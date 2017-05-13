@@ -61,7 +61,7 @@ impl Renderer {
 
         // Create the uniforms
         let perspective = PerspectiveFov {
-            fovy: Rad::full_turn() * 0.27,
+            fovy: Rad::full_turn() * 0.25,
             aspect: 1280.0 / 720.0,
             near: 0.1,
             far: 500.0,

@@ -2,7 +2,7 @@ extern crate cgmath;
 extern crate cobalt_rendering;
 extern crate cobalt_utils;
 
-use cgmath::{Vector3};
+use cgmath::{Vector3, Euler, Rad, Zero, Angle};
 use cobalt_rendering::world3d::{Renderer, Camera};
 use cobalt_rendering::{Target};
 use cobalt_utils::{LoopTimer};
@@ -27,6 +27,9 @@ fn main() {
         // Set up the camera to render with
         let camera = Camera {
             position: Vector3::new(accumulator.sin(), 0.0, 1.0),
+            rotation: Euler::new(
+                Rad::zero(), Rad::full_turn() * accumulator.sin() * 0.25, Rad::zero()
+            ).into(),
         };
 
         // Render the frame
