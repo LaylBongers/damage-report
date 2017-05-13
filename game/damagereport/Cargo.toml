@@ -4,4 +4,6 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-cobalt-rendering = {path="../cobalt-rendering"}
+cgmath = "0.14.1"
+cobalt-rendering = {path = "../cobalt-rendering"}
+cobalt-utils = {path = "../cobalt-utils"}

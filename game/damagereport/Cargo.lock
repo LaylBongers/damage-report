@@ -2,7 +2,9 @@
 name = "damagereport"
 version = "0.1.0"
 dependencies = [
+ "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cobalt-rendering 0.1.0",
+ "cobalt-utils 0.1.0",
 ]
 
 [[package]]
@@ -95,6 +97,10 @@ dependencies = [
  "glium 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "cobalt-utils"
+version = "0.1.0"
 
 [[package]]
 name = "cocoa"
