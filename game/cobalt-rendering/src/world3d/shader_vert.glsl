@@ -3,10 +3,11 @@
 uniform mat4 u_matrix;
 
 in vec3 v_position;
+in vec2 v_tex_coords;
 
-out vec3 f_position;
+out vec2 f_tex_coords;
 
 void main() {
-    f_position = v_position;
+    f_tex_coords = v_tex_coords;
     gl_Position = u_matrix * vec4(v_position, 1.0);
 }

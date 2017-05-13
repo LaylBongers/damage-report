@@ -6,3 +6,4 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.14.1"
 glium = "0.16.0"
+image = "0.13.0"
