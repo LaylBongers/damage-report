@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
+cgmath = "0.14.1"
 glium = "0.16.0"
