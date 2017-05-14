@@ -15,6 +15,7 @@ impl Target {
         let context = WindowBuilder::new()
             .with_dimensions(size.x, size.y)
             .with_title(format!("Cobalt"))
+            .with_depth_buffer(24)
             .build_glium()
             .unwrap();
 
@@ -44,7 +45,7 @@ impl Target {
     pub fn start_frame(&self) -> Frame {
         let mut frame = self.context.draw();
 
-        frame.clear_color(0.005, 0.005, 0.006, 1.0);
+        frame.clear_color_and_depth((0.005, 0.005, 0.006, 1.0), 1.0);
 
         Frame {
             inner: frame,

@@ -1,10 +1,11 @@
 use std::io::Cursor;
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
-use glium::backend::Facade;
+use glium::backend::{Facade};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::texture::{RawImage2d, SrgbTexture2d};
-use glium::{Surface, VertexBuffer, Program};
+use glium::draw_parameters::{DepthTest};
+use glium::{Surface, VertexBuffer, Program, Depth, DrawParameters};
 use image;
 
 use world3d::Camera;
@@ -53,11 +54,23 @@ impl Renderer {
 
     pub fn render(&self, context: &Facade, frame: &mut Frame, camera: &Camera) {
         // Create the vertex buffer
-        let vertex1 = Vertex { v_position: [0.0, 0.0, 0.0], v_tex_coords: [0.0, 0.0] };
-        let vertex2 = Vertex { v_position: [1.0, 0.0, 0.0], v_tex_coords: [1.0, 0.0] };
-        let vertex3 = Vertex { v_position: [0.0, 1.0, 0.0], v_tex_coords: [0.0, 1.0] };
-        let shape = vec![vertex1, vertex2, vertex3];
-        let vertex_buffer = VertexBuffer::new(context, &shape).unwrap();
+        let mut vertices = Vec::new();
+        for x in -10..10 {
+            for z in -10..10 {
+                let fx = x as f32;
+                let fz = z as f32;
+                vertices.push(Vertex {
+                    v_position: [fx + 0.0, 0.0, fz + 0.0], v_tex_coords: [0.0, 0.0]
+                });
+                vertices.push(Vertex {
+                    v_position: [fx + 1.0, 0.0, fz + 0.0], v_tex_coords: [1.0, 0.0]
+                });
+                vertices.push(Vertex {
+                    v_position: [fx + 0.0, 1.0, fz + 0.0], v_tex_coords: [0.0, 1.0]
+                });
+            }
+        }
+        let vertex_buffer = VertexBuffer::new(context, &vertices).unwrap();
         let indices = NoIndices(PrimitiveType::TrianglesList);
 
         // Create the uniforms
@@ -72,12 +85,21 @@ impl Renderer {
         let matrix_raw: [[f32; 4]; 4] = (projection * view).into();
         let uniforms = uniform! { u_matrix: matrix_raw, u_texture: &self.texture };
 
+        // Set up the drawing parameters
+        let params = DrawParameters {
+            depth: Depth {
+                test: DepthTest::IfLess,
+                write: true,
+                .. Default::default()
+            },
+            .. Default::default()
+        };
+
         // Perform the actual draw
         frame.inner.draw(
             &vertex_buffer, &indices,
-            &self.program,
-            &uniforms,
-            &Default::default(),
+            &self.program, &uniforms,
+            &params,
         ).unwrap();
     }
 }
