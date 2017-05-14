@@ -12,7 +12,7 @@ This is a list of Epics with corresponding tasks.
 ## Basic Movement
 | Task                                                                | Status |
 |---------------------------------------------------------------------|--------|
-| WASD Movement & Mouse Look                                          |        |
+| WASD Movement & Mouse Look                                          | Done   |
 | Movement blocked by devices                                         |        |
 | Player can activate hitbox debug mode                               |        |
 | Player can crouch                                                   |        |
@@ -20,7 +20,7 @@ This is a list of Epics with corresponding tasks.
 ## Basic Devices
 | Task                                                                | Status |
 |---------------------------------------------------------------------|--------|
-| Devices are rendered in position                                    |        |
+| Devices are rendered in voxel positions different from hull cubes   |        |
 | Devices have models                                                 |        |
 
 ## Breaking Devices
