@@ -7,6 +7,7 @@ use glium::{DisplayBuild, Surface, Frame as GliumFrame};
 pub struct Target {
     context: GlutinFacade,
     size: Vector2<u32>,
+    focused: bool,
 }
 
 impl Target {
@@ -22,6 +23,7 @@ impl Target {
         Target {
             context,
             size,
+            focused: true,
         }
     }
 
@@ -33,8 +35,14 @@ impl Target {
                 GlutinEvent::Resized(width, height) =>
                     self.size = Vector2::new(width, height),
                 GlutinEvent::Closed => event.push(Event::Closed),
+                GlutinEvent::Focused(focused) =>
+                    self.focused = focused,
                 GlutinEvent::KeyboardInput(state, scan_code, key_code) =>
                     event.push(Event::KeyboardInput(state, scan_code, key_code)),
+                GlutinEvent::MouseMoved(x, y) =>
+                    if self.focused {
+                        event.push(Event::MouseMoved(Vector2::new(x as u32, y as u32)))
+                    },
                 _ => ()
             }
         }
@@ -53,8 +61,19 @@ impl Target {
         }
     }
 
+    pub fn set_cursor_position(&self, position: Vector2<u32>) {
+        self.context
+            .get_window().unwrap()
+            .set_cursor_position(position.x as i32, position.y as i32)
+            .unwrap();
+    }
+
     pub fn context(&self) -> &Facade {
         &self.context
+    }
+
+    pub fn size(&self) -> Vector2<u32> {
+        self.size
     }
 }
 
@@ -73,4 +92,5 @@ impl Frame {
 pub enum Event {
     Closed,
     KeyboardInput(ElementState, ScanCode, Option<VirtualKeyCode>),
+    MouseMoved(Vector2<u32>),
 }
