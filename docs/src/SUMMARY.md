@@ -2,4 +2,5 @@
 
 [Introduction](./Introduction.md)
 - [Gameplay Loop](./GameplayLoop.md)
-- [Prototype](./Prototype.md)
+- [Milestones]()
+    - [0 Prototype](./Milestones/00 Prototype.md)

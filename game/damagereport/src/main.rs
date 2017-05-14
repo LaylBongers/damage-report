@@ -2,33 +2,39 @@ extern crate cgmath;
 extern crate cobalt_rendering;
 extern crate cobalt_utils;
 
-use cgmath::{Vector3, Euler, Rad, Zero, Angle};
+use cgmath::{Vector3, Euler, Rad, Zero};
 use cobalt_rendering::world3d::{Renderer, Camera};
-use cobalt_rendering::{Target};
+use cobalt_rendering::{Target, Event};
 use cobalt_utils::{LoopTimer};
 
 fn main() {
     // Initialize the rendering system
-    let target = Target::init();
+    let mut target = Target::init();
     let renderer = Renderer::init(target.context());
 
     // Initialize generic utilities
     let mut timer = LoopTimer::start();
 
-    let mut accumulator = 0.0;
+    // Game state
+    let player_position = Vector3::new(0.0, 0.0, 4.0);
 
+    // The main game loop
     loop {
-        let time = timer.tick();
-        accumulator += time;
+        let _time = timer.tick();
 
         // Handle the events that happened to the target
-        if !target.poll_events() { break; }
+        for event in target.poll_events() {
+            match event {
+                Event::Closed => return,
+                _ => (),
+            }
+        }
 
         // Set up the camera to render with
         let camera = Camera {
-            position: Vector3::new(accumulator.sin(), 0.0, 1.0),
+            position: player_position + Vector3::new(0.0, 1.6, 0.0),
             rotation: Euler::new(
-                Rad::zero(), Rad::full_turn() * accumulator.sin() * 0.25, Rad::zero()
+                Rad::zero(), Rad::zero(), Rad::zero()
             ).into(),
         };
 

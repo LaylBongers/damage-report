@@ -4,10 +4,11 @@ use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
 use glium::backend::Facade;
 use glium::index::{NoIndices, PrimitiveType};
 use glium::texture::{RawImage2d, SrgbTexture2d};
-use glium::{Surface, Frame, VertexBuffer, Program};
+use glium::{Surface, VertexBuffer, Program};
 use image;
 
 use world3d::Camera;
+use Frame;
 
 #[derive(Copy, Clone)]
 struct Vertex {
@@ -62,7 +63,7 @@ impl Renderer {
         // Create the uniforms
         let perspective = PerspectiveFov {
             fovy: Rad::full_turn() * 0.25,
-            aspect: 1280.0 / 720.0,
+            aspect: frame.size.x as f32 / frame.size.y as f32,
             near: 0.1,
             far: 500.0,
         };
@@ -72,7 +73,7 @@ impl Renderer {
         let uniforms = uniform! { u_matrix: matrix_raw, u_texture: &self.texture };
 
         // Perform the actual draw
-        frame.draw(
+        frame.inner.draw(
             &vertex_buffer, &indices,
             &self.program,
             &uniforms,
