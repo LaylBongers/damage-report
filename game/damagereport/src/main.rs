@@ -24,14 +24,15 @@ fn main() {
         let time = timer.tick();
 
         // Handle any events in the target
+        let mut frame_pitch = 0.0;
         let mut frame_yaw = 0.0;
-        if !handle_events(&mut target, &mut input_state, &mut frame_yaw) ||
+        if !handle_events(&mut target, &mut input_state, &mut frame_pitch, &mut frame_yaw) ||
            input_state.escape_pressed {
             break
         }
 
         // Update the player based on the input we got so far
-        player.update(&input_state, frame_yaw, time);
+        player.update(&input_state, frame_pitch, frame_yaw, time);
 
         // Perform the actual rendering
         let camera = player.create_camera();
@@ -41,6 +42,7 @@ fn main() {
 
 struct Player {
     position: Vector3<f32>,
+    pitch: f32,
     yaw: f32,
 }
 
@@ -48,24 +50,38 @@ impl Player {
     fn new() -> Self {
         Player {
             position: Vector3::new(0.0, 0.0, 4.0),
+            pitch: 0.0,
             yaw: 0.0,
         }
     }
 
-    fn update(&mut self, input_state: &InputState, frame_yaw: f32, time: f32) {
+    fn update(&mut self, input_state: &InputState, frame_pitch: f32, frame_yaw: f32, time: f32) {
         // Rotate the player's yaw depending on input
+        self.pitch += frame_pitch;
         self.yaw += frame_yaw;
+
+        // Limit the pitch
+        if self.pitch > 0.25 {
+            self.pitch = 0.25;
+        }
+        if self.pitch < -0.25 {
+            self.pitch = -0.25;
+        }
 
         // Move the player following the movement input, in the direction the player's pointing
         let rotation = self.create_rotation();
         let axes = input_state.movement_axes();
-        self.position += (rotation * Vector3::new(axes.x, 0.0, -axes.y)) * time;
+        let mut rotated_movement = rotation * Vector3::new(axes.x, 0.0, -axes.y);
+        rotated_movement.y = 0.0;
+        self.position += rotated_movement * time;
     }
 
     fn create_rotation(&self) -> Quaternion<f32> {
-        Euler::new(
-            Rad::zero(), Rad::full_turn() * self.yaw, Rad::zero(),
-        ).into()
+        let yaw: Quaternion<f32> =
+            Euler::new(Rad::zero(), Rad::full_turn() * self.yaw, Rad::zero()).into();
+        let pitch: Quaternion<f32> =
+            Euler::new(Rad::full_turn() * self.pitch, Rad::zero(), Rad::zero()).into();
+        yaw * pitch
     }
 
     fn create_camera(&self) -> Camera {
@@ -76,7 +92,10 @@ impl Player {
     }
 }
 
-fn handle_events(target: &mut Target, input_state: &mut InputState, frame_yaw: &mut f32) -> bool {
+fn handle_events(
+    target: &mut Target, input_state: &mut InputState,
+    frame_pitch: &mut f32, frame_yaw: &mut f32
+) -> bool {
     let mut should_continue = true;
 
     for event in target.poll_events() {
@@ -89,6 +108,7 @@ fn handle_events(target: &mut Target, input_state: &mut InputState, frame_yaw: &
 
                 // Check how far away from the center we are and use that to calculate input
                 let difference: Vector2<i32> = position.cast() - center.cast();
+                *frame_pitch += difference.y as f32 * -0.0005;
                 *frame_yaw += difference.x as f32 * -0.0005;
 
                 // Re-center the mouse so it stays in the middle of the screen
