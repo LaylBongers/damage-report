@@ -8,7 +8,7 @@ use glium::draw_parameters::{DepthTest, BackfaceCullingMode};
 use glium::{Surface, Program, Depth, DrawParameters};
 use image;
 
-use world3d::{Camera, World};
+use world3d::{Camera, World, Entity};
 use {Frame};
 
 pub struct Renderer {
@@ -45,8 +45,6 @@ impl Renderer {
     }
 
     pub fn render(&self, frame: &mut Frame, camera: &Camera, world: &World) {
-        let indices = NoIndices(PrimitiveType::TrianglesList);
-
         // Create the uniforms
         let perspective = PerspectiveFov {
             fovy: Rad::full_turn() * 0.25,
@@ -56,6 +54,7 @@ impl Renderer {
         };
         let projection = Matrix4::from(perspective);
         let view = camera.create_world_to_view_matrix();
+        let projection_view = projection * view;
 
         // Set up the drawing parameters
         let params = DrawParameters {
@@ -70,17 +69,25 @@ impl Renderer {
 
         // Go over everything in the world
         for entity in &world.entities {
-            // Create a matrix for this world entity
-            let model = Matrix4::from_translation(entity.position);
-            let matrix_raw: [[f32; 4]; 4] = (projection * view * model).into();
-
-            // Perform the actual draw
-            let uniforms = uniform! { u_matrix: matrix_raw, u_texture: &self.texture };
-            frame.inner.draw(
-                &entity.model.inner.vertex_buffer, &indices,
-                &self.program, &uniforms,
-                &params,
-            ).unwrap();
+            self.render_entity(entity, frame, &params, &projection_view);
         }
+    }
+
+    fn render_entity(
+        &self,
+        entity: &Entity, frame: &mut Frame, params: &DrawParameters,
+        projection_view: &Matrix4<f32>
+    ) {
+        // Create a matrix for this world entity
+        let model = Matrix4::from_translation(entity.position);
+        let matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
+
+        // Perform the actual draw
+        let uniforms = uniform! { u_matrix: matrix_raw, u_texture: &self.texture };
+        frame.inner.draw(
+            &entity.model.inner.vertex_buffer, &NoIndices(PrimitiveType::TrianglesList),
+            &self.program, &uniforms,
+            &params,
+        ).unwrap();
     }
 }
