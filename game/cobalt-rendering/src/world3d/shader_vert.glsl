@@ -4,6 +4,7 @@ uniform mat4 u_matrix;
 
 in vec3 v_position;
 in vec2 v_tex_coords;
+in vec3 v_normal;
 
 out vec2 f_tex_coords;
 
