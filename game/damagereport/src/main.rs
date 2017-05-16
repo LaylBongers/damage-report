@@ -6,7 +6,7 @@ mod input;
 mod player;
 
 use cgmath::{Vector2, Vector3};
-use cobalt_rendering::world3d::{Renderer, Camera, World};
+use cobalt_rendering::world3d::{Renderer, Camera, World, Model};
 use cobalt_rendering::{Target, Event};
 use cobalt_utils::{LoopTimer};
 
@@ -26,10 +26,15 @@ fn main() {
     let mut input_state = InputState::default();
     let mut player = Player::new();
 
+    // Create the floor
+    let floor_model = Model::load(&target, "./assets/floor.obj", 0.1);
+    world.add(Vector3::new(0.0, 0.0, 0.0), floor_model);
+
     // Create the 3 test devices
-    world.add(Vector3::new(-2.0, 0.0, -4.0));
-    world.add(Vector3::new(0.0, 0.0, -4.0));
-    world.add(Vector3::new(2.0, 0.0, -4.0));
+    let device_model = Model::load(&target, "./assets/device.obj", 0.1);
+    world.add(Vector3::new(-2.0, 0.0, -4.0), device_model.clone());
+    world.add(Vector3::new( 0.0, 0.0, -4.0), device_model.clone());
+    world.add(Vector3::new( 2.0, 0.0, -4.0), device_model.clone());
 
     // The main game loop
     loop {
@@ -85,7 +90,7 @@ fn render_frame(target: &Target, renderer: &Renderer, camera: &Camera, world: &W
     let mut frame = target.start_frame();
 
     // Render the world itself
-    renderer.render(target.context(), &mut frame, camera, world);
+    renderer.render(&mut frame, camera, world);
 
     // Finish the frame
     frame.finish().unwrap();

@@ -21,7 +21,7 @@ This is a list of Epics with corresponding tasks.
 | Task                                                                | Status |
 |---------------------------------------------------------------------|--------|
 | Devices are rendered in different positions                         | Done   |
-| Devices have models                                                 |        |
+| Devices have models                                                 | In-Progress |
 
 ## Breaking Devices
 | Task                                                                | Status |

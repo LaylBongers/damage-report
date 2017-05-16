@@ -5,19 +5,11 @@ use glium::backend::{Facade};
 use glium::index::{NoIndices, PrimitiveType};
 use glium::texture::{RawImage2d, SrgbTexture2d};
 use glium::draw_parameters::{DepthTest, BackfaceCullingMode};
-use glium::{Surface, VertexBuffer, Program, Depth, DrawParameters};
+use glium::{Surface, Program, Depth, DrawParameters};
 use image;
 
 use world3d::{Camera, World};
-use Frame;
-
-#[derive(Copy, Clone)]
-struct Vertex {
-    v_position: [f32; 3],
-    v_tex_coords: [f32; 2],
-}
-
-implement_vertex!(Vertex, v_position, v_tex_coords);
+use {Frame};
 
 pub struct Renderer {
     program: Program,
@@ -52,13 +44,7 @@ impl Renderer {
         }
     }
 
-    pub fn render(&self, context: &Facade, frame: &mut Frame, camera: &Camera, world: &World) {
-        // Create the vertex buffer
-        let mut vertices = Vec::new();
-        vertices.push(Vertex {v_position: [0.0, 0.0, 0.0], v_tex_coords: [0.0, 0.0]});
-        vertices.push(Vertex {v_position: [1.0, 0.0, 0.0], v_tex_coords: [1.0, 0.0]});
-        vertices.push(Vertex {v_position: [0.0, 1.0, 0.0], v_tex_coords: [0.0, 1.0]});
-        let vertex_buffer = VertexBuffer::new(context, &vertices).unwrap();
+    pub fn render(&self, frame: &mut Frame, camera: &Camera, world: &World) {
         let indices = NoIndices(PrimitiveType::TrianglesList);
 
         // Create the uniforms
@@ -83,15 +69,15 @@ impl Renderer {
         };
 
         // Go over everything in the world
-        for position in &world.positions {
+        for entity in &world.entities {
             // Create a matrix for this world entity
-            let model = Matrix4::from_translation(*position);
+            let model = Matrix4::from_translation(entity.position);
             let matrix_raw: [[f32; 4]; 4] = (projection * view * model).into();
 
             // Perform the actual draw
             let uniforms = uniform! { u_matrix: matrix_raw, u_texture: &self.texture };
             frame.inner.draw(
-                &vertex_buffer, &indices,
+                &entity.model.inner.vertex_buffer, &indices,
                 &self.program, &uniforms,
                 &params,
             ).unwrap();
