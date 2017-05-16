@@ -2,6 +2,7 @@ extern crate cgmath;
 #[macro_use]
 extern crate glium;
 extern crate image;
+extern crate wavefront_obj;
 
 pub mod world3d;
 mod target;

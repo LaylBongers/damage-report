@@ -5,8 +5,8 @@ extern crate cobalt_utils;
 mod input;
 mod player;
 
-use cgmath::{Vector2};
-use cobalt_rendering::world3d::{Renderer, Camera};
+use cgmath::{Vector2, Vector3};
+use cobalt_rendering::world3d::{Renderer, Camera, World};
 use cobalt_rendering::{Target, Event};
 use cobalt_utils::{LoopTimer};
 
@@ -17,6 +17,7 @@ fn main() {
     // Initialize the rendering system
     let mut target = Target::init();
     let renderer = Renderer::init(target.context());
+    let mut world = World::default();
 
     // Initialize generic utilities
     let mut timer = LoopTimer::start();
@@ -24,6 +25,11 @@ fn main() {
     // Game state
     let mut input_state = InputState::default();
     let mut player = Player::new();
+
+    // Create the 3 test devices
+    world.add(Vector3::new(-2.0, 0.0, -4.0));
+    world.add(Vector3::new(0.0, 0.0, -4.0));
+    world.add(Vector3::new(2.0, 0.0, -4.0));
 
     // The main game loop
     loop {
@@ -41,7 +47,7 @@ fn main() {
 
         // Perform the actual rendering
         let camera = player.create_camera();
-        render_frame(&target, &renderer, &camera);
+        render_frame(&target, &renderer, &camera, &world);
     }
 }
 
@@ -74,8 +80,13 @@ fn handle_events(
     should_continue
 }
 
-fn render_frame(target: &Target, renderer: &Renderer, camera: &Camera) {
+fn render_frame(target: &Target, renderer: &Renderer, camera: &Camera, world: &World) {
+    // Start the frame
     let mut frame = target.start_frame();
-    renderer.render(target.context(), &mut frame, camera);
+
+    // Render the world itself
+    renderer.render(target.context(), &mut frame, camera, world);
+
+    // Finish the frame
     frame.finish().unwrap();
 }

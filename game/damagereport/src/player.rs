@@ -12,7 +12,7 @@ pub struct Player {
 impl Player {
     pub fn new() -> Self {
         Player {
-            position: Vector3::new(0.0, 1.0, 4.0),
+            position: Vector3::new(0.0, 0.0, 0.0),
             pitch: 0.0,
             yaw: 0.0,
         }

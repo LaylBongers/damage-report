@@ -7,3 +7,4 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 cgmath = "0.14.1"
 glium = "0.16.0"
 image = "0.13.0"
+wavefront_obj = "5.0.0"

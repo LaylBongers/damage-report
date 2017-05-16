@@ -20,7 +20,7 @@ This is a list of Epics with corresponding tasks.
 ## Basic Devices
 | Task                                                                | Status |
 |---------------------------------------------------------------------|--------|
-| Devices are rendered in voxel positions different from hull cubes   |        |
+| Devices are rendered in different positions                         | Done   |
 | Devices have models                                                 |        |
 
 ## Breaking Devices
