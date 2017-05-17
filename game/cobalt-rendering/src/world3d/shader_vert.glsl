@@ -1,9 +1,9 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 0) uniform UniformBufferObject {
+layout(set = 0, binding = 0) uniform UniformsData {
     mat4 matrix;
-} ubo;
+} uniforms;
 
 layout(location = 0) in vec3 v_position;
 layout(location = 1) in vec2 v_tex_coords;
@@ -19,5 +19,5 @@ out gl_PerVertex {
 void main() {
     f_tex_coords = v_tex_coords;
     f_normal = v_normal;
-    gl_Position = ubo.matrix * vec4(v_position, 1.0);
+    gl_Position = uniforms.matrix * vec4(v_position, 1.0);
 }

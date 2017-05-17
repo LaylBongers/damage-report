@@ -31,25 +31,8 @@ impl Renderer {
         let vs = vs::Shader::load(target.device()).unwrap();
         let fs = fs::Shader::load(target.device()).unwrap();
 
-        // Set up a render pass TODO: Comment better
-        #[allow(dead_code)]
-        let render_pass = Arc::new(single_pass_renderpass!(target.device().clone(),
-            attachments: {
-                color: {
-                    load: Clear,
-                    store: Store,
-                    format: target.images()[0].format(),
-                    samples: 1,
-                }
-            },
-            pass: {
-                color: [color],
-                depth_stencil: {}
-            }
-        ).unwrap());
-
         // Set up a pipeline TODO: Comment better
-        let pipeline_params = GraphicsPipelineParams {
+        /*let pipeline_params = GraphicsPipelineParams {
             vertex_input: SingleBufferDefinition::new(),
             vertex_shader: vs.main_entry_point(),
             input_assembly: InputAssembly::triangle_list(),
@@ -76,26 +59,10 @@ impl Renderer {
             render_pass: Subpass::from(render_pass.clone(), 0).unwrap(),
         };
         let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::world3d::Vertex>, _, _>> =
-            Arc::new(GraphicsPipeline::new(target.device(), pipeline_params).unwrap());
-
-        // Set up the frame buffers matching the render pass TODO: Comment better
-        let framebuffers = target.images().iter().map(|image| {
-            let attachments = render_pass.desc().start_attachments().color(image.clone());
-            let dimensions = [image.dimensions()[0], image.dimensions()[1], 1];
-            Framebuffer::new(render_pass.clone(), dimensions, attachments).unwrap()
-        }).collect::<Vec<_>>();
-
-        // Create the shader program to render with
-        /*let vertex_shader_src = include_str!("./shader_vert.glsl");
-        let fragment_shader_src = include_str!("./shader_frag.glsl");
-        let program = Program::from_source(
-            context,
-            vertex_shader_src, fragment_shader_src,
-            None
-        ).unwrap();
+            Arc::new(GraphicsPipeline::new(target.device(), pipeline_params).unwrap());*/
 
         // Create the texture to render
-        let image = image::load(
+        /*let image = image::load(
             Cursor::new(&include_bytes!("./texture.png")[..]),
             image::PNG
         ).unwrap().to_rgba();

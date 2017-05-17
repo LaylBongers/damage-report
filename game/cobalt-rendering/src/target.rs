@@ -1,10 +1,15 @@
 use std::sync::{Arc};
+use std::time::{Duration};
 
 use cgmath::{Vector2};
+use vulkano::command_buffer::{self, AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
 use vulkano::device::{DeviceExtensions, Device, Queue};
+use vulkano::framebuffer::{Framebuffer, RenderPass, Subpass, RenderPassDesc, RenderPassAbstract, FramebufferAbstract};
+use vulkano::format::{ClearValue};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform};
 use vulkano::image::{SwapchainImage};
+use vulkano::sync::{GpuFuture};
 use vulkano_win::{self, VkSurfaceBuild, Window};
 use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, ScanCode, VirtualKeyCode, ModifiersState};
 
@@ -12,10 +17,18 @@ pub struct Target {
     // Winit window
     events_loop: EventsLoop,
     window: Window,
+
     // Persistent values needed for vulkan rendering
     device: Arc<Device>,
     graphics_queue: Arc<Queue>,
     images: Vec<Arc<SwapchainImage>>,
+    swapchain: Arc<Swapchain>,
+    render_pass: Arc<RenderPassAbstract + Send + Sync>,
+    framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
+
+    // Submissions from previous frames
+    submissions: Vec<Box<GpuFuture>>,
+
     // Generic data
     size: Vector2<u32>,
     focused: bool,
@@ -109,9 +122,43 @@ impl Target {
             ).unwrap()
         };
 
+        // Set up a render pass TODO: Comment better
+        #[allow(dead_code)]
+        let render_pass = Arc::new(single_pass_renderpass!(device.clone(),
+            attachments: {
+                color: {
+                    load: Clear,
+                    store: Store,
+                    format: images[0].format(),
+                    samples: 1,
+                }
+            },
+            pass: {
+                color: [color],
+                depth_stencil: {}
+            }
+        ).unwrap());
+
+        // Set up the frame buffers matching the render pass TODO: Comment better
+        let framebuffers = images.iter().map(|image| {
+            let attachments = render_pass.desc().start_attachments().color(image.clone());
+            let dimensions = [image.dimensions()[0], image.dimensions()[1], 1];
+            Framebuffer::new(render_pass.clone(), dimensions, attachments).unwrap() as Arc<FramebufferAbstract + Send + Sync>
+        }).collect::<Vec<_>>();
+
         Target {
-            events_loop, window,
-            device, graphics_queue, images,
+            events_loop,
+            window,
+
+            device,
+            graphics_queue,
+            images,
+            swapchain,
+            render_pass,
+            framebuffers,
+
+            submissions: Vec::new(),
+
             size,
             focused: true,
         }
@@ -138,22 +185,57 @@ impl Target {
                         _ => (),
                     }
                 },
-                _ => ()
             }
         });
 
         event
     }
 
-    pub fn start_frame(&self) -> Frame {
-        //let mut frame = self.context.draw();
+    pub fn start_frame(&mut self) -> Frame {
+        // Clearing the old submissions by keeping alive only the ones which probably aren't
+        //  finished
+        while self.submissions.len() >= 4 {
+            self.submissions.remove(0);
+        }
 
-        //frame.clear_color_and_depth((0.005, 0.005, 0.006, 1.0), 1.0);
+        // Get the image for this frame
+        let (image_num, future) = self.swapchain.acquire_next_image(Duration::new(1, 0)).unwrap();
+
+        let clear_values = vec!(ClearValue::Float([0.0, 0.0, 1.0, 1.0]));
+
+        // Create the command buffer for this frame, this will hold all the draw calls and we'll
+        //  submit them all at once
+        let command_buffer_builder = AutoCommandBufferBuilder::new(
+                self.device.clone(), self.graphics_queue.family()
+            ).unwrap()
+            // We immediately start with a render pass
+            .begin_render_pass(
+                self.framebuffers[image_num].clone(), false,
+                clear_values
+            ).unwrap();
+
+        //.draw(pipeline.clone(), DynamicState::none(), vertex_buffer.clone(), (), ())
+        //.unwrap()
 
         Frame {
-            //inner: frame,
-            size: self.size,
+            command_buffer_builder,
+            image_num,
+            future: Box::new(future),
         }
+    }
+
+    pub fn finish_frame(&mut self, frame: Frame) {
+        // End the render pass and finish the command buffer
+        let command_buffer = frame.command_buffer_builder
+            .end_render_pass().unwrap()
+            .build().unwrap();
+
+        // TODO: ???
+        let future = frame.future
+            .then_execute(self.graphics_queue.clone(), command_buffer).unwrap()
+            .then_swapchain_present(self.graphics_queue.clone(), self.swapchain.clone(), frame.image_num)
+            .then_signal_fence_and_flush().unwrap();
+        self.submissions.push(Box::new(future));
     }
 
     pub fn set_cursor_position(&self, position: Vector2<u32>) {
@@ -179,21 +261,15 @@ impl Target {
     }
 }
 
-pub struct Frame {
-    //pub inner: GliumFrame,
-    pub size: Vector2<u32>,
-}
-
-impl Frame {
-    pub fn finish(self) -> Result<(), ()> {
-        //self.inner.finish().map_err(|_| ())
-        Ok(())
-    }
-}
-
 #[derive(Debug)]
 pub enum Event {
     Closed,
     KeyboardInput(ElementState, ScanCode, Option<VirtualKeyCode>, ModifiersState),
     MouseMoved(Vector2<u32>),
+}
+
+pub struct Frame {
+    command_buffer_builder: AutoCommandBufferBuilder,
+    image_num: usize,
+    future: Box<GpuFuture>,
 }
