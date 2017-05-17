@@ -16,7 +16,7 @@ use player::{Player};
 fn main() {
     // Initialize the rendering system
     let mut target = Target::init();
-    //let renderer = Renderer::init(target.context());
+    let renderer = Renderer::init(&target);
     let mut world = World::default();
 
     // Initialize generic utilities

@@ -10,3 +10,6 @@ vulkano = {git = "https://github.com/tomaka/vulkano.git"}
 vulkano-win = {git = "https://github.com/tomaka/vulkano.git"}
 wavefront_obj = "5.0.0"
 winit = "0.6.4"
+
+[build-dependencies]
+vulkano-shaders = {git = "https://github.com/tomaka/vulkano.git"}

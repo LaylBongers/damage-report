@@ -1,10 +1,24 @@
-use std::io::Cursor;
+use std::io::{Cursor};
+use std::sync::{Arc};
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
 use image;
+use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams};
+use vulkano::pipeline::blend::{Blend};
+use vulkano::pipeline::depth_stencil::{DepthStencil};
+use vulkano::pipeline::input_assembly::{InputAssembly};
+use vulkano::pipeline::multisample::{Multisample};
+use vulkano::pipeline::vertex::{SingleBufferDefinition};
+use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
+use vulkano::framebuffer::{Framebuffer, Subpass};
 
 use world3d::{Camera, World, Entity};
-use {Frame};
+use {Target, Frame};
+
+#[allow(dead_code)]
+mod vs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_vert.glsl")} }
+#[allow(dead_code)]
+mod fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_frag.glsl")} }
 
 pub struct Renderer {
     //program: Program,
@@ -12,9 +26,67 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    /*pub fn init(context: &Facade) -> Self {
+    pub fn init(target: &Target) -> Self {
+        // Load in the shaders
+        let vs = vs::Shader::load(target.device()).unwrap();
+        let fs = fs::Shader::load(target.device()).unwrap();
+
+        // Set up a render pass TODO: Comment better
+        #[allow(dead_code)]
+        let render_pass = Arc::new(single_pass_renderpass!(target.device().clone(),
+            attachments: {
+                color: {
+                    load: Clear,
+                    store: Store,
+                    format: target.images()[0].format(),
+                    samples: 1,
+                }
+            },
+            pass: {
+                color: [color],
+                depth_stencil: {}
+            }
+        ).unwrap());
+
+        // Set up a pipeline TODO: Comment better
+        let pipeline_params = GraphicsPipelineParams {
+            vertex_input: SingleBufferDefinition::new(),
+            vertex_shader: vs.main_entry_point(),
+            input_assembly: InputAssembly::triangle_list(),
+            tessellation: None,
+            geometry_shader: None,
+            viewport: ViewportsState::Fixed {
+                data: vec![(
+                    Viewport {
+                        origin: [0.0, 0.0],
+                        depth_range: 0.0 .. 1.0,
+                        dimensions: [
+                            target.images()[0].dimensions()[0] as f32,
+                            target.images()[0].dimensions()[1] as f32
+                        ],
+                    },
+                    Scissor::irrelevant()
+                )],
+            },
+            raster: Default::default(),
+            multisample: Multisample::disabled(),
+            fragment_shader: fs.main_entry_point(),
+            depth_stencil: DepthStencil::disabled(),
+            blend: Blend::pass_through(),
+            render_pass: Subpass::from(render_pass.clone(), 0).unwrap(),
+        };
+        let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::world3d::Vertex>, _, _>> =
+            Arc::new(GraphicsPipeline::new(target.device(), pipeline_params).unwrap());
+
+        // Set up the frame buffers matching the render pass TODO: Comment better
+        let framebuffers = target.images().iter().map(|image| {
+            let attachments = render_pass.desc().start_attachments().color(image.clone());
+            let dimensions = [image.dimensions()[0], image.dimensions()[1], 1];
+            Framebuffer::new(render_pass.clone(), dimensions, attachments).unwrap()
+        }).collect::<Vec<_>>();
+
         // Create the shader program to render with
-        let vertex_shader_src = include_str!("./shader_vert.glsl");
+        /*let vertex_shader_src = include_str!("./shader_vert.glsl");
         let fragment_shader_src = include_str!("./shader_frag.glsl");
         let program = Program::from_source(
             context,
@@ -31,15 +103,15 @@ impl Renderer {
         let image = RawImage2d::from_raw_rgba_reversed(
             image.into_raw(), image_dimensions
         );
-        let texture = SrgbTexture2d::new(context, image).unwrap();
+        let texture = SrgbTexture2d::new(context, image).unwrap();*/
 
         Renderer {
-            program,
-            texture,
+            //program,
+            //texture,
         }
     }
 
-    pub fn render(&self, frame: &mut Frame, camera: &Camera, world: &World) {
+    /*pub fn render(&self, frame: &mut Frame, camera: &Camera, world: &World) {
         // Create the uniforms
         let perspective = PerspectiveFov {
             fovy: Rad::full_turn() * 0.25,

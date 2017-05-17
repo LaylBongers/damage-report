@@ -1,15 +1,22 @@
 use std::sync::{Arc};
 
 use cgmath::{Vector2};
-use vulkano::device::{DeviceExtensions, Device};
+use vulkano::device::{DeviceExtensions, Device, Queue};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform};
+use vulkano::image::{SwapchainImage};
 use vulkano_win::{self, VkSurfaceBuild, Window};
 use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, ScanCode, VirtualKeyCode, ModifiersState};
 
 pub struct Target {
+    // Winit window
     events_loop: EventsLoop,
     window: Window,
+    // Persistent values needed for vulkan rendering
+    device: Arc<Device>,
+    graphics_queue: Arc<Queue>,
+    images: Vec<Arc<SwapchainImage>>,
+    // Generic data
     size: Vector2<u32>,
     focused: bool,
 }
@@ -104,6 +111,7 @@ impl Target {
 
         Target {
             events_loop, window,
+            device, graphics_queue, images,
             size,
             focused: true,
         }
@@ -152,6 +160,18 @@ impl Target {
         self.window.window()
             .set_cursor_position(position.x as i32, position.y as i32)
             .unwrap();
+    }
+
+    pub fn device(&self) -> &Arc<Device> {
+        &self.device
+    }
+
+    pub fn graphics_queue(&self) -> &Arc<Queue> {
+        &self.graphics_queue
+    }
+
+    pub fn images(&self) -> &Vec<Arc<SwapchainImage>> {
+        &self.images
     }
 
     pub fn size(&self) -> Vector2<u32> {

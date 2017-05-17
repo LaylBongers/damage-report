@@ -1,11 +1,12 @@
-#version 330 core
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
 
-uniform sampler2D u_texture;
+layout(binding = 1) uniform sampler2D u_texture;
 
-in vec2 f_tex_coords;
-in vec3 f_normal;
+layout(location = 0) in vec2 f_tex_coords;
+layout(location = 1) in vec3 f_normal;
 
-out vec4 o_color;
+layout(location = 0) out vec4 o_color;
 
 // The light is inverse of the angle it should be pointing at
 vec3 LIGHT = vec3(0.4, 0.5, 0.6);

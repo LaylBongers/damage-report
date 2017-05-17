@@ -1,22 +1,25 @@
 use std::path::{Path};
-use std::rc::{Rc};
 use std::io::{Read};
 use std::fs::{File};
+use std::sync::{Arc};
 
+use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 use {Target};
 
 #[derive(Copy, Clone)]
 pub struct Vertex {
-    v_position: [f32; 3],
-    v_tex_coords: [f32; 2],
-    v_normal: [f32; 3],
+    pub v_position: [f32; 3],
+    pub v_tex_coords: [f32; 2],
+    pub v_normal: [f32; 3],
 }
+
+impl_vertex!(Vertex, v_position, v_tex_coords, v_normal);
 
 /// A refcounted loaded model.
 #[derive(Clone)]
 pub struct Model {
-    pub inner: Rc<GliumModel>
+    pub vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>
 }
 
 impl Model {
@@ -33,17 +36,16 @@ impl Model {
         let obj_set = obj::parse(obj_file_data).unwrap();
 
         // Create the vertex buffer from the object set
-        //let vertex_buffer = Self::create_vertex_buffer(target, &obj_set, scale);
+        let vertex_buffer = Self::create_vertex_buffer(target, &obj_set, scale);
 
         Model {
-            inner: Rc::new(GliumModel {
-                //vertex_buffer
-            })
+            vertex_buffer
         }
     }
 
-    /*fn create_vertex_buffer(target: &Target, obj_set: &ObjSet, scale: f32
-    ) -> VertexBuffer<Vertex> {
+    fn create_vertex_buffer(
+        target: &Target, obj_set: &ObjSet, scale: f32
+    ) -> Arc<CpuAccessibleBuffer<[Vertex]>> {
         // A temporary vector to keep the vertices in
         let mut vertices = Vec::new();
 
@@ -71,8 +73,11 @@ impl Model {
         }
 
         // Finally, create the vertex buffer
-        VertexBuffer::new(target.context(), &vertices).unwrap()
-    }*/
+        CpuAccessibleBuffer::from_iter(
+            &target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
+            vertices.into_iter()
+        ).unwrap()
+    }
 
     fn convert_vertex(obj_vertex: VTNIndex, object: &Object, scale: f32) -> Vertex {
         let pos = object.vertices[obj_vertex.0];
@@ -85,8 +90,4 @@ impl Model {
             v_normal: [norm.x as f32, norm.y as f32, norm.z as f32],
         }
     }
-}
-
-pub struct GliumModel {
-    //pub vertex_buffer: VertexBuffer<Vertex>,
 }
