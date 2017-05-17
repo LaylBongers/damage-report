@@ -1,5 +1,5 @@
 use cgmath::{Vector2, Zero};
-use cobalt_rendering::{ElementState, VirtualKeyCode};
+use cobalt_rendering::winit::{ElementState, VirtualKeyCode};
 
 #[derive(Default)]
 pub struct FrameInput {

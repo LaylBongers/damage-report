@@ -1,23 +1,18 @@
 use std::io::Cursor;
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
-use glium::backend::{Facade};
-use glium::index::{NoIndices, PrimitiveType};
-use glium::texture::{RawImage2d, SrgbTexture2d};
-use glium::draw_parameters::{DepthTest, BackfaceCullingMode};
-use glium::{Surface, Program, Depth, DrawParameters};
 use image;
 
 use world3d::{Camera, World, Entity};
 use {Frame};
 
 pub struct Renderer {
-    program: Program,
-    texture: SrgbTexture2d,
+    //program: Program,
+    //texture: SrgbTexture2d,
 }
 
 impl Renderer {
-    pub fn init(context: &Facade) -> Self {
+    /*pub fn init(context: &Facade) -> Self {
         // Create the shader program to render with
         let vertex_shader_src = include_str!("./shader_vert.glsl");
         let fragment_shader_src = include_str!("./shader_frag.glsl");
@@ -89,5 +84,5 @@ impl Renderer {
             &self.program, &uniforms,
             &params,
         ).unwrap();
-    }
+    }*/
 }

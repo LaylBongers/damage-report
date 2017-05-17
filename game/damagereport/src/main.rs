@@ -16,7 +16,7 @@ use player::{Player};
 fn main() {
     // Initialize the rendering system
     let mut target = Target::init();
-    let renderer = Renderer::init(target.context());
+    //let renderer = Renderer::init(target.context());
     let mut world = World::default();
 
     // Initialize generic utilities
@@ -52,7 +52,7 @@ fn main() {
 
         // Perform the actual rendering
         let camera = player.create_camera();
-        render_frame(&target, &renderer, &camera, &world);
+        //render_frame(&target, &renderer, &camera, &world);
     }
 }
 
@@ -65,7 +65,7 @@ fn handle_events(
     for event in target.poll_events() {
         match event {
             Event::Closed => should_continue = false,
-            Event::KeyboardInput(key_state, _, Some(key_code)) =>
+            Event::KeyboardInput(key_state, _, Some(key_code), _) =>
                 input_state.handle_key(key_state, key_code),
             Event::MouseMoved(position) => {
                 let center = target.size()/2;
@@ -90,7 +90,7 @@ fn render_frame(target: &Target, renderer: &Renderer, camera: &Camera, world: &W
     let mut frame = target.start_frame();
 
     // Render the world itself
-    renderer.render(&mut frame, camera, world);
+    //renderer.render(&mut frame, camera, world);
 
     // Finish the frame
     frame.finish().unwrap();

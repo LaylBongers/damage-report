@@ -3,7 +3,6 @@ use std::rc::{Rc};
 use std::io::{Read};
 use std::fs::{File};
 
-use glium::{VertexBuffer};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 use {Target};
 
@@ -13,8 +12,6 @@ pub struct Vertex {
     v_tex_coords: [f32; 2],
     v_normal: [f32; 3],
 }
-
-implement_vertex!(Vertex, v_position, v_tex_coords, v_normal);
 
 /// A refcounted loaded model.
 #[derive(Clone)]
@@ -36,16 +33,17 @@ impl Model {
         let obj_set = obj::parse(obj_file_data).unwrap();
 
         // Create the vertex buffer from the object set
-        let vertex_buffer = Self::create_vertex_buffer(target, &obj_set, scale);
+        //let vertex_buffer = Self::create_vertex_buffer(target, &obj_set, scale);
 
         Model {
             inner: Rc::new(GliumModel {
-                vertex_buffer
+                //vertex_buffer
             })
         }
     }
 
-    fn create_vertex_buffer(target: &Target, obj_set: &ObjSet, scale: f32) -> VertexBuffer<Vertex> {
+    /*fn create_vertex_buffer(target: &Target, obj_set: &ObjSet, scale: f32
+    ) -> VertexBuffer<Vertex> {
         // A temporary vector to keep the vertices in
         let mut vertices = Vec::new();
 
@@ -74,7 +72,7 @@ impl Model {
 
         // Finally, create the vertex buffer
         VertexBuffer::new(target.context(), &vertices).unwrap()
-    }
+    }*/
 
     fn convert_vertex(obj_vertex: VTNIndex, object: &Object, scale: f32) -> Vertex {
         let pos = object.vertices[obj_vertex.0];
@@ -90,5 +88,5 @@ impl Model {
 }
 
 pub struct GliumModel {
-    pub vertex_buffer: VertexBuffer<Vertex>,
+    //pub vertex_buffer: VertexBuffer<Vertex>,
 }
