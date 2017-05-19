@@ -6,7 +6,7 @@ use cgmath::{Vector2};
 use vulkano::command_buffer::{self, AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
 use vulkano::device::{DeviceExtensions, Device, Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPass, Subpass, RenderPassDesc, RenderPassAbstract, FramebufferAbstract};
-use vulkano::format::{ClearValue};
+use vulkano::format::{D16Unorm, ClearValue};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform};
 use vulkano::image::{SwapchainImage};
@@ -124,6 +124,14 @@ impl Target {
             ).unwrap()
         };
 
+        let depth_buffer = {
+            use vulkano::image::{Image};
+            use vulkano::image::attachment::{AttachmentImage};
+            AttachmentImage::transient(
+                &device, (&images[0] as &Image<Access=_>).dimensions().width_height(), D16Unorm
+            ).unwrap().access()
+        };
+
         // Set up a render pass TODO: Comment better
         #[allow(dead_code)]
         let render_pass = Arc::new(single_pass_renderpass!(device.clone(),
@@ -133,7 +141,13 @@ impl Target {
                     store: Store,
                     format: images[0].format(),
                     samples: 1,
-                }
+                }/*,
+                depth: {
+                    load: Clear,
+                    store: DontCare,
+                    format: ::vulkano::image::ImageAccess::format(&depth_buffer),
+                    samples: 1,
+                }*/
             },
             pass: {
                 color: [color],
@@ -145,7 +159,8 @@ impl Target {
         let framebuffers = images.iter().map(|image| {
             let attachments = render_pass.desc().start_attachments().color(image.clone());
             let dimensions = [image.dimensions()[0], image.dimensions()[1], 1];
-            Framebuffer::new(render_pass.clone(), dimensions, attachments).unwrap() as Arc<FramebufferAbstract + Send + Sync>
+            Framebuffer::new(render_pass.clone(), dimensions, attachments).unwrap()
+                as Arc<FramebufferAbstract + Send + Sync>
         }).collect::<Vec<_>>();
 
         Target {

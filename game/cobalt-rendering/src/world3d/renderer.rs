@@ -1,7 +1,7 @@
 use std::io::{Cursor};
 use std::sync::{Arc};
 
-use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
+use cgmath::{Rad, PerspectiveFov, Angle, Matrix4, SquareMatrix};
 use image;
 use vulkano::command_buffer::{self, AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
@@ -24,7 +24,6 @@ mod fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_frag.gls
 
 pub struct Renderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
-    //program: Program,
     //texture: SrgbTexture2d,
 }
 
@@ -77,7 +76,6 @@ impl Renderer {
 
         Renderer {
             pipeline,
-            //program,
             //texture,
         }
     }
@@ -90,20 +88,13 @@ impl Renderer {
             near: 0.1,
             far: 500.0,
         };
-        let projection = Matrix4::from(perspective);
+        // Flip the projection upside down, glm expects opengl values, we need vulkan values
+        let projection =
+            Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) * Matrix4::from(perspective);
         let view = camera.create_world_to_view_matrix();
-        let projection_view = projection * view;
 
-        // Set up the drawing parameters
-        /*let params = DrawParameters {
-            depth: Depth {
-                test: DepthTest::IfLess,
-                write: true,
-                .. Default::default()
-            },
-            backface_culling: BackfaceCullingMode::CullClockwise,
-            .. Default::default()
-        };*/
+        // Combine the projection and the view, we don't need them separately
+        let projection_view = projection * view;
 
         // Go over everything in the world
         for entity in &world.entities {
@@ -118,7 +109,7 @@ impl Renderer {
     ) {
         // Create a matrix for this world entity
         let model = Matrix4::from_translation(entity.position);
-        let matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
+        let mut matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
 
         // Send it over to the GPU
         let uniform_buffer = CpuAccessibleBuffer::<vs::ty::UniformsData>::from_data(
