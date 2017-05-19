@@ -90,7 +90,7 @@ fn render_frame(target: &mut Target, renderer: &Renderer, camera: &Camera, world
     let mut frame = target.start_frame();
 
     // Render the world itself
-    //renderer.render(&mut frame, camera, world);
+    renderer.render(target, &mut frame, camera, world);
 
     // Finish the frame
     target.finish_frame(frame);

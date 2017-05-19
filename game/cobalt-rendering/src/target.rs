@@ -1,5 +1,6 @@
 use std::sync::{Arc};
 use std::time::{Duration};
+use std::cell::{Cell};
 
 use cgmath::{Vector2};
 use vulkano::command_buffer::{self, AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
@@ -50,6 +51,7 @@ impl Target {
         // TODO: Allow user to select in some way, perhaps through config
         let physical = PhysicalDevice::enumerate(&instance)
             .next().unwrap();
+        // TODO: Move to slog
         println!("Using device: {} (type: {:?})", physical.name(), physical.ty());
 
         // Set up the window we want to render to, along with an EventsLoop we can use to listen
@@ -201,7 +203,7 @@ impl Target {
         // Get the image for this frame
         let (image_num, future) = self.swapchain.acquire_next_image(Duration::new(1, 0)).unwrap();
 
-        let clear_values = vec!(ClearValue::Float([0.0, 0.0, 1.0, 1.0]));
+        let clear_values = vec!(ClearValue::Float([0.0, 0.0, 1.0, 1.0]), ClearValue::Depth(1.0));
 
         // Create the command buffer for this frame, this will hold all the draw calls and we'll
         //  submit them all at once
@@ -214,19 +216,16 @@ impl Target {
                 clear_values
             ).unwrap();
 
-        //.draw(pipeline.clone(), DynamicState::none(), vertex_buffer.clone(), (), ())
-        //.unwrap()
-
         Frame {
-            command_buffer_builder,
+            command_buffer_builder: Some(command_buffer_builder),
             image_num,
             future: Box::new(future),
         }
     }
 
-    pub fn finish_frame(&mut self, frame: Frame) {
+    pub fn finish_frame(&mut self, mut frame: Frame) {
         // End the render pass and finish the command buffer
-        let command_buffer = frame.command_buffer_builder
+        let command_buffer = frame.command_buffer_builder.take().unwrap()
             .end_render_pass().unwrap()
             .build().unwrap();
 
@@ -256,6 +255,10 @@ impl Target {
         &self.images
     }
 
+    pub fn render_pass(&self) -> &Arc<RenderPassAbstract + Send + Sync> {
+        &self.render_pass
+    }
+
     pub fn size(&self) -> Vector2<u32> {
         self.size
     }
@@ -269,7 +272,7 @@ pub enum Event {
 }
 
 pub struct Frame {
-    command_buffer_builder: AutoCommandBufferBuilder,
+    pub command_buffer_builder: Option<AutoCommandBufferBuilder>,
     image_num: usize,
     future: Box<GpuFuture>,
 }

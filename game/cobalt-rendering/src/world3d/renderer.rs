@@ -3,7 +3,8 @@ use std::sync::{Arc};
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
 use image;
-use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams};
+use vulkano::command_buffer::{self, AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
+use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
 use vulkano::pipeline::blend::{Blend};
 use vulkano::pipeline::depth_stencil::{DepthStencil};
 use vulkano::pipeline::input_assembly::{InputAssembly};
@@ -11,6 +12,7 @@ use vulkano::pipeline::multisample::{Multisample};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
 use vulkano::framebuffer::{Framebuffer, Subpass};
+use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use world3d::{Camera, World, Entity};
 use {Target, Frame};
@@ -21,6 +23,7 @@ mod vs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_vert.gls
 mod fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_frag.glsl")} }
 
 pub struct Renderer {
+    pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
     //program: Program,
     //texture: SrgbTexture2d,
 }
@@ -32,7 +35,7 @@ impl Renderer {
         let fs = fs::Shader::load(target.device()).unwrap();
 
         // Set up a pipeline TODO: Comment better
-        /*let pipeline_params = GraphicsPipelineParams {
+        let pipeline_params = GraphicsPipelineParams {
             vertex_input: SingleBufferDefinition::new(),
             vertex_shader: vs.main_entry_point(),
             input_assembly: InputAssembly::triangle_list(),
@@ -56,10 +59,10 @@ impl Renderer {
             fragment_shader: fs.main_entry_point(),
             depth_stencil: DepthStencil::disabled(),
             blend: Blend::pass_through(),
-            render_pass: Subpass::from(render_pass.clone(), 0).unwrap(),
+            render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
         };
         let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::world3d::Vertex>, _, _>> =
-            Arc::new(GraphicsPipeline::new(target.device(), pipeline_params).unwrap());*/
+            Arc::new(GraphicsPipeline::new(target.device(), pipeline_params).unwrap());
 
         // Create the texture to render
         /*let image = image::load(
@@ -73,16 +76,17 @@ impl Renderer {
         let texture = SrgbTexture2d::new(context, image).unwrap();*/
 
         Renderer {
+            pipeline,
             //program,
             //texture,
         }
     }
 
-    /*pub fn render(&self, frame: &mut Frame, camera: &Camera, world: &World) {
+    pub fn render(&self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World) {
         // Create the uniforms
         let perspective = PerspectiveFov {
             fovy: Rad::full_turn() * 0.25,
-            aspect: frame.size.x as f32 / frame.size.y as f32,
+            aspect: target.size().x as f32 / target.size().y as f32,
             near: 0.1,
             far: 500.0,
         };
@@ -91,7 +95,7 @@ impl Renderer {
         let projection_view = projection * view;
 
         // Set up the drawing parameters
-        let params = DrawParameters {
+        /*let params = DrawParameters {
             depth: Depth {
                 test: DepthTest::IfLess,
                 write: true,
@@ -99,29 +103,40 @@ impl Renderer {
             },
             backface_culling: BackfaceCullingMode::CullClockwise,
             .. Default::default()
-        };
+        };*/
 
         // Go over everything in the world
         for entity in &world.entities {
-            self.render_entity(entity, frame, &params, &projection_view);
+            self.render_entity(entity, target, frame, &projection_view);
         }
     }
 
     fn render_entity(
         &self,
-        entity: &Entity, frame: &mut Frame, params: &DrawParameters,
+        entity: &Entity, target: &mut Target, frame: &mut Frame,
         projection_view: &Matrix4<f32>
     ) {
         // Create a matrix for this world entity
         let model = Matrix4::from_translation(entity.position);
         let matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
 
+        // Send it over to the GPU
+        let uniform_buffer = CpuAccessibleBuffer::<vs::ty::UniformsData>::from_data(
+            target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
+            vs::ty::UniformsData {
+                matrix: matrix_raw,
+            }).unwrap();
+        let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
+            uniforms: uniform_buffer.clone()
+        }));
+
         // Perform the actual draw
-        let uniforms = uniform! { u_matrix: matrix_raw, u_texture: &self.texture };
-        frame.inner.draw(
-            &entity.model.inner.vertex_buffer, &NoIndices(PrimitiveType::TrianglesList),
-            &self.program, &uniforms,
-            &params,
-        ).unwrap();
-    }*/
+        frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
+            .draw(
+                self.pipeline.clone(), DynamicState::none(),
+                vec!(entity.model.vertex_buffer.clone()), set, ()
+            )
+            .unwrap()
+        );
+    }
 }
