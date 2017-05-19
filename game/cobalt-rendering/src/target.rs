@@ -112,9 +112,9 @@ impl Target {
             //  the first available option
             let alpha = caps.supported_composite_alpha.iter().next().unwrap();
 
-            // And finally, chose the internal format that images will have, we're picking the
-            //  first available format again
-            let format = caps.supported_formats[0].0;
+            // And finally, chose the internal format that images will have
+            // The swap chain needs to be in SRGB, and this format is guaranteed supported
+            let format = ::vulkano::format::B8G8R8A8Srgb;
 
             // Finally, actually create the swap chain
             Swapchain::new(
@@ -141,23 +141,25 @@ impl Target {
                     store: Store,
                     format: images[0].format(),
                     samples: 1,
-                }/*,
+                },
                 depth: {
                     load: Clear,
                     store: DontCare,
                     format: ::vulkano::image::ImageAccess::format(&depth_buffer),
                     samples: 1,
-                }*/
+                }
             },
             pass: {
                 color: [color],
-                depth_stencil: {}
+                depth_stencil: {depth}
             }
         ).unwrap());
 
         // Set up the frame buffers matching the render pass TODO: Comment better
         let framebuffers = images.iter().map(|image| {
-            let attachments = render_pass.desc().start_attachments().color(image.clone());
+            let attachments = render_pass.desc().start_attachments()
+                .color(image.clone())
+                .depth(depth_buffer.clone());
             let dimensions = [image.dimensions()[0], image.dimensions()[1], 1];
             Framebuffer::new(render_pass.clone(), dimensions, attachments).unwrap()
                 as Arc<FramebufferAbstract + Send + Sync>
@@ -247,7 +249,9 @@ impl Target {
         // TODO: ???
         let future = frame.future
             .then_execute(self.graphics_queue.clone(), command_buffer).unwrap()
-            .then_swapchain_present(self.graphics_queue.clone(), self.swapchain.clone(), frame.image_num)
+            .then_swapchain_present(
+                self.graphics_queue.clone(), self.swapchain.clone(), frame.image_num
+            )
             .then_signal_fence_and_flush().unwrap();
         self.submissions.push(Box::new(future));
     }

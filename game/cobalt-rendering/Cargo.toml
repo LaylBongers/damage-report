@@ -6,10 +6,10 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.14.1"
 image = "0.13.0"
-vulkano = {git = "https://github.com/tomaka/vulkano.git"}
-vulkano-win = {git = "https://github.com/tomaka/vulkano.git"}
+vulkano = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
+vulkano-win = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
 wavefront_obj = "5.0.0"
 winit = "0.6.4"
 
 [build-dependencies]
-vulkano-shaders = {git = "https://github.com/tomaka/vulkano.git"}
+vulkano-shaders = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}

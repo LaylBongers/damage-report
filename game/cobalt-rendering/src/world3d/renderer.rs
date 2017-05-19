@@ -56,7 +56,7 @@ impl Renderer {
             raster: Default::default(),
             multisample: Multisample::disabled(),
             fragment_shader: fs.main_entry_point(),
-            depth_stencil: DepthStencil::disabled(),
+            depth_stencil: DepthStencil::simple_depth_test(),
             blend: Blend::pass_through(),
             render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
         };
