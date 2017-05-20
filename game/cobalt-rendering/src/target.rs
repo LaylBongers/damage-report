@@ -1,12 +1,11 @@
 use std::sync::{Arc};
 use std::time::{Duration};
-use std::cell::{Cell};
 
 use cgmath::{Vector2};
-use vulkano::command_buffer::{self, AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
+use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
 use vulkano::device::{DeviceExtensions, Device, Queue};
-use vulkano::framebuffer::{Framebuffer, RenderPass, Subpass, RenderPassDesc, RenderPassAbstract, FramebufferAbstract};
-use vulkano::format::{D16Unorm, ClearValue};
+use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
+use vulkano::format::{D16Unorm};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform};
 use vulkano::image::{SwapchainImage};
@@ -220,30 +219,23 @@ impl Target {
         // Get the image for this frame
         let (image_num, future) = self.swapchain.acquire_next_image(Duration::new(1, 0)).unwrap();
 
-        let clear_values = vec!(ClearValue::Float([0.0, 0.0, 1.0, 1.0]), ClearValue::Depth(1.0));
-
         // Create the command buffer for this frame, this will hold all the draw calls and we'll
         //  submit them all at once
         let command_buffer_builder = AutoCommandBufferBuilder::new(
                 self.device.clone(), self.graphics_queue.family()
-            ).unwrap()
-            // We immediately start with a render pass
-            .begin_render_pass(
-                self.framebuffers[image_num].clone(), false,
-                clear_values
             ).unwrap();
 
         Frame {
             command_buffer_builder: Some(command_buffer_builder),
+            framebuffer: self.framebuffers[image_num].clone(),
             image_num,
             future: Box::new(future),
         }
     }
 
     pub fn finish_frame(&mut self, mut frame: Frame) {
-        // End the render pass and finish the command buffer
+        // Finish the command buffer
         let command_buffer = frame.command_buffer_builder.take().unwrap()
-            .end_render_pass().unwrap()
             .build().unwrap();
 
         // TODO: ???
@@ -292,6 +284,7 @@ pub enum Event {
 
 pub struct Frame {
     pub command_buffer_builder: Option<AutoCommandBufferBuilder>,
+    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     image_num: usize,
     future: Box<GpuFuture>,
 }

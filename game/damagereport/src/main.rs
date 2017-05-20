@@ -16,7 +16,7 @@ use player::{Player};
 fn main() {
     // Initialize the rendering system
     let mut target = Target::init();
-    let renderer = Renderer::init(&target);
+    let mut renderer = Renderer::init(&target);
     let mut world = World::default();
 
     // Initialize generic utilities
@@ -52,7 +52,7 @@ fn main() {
 
         // Perform the actual rendering
         let camera = player.create_camera();
-        render_frame(&mut target, &renderer, &camera, &world);
+        render_frame(&mut target, &mut renderer, &camera, &world);
     }
 }
 
@@ -85,7 +85,7 @@ fn handle_events(
     should_continue
 }
 
-fn render_frame(target: &mut Target, renderer: &Renderer, camera: &Camera, world: &World) {
+fn render_frame(target: &mut Target, renderer: &mut Renderer, camera: &Camera, world: &World) {
     // Start the frame
     let mut frame = target.start_frame();
 

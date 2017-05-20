@@ -1,9 +1,9 @@
-use std::io::{Cursor};
 use std::sync::{Arc};
 
-use cgmath::{Rad, PerspectiveFov, Angle, Matrix4, SquareMatrix};
+use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
 use image;
-use vulkano::command_buffer::{self, AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
+use vulkano::format::{self, ClearValue};
+use vulkano::command_buffer::{CommandBufferBuilder, DynamicState};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
 use vulkano::pipeline::blend::{Blend};
 use vulkano::pipeline::depth_stencil::{DepthStencil};
@@ -11,8 +11,11 @@ use vulkano::pipeline::input_assembly::{InputAssembly};
 use vulkano::pipeline::multisample::{Multisample};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
-use vulkano::framebuffer::{Framebuffer, Subpass};
+use vulkano::framebuffer::{Subpass};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
+use vulkano::image::{Dimensions};
+use vulkano::image::immutable::{ImmutableImage};
 
 use world3d::{Camera, World, Entity};
 use {Target, Frame};
@@ -24,7 +27,10 @@ mod fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_frag.gls
 
 pub struct Renderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
-    //texture: SrgbTexture2d,
+    test_texture_buffer: Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
+    test_texture: Arc<ImmutableImage<format::R8G8B8A8Unorm>>,
+    test_sampler: Arc<Sampler>,
+    texture_uploaded: bool,
 }
 
 impl Renderer {
@@ -63,24 +69,73 @@ impl Renderer {
         let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::world3d::Vertex>, _, _>> =
             Arc::new(GraphicsPipeline::new(target.device(), pipeline_params).unwrap());
 
-        // Create the texture to render
-        /*let image = image::load(
-            Cursor::new(&include_bytes!("./texture.png")[..]),
-            image::PNG
-        ).unwrap().to_rgba();
-        let image_dimensions = image.dimensions();
-        let image = RawImage2d::from_raw_rgba_reversed(
-            image.into_raw(), image_dimensions
-        );
-        let texture = SrgbTexture2d::new(context, image).unwrap();*/
+        // Load in the test texture
+        let test_texture_buffer = {
+            let image = image::load_from_memory_with_format(
+                include_bytes!("./texture.png"),
+                image::ImageFormat::PNG
+            ).unwrap().to_rgba();
+            let image_data = image.into_raw().clone();
+
+            let image_data_chunks = image_data.chunks(4).map(|c| [c[0], c[1], c[2], c[3]]);
+
+            // TODO: staging buffer instead
+            CpuAccessibleBuffer::<[[u8; 4]]>::from_iter(
+                target.device(), &BufferUsage::all(),
+                Some(target.graphics_queue().family()), image_data_chunks
+            ).unwrap()
+        };
+
+        // Create the texture and sampler for the image, the texture data will later be copied in
+        //  a command buffer
+        let test_texture = ImmutableImage::new(
+            target.device(), Dimensions::Dim2d { width: 256, height: 256 },
+            format::R8G8B8A8Unorm, Some(target.graphics_queue().family())
+        ).unwrap();
+        let test_sampler = Sampler::new(
+            target.device(),
+            Filter::Linear,
+            Filter::Linear,
+            MipmapMode::Nearest,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            0.0, 1.0, 0.0, 0.0
+        ).unwrap();
 
         Renderer {
             pipeline,
-            //texture,
+            test_texture_buffer,
+            test_texture,
+            test_sampler,
+            texture_uploaded: false,
         }
     }
 
-    pub fn render(&self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World) {
+    pub fn render(
+        &mut self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World
+    ) {
+        // Upload the texture if we need to, we need to do this before the start of the render pass
+        if !self.texture_uploaded {
+            frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
+                .copy_buffer_to_image(self.test_texture_buffer.clone(), self.test_texture.clone())
+                .unwrap()
+            );
+            self.texture_uploaded = true;
+        }
+
+        // Then, start the render pass
+        let clear_values = vec!(
+            ClearValue::Float([0.005, 0.005, 0.006, 1.0]),
+            ClearValue::Depth(1.0)
+        );
+        frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
+            .begin_render_pass(
+                frame.framebuffer.clone(), false,
+                clear_values
+            ).unwrap()
+        );
+
         // Create the uniforms
         let perspective = PerspectiveFov {
             fovy: Rad::full_turn() * 0.25,
@@ -100,6 +155,11 @@ impl Renderer {
         for entity in &world.entities {
             self.render_entity(entity, target, frame, &projection_view);
         }
+
+        // End the render pass
+        frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
+            .end_render_pass().unwrap()
+        );
     }
 
     fn render_entity(
@@ -109,16 +169,17 @@ impl Renderer {
     ) {
         // Create a matrix for this world entity
         let model = Matrix4::from_translation(entity.position);
-        let mut matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
+        let matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
 
-        // Send it over to the GPU
+        // Send the uniforms over to the GPU
         let uniform_buffer = CpuAccessibleBuffer::<vs::ty::UniformsData>::from_data(
             target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
             vs::ty::UniformsData {
                 matrix: matrix_raw,
             }).unwrap();
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
-            uniforms: uniform_buffer.clone()
+            u_data: uniform_buffer.clone(),
+            u_texture: (self.test_texture.clone(), self.test_sampler.clone())
         }));
 
         // Perform the actual draw
