@@ -28,7 +28,7 @@ mod fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_frag.gls
 pub struct Renderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
     test_texture_buffer: Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
-    test_texture: Arc<ImmutableImage<format::R8G8B8A8Unorm>>,
+    test_texture: Arc<ImmutableImage<format::R8G8B8A8Srgb>>,
     test_sampler: Arc<Sampler>,
     texture_uploaded: bool,
 }
@@ -90,7 +90,7 @@ impl Renderer {
         //  a command buffer
         let test_texture = ImmutableImage::new(
             target.device(), Dimensions::Dim2d { width: 256, height: 256 },
-            format::R8G8B8A8Unorm, Some(target.graphics_queue().family())
+            format::R8G8B8A8Srgb, Some(target.graphics_queue().family())
         ).unwrap();
         let test_sampler = Sampler::new(
             target.device(),
