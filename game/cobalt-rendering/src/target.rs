@@ -2,6 +2,8 @@ use std::sync::{Arc};
 use std::time::{Duration};
 
 use cgmath::{Vector2};
+use vulkano::format;
+use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
 use vulkano::device::{DeviceExtensions, Device, Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
@@ -9,6 +11,7 @@ use vulkano::format::{D16Unorm};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform};
 use vulkano::image::{SwapchainImage};
+use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sync::{GpuFuture};
 use vulkano_win::{self, VkSurfaceBuild, Window};
 use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, ScanCode, VirtualKeyCode, ModifiersState};
@@ -28,6 +31,12 @@ pub struct Target {
 
     // Submissions from previous frames
     submissions: Vec<Box<GpuFuture>>,
+
+    // Queued up things we need to submit as part of command buffers
+    queued_texture_copies: Vec<(
+        Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
+        Arc<ImmutableImage<format::R8G8B8A8Srgb>>
+    )>,
 
     // Generic data
     size: Vector2<u32>,
@@ -177,6 +186,8 @@ impl Target {
 
             submissions: Vec::new(),
 
+            queued_texture_copies: Vec::new(),
+
             size,
             focused: true,
         }
@@ -221,9 +232,16 @@ impl Target {
 
         // Create the command buffer for this frame, this will hold all the draw calls and we'll
         //  submit them all at once
-        let command_buffer_builder = AutoCommandBufferBuilder::new(
-                self.device.clone(), self.graphics_queue.family()
-            ).unwrap();
+        let mut command_buffer_builder = AutoCommandBufferBuilder::new(
+            self.device.clone(), self.graphics_queue.family()
+        ).unwrap();
+
+        // Add any textures we need to upload to the command buffer
+        while let Some(val) = self.queued_texture_copies.pop() {
+            command_buffer_builder = command_buffer_builder
+                .copy_buffer_to_image(val.0, val.1)
+                .unwrap();
+        }
 
         Frame {
             command_buffer_builder: Some(command_buffer_builder),
@@ -252,6 +270,14 @@ impl Target {
         self.window.window()
             .set_cursor_position(position.x as i32, position.y as i32)
             .unwrap();
+    }
+
+    pub fn queue_texture_copy(
+        &mut self,
+        buffer: Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
+        texture: Arc<ImmutableImage<format::R8G8B8A8Srgb>>,
+    ) {
+        self.queued_texture_copies.push((buffer, texture));
     }
 
     pub fn device(&self) -> &Arc<Device> {

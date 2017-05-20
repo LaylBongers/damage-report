@@ -27,10 +27,6 @@ mod fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_frag.gls
 
 pub struct Renderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
-    test_texture_buffer: Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
-    test_texture: Arc<ImmutableImage<format::R8G8B8A8Srgb>>,
-    test_sampler: Arc<Sampler>,
-    texture_uploaded: bool,
 }
 
 impl Renderer {
@@ -69,61 +65,14 @@ impl Renderer {
         let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::world3d::Vertex>, _, _>> =
             Arc::new(GraphicsPipeline::new(target.device(), pipeline_params).unwrap());
 
-        // Load in the test texture
-        let test_texture_buffer = {
-            let image = image::load_from_memory_with_format(
-                include_bytes!("./texture.png"),
-                image::ImageFormat::PNG
-            ).unwrap().to_rgba();
-            let image_data = image.into_raw().clone();
-
-            let image_data_chunks = image_data.chunks(4).map(|c| [c[0], c[1], c[2], c[3]]);
-
-            // TODO: staging buffer instead
-            CpuAccessibleBuffer::<[[u8; 4]]>::from_iter(
-                target.device(), &BufferUsage::all(),
-                Some(target.graphics_queue().family()), image_data_chunks
-            ).unwrap()
-        };
-
-        // Create the texture and sampler for the image, the texture data will later be copied in
-        //  a command buffer
-        let test_texture = ImmutableImage::new(
-            target.device(), Dimensions::Dim2d { width: 256, height: 256 },
-            format::R8G8B8A8Srgb, Some(target.graphics_queue().family())
-        ).unwrap();
-        let test_sampler = Sampler::new(
-            target.device(),
-            Filter::Linear,
-            Filter::Linear,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
-        ).unwrap();
-
         Renderer {
             pipeline,
-            test_texture_buffer,
-            test_texture,
-            test_sampler,
-            texture_uploaded: false,
         }
     }
 
     pub fn render(
         &mut self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World
     ) {
-        // Upload the texture if we need to, we need to do this before the start of the render pass
-        if !self.texture_uploaded {
-            frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
-                .copy_buffer_to_image(self.test_texture_buffer.clone(), self.test_texture.clone())
-                .unwrap()
-            );
-            self.texture_uploaded = true;
-        }
-
         // Then, start the render pass
         let clear_values = vec!(
             ClearValue::Float([0.005, 0.005, 0.006, 1.0]),
@@ -152,7 +101,7 @@ impl Renderer {
         let projection_view = projection * view;
 
         // Go over everything in the world
-        for entity in &world.entities {
+        for entity in world.entities() {
             self.render_entity(entity, target, frame, &projection_view);
         }
 
@@ -176,10 +125,11 @@ impl Renderer {
             target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
             vs::ty::UniformsData {
                 matrix: matrix_raw,
-            }).unwrap();
+            }
+        ).unwrap();
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
-            u_data: uniform_buffer.clone(),
-            u_texture: (self.test_texture.clone(), self.test_sampler.clone())
+            u_data: uniform_buffer,
+            u_texture: entity.material.uniform(),
         }));
 
         // Perform the actual draw

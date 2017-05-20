@@ -2,16 +2,17 @@ extern crate cgmath;
 extern crate cobalt_rendering;
 extern crate cobalt_utils;
 
+mod game_world;
 mod input;
 mod player;
 
-use cgmath::{Vector2, Vector3};
-use cobalt_rendering::world3d::{Renderer, Camera, World, Model};
+use cgmath::{Vector2};
+use cobalt_rendering::world3d::{Renderer, Camera, World};
 use cobalt_rendering::{Target, Event};
 use cobalt_utils::{LoopTimer};
 
+use game_world::{GameWorld};
 use input::{InputState, FrameInput};
-use player::{Player};
 
 fn main() {
     // Initialize the rendering system
@@ -21,20 +22,10 @@ fn main() {
 
     // Initialize generic utilities
     let mut timer = LoopTimer::start();
-
-    // Game state
     let mut input_state = InputState::default();
-    let mut player = Player::new();
 
-    // Create the floor
-    let floor_model = Model::load(&target, "./assets/floor.obj", 0.1);
-    world.add(Vector3::new(0.0, 0.0, 0.0), floor_model);
-
-    // Create the 3 test devices
-    let device_model = Model::load(&target, "./assets/device.obj", 0.1);
-    world.add(Vector3::new(-2.0, 0.0, -4.0), device_model.clone());
-    world.add(Vector3::new( 0.0, 0.0, -4.0), device_model.clone());
-    world.add(Vector3::new( 2.0, 0.0, -4.0), device_model.clone());
+    // Initialize the gamae world
+    let mut game_world = GameWorld::init(&mut target, &mut world);
 
     // The main game loop
     loop {
@@ -47,11 +38,10 @@ fn main() {
             break
         }
 
-        // Update the player based on the input we got so far
-        player.update(&input_state, &frame_input, time);
+        game_world.update(time, &mut world, &input_state, &frame_input);
 
         // Perform the actual rendering
-        let camera = player.create_camera();
+        let camera = game_world.player.create_camera();
         render_frame(&mut target, &mut renderer, &camera, &world);
     }
 }
