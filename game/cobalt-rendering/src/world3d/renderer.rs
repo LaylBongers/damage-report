@@ -1,8 +1,7 @@
 use std::sync::{Arc};
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
-use image;
-use vulkano::format::{self, ClearValue};
+use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{CommandBufferBuilder, DynamicState};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
 use vulkano::pipeline::blend::{Blend};
@@ -13,9 +12,6 @@ use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
 use vulkano::framebuffer::{Subpass};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
-use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
-use vulkano::image::{Dimensions};
-use vulkano::image::immutable::{ImmutableImage};
 
 use world3d::{Camera, World, Entity};
 use {Target, Frame};

@@ -1,7 +1,5 @@
 use std::sync::{Arc};
 use std::path::{Path};
-use std::io::{Read};
-use std::fs::{File};
 
 use image::{self, GenericImage};
 use vulkano::format;

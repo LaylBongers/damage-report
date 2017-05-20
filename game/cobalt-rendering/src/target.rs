@@ -3,7 +3,7 @@ use std::time::{Duration};
 
 use cgmath::{Vector2};
 use vulkano::format;
-use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::buffer::{CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
 use vulkano::device::{DeviceExtensions, Device, Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};

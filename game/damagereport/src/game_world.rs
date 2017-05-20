@@ -25,9 +25,20 @@ impl GameWorld {
 
         // Create the 3 test devices
         let device_model = Model::load(target, "./assets/device.obj", 0.1);
-        let d1 = Device::new(world, Vector3::new(-2.0, 0.0, -4.0), &device_model, &floor_material);
-        let d2 = Device::new(world, Vector3::new( 0.0, 0.0, -4.0), &device_model, &floor_material);
-        let d3 = Device::new(world, Vector3::new( 2.0, 0.0, -4.0), &device_model, &floor_material);
+        let material_working = Material::load(target, "./assets/texture_broken.png");
+        let material_broken = Material::load(target, "./assets/texture_working.png");
+        let d1 = Device::new(
+            world, Vector3::new(-2.0, 0.0, -4.0), &device_model,
+            &material_working, &material_broken,
+        );
+        let d2 = Device::new(
+            world, Vector3::new( 0.0, 0.0, -4.0), &device_model,
+            &material_working, &material_broken,
+        );
+        let d3 = Device::new(
+            world, Vector3::new( 2.0, 0.0, -4.0), &device_model,
+            &material_working, &material_broken,
+        );
         let devices = vec!(d1, d2, d3);
 
         GameWorld {
@@ -53,22 +64,27 @@ struct Device {
     fixedness: f32,
     status: bool,
     entity: EntityId,
+    material_working: Material,
+    material_broken: Material,
 }
 
 impl Device {
     fn new(
-        world: &mut World, position: Vector3<f32>, model: &Model, material: &Material
+        world: &mut World, position: Vector3<f32>, model: &Model,
+        material_working: &Material, material_broken: &Material
     ) -> Self {
         let entity = world.add(Entity {
             position,
             model: model.clone(),
-            material: material.clone(),
+            material: material_working.clone(),
         });
 
         Device {
             fixedness: 1.0,
             status: true,
             entity,
+            material_working: material_working.clone(),
+            material_broken: material_broken.clone(),
         }
     }
 
@@ -83,13 +99,13 @@ impl Device {
             self.status = false;
 
             let entity = world.entity_mut(self.entity);
-            //TODO: entity.material = self.material_broken;
+            entity.material = self.material_broken.clone();
         }
         if self.fixedness > 1.0 && !self.status {
             self.status = true;
 
             let entity = world.entity_mut(self.entity);
-            //TODO: entity.material = self.material_working;
+            entity.material = self.material_working.clone();
         }
     }
 }
