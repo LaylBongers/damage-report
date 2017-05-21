@@ -130,11 +130,11 @@ impl Renderer {
 
         // Perform the actual draw
         frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
-            .draw(
+            .draw_indexed(
                 self.pipeline.clone(), DynamicState::none(),
-                vec!(entity.model.vertex_buffer.clone()), set, ()
-            )
-            .unwrap()
+                vec!(entity.model.vertex_buffer.clone()), entity.model.index_buffer.clone(),
+                set, ()
+            ).unwrap()
         );
     }
 }

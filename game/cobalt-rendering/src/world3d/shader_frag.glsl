@@ -3,7 +3,6 @@
 
 layout(set = 0, binding = 1) uniform sampler2D u_texture;
 
-
 layout(location = 0) in vec2 f_tex_coords;
 layout(location = 1) in vec3 f_normal;
 

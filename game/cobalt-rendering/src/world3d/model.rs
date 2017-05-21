@@ -7,7 +7,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 use {Target};
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct Vertex {
     pub v_position: [f32; 3],
     pub v_tex_coords: [f32; 2],
@@ -19,7 +19,8 @@ impl_vertex!(Vertex, v_position, v_tex_coords, v_normal);
 /// A refcounted loaded model.
 #[derive(Clone)]
 pub struct Model {
-    pub vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>
+    pub vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>,
+    pub index_buffer: Arc<CpuAccessibleBuffer<[u16]>>
 }
 
 impl Model {
@@ -36,18 +37,30 @@ impl Model {
         let obj_set = obj::parse(obj_file_data).unwrap();
 
         // Create the vertex buffer from the object set
-        let vertex_buffer = Self::create_vertex_buffer(target, &obj_set, scale);
+        let (vertices, indices) = Self::obj_set_to_vertices(&obj_set, scale);
+        println!("Loaded Model, Vertices: {} Indices: {}", vertices.len(), indices.len());
+
+        // Finally, create the buffers
+        let vertex_buffer = CpuAccessibleBuffer::from_iter(
+            &target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
+            vertices.into_iter()
+        ).unwrap();
+        let index_buffer = CpuAccessibleBuffer::from_iter(
+            &target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
+            indices.into_iter()
+        ).unwrap();
 
         Model {
-            vertex_buffer
+            vertex_buffer,
+            index_buffer,
         }
     }
 
-    fn create_vertex_buffer(
-        target: &Target, obj_set: &ObjSet, scale: f32
-    ) -> Arc<CpuAccessibleBuffer<[Vertex]>> {
+    fn obj_set_to_vertices(obj_set: &ObjSet, scale: f32) -> (Vec<Vertex>, Vec<u16>) {
         // A temporary vector to keep the vertices in
         let mut vertices = Vec::new();
+        let mut indices = Vec::new();
+        let mut i = 0;
 
         // Go over all objects in the file
         for object in &obj_set.objects {
@@ -64,19 +77,40 @@ impl Model {
                     // Make sure we got a triangle, it's the only shape we want to process
                     if let Primitive::Triangle(v1, v2, v3) = shape.primitive {
                         // Add the triangle's vertices to the vertices vector
-                        vertices.push(Self::convert_vertex(v1, &object, scale));
-                        vertices.push(Self::convert_vertex(v2, &object, scale));
-                        vertices.push(Self::convert_vertex(v3, &object, scale));
+                        Self::find_or_add_vertex(
+                            Self::convert_vertex(v1, &object, scale),
+                            &mut vertices, &mut indices, &mut i
+                        );
+                        Self::find_or_add_vertex(
+                            Self::convert_vertex(v2, &object, scale),
+                            &mut vertices, &mut indices, &mut i
+                        );
+                        Self::find_or_add_vertex(
+                            Self::convert_vertex(v3, &object, scale),
+                            &mut vertices, &mut indices, &mut i
+                        );
                     }
                 }
             }
         }
 
-        // Finally, create the vertex buffer
-        CpuAccessibleBuffer::from_iter(
-            &target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
-            vertices.into_iter()
-        ).unwrap()
+        (vertices, indices)
+    }
+
+    fn find_or_add_vertex(
+        vertex: Vertex, vertices: &mut Vec<Vertex>, indices: &mut Vec<u16>, i: &mut u16
+    ) {
+        // Check if the vector contains any matching vertex
+        if let Some(value) = vertices.iter().enumerate().find(|v| *v.1 == vertex) {
+            // We found a match, go with the existing one
+            indices.push(value.0 as u16);
+            return;
+        }
+
+        // We didn't find a match, create a new one
+        vertices.push(vertex);
+        indices.push(*i);
+        *i += 1;
     }
 
     fn convert_vertex(obj_vertex: VTNIndex, object: &Object, scale: f32) -> Vertex {
