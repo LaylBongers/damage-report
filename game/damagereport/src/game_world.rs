@@ -1,4 +1,5 @@
 use cgmath::{Vector3};
+use slog::{Logger};
 use cobalt_rendering::world3d::{World, Model, Entity, EntityId, Material};
 use cobalt_rendering::{Target};
 
@@ -11,12 +12,12 @@ pub struct GameWorld {
 }
 
 impl GameWorld {
-    pub fn init(target: &mut Target, world: &mut World) -> Self {
+    pub fn init(log: &Logger, target: &mut Target, world: &mut World) -> Self {
         let player = Player::new();
 
         // Create the floor
-        let floor_model = Model::load(target, "./assets/floor.obj", 0.1);
-        let floor_material = Material::load(target, "./assets/texture.png");
+        let floor_model = Model::load(log, target, "./assets/floor.obj", 0.1);
+        let floor_material = Material::load(log, target, "./assets/texture.png");
         world.add(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
             model: floor_model,
@@ -24,9 +25,9 @@ impl GameWorld {
         });
 
         // Create the 3 test devices
-        let device_model = Model::load(target, "./assets/device.obj", 0.1);
-        let material_working = Material::load(target, "./assets/texture_broken.png");
-        let material_broken = Material::load(target, "./assets/texture_working.png");
+        let device_model = Model::load(log, target, "./assets/device.obj", 0.1);
+        let material_working = Material::load(log, target, "./assets/texture_broken.png");
+        let material_broken = Material::load(log, target, "./assets/texture_working.png");
         let d1 = Device::new(
             world, Vector3::new(-2.0, 0.0, -4.0), &device_model,
             &material_working, &material_broken,

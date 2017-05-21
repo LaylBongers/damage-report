@@ -2,6 +2,7 @@ use std::sync::{Arc};
 use std::path::{Path};
 
 use image::{self, GenericImage};
+use slog::{Logger};
 use vulkano::format;
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::image::{Dimensions};
@@ -17,9 +18,9 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn load<P: AsRef<Path>>(target: &mut Target, path: P) -> Self {
+    pub fn load<P: AsRef<Path>>(log: &Logger, target: &mut Target, path: P) -> Self {
         // Load in the image file
-        let img = image::open(path).unwrap();
+        let img = image::open(path.as_ref()).unwrap();
         let img_dimensions = img.dimensions();
 
         // Load the image data into a buffer
@@ -54,6 +55,11 @@ impl Material {
 
         // Make sure the buffer's actually put into the texture
         target.queue_texture_copy(buffer, texture.clone());
+
+        info!(
+            log, "Loaded texture at \"{}\", size: ({}, {})",
+            path.as_ref().display(), img_dimensions.0, img_dimensions.1
+        );
 
         Material {
             texture,

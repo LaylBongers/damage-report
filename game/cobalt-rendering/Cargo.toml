@@ -6,6 +6,7 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.14.1"
 image = "0.13.0"
+slog = "2.0.5"
 vulkano = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
 vulkano-win = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
 wavefront_obj = "5.0.0"

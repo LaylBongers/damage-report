@@ -3,8 +3,10 @@ use std::io::{Read};
 use std::fs::{File};
 use std::sync::{Arc};
 
+use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
+
 use {Target};
 
 #[derive(Copy, Clone, PartialEq)]
@@ -24,21 +26,25 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn load<P: AsRef<Path>>(target: &Target, path: P, scale: f32) -> Self {
+    pub fn load<P: AsRef<Path>>(log: &Logger, target: &Target, path: P, scale: f32) -> Self {
         // TODO: Change unwraps to proper error handling
         // TODO: Expose separate objects in the object set as individual objects
         // TODO: Add logging (slog) support
         // TODO: Support indices
 
         // Load in the wavefront obj data
-        let mut obj_file = File::open(path).unwrap();
+        let mut obj_file = File::open(path.as_ref()).unwrap();
         let mut obj_file_data = String::new();
         obj_file.read_to_string(&mut obj_file_data).unwrap();
         let obj_set = obj::parse(obj_file_data).unwrap();
 
         // Create the vertex buffer from the object set
         let (vertices, indices) = Self::obj_set_to_vertices(&obj_set, scale);
-        println!("Loaded Model, Vertices: {} Indices: {}", vertices.len(), indices.len());
+        info!(
+            log, "Loaded model at \"{}\", vertices: {} indices: {}",
+            path.as_ref().display(),
+            vertices.len(), indices.len()
+        );
 
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(

@@ -2,6 +2,7 @@ use std::sync::{Arc};
 use std::time::{Duration};
 
 use cgmath::{Vector2};
+use slog::{Logger};
 use vulkano::format;
 use vulkano::buffer::{CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
@@ -44,7 +45,7 @@ pub struct Target {
 }
 
 impl Target {
-    pub fn init() -> Self {
+    pub fn init(log: &Logger) -> Self {
         let size = Vector2::new(1280, 720);
 
         // Start by setting up the vulkano instance, this is a silo of vulkan that all our vulkan
@@ -57,10 +58,8 @@ impl Target {
 
         // Pick a GPU to use for rendering. We assume first device as the one to render with
         // TODO: Allow user to select in some way, perhaps through config
-        let physical = PhysicalDevice::enumerate(&instance)
-            .next().unwrap();
-        // TODO: Move to slog
-        println!("Using device: {} (type: {:?})", physical.name(), physical.ty());
+        let physical = PhysicalDevice::enumerate(&instance).next().unwrap();
+        info!(log, "Using device: {} (type: {:?})", physical.name(), physical.ty());
 
         // Set up the window we want to render to, along with an EventsLoop we can use to listen
         //  for input and other events happening to the window coming from the OS

@@ -7,3 +7,6 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 cgmath = "0.14.1"
 cobalt-rendering = {path = "../cobalt-rendering"}
 cobalt-utils = {path = "../cobalt-utils"}
+slog = "2.0.5"
+slog-async = "2.0.1"
+slog-term = "2.0.1"

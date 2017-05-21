@@ -1,4 +1,8 @@
 extern crate cgmath;
+#[macro_use]
+extern crate slog;
+extern crate slog_async;
+extern crate slog_term;
 extern crate cobalt_rendering;
 extern crate cobalt_utils;
 
@@ -7,6 +11,10 @@ mod input;
 mod player;
 
 use cgmath::{Vector2};
+use slog::{Logger, Drain};
+use slog_async::{Async};
+use slog_term::{CompactFormat, TermDecorator};
+
 use cobalt_rendering::world3d::{Renderer, Camera, World};
 use cobalt_rendering::{Target, Event};
 use cobalt_utils::{LoopTimer};
@@ -15,8 +23,15 @@ use game_world::{GameWorld};
 use input::{InputState, FrameInput};
 
 fn main() {
+    // Set up the logger
+    let decorator = TermDecorator::new().build();
+    let drain = Async::new(CompactFormat::new(decorator).build().fuse()).build().fuse();
+    let log = Logger::root(drain, o!());
+    let init_log = log.new(o!("state" => "initializing"));
+    info!(init_log, "Damage Report Version {}", env!("CARGO_PKG_VERSION"));
+
     // Initialize the rendering system
-    let mut target = Target::init();
+    let mut target = Target::init(&init_log);
     let mut renderer = Renderer::init(&target);
     let mut world = World::default();
 
@@ -25,9 +40,10 @@ fn main() {
     let mut input_state = InputState::default();
 
     // Initialize the gamae world
-    let mut game_world = GameWorld::init(&mut target, &mut world);
+    let mut game_world = GameWorld::init(&init_log, &mut target, &mut world);
 
     // The main game loop
+    let _loop_log = log.new(o!("state" => "game loop"));
     loop {
         let time = timer.tick();
 
