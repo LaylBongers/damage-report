@@ -8,7 +8,9 @@ extern crate vulkano_win;
 extern crate wavefront_obj;
 pub extern crate winit;
 
+mod error;
 pub mod world3d;
 mod target;
 
+pub use error::{Error};
 pub use target::{Target, Event, Frame};

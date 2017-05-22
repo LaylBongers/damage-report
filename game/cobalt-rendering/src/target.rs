@@ -17,6 +17,9 @@ use vulkano::sync::{GpuFuture};
 use vulkano_win::{self, VkSurfaceBuild, Window};
 use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, ScanCode, VirtualKeyCode, ModifiersState};
 
+use error::{CobaltErrorMap};
+use {Error};
+
 pub struct Target {
     // Winit window
     events_loop: EventsLoop,
@@ -45,7 +48,7 @@ pub struct Target {
 }
 
 impl Target {
-    pub fn init(log: &Logger) -> Self {
+    pub fn init(log: &Logger) -> Result<Self, Error> {
         let size = Vector2::new(1280, 720);
 
         // Start by setting up the vulkano instance, this is a silo of vulkan that all our vulkan
@@ -53,12 +56,14 @@ impl Target {
         let instance = {
             // Tell it we need at least the extensions vulkano-win needs
             let extensions = vulkano_win::required_extensions();
-            Instance::new(None, &extensions, None).unwrap()
+            Instance::new(None, &extensions, None)
+                .map_platform_err()?
         };
 
         // Pick a GPU to use for rendering. We assume first device as the one to render with
         // TODO: Allow user to select in some way, perhaps through config
-        let physical = PhysicalDevice::enumerate(&instance).next().unwrap();
+        let physical = PhysicalDevice::enumerate(&instance).next()
+            .ok_or_else(|| Error::Platform("No physical devices found".into()))?;
         info!(log, "Using device: {} (type: {:?})", physical.name(), physical.ty());
 
         // Set up the window we want to render to, along with an EventsLoop we can use to listen
@@ -68,7 +73,7 @@ impl Target {
             .with_dimensions(size.x, size.y)
             .with_title(format!("Cobalt"))
             .build_vk_surface(&events_loop, &instance)
-            .unwrap();
+            .map_platform_err()?;
 
         // Find a GPU graphics queue family, we later create a queue from this family to talk to
         //  the GPU
@@ -172,7 +177,7 @@ impl Target {
                 as Arc<FramebufferAbstract + Send + Sync>
         }).collect::<Vec<_>>();
 
-        Target {
+        Ok(Target {
             events_loop,
             window,
 
@@ -189,7 +194,7 @@ impl Target {
 
             size,
             focused: true,
-        }
+        })
     }
 
     pub fn poll_events(&mut self) -> Vec<Event> {

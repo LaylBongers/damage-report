@@ -16,7 +16,7 @@ use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
 use cobalt_rendering::world3d::{Renderer, Camera, World};
-use cobalt_rendering::{Target, Event};
+use cobalt_rendering::{Error, Target, Event};
 use cobalt_utils::{LoopTimer};
 
 use game_world::{GameWorld};
@@ -27,11 +27,22 @@ fn main() {
     let decorator = TermDecorator::new().build();
     let drain = Async::new(CompactFormat::new(decorator).build().fuse()).build().fuse();
     let log = Logger::root(drain, o!());
+
+    // Run the actual game
+    let result = try_main(&log);
+
+    // Check the result of running the game
+    if let Err(err) = result {
+        error!(log, "{}", err);
+    }
+}
+
+fn try_main(log: &Logger) -> Result<(), Error> {
     let init_log = log.new(o!("state" => "initializing"));
     info!(init_log, "Damage Report Version {}", env!("CARGO_PKG_VERSION"));
 
     // Initialize the rendering system
-    let mut target = Target::init(&init_log);
+    let mut target = Target::init(&init_log)?;
     let mut renderer = Renderer::init(&target);
     let mut world = World::default();
 
@@ -60,6 +71,8 @@ fn main() {
         let camera = game_world.player.create_camera();
         render_frame(&mut target, &mut renderer, &camera, &world);
     }
+
+    Ok(())
 }
 
 fn handle_events(
