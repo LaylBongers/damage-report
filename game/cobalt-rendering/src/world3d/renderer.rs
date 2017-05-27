@@ -13,14 +13,10 @@ use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
 use vulkano::framebuffer::{Subpass};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use cobalt_rendering_shaders::{vs, fs};
 
 use world3d::{Camera, World, Entity};
 use {Target, Frame};
-
-#[allow(dead_code)]
-mod vs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_vert.glsl")} }
-#[allow(dead_code)]
-mod fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/world3d/shader_frag.glsl")} }
 
 pub struct Renderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,

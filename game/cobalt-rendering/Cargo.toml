@@ -11,6 +11,4 @@ vulkano = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
 vulkano-win = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
 wavefront_obj = "5.0.0"
 winit = "0.6.4"
-
-[build-dependencies]
-vulkano-shaders = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
+cobalt-rendering-shaders = {path = "../cobalt-rendering-shaders"}
