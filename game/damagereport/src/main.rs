@@ -39,11 +39,11 @@ fn main() {
 }
 
 fn try_main(log: &Logger) -> Result<(), Error> {
-    let init_log = log.new(o!("action" => "Initializing"));
+    info!(log, "Initializing Game");
 
     // Initialize the rendering system
-    let mut target = Target::init(&init_log)?;
-    let mut renderer = Renderer::init(&init_log, &target);
+    let mut target = Target::init(log)?;
+    let mut renderer = Renderer::init(log, &target);
     let mut world = World::default();
 
     // Initialize generic utilities
@@ -51,11 +51,10 @@ fn try_main(log: &Logger) -> Result<(), Error> {
     let mut input_state = InputState::default();
 
     // Initialize the game world
-    let mut game_world = GameWorld::init(&init_log, &mut target, &mut world);
+    let mut game_world = GameWorld::init(log, &mut target, &mut world);
 
     // The main game loop
-    let loop_log = log.new(o!("action" => "Game loop"));
-    info!(loop_log, "Starting game loop");
+    info!(log, "Starting game loop");
     loop {
         let time = timer.tick();
 
@@ -66,13 +65,13 @@ fn try_main(log: &Logger) -> Result<(), Error> {
             break
         }
 
-        game_world.update(&loop_log, time, &mut world, &input_state, &frame_input);
+        game_world.update(log, time, &mut world, &input_state, &frame_input);
 
         // Perform the actual rendering
         let camera = game_world.player.create_camera();
         render_frame(&mut target, &mut renderer, &camera, &world);
     }
-    info!(loop_log, "Ending game loop");
+    info!(log, "Ending game loop");
 
     Ok(())
 }

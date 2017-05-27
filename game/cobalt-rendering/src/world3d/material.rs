@@ -20,6 +20,7 @@ pub struct Material {
 impl Material {
     pub fn load<P: AsRef<Path>>(log: &Logger, target: &mut Target, path: P) -> Self {
         // Load in the image file
+        info!(log, "Loading texture"; "path" => path.as_ref().display().to_string());
         let img = image::open(path.as_ref()).unwrap();
         let img_dimensions = img.dimensions();
 
@@ -55,11 +56,6 @@ impl Material {
 
         // Make sure the buffer's actually put into the texture
         target.queue_texture_copy(buffer, texture.clone());
-
-        info!(
-            log, "Loaded texture at \"{}\", size: ({}, {})",
-            path.as_ref().display(), img_dimensions.0, img_dimensions.1
-        );
 
         Material {
             texture,
