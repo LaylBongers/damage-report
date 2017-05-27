@@ -58,11 +58,11 @@ impl Mesh {
     ) -> Mesh {
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
-            &target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
+            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
             vertices.iter().map(|v| *v)
         ).unwrap();
         let index_buffer = CpuAccessibleBuffer::from_iter(
-            &target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
+            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
             indices.iter().map(|v| *v)
         ).unwrap();
 

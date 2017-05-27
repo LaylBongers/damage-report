@@ -139,8 +139,8 @@ impl Target {
 
             // Finally, actually create the swap chain
             Swapchain::new(
-                &device, &window.surface(), caps.min_image_count, format, dimensions, 1,
-                &caps.supported_usage_flags, &graphics_queue, SurfaceTransform::Identity, alpha,
+                device.clone(), &window.surface(), caps.min_image_count, format, dimensions, 1,
+                caps.supported_usage_flags, &graphics_queue, SurfaceTransform::Identity, alpha,
                 present, true, None
             ).unwrap()
         };
@@ -152,7 +152,8 @@ impl Target {
             use vulkano::image::{Image};
             use vulkano::image::attachment::{AttachmentImage};
             AttachmentImage::transient(
-                &device, (&images[0] as &Image<Access=_>).dimensions().width_height(), D16Unorm
+                device.clone(), (&images[0] as &Image<Access=_>).dimensions().width_height(),
+                D16Unorm
             ).unwrap().access()
         };
 

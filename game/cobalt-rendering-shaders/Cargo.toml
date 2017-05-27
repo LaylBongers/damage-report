@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-vulkano = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
+vulkano = {git = "https://github.com/tomaka/vulkano.git"}
 
 [build-dependencies]
-vulkano-shaders = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
+vulkano-shaders = {git = "https://github.com/tomaka/vulkano.git"}

@@ -31,7 +31,7 @@ impl Material {
 
             // TODO: staging buffer instead
             CpuAccessibleBuffer::<[[u8; 4]]>::from_iter(
-                target.device(), &BufferUsage::all(),
+                target.device().clone(), BufferUsage::all(),
                 Some(target.graphics_queue().family()), image_data_chunks
             ).unwrap()
         };
@@ -39,12 +39,12 @@ impl Material {
         // Create the texture and sampler for the image, the texture data will later be copied in
         //  a command buffer
         let texture = ImmutableImage::new(
-            target.device(),
+            target.device().clone(),
             Dimensions::Dim2d { width: img_dimensions.0, height: img_dimensions.1 },
             format::R8G8B8A8Srgb, Some(target.graphics_queue().family())
         ).unwrap();
         let sampler = Sampler::new(
-            target.device(),
+            target.device().clone(),
             Filter::Linear,
             Filter::Linear,
             MipmapMode::Nearest,

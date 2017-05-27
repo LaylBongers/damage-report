@@ -60,7 +60,7 @@ impl Renderer {
             render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
         };
         let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::world3d::Vertex>, _, _>> =
-            Arc::new(GraphicsPipeline::new(target.device(), pipeline_params).unwrap());
+            Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap());
 
         Renderer {
             pipeline,
@@ -119,7 +119,7 @@ impl Renderer {
 
         // Send the uniforms over to the GPU
         let uniform_buffer = CpuAccessibleBuffer::<vs::ty::UniformsData>::from_data(
-            target.device(), &BufferUsage::all(), Some(target.graphics_queue().family()),
+            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
             vs::ty::UniformsData {
                 matrix: matrix_raw,
             }

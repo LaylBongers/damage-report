@@ -7,8 +7,8 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 cgmath = "0.14.1"
 image = "0.13.0"
 slog = "2.0.5"
-vulkano = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
-vulkano-win = {git = "https://github.com/tomaka/vulkano.git", branch = "hack"}
+vulkano = {git = "https://github.com/tomaka/vulkano.git"}
+vulkano-win = {git = "https://github.com/tomaka/vulkano.git"}
 wavefront_obj = "5.0.0"
 winit = "0.6.4"
 cobalt-rendering-shaders = {path = "../cobalt-rendering-shaders"}
