@@ -50,7 +50,7 @@ fn try_main(log: &Logger) -> Result<(), Error> {
     let mut timer = LoopTimer::start();
     let mut input_state = InputState::default();
 
-    // Initialize the gamae world
+    // Initialize the game world
     let mut game_world = GameWorld::init(&init_log, &mut target, &mut world);
 
     // The main game loop

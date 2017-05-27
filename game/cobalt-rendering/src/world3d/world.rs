@@ -1,5 +1,5 @@
 use cgmath::{Vector3};
-use world3d::{Model, Material};
+use world3d::{Mesh, Material};
 
 #[derive(Default)]
 pub struct World {
@@ -25,6 +25,6 @@ pub type EntityId = usize;
 
 pub struct Entity {
     pub position: Vector3<f32>,
-    pub model: Model,
+    pub mesh: Mesh,
     pub material: Material,
 }
