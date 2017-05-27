@@ -49,10 +49,12 @@ pub struct Target {
 
 impl Target {
     pub fn init(log: &Logger) -> Result<Self, Error> {
+        let log = log.new(o!("action" => "Initializing Vulkan target"));
         let size = Vector2::new(1280, 720);
 
         // Start by setting up the vulkano instance, this is a silo of vulkan that all our vulkan
         //  types will belong to
+        info!(log, "Creating Vulkan instance");
         let instance = {
             // Tell it we need at least the extensions vulkano-win needs
             let extensions = vulkano_win::required_extensions();
@@ -62,12 +64,14 @@ impl Target {
 
         // Pick a GPU to use for rendering. We assume first device as the one to render with
         // TODO: Allow user to select in some way, perhaps through config
+        info!(log, "Finding target physical device");
         let physical = PhysicalDevice::enumerate(&instance).next()
             .ok_or_else(|| Error::Platform("No physical devices found".into()))?;
         info!(log, "Using device: {} (type: {:?})", physical.name(), physical.ty());
 
         // Set up the window we want to render to, along with an EventsLoop we can use to listen
         //  for input and other events happening to the window coming from the OS
+        info!(log, "Creating window");
         let events_loop = EventsLoop::new();
         let window = WindowBuilder::new()
             .with_dimensions(size.x, size.y)
@@ -77,6 +81,7 @@ impl Target {
 
         // Find a GPU graphics queue family, we later create a queue from this family to talk to
         //  the GPU
+        info!(log, "Finding graphics queue family with required features");
         let graphics_queue_family = physical.queue_families().find(|q| {
             // The queue needs to support graphics (of course) and needs to support drawing to
             //  the previously created window's surface
@@ -86,6 +91,7 @@ impl Target {
         // Finally, we create our actual connection with the GPU. We need a "device", which
         //  represents the connection between our program and the device, and queues, which we use
         //  to issue rendering commands to the GPU
+        info!(log, "Creating logical device and queues");
         let (device, mut queues) = {
             // We need to request features explicitly, we need at least the swap chain
             let device_ext = DeviceExtensions {
@@ -105,8 +111,9 @@ impl Target {
         // Get the graphics queue we requested
         let graphics_queue = queues.next().unwrap();
 
-        // Now create the swap chain, we need this to actually swap between our back buffer and the
+        // Now create the swapchain, we need this to actually swap between our back buffer and the
         //  window's front buffer, without it we can't show anything
+        info!(log, "Creating swapchain");
         let (swapchain, images) = {
             // Get what the swap chain we want to create would be capable of, we can't request
             //  anything it can't do
@@ -136,6 +143,9 @@ impl Target {
             ).unwrap()
         };
 
+        // To render in 3D, we need an extra buffer to keep track of the depth. Since this won't be
+        //  displayed, it doesn't need to be part of the swapchain.
+        info!(log, "Creating depth buffer");
         let depth_buffer = {
             use vulkano::image::{Image};
             use vulkano::image::attachment::{AttachmentImage};
@@ -168,6 +178,7 @@ impl Target {
         ).unwrap());
 
         // Set up the frame buffers matching the render pass TODO: Comment better
+        info!(log, "Creating framebuffers for swapchain");
         let framebuffers = images.iter().map(|image| {
             let attachments = render_pass.desc().start_attachments()
                 .color(image.clone())

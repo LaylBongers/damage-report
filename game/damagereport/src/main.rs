@@ -27,6 +27,7 @@ fn main() {
     let decorator = TermDecorator::new().build();
     let drain = Async::new(CompactFormat::new(decorator).build().fuse()).build().fuse();
     let log = Logger::root(drain, o!());
+    info!(log, "Damage Report Version {}", env!("CARGO_PKG_VERSION"));
 
     // Run the actual game
     let result = try_main(&log);
@@ -38,12 +39,11 @@ fn main() {
 }
 
 fn try_main(log: &Logger) -> Result<(), Error> {
-    let init_log = log.new(o!("state" => "initializing"));
-    info!(init_log, "Damage Report Version {}", env!("CARGO_PKG_VERSION"));
+    let init_log = log.new(o!("action" => "Initializing"));
 
     // Initialize the rendering system
     let mut target = Target::init(&init_log)?;
-    let mut renderer = Renderer::init(&target);
+    let mut renderer = Renderer::init(&init_log, &target);
     let mut world = World::default();
 
     // Initialize generic utilities
@@ -54,23 +54,25 @@ fn try_main(log: &Logger) -> Result<(), Error> {
     let mut game_world = GameWorld::init(&init_log, &mut target, &mut world);
 
     // The main game loop
-    let _loop_log = log.new(o!("state" => "game loop"));
+    let loop_log = log.new(o!("action" => "Game loop"));
+    info!(loop_log, "Starting game loop");
     loop {
         let time = timer.tick();
 
         // Handle any events in the target
         let mut frame_input = FrameInput::default();
-        if !handle_events(&mut target, &mut input_state, &mut frame_input) ||
-           input_state.escape_pressed {
+        let should_continue = handle_events(&mut target, &mut input_state, &mut frame_input);
+        if !should_continue || input_state.escape_pressed {
             break
         }
 
-        game_world.update(time, &mut world, &input_state, &frame_input);
+        game_world.update(&loop_log, time, &mut world, &input_state, &frame_input);
 
         // Perform the actual rendering
         let camera = game_world.player.create_camera();
         render_frame(&mut target, &mut renderer, &camera, &world);
     }
+    info!(loop_log, "Ending game loop");
 
     Ok(())
 }

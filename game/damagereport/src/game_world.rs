@@ -49,14 +49,15 @@ impl GameWorld {
     }
 
     pub fn update(
-        &mut self, time: f32, world: &mut World, input_state: &InputState, frame_input: &FrameInput
+        &mut self, log: &Logger, time: f32, world: &mut World,
+        input_state: &InputState, frame_input: &FrameInput
     ) {
         // Update the player based on the input we got so far
         self.player.update(&input_state, &frame_input, time);
 
         // Update the devices
         for device in &mut self.devices {
-            device.update(time, world);
+            device.update(log, time, world);
         }
     }
 }
@@ -89,7 +90,12 @@ impl Device {
         }
     }
 
-    fn update(&mut self, time: f32, world: &mut World) {
+    fn set_status(&mut self, log: &Logger, value: bool) {
+        self.status = value;
+        info!(log, "Switched device status to {}", self.status);
+    }
+
+    fn update(&mut self, log: &Logger, time: f32, world: &mut World) {
         if self.status {
             self.fixedness -= time;
         } else {
@@ -97,13 +103,13 @@ impl Device {
         }
 
         if self.fixedness < 0.0 && self.status {
-            self.status = false;
+            self.set_status(log, false);
 
             let entity = world.entity_mut(self.entity);
             entity.material = self.material_broken.clone();
         }
         if self.fixedness > 1.0 && !self.status {
-            self.status = true;
+            self.set_status(log, true);
 
             let entity = world.entity_mut(self.entity);
             entity.material = self.material_working.clone();

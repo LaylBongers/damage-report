@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
+use slog::{Logger};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{CommandBufferBuilder, DynamicState};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
@@ -26,12 +27,16 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn init(target: &Target) -> Self {
+    pub fn init(log: &Logger, target: &Target) -> Self {
+        let log = log.new(o!("action" => "Initializing Vulkan 3D world renderer"));
+
         // Load in the shaders
+        info!(log, "Loading shaders");
         let vs = vs::Shader::load(target.device()).unwrap();
         let fs = fs::Shader::load(target.device()).unwrap();
 
         // Set up a pipeline TODO: Comment better
+        info!(log, "Creating render pipeline");
         let pipeline_params = GraphicsPipelineParams {
             vertex_input: SingleBufferDefinition::new(),
             vertex_shader: vs.main_entry_point(),
