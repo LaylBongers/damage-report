@@ -24,7 +24,7 @@ pub struct Renderer {
 
 impl Renderer {
     pub fn init(log: &Logger, target: &Target) -> Self {
-        info!(log, "Initializing Vulkan 3D world renderer");
+        info!(log, "Initializing world renderer");
 
         // Load in the shaders
         debug!(log, "Loading shaders");
