@@ -4,6 +4,7 @@ extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
 extern crate cobalt_rendering;
+extern crate cobalt_rendering_world3d;
 extern crate cobalt_utils;
 
 mod game_world;
@@ -15,8 +16,8 @@ use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
-use cobalt_rendering::world3d::{Renderer, Camera, World};
 use cobalt_rendering::{Error, Target, Event};
+use cobalt_rendering_world3d::{Renderer, Camera, World};
 use cobalt_utils::{LoopTimer};
 
 use game_world::{GameWorld};

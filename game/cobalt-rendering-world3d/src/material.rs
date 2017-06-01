@@ -9,7 +9,7 @@ use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use {Target};
+use cobalt_rendering::{Target};
 
 #[derive(Clone)]
 pub struct Material {

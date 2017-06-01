@@ -1,5 +1,5 @@
 use cgmath::{Vector3};
-use world3d::{Mesh, Material};
+use {Mesh, Material};
 
 #[derive(Default)]
 pub struct World {

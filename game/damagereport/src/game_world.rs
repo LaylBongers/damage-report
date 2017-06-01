@@ -1,6 +1,6 @@
 use cgmath::{Vector3};
 use slog::{Logger};
-use cobalt_rendering::world3d::{World, Model, Entity, EntityId, Material};
+use cobalt_rendering_world3d::{World, Model, Entity, EntityId, Material};
 use cobalt_rendering::{Target};
 
 use input::{InputState, FrameInput};

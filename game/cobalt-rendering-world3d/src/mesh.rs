@@ -2,7 +2,7 @@ use std::sync::{Arc};
 
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use {Target};
+use cobalt_rendering::{Target};
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Vertex {
