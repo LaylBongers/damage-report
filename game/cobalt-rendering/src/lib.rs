@@ -10,6 +10,8 @@ extern crate cobalt_rendering_shaders;
 
 mod error;
 mod target;
+mod texture;
 
 pub use error::{Error};
 pub use target::{Target, Event, Frame};
+pub use texture::{Texture};

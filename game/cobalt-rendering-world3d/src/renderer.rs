@@ -126,7 +126,7 @@ impl Renderer {
         ).unwrap();
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
             u_data: uniform_buffer,
-            u_texture: entity.material.uniform(),
+            u_sampler_diffuse: entity.material.diffuse.uniform(),
         }));
 
         // Perform the actual draw

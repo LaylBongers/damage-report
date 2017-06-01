@@ -1,7 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(set = 0, binding = 1) uniform sampler2D u_texture;
+layout(set = 0, binding = 1) uniform sampler2D u_sampler_diffuse;
 
 layout(location = 0) in vec2 f_tex_coords;
 layout(location = 1) in vec3 f_normal;
@@ -18,7 +18,7 @@ void main() {
     float total_scale = min(diffuse_scale + ambient_scale, 1.0f);
 
     // Isolate the diffuse color from the texture
-    vec4 tex_color = texture(u_texture, f_tex_coords);
+    vec4 tex_color = texture(u_sampler_diffuse, f_tex_coords);
     vec3 diffuse_color = tex_color.rgb;
 
     // Apply the light strength and alpha
