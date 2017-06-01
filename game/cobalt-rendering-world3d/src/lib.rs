@@ -1,3 +1,13 @@
+extern crate cgmath;
+extern crate image;
+#[macro_use]
+extern crate slog;
+#[macro_use]
+extern crate vulkano;
+extern crate wavefront_obj;
+extern crate cobalt_rendering;
+extern crate cobalt_rendering_shaders;
+
 mod camera;
 mod material;
 mod mesh;

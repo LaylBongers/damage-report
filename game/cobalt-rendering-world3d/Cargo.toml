@@ -1,5 +1,5 @@
 [package]
-name = "cobalt-rendering"
+name = "cobalt-rendering-world3d"
 version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
@@ -8,6 +8,6 @@ cgmath = "0.14.1"
 image = "0.13.0"
 slog = "2.0.5"
 vulkano = {git = "https://github.com/tomaka/vulkano.git"}
-vulkano-win = {git = "https://github.com/tomaka/vulkano.git"}
-winit = "0.6.4"
+wavefront_obj = "5.0.0"
+cobalt-rendering = {path = "../cobalt-rendering"}
 cobalt-rendering-shaders = {path = "../cobalt-rendering-shaders"}

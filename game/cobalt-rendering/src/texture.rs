@@ -11,13 +11,14 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use {Target};
 
+/// An uploaded texture. Internally ref-counted, cheap clone.
 #[derive(Clone)]
-pub struct Material {
+pub struct Texture {
     texture: Arc<ImmutableImage<format::R8G8B8A8Srgb>>,
     sampler: Arc<Sampler>,
 }
 
-impl Material {
+impl Texture {
     pub fn load<P: AsRef<Path>>(log: &Logger, target: &mut Target, path: P) -> Self {
         // Load in the image file
         info!(log, "Loading texture"; "path" => path.as_ref().display().to_string());
@@ -57,7 +58,7 @@ impl Material {
         // Make sure the buffer's actually put into the texture
         target.queue_texture_copy(buffer, texture.clone());
 
-        Material {
+        Texture {
             texture,
             sampler,
         }

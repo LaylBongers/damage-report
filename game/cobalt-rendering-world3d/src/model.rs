@@ -5,8 +5,8 @@ use std::fs::{File};
 use slog::{Logger};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
-use world3d::{Mesh, Vertex};
-use {Target};
+use cobalt_rendering::{Target};
+use {Mesh, Vertex};
 
 pub struct Model {
     pub meshes: Vec<Mesh>,
@@ -18,23 +18,28 @@ impl Model {
         info!(log, "Loading model"; "path" => path.as_ref().display().to_string());
 
         // Load in the wavefront obj data
+        debug!(log, "Loading obj file to string");
         let mut obj_file = File::open(path.as_ref()).unwrap();
         let mut obj_file_data = String::new();
         obj_file.read_to_string(&mut obj_file_data).unwrap();
+        debug!(log, "Parsing obj file data");
         let obj_set = obj::parse(obj_file_data).unwrap();
 
         // Convert all the objects to meshes
-        let meshes = Self::obj_set_to_vertex_vecs(target, &obj_set, scale);
+        let meshes = Self::obj_set_to_meshes(log, target, &obj_set, scale);
 
         Model {
             meshes
         }
     }
 
-    fn obj_set_to_vertex_vecs(target: &Target, obj_set: &ObjSet, scale: f32) -> Vec<Mesh> {
+    fn obj_set_to_meshes(
+        log: &Logger, target: &Target, obj_set: &ObjSet, scale: f32
+    ) -> Vec<Mesh> {
         let mut meshes = Vec::new();
 
         // Go over all objects in the file
+        debug!(log, "Converting {} objects to Meshes", obj_set.objects.len());
         for object in &obj_set.objects {
             // Skip empty objects
             if object.vertices.len() == 0 { continue; }

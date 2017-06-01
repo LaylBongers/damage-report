@@ -15,8 +15,8 @@ use vulkano::framebuffer::{Subpass};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use cobalt_rendering_shaders::{vs, fs};
 
-use world3d::{Camera, World, Entity};
-use {Target, Frame};
+use cobalt_rendering::{Target, Frame};
+use {Camera, World, Entity};
 
 pub struct Renderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
@@ -59,7 +59,7 @@ impl Renderer {
             blend: Blend::pass_through(),
             render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
         };
-        let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::world3d::Vertex>, _, _>> =
+        let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::Vertex>, _, _>> =
             Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap());
 
         Renderer {
@@ -126,7 +126,7 @@ impl Renderer {
         ).unwrap();
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
             u_data: uniform_buffer,
-            u_texture: entity.material.uniform(),
+            u_sampler_diffuse: entity.material.diffuse.uniform(),
         }));
 
         // Perform the actual draw

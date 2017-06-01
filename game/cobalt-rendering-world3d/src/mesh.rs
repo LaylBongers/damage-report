@@ -2,7 +2,7 @@ use std::sync::{Arc};
 
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use {Target};
+use cobalt_rendering::{Target};
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Vertex {
@@ -13,8 +13,7 @@ pub struct Vertex {
 
 impl_vertex!(Vertex, v_position, v_tex_coords, v_normal);
 
-/// A mesh of vertex data used by the backend to render with. Likely uses vertex buffers depending
-/// on implementation.
+/// An uploaded mesh. Internally ref-counted, cheap to clone.
 #[derive(Clone)]
 pub struct Mesh {
     pub vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>,
