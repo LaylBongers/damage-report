@@ -59,7 +59,7 @@ impl Renderer {
             blend: Blend::pass_through(),
             render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
         };
-        let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::Vertex>, _, _>> =
+        let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>> =
             Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap());
 
         Renderer {

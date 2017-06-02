@@ -1,25 +1,31 @@
 use std::sync::{Arc};
 
+use cgmath::{Vector2, Vector3, InnerSpace};
 use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use cobalt_rendering::{Target};
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Vertex {
-    pub v_position: [f32; 3],
-    pub v_tex_coords: [f32; 2],
-    pub v_normal: [f32; 3],
-    pub v_tangent: [f32; 3],
-    pub v_bitangent: [f32; 3],
+    pub position: Vector3<f32>,
+    pub uv: Vector2<f32>,
+    pub normal: Vector3<f32>,
 }
 
-impl_vertex!(Vertex, v_position, v_tex_coords, v_normal, v_tangent, v_bitangent);
+pub struct VkVertex {
+    pub v_position: [f32; 3],
+    pub v_uv: [f32; 2],
+    pub v_normal: [f32; 3],
+    pub v_tangent: [f32; 3],
+}
+
+impl_vertex!(VkVertex, v_position, v_uv, v_normal, v_tangent);
 
 /// An uploaded mesh. Internally ref-counted, cheap to clone.
 #[derive(Clone)]
 pub struct Mesh {
-    pub vertex_buffer: Arc<CpuAccessibleBuffer<[Vertex]>>,
+    pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,
     pub index_buffer: Arc<CpuAccessibleBuffer<[u16]>>
 }
 
@@ -35,7 +41,7 @@ impl Mesh {
         let mut i = 0;
 
         for vertex in flat_vertices {
-            Self::find_or_add_vertex(*vertex, &mut vertices, &mut indices, &mut i);
+            Self::find_or_add_vertex(vertex.clone(), &mut vertices, &mut indices, &mut i);
         }
 
         Self::from_vertices_indices(log, target, &vertices, &indices)
@@ -61,10 +67,49 @@ impl Mesh {
     pub fn from_vertices_indices(
         log: &Logger, target: &Target, vertices: &Vec<Vertex>, indices: &Vec<u16>
     ) -> Mesh {
+        // Seed the tangent calculation data, we will accumulate data as we go over the triangles
+        let mut tri_tangents = vec!(TangentCalcEntry::new(); vertices.len());
+
+        // Go over all triangles and calculate tangents for them
+        for tri in indices.chunks(3) {
+            // Retrieve the relevant vertices
+            let v0 = &vertices[tri[0] as usize];
+            let v1 = &vertices[tri[1] as usize];
+            let v2 = &vertices[tri[2] as usize];
+
+            // First get the deltas for positions and UVs
+            let edge1 = v1.position - v0.position;
+            let edge2 = v2.position - v0.position;
+            let delta_uv1 = v1.uv - v0.uv;
+            let delta_uv2 = v2.uv - v0.uv;
+
+            // Now calculate the actual tangent from that
+            let f = 1.0 / (delta_uv1.x * delta_uv2.y - delta_uv2.x * delta_uv1.y);
+            let tangent = Vector3::new(
+                f * (delta_uv2.y * edge1.x - delta_uv1.y * edge2.x),
+                f * (delta_uv2.y * edge1.y - delta_uv1.y * edge2.y),
+                f * (delta_uv2.y * edge1.z - delta_uv1.y * edge2.z),
+            ).normalize();
+
+            // Store the tangent for these vertices
+            tri_tangents[tri[0] as usize].add(tangent);
+            tri_tangents[tri[1] as usize].add(tangent);
+            tri_tangents[tri[2] as usize].add(tangent);
+        }
+
+        // Convert all vertices into final vertices taken by our shader
+        // Here we also take out the final tangent values
+        let vk_vertices: Vec<_> = vertices.iter().enumerate().map(|(i, v)| VkVertex {
+            v_position: v.position.into(),
+            v_uv: v.uv.into(),
+            v_normal: v.normal.into(),
+            v_tangent: tri_tangents[i].value.into(),
+        }).collect();
+
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
             target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
-            vertices.iter().map(|v| *v)
+            vk_vertices.into_iter()
         ).unwrap();
         let index_buffer = CpuAccessibleBuffer::from_iter(
             target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
@@ -78,5 +123,26 @@ impl Mesh {
             vertex_buffer,
             index_buffer,
         }
+    }
+}
+
+#[derive(Clone)]
+struct TangentCalcEntry {
+    value: Vector3<f32>,
+    amount: i32,
+}
+
+impl TangentCalcEntry {
+    fn new() -> Self {
+        TangentCalcEntry {
+            value: Vector3::new(0.0, 0.0, 0.0),
+            amount: 0,
+        }
+    }
+
+    fn add(&mut self, value: Vector3<f32>) {
+        let new_amount = self.amount + 1;
+        self.value = ((self.value * self.amount as f32) + value) / new_amount as f32;
+        self.amount = new_amount;
     }
 }

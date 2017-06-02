@@ -2,6 +2,7 @@ use std::path::{Path};
 use std::io::{Read};
 use std::fs::{File};
 
+use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
@@ -78,11 +79,9 @@ impl Model {
         let norm = object.normals[obj_vertex.2.unwrap()];
 
         Vertex {
-            v_position: [pos.x as f32 * scale, pos.y as f32 * scale, pos.z as f32 * scale],
-            v_tex_coords: [tex.u as f32, tex.v as f32],
-            v_normal: [norm.x as f32, norm.y as f32, norm.z as f32],
-            v_tangent: [0.0, 0.0, 0.0],
-            v_bitangent: [0.0, 0.0, 0.0],
+            position: Vector3::new(pos.x as f32, pos.y as f32, pos.z as f32) * scale,
+            uv: Vector2::new(tex.u as f32, tex.v as f32),
+            normal: Vector3::new(norm.x as f32, norm.y as f32, norm.z as f32),
         }
     }
 }
