@@ -20,19 +20,19 @@ void main() {
     vec4 base_color_full = texture(u_base_color_sampler, f_tex_coords);
     vec3 base_color = base_color_full.rgb;
 
-    // Calculate what direction the point light is from where we are
+    // Calculate the normal for this fragment and various directions
     vec3 normal = normalize(f_normal);
     vec3 light_direction = normalize(u_light_data.light_position - f_position);
+    vec3 camera_direction = normalize(u_light_data.camera_position - f_position);
 
     // Calculate the diffuse brightness of the light on this fragment
     float diffuse_angle_dot_product = max(dot(normal, light_direction), 0.0);
     vec3 diffuse = diffuse_angle_dot_product * u_light_data.light_color;
 
-    // Calculate the specular brightness as well
-    float specular_strength = 0.5;
-    vec3 camera_direction = normalize(u_light_data.camera_position - f_position);
-    vec3 reflect_direction = reflect(-light_direction, normal);
-    float specular_angle_dot_product = pow(max(dot(camera_direction, reflect_direction), 0.0), 32);
+    // Calculate the specular brightness as well (using Blinn-Phong)
+    float specular_strength = 1.0;
+    vec3 halfway_direction = normalize(light_direction + camera_direction);
+    float specular_angle_dot_product = pow(max(dot(normal, halfway_direction), 0.0), 16.0);
     vec3 specular = specular_strength * specular_angle_dot_product * u_light_data.light_color;
 
     // Calculate how much the light falls off over distance
