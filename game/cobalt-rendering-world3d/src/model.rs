@@ -66,7 +66,7 @@ impl Model {
             }
 
             // Convert the vertices to a mesh
-            meshes.push(Mesh::from_flat_vertices(target, &vertices));
+            meshes.push(Mesh::from_flat_vertices(log, target, &vertices));
         }
 
         meshes
@@ -81,6 +81,8 @@ impl Model {
             v_position: [pos.x as f32 * scale, pos.y as f32 * scale, pos.z as f32 * scale],
             v_tex_coords: [tex.u as f32, tex.v as f32],
             v_normal: [norm.x as f32, norm.y as f32, norm.z as f32],
+            v_tangent: [0.0, 0.0, 0.0],
+            v_bitangent: [0.0, 0.0, 0.0],
         }
     }
 }

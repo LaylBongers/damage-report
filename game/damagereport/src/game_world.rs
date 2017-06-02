@@ -20,7 +20,8 @@ impl GameWorld {
         // Create the floor
         let floor_model = Model::load(log, target, "./assets/floor.obj", 0.1);
         let floor_material = Material {
-            base_color: Texture::load(log, target, "./assets/texture.png"),
+            base_color: Texture::load(log, target, "./assets/floor.png"),
+            normal_map: Texture::load(log, target, "./assets/floor_norm.png"),
         };
         world.add(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
@@ -30,23 +31,30 @@ impl GameWorld {
 
         // Create the 3 test devices
         let device_model = Model::load(log, target, "./assets/device.obj", 0.1);
+        let flat_normal_map = Texture::load(log, target, "./assets/texture_norm.png");
+        let material_device = Material {
+            base_color: Texture::load(log, target, "./assets/texture.png"),
+            normal_map: flat_normal_map.clone(),
+        };
         let material_working = Material {
             base_color: Texture::load(log, target, "./assets/texture_broken.png"),
+            normal_map: flat_normal_map.clone(),
         };
         let material_broken = Material {
             base_color: Texture::load(log, target, "./assets/texture_working.png"),
+            normal_map: flat_normal_map.clone(),
         };
         let d1 = Device::new(
             world, Vector3::new(-2.0, 0.0, -4.0), &device_model,
-            &floor_material, &material_working, &material_broken,
+            &material_device, &material_working, &material_broken,
         );
         let d2 = Device::new(
             world, Vector3::new( 0.0, 0.0, -4.0), &device_model,
-            &floor_material, &material_working, &material_broken,
+            &material_device, &material_working, &material_broken,
         );
         let d3 = Device::new(
             world, Vector3::new( 2.0, 0.0, -4.0), &device_model,
-            &floor_material, &material_working, &material_broken,
+            &material_device, &material_working, &material_broken,
         );
         let devices = vec!(d1, d2, d3);
 

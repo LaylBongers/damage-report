@@ -1,27 +1,36 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(set = 0, binding = 1) uniform sampler2D u_base_color_sampler;
-layout(set = 0, binding = 2) uniform LightData {
+layout(set = 0, binding = 1) uniform sampler2D u_material_base_color;
+layout(set = 0, binding = 2) uniform sampler2D u_material_normal_map;
+layout(set = 0, binding = 3) uniform LightData {
     vec3 camera_position;
     vec3 ambient_light;
     vec3 light_position;
     vec3 light_color;
 } u_light_data;
 
-layout(location = 0) in vec2 f_tex_coords;
-layout(location = 1) in vec3 f_position;
-layout(location = 2) in vec3 f_normal;
+layout(location = 0) in vec3 f_position;
+layout(location = 1) in vec2 f_tex_coords;
+layout(location = 2) in vec3 f_normal; //TODO: remove me after normal mapping
+layout(location = 3) in mat3 f_tbn;
 
 layout(location = 0) out vec4 o_color;
 
 void main() {
     // Isolate the base color from the texture
-    vec4 base_color_full = texture(u_base_color_sampler, f_tex_coords);
+    vec4 base_color_full = texture(u_material_base_color, f_tex_coords);
     vec3 base_color = base_color_full.rgb;
 
-    // Calculate the normal for this fragment and various directions
+    // Calculate the normal for this fragment based on the vertices and map
     vec3 normal = normalize(f_normal);
+    // TODO: Normal mapping
+    // Obtain normal from normal map in range [0,1]
+    //normal = texture(normalMap, fs_in.TexCoords).rgb;
+    // Transform normal vector to range [-1,1]
+    //normal = normalize(normal * 2.0 - 1.0)
+
+    // Calculate various directions
     vec3 light_direction = normalize(u_light_data.light_position - f_position);
     vec3 camera_direction = normalize(u_light_data.camera_position - f_position);
 

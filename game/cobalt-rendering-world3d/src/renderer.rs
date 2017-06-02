@@ -155,7 +155,8 @@ impl Renderer {
         // Create the final uniforms set
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
             u_matrix_data: matrix_data_buffer,
-            u_base_color_sampler: entity.material.base_color.uniform(),
+            u_material_base_color: entity.material.base_color.uniform(),
+            u_material_normal_map: entity.material.normal_map.uniform(),
             u_light_data: light_data_buffer.clone(),
         }));
 

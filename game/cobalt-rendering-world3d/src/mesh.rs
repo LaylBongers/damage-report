@@ -1,5 +1,6 @@
 use std::sync::{Arc};
 
+use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use cobalt_rendering::{Target};
@@ -9,9 +10,11 @@ pub struct Vertex {
     pub v_position: [f32; 3],
     pub v_tex_coords: [f32; 2],
     pub v_normal: [f32; 3],
+    pub v_tangent: [f32; 3],
+    pub v_bitangent: [f32; 3],
 }
 
-impl_vertex!(Vertex, v_position, v_tex_coords, v_normal);
+impl_vertex!(Vertex, v_position, v_tex_coords, v_normal, v_tangent, v_bitangent);
 
 /// An uploaded mesh. Internally ref-counted, cheap to clone.
 #[derive(Clone)]
@@ -23,7 +26,10 @@ pub struct Mesh {
 impl Mesh {
     /// Creates a mesh from vertcies. Will eliminate duplicate vertices using indices. Avoid using
     /// if you can directly provide vertices/indices without duplicate checking instead.
-    pub fn from_flat_vertices(target: &Target, flat_vertices: &Vec<Vertex>) -> Mesh {
+    pub fn from_flat_vertices(log: &Logger, target: &Target, flat_vertices: &Vec<Vertex>) -> Mesh {
+        debug!(log, "Converting flat vertices to indexed vertices";
+            "vertices" => flat_vertices.len()
+        );
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
         let mut i = 0;
@@ -32,7 +38,7 @@ impl Mesh {
             Self::find_or_add_vertex(*vertex, &mut vertices, &mut indices, &mut i);
         }
 
-        Self::from_vertices_indices(target, &vertices, &indices)
+        Self::from_vertices_indices(log, target, &vertices, &indices)
     }
 
     fn find_or_add_vertex(
@@ -53,7 +59,7 @@ impl Mesh {
 
     /// Creates a mesh from vertices and indices. Performs no duplicate checking.
     pub fn from_vertices_indices(
-        target: &Target, vertices: &Vec<Vertex>, indices: &Vec<u16>
+        log: &Logger, target: &Target, vertices: &Vec<Vertex>, indices: &Vec<u16>
     ) -> Mesh {
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
@@ -65,6 +71,9 @@ impl Mesh {
             indices.iter().map(|v| *v)
         ).unwrap();
 
+        debug!(log, "Created new mesh with";
+            "vertices" => vertices.len(), "indices" => indices.len()
+        );
         Mesh {
             vertex_buffer,
             index_buffer,
