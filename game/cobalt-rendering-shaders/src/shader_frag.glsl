@@ -35,15 +35,15 @@ void main() {
     float specular_angle_dot_product = pow(max(dot(camera_direction, reflect_direction), 0.0), 32);
     vec3 specular = specular_strength * specular_angle_dot_product * u_light_data.light_color;
 
-    // Calculate how much the light falls off over time
+    // Calculate how much the light falls off over distance
     // TODO: Take distance as parameter
     float light_distance = 5.0f;
-    float light_distance_scale = 1.0f / light_distance;
     float distance = length(u_light_data.light_position - f_position);
-    float attenuation = 1.0f / (1.0f + (light_distance_scale * distance * distance));
+    float value = clamp(1 - pow(distance / light_distance, 4), 0.0, 1.0);
+    float falloff = (value * value) / (distance * distance) + 1;
 
     // Apply all the light values together and re-apply the alpha
-    vec3 final_light = (diffuse + specular) * attenuation;
+    vec3 final_light = (diffuse + specular) * falloff;
     vec3 result = (u_light_data.ambient_light + final_light) * base_color;
     o_color = vec4(result, base_color_full.a);
 }
