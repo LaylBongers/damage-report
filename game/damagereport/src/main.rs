@@ -45,7 +45,7 @@ fn try_main(log: &Logger) -> Result<(), Error> {
     // Initialize the rendering system
     let mut target = Target::init(log)?;
     let mut renderer = Renderer::init(log, &target);
-    let mut world = World::default();
+    let mut world = World::new();
 
     // Initialize generic utilities
     let mut timer = LoopTimer::start();

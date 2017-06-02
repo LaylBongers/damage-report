@@ -6,7 +6,6 @@ extern crate slog;
 extern crate vulkano;
 extern crate vulkano_win;
 pub extern crate winit;
-extern crate cobalt_rendering_shaders;
 
 mod error;
 mod target;

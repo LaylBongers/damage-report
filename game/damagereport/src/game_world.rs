@@ -1,7 +1,7 @@
 use cgmath::{Vector3};
 use slog::{Logger};
 use cobalt_rendering::{Target, Texture};
-use cobalt_rendering_world3d::{World, Model, Entity, EntityId, Material};
+use cobalt_rendering_world3d::{World, Model, Entity, Light, EntityId, LightId, Material};
 
 use input::{InputState, FrameInput};
 use player::{Player};
@@ -9,6 +9,8 @@ use player::{Player};
 pub struct GameWorld {
     pub player: Player,
     devices: Vec<Device>,
+    light: LightId,
+    light_accum: f32,
 }
 
 impl GameWorld {
@@ -18,7 +20,7 @@ impl GameWorld {
         // Create the floor
         let floor_model = Model::load(log, target, "./assets/floor.obj", 0.1);
         let floor_material = Material {
-            diffuse: Texture::load(log, target, "./assets/texture.png"),
+            base_color: Texture::load(log, target, "./assets/texture.png"),
         };
         world.add(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
@@ -29,10 +31,10 @@ impl GameWorld {
         // Create the 3 test devices
         let device_model = Model::load(log, target, "./assets/device.obj", 0.1);
         let material_working = Material {
-            diffuse: Texture::load(log, target, "./assets/texture_broken.png"),
+            base_color: Texture::load(log, target, "./assets/texture_broken.png"),
         };
         let material_broken = Material {
-            diffuse: Texture::load(log, target, "./assets/texture_working.png"),
+            base_color: Texture::load(log, target, "./assets/texture_working.png"),
         };
         let d1 = Device::new(
             world, Vector3::new(-2.0, 0.0, -4.0), &device_model,
@@ -48,9 +50,19 @@ impl GameWorld {
         );
         let devices = vec!(d1, d2, d3);
 
+        // Create a centered test light
+        let light = world.add_light(Light {
+            position: Vector3::new(0.0, 1.5, 0.0),
+            color: Vector3::new(1.0, 1.0, 1.0),
+        });
+
         GameWorld {
             player,
             devices,
+
+            // TODO: Remove these two
+            light,
+            light_accum: 0.0,
         }
     }
 
@@ -65,6 +77,12 @@ impl GameWorld {
         for device in &mut self.devices {
             device.update(log, time, world);
         }
+
+        // Rotate the light around
+        self.light_accum += time;
+        let light = world.light_mut(self.light);
+        light.position.x = f32::sin(self.light_accum) * 4.0;
+        light.position.z = f32::cos(self.light_accum) * 4.0;
     }
 }
 

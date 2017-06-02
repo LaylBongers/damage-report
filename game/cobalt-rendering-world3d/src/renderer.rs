@@ -70,9 +70,9 @@ impl Renderer {
     pub fn render(
         &mut self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World
     ) {
-        // Then, start the render pass
+        // Start the render pass
         let clear_values = vec!(
-            ClearValue::Float([0.005, 0.005, 0.006, 1.0]),
+            ClearValue::Float([0.005, 0.005, 0.005, 1.0]),
             ClearValue::Depth(1.0)
         );
         frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
@@ -82,7 +82,41 @@ impl Renderer {
             ).unwrap()
         );
 
-        // Create the uniforms
+        // Create the projection-view matrix needed for the perspective rendering
+        let projection_view = Self::create_projection_view(target, camera);
+
+        // Retrieve the one point light
+        // TODO: Support variable light amounts
+        // TODO: Make use of this value
+        assert!(world.lights().len() == 1);
+        let light = &world.lights()[0];
+
+        // Send over the lights information to vulkan
+        let light_data_buffer = CpuAccessibleBuffer::<fs::ty::LightData>::from_data(
+            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
+            fs::ty::LightData {
+                camera_position: camera.position.into(),
+                _dummy0: Default::default(),
+                ambient_light: world.ambient_light().into(),
+                _dummy1: Default::default(),
+                light_position: light.position.into(),
+                _dummy2: Default::default(),
+                light_color: light.color.into(),
+            }
+        ).unwrap();
+
+        // Go over everything in the world
+        for entity in world.entities() {
+            self.render_entity(entity, target, frame, &projection_view, &light_data_buffer);
+        }
+
+        // Finish the render pass
+        frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
+            .end_render_pass().unwrap()
+        );
+    }
+
+    fn create_projection_view(target: &mut Target, camera: &Camera) -> Matrix4<f32> {
         let perspective = PerspectiveFov {
             fovy: Rad::full_turn() * 0.25,
             aspect: target.size().x as f32 / target.size().y as f32,
@@ -95,38 +129,34 @@ impl Renderer {
         let view = camera.create_world_to_view_matrix();
 
         // Combine the projection and the view, we don't need them separately
-        let projection_view = projection * view;
-
-        // Go over everything in the world
-        for entity in world.entities() {
-            self.render_entity(entity, target, frame, &projection_view);
-        }
-
-        // End the render pass
-        frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
-            .end_render_pass().unwrap()
-        );
+        projection * view
     }
 
     fn render_entity(
         &self,
         entity: &Entity, target: &mut Target, frame: &mut Frame,
-        projection_view: &Matrix4<f32>
+        projection_view: &Matrix4<f32>,
+        light_data_buffer: &Arc<CpuAccessibleBuffer<fs::ty::LightData>>
     ) {
         // Create a matrix for this world entity
         let model = Matrix4::from_translation(entity.position);
-        let matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
+        let total_matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
+        let model_matrix_raw: [[f32; 4]; 4] = model.into();
 
-        // Send the uniforms over to the GPU
-        let uniform_buffer = CpuAccessibleBuffer::<vs::ty::UniformsData>::from_data(
+        // Send the matrices over to the GPU
+        let matrix_data_buffer = CpuAccessibleBuffer::<vs::ty::MatrixData>::from_data(
             target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
-            vs::ty::UniformsData {
-                matrix: matrix_raw,
+            vs::ty::MatrixData {
+                total: total_matrix_raw,
+                model: model_matrix_raw,
             }
         ).unwrap();
+
+        // Create the final uniforms set
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
-            u_data: uniform_buffer,
-            u_sampler_diffuse: entity.material.diffuse.uniform(),
+            u_matrix_data: matrix_data_buffer,
+            u_base_color_sampler: entity.material.base_color.uniform(),
+            u_light_data: light_data_buffer.clone(),
         }));
 
         // Perform the actual draw

@@ -10,4 +10,3 @@ slog = "2.0.5"
 vulkano = {git = "https://github.com/tomaka/vulkano.git"}
 vulkano-win = {git = "https://github.com/tomaka/vulkano.git"}
 winit = "0.6.4"
-cobalt-rendering-shaders = {path = "../cobalt-rendering-shaders"}
