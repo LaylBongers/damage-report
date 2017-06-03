@@ -33,7 +33,7 @@ impl Mesh {
     /// Creates a mesh from vertcies. Will eliminate duplicate vertices using indices. Avoid using
     /// if you can directly provide vertices/indices without duplicate checking instead.
     pub fn from_flat_vertices(log: &Logger, target: &Target, flat_vertices: &Vec<Vertex>) -> Mesh {
-        debug!(log, "Converting flat vertices to indexed vertices";
+        debug!(log, "Converting flat vertices to indexed";
             "vertices" => flat_vertices.len()
         );
         let mut vertices = Vec::new();
@@ -67,6 +67,8 @@ impl Mesh {
     pub fn from_vertices_indices(
         log: &Logger, target: &Target, vertices: &Vec<Vertex>, indices: &Vec<u16>
     ) -> Mesh {
+        let mut hotfixed_uvs = false;
+
         // Seed the tangent calculation data, we will accumulate data as we go over the triangles
         let mut tri_tangents = vec!(TangentCalcEntry::new(); vertices.len());
 
@@ -80,8 +82,18 @@ impl Mesh {
             // First get the deltas for positions and UVs
             let edge1 = v1.position - v0.position;
             let edge2 = v2.position - v0.position;
-            let delta_uv1 = v1.uv - v0.uv;
-            let delta_uv2 = v2.uv - v0.uv;
+            let mut delta_uv1 = v1.uv - v0.uv;
+            let mut delta_uv2 = v2.uv - v0.uv;
+
+            // Hotfix any bad UV data, most likely these don't have working normal maps anyways
+            // If a model has this it probably just has a debug/single color texture applied
+            let e = 0.0001;
+            if f32::abs(delta_uv1.x) < e || f32::abs(delta_uv1.y) < e ||
+               f32::abs(delta_uv2.x) < e || f32::abs(delta_uv2.y) < e {
+                hotfixed_uvs = true;
+                delta_uv1 = Vector2::new(0.0, 1.0);
+                delta_uv2 = Vector2::new(1.0, 0.0);
+            }
 
             // Now calculate the actual tangent from that
             let f = 1.0 / (delta_uv1.x * delta_uv2.y - delta_uv2.x * delta_uv1.y);
@@ -103,7 +115,7 @@ impl Mesh {
             v_position: v.position.into(),
             v_uv: v.uv.into(),
             v_normal: v.normal.into(),
-            v_tangent: tri_tangents[i].value.into(),
+            v_tangent: tri_tangents[i].average().into(),
         }).collect();
 
         // Finally, create the buffers
@@ -115,6 +127,11 @@ impl Mesh {
             target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
             indices.iter().map(|v| *v)
         ).unwrap();
+
+        // Log if we had to hotfix UVs
+        if hotfixed_uvs {
+            warn!(log, "Found triangles with two or more of the same UVs, tangents may be wrong");
+        }
 
         debug!(log, "Created new mesh with";
             "vertices" => vertices.len(), "indices" => indices.len()
@@ -141,8 +158,11 @@ impl TangentCalcEntry {
     }
 
     fn add(&mut self, value: Vector3<f32>) {
-        let new_amount = self.amount + 1;
-        self.value = ((self.value * self.amount as f32) + value) / new_amount as f32;
-        self.amount = new_amount;
+        self.value += value;
+        self.amount += 1;
+    }
+
+    fn average(&self) -> Vector3<f32> {
+        (self.value / self.amount as f32).normalize()
     }
 }

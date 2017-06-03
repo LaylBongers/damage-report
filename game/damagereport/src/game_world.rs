@@ -1,6 +1,6 @@
 use cgmath::{Vector3};
 use slog::{Logger};
-use cobalt_rendering::{Target, Texture};
+use cobalt_rendering::{Target, TextureSrgb, TextureLinear};
 use cobalt_rendering_world3d::{World, Model, Entity, Light, EntityId, LightId, Material};
 
 use input::{InputState, FrameInput};
@@ -20,8 +20,8 @@ impl GameWorld {
         // Create the floor
         let floor_model = Model::load(log, target, "./assets/floor.obj", 0.1);
         let floor_material = Material {
-            base_color: Texture::load(log, target, "./assets/floor.png"),
-            normal_map: Texture::load(log, target, "./assets/floor_norm.png"),
+            base_color: TextureSrgb::load(log, target, "./assets/floor.png"),
+            normal_map: TextureLinear::load(log, target, "./assets/floor_norm.png"),
         };
         world.add(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
@@ -31,17 +31,17 @@ impl GameWorld {
 
         // Create the 3 test devices
         let device_model = Model::load(log, target, "./assets/device.obj", 0.1);
-        let flat_normal_map = Texture::load(log, target, "./assets/texture_norm.png");
+        let flat_normal_map = TextureLinear::load(log, target, "./assets/texture_norm.png");
         let material_device = Material {
-            base_color: Texture::load(log, target, "./assets/texture.png"),
+            base_color: TextureSrgb::load(log, target, "./assets/texture.png"),
             normal_map: flat_normal_map.clone(),
         };
         let material_working = Material {
-            base_color: Texture::load(log, target, "./assets/texture_broken.png"),
+            base_color: TextureSrgb::load(log, target, "./assets/texture_broken.png"),
             normal_map: flat_normal_map.clone(),
         };
         let material_broken = Material {
-            base_color: Texture::load(log, target, "./assets/texture_working.png"),
+            base_color: TextureSrgb::load(log, target, "./assets/texture_working.png"),
             normal_map: flat_normal_map.clone(),
         };
         let d1 = Device::new(

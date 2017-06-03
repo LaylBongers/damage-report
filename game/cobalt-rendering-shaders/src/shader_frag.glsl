@@ -12,7 +12,7 @@ layout(set = 0, binding = 3) uniform LightData {
 
 layout(location = 0) in vec3 f_position;
 layout(location = 1) in vec2 f_uv;
-layout(location = 2) in vec3 f_normal; //TODO: remove me after normal mapping
+layout(location = 2) in vec3 f_normal;
 layout(location = 3) in mat3 f_tbn;
 
 layout(location = 0) out vec4 o_color;
@@ -22,13 +22,11 @@ void main() {
     vec4 base_color_full = texture(u_material_base_color, f_uv);
     vec3 base_color = base_color_full.rgb;
 
-    // Calculate the normal for this fragment based on the vertices and map
-    vec3 normal = normalize(f_normal);
-    // TODO: Normal mapping
-    // Obtain normal from normal map in range [0,1]
-    //normal = texture(normalMap, fs_in.TexCoords).rgb;
-    // Transform normal vector to range [-1,1]
-    //normal = normalize(normal * 2.0 - 1.0)
+    // Calculate the normal for this fragment
+    //vec3 normal = normalize(f_normal);
+    vec3 normal = texture(u_material_normal_map, f_uv).rgb;
+    normal = normalize(normal * 2.0 - 1.0);
+    normal = normalize(f_tbn * normal);
 
     // Calculate various directions
     vec3 light_direction = normalize(u_light_data.light_position - f_position);
