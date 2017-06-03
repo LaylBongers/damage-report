@@ -11,18 +11,17 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use {Target};
 
-// TODO: This file contains different texture variants depending on format, we need to find a way
-// to merge their functionality better.
-
 /// An uploaded texture. Internally ref-counted, cheap clone.
 #[derive(Clone)]
 pub struct Texture {
-    texture: Arc<ImmutableImage<Format>>,//Arc<ImmutableImage<format::R8G8B8A8Srgb>>,
+    texture: Arc<ImmutableImage<Format>>,
     sampler: Arc<Sampler>,
 }
 
 impl Texture {
-    pub fn load<P: AsRef<Path>>(log: &Logger, target: &mut Target, path: P, srgb: bool) -> Self {
+    pub fn load<P: AsRef<Path>>(
+        log: &Logger, target: &mut Target, path: P, format: TextureFormat
+    ) -> Self {
         // Load in the image file
         info!(log, "Loading texture"; "path" => path.as_ref().display().to_string());
         let img = image::open(path.as_ref()).unwrap();
@@ -31,20 +30,23 @@ impl Texture {
         // Load the image data into a buffer
         let buffer = {
             let image_data = img.raw_pixels();
-            let image_data_chunks = image_data.chunks(4).map(|c| [c[0], c[1], c[2], c[3]]);
+
+            // If the format is LinearRed, we need to ignore the GBA elements
+            let chunk_size = if format != TextureFormat::LinearRed { 1 } else { 4 };
+            let image_data_iter = image_data.chunks(chunk_size).map(|c| c[0]);
 
             // TODO: staging buffer instead
-            CpuAccessibleBuffer::<[[u8; 4]]>::from_iter(
+            CpuAccessibleBuffer::<[u8]>::from_iter(
                 target.device().clone(), BufferUsage::all(),
-                Some(target.graphics_queue().family()), image_data_chunks
+                Some(target.graphics_queue().family()), image_data_iter
             ).unwrap()
         };
 
         // Get the correct format for the srgb parameter we got passed
-        let format = if srgb {
-            Format::R8G8B8A8Srgb
-        } else {
-            Format::R8G8B8A8Unorm
+        let format = match format {
+            TextureFormat::Srgb => Format::R8G8B8A8Srgb,
+            TextureFormat::Linear => Format::R8G8B8A8Unorm,
+            TextureFormat::LinearRed => Format::R8Unorm,
         };
 
         // Create the texture and sampler for the image, the texture data will later be copied in
@@ -77,4 +79,11 @@ impl Texture {
     pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
         (self.texture.clone(), self.sampler.clone())
     }
+}
+
+#[derive(PartialEq)]
+pub enum TextureFormat {
+    Srgb,
+    Linear,
+    LinearRed,
 }

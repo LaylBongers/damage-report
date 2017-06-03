@@ -38,7 +38,7 @@ pub struct Target {
 
     // Queued up things we need to submit as part of command buffers
     queued_texture_copies: Vec<(
-        Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
+        Arc<CpuAccessibleBuffer<[u8]>>,
         Arc<ImmutableImage<Format>>
     )>,
 
@@ -296,7 +296,7 @@ impl Target {
 
     pub fn queue_texture_copy(
         &mut self,
-        buffer: Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
+        buffer: Arc<CpuAccessibleBuffer<[u8]>>,
         texture: Arc<ImmutableImage<Format>>,
     ) {
         self.queued_texture_copies.push((buffer, texture));

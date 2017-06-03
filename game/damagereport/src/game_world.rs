@@ -1,6 +1,6 @@
 use cgmath::{Vector3};
 use slog::{Logger};
-use cobalt_rendering::{Target, Texture};
+use cobalt_rendering::{Target, Texture, TextureFormat};
 use cobalt_rendering_world3d::{World, Model, Entity, Light, EntityId, LightId, Material};
 
 use input::{InputState, FrameInput};
@@ -20,9 +20,13 @@ impl GameWorld {
         // Create the floor
         let floor_model = Model::load(log, target, "./assets/floor.obj", 0.1);
         let floor_material = Material {
-            base_color: Texture::load(log, target, "./assets/floor.png", true),
-            normal_map: Texture::load(log, target, "./assets/floor_norm.png", false),
-            specular_map: Texture::load(log, target, "./assets/floor_spec.png", false),
+            base_color: Texture::load(log, target, "./assets/floor.png", TextureFormat::Srgb),
+            normal_map: Texture::load(
+                log, target, "./assets/floor_norm.png", TextureFormat::Linear
+            ),
+            specular_map: Texture::load(
+                log, target, "./assets/floor_spec.png", TextureFormat::LinearRed
+            ),
         };
         world.add(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
@@ -32,20 +36,28 @@ impl GameWorld {
 
         // Create the 3 test devices
         let device_model = Model::load(log, target, "./assets/device.obj", 0.1);
-        let flat_normal_map = Texture::load(log, target, "./assets/texture_norm.png", false);
-        let flat_specular_map = Texture::load(log, target, "./assets/texture_spec.png", false);
+        let flat_normal_map = Texture::load(
+            log, target, "./assets/texture_norm.png", TextureFormat::Linear
+        );
+        let flat_specular_map = Texture::load(
+            log, target, "./assets/texture_spec.png", TextureFormat::LinearRed
+        );
         let material_device = Material {
-            base_color: Texture::load(log, target, "./assets/texture.png", true),
+            base_color: Texture::load(log, target, "./assets/texture.png", TextureFormat::Srgb),
             normal_map: flat_normal_map.clone(),
             specular_map: flat_specular_map.clone(),
         };
         let material_working = Material {
-            base_color: Texture::load(log, target, "./assets/texture_broken.png", true),
+            base_color: Texture::load(
+                log, target, "./assets/texture_broken.png", TextureFormat::Srgb
+            ),
             normal_map: flat_normal_map.clone(),
             specular_map: flat_specular_map.clone(),
         };
         let material_broken = Material {
-            base_color: Texture::load(log, target, "./assets/texture_working.png", true),
+            base_color: Texture::load(
+                log, target, "./assets/texture_working.png", TextureFormat::Srgb
+            ),
             normal_map: flat_normal_map.clone(),
             specular_map: flat_specular_map.clone(),
         };
