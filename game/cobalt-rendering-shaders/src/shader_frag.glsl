@@ -23,7 +23,6 @@ void main() {
     vec3 base_color = base_color_full.rgb;
 
     // Calculate the normal for this fragment
-    //vec3 normal = normalize(f_normal);
     vec3 normal = texture(u_material_normal_map, f_uv).rgb;
     normal = normalize(normal * 2.0 - 1.0);
     normal = normalize(f_tbn * normal);

@@ -80,8 +80,8 @@ impl Mesh {
             let v2 = &vertices[tri[2] as usize];
 
             // First get the deltas for positions and UVs
-            let edge1 = v1.position - v0.position;
-            let edge2 = v2.position - v0.position;
+            let delta_pos1 = v1.position - v0.position;
+            let delta_pos2 = v2.position - v0.position;
             let mut delta_uv1 = v1.uv - v0.uv;
             let mut delta_uv2 = v2.uv - v0.uv;
 
@@ -89,7 +89,9 @@ impl Mesh {
             // If a model has this it probably just has a debug/single color texture applied
             let e = 0.0001;
             if (f32::abs(delta_uv1.x) < e && f32::abs(delta_uv1.y) < e) ||
-               (f32::abs(delta_uv2.x) < e && f32::abs(delta_uv2.y) < e) {
+               (f32::abs(delta_uv2.x) < e && f32::abs(delta_uv2.y) < e) ||
+               (delta_uv1.x == 0.0 && delta_uv2.x == 0.0) ||
+               (delta_uv1.y == 0.0 && delta_uv2.y == 0.0) {
                 hotfixed_uvs = true;
                 delta_uv1 = Vector2::new(0.0, 1.0);
                 delta_uv2 = Vector2::new(1.0, 0.0);
@@ -98,10 +100,22 @@ impl Mesh {
             // Now calculate the actual tangent from that
             let f = 1.0 / (delta_uv1.x * delta_uv2.y - delta_uv2.x * delta_uv1.y);
             let tangent = Vector3::new(
-                f * (delta_uv2.y * edge1.x - delta_uv1.y * edge2.x),
-                f * (delta_uv2.y * edge1.y - delta_uv1.y * edge2.y),
-                f * (delta_uv2.y * edge1.z - delta_uv1.y * edge2.z),
+                f * (delta_uv2.y * delta_pos1.x - delta_uv1.y * delta_pos2.x),
+                f * (delta_uv2.y * delta_pos1.y - delta_uv1.y * delta_pos2.y),
+                f * (delta_uv2.y * delta_pos1.z - delta_uv1.y * delta_pos2.z),
             ).normalize();
+
+            // We panic on this just in case we didn't fix all bad UVs
+            if tangent.x.is_nan() || tangent.y.is_nan() {
+                error!(log, "NaN found");
+                error!(log, "delta_uv1: {:?}", delta_uv1);
+                error!(log, "delta_uv2: {:?}", delta_uv2);
+                error!(log, "delta_pos1: {:?}", delta_pos1);
+                error!(log, "delta_pos2: {:?}", delta_pos2);
+                error!(log, "f: {:?}", f);
+                error!(log, "tangent: {:?}", tangent);
+                panic!();
+            }
 
             // Store the tangent for these vertices
             tri_tangents[tri[0] as usize].add(tangent);
@@ -130,7 +144,7 @@ impl Mesh {
 
         // Log if we had to hotfix UVs
         if hotfixed_uvs {
-            warn!(log, "Found triangles with two or more of the same UVs, tangents may be wrong");
+            warn!(log, "Found triangles with bad UVs, tangents may be wrong");
         }
 
         debug!(log, "Created new mesh with";

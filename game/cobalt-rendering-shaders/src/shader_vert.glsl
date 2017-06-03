@@ -31,7 +31,10 @@ void main() {
     // Re-orthogonalize T with respect to N
     t = normalize(t - dot(t, n) * n);
     // Then retrieve perpendicular vector B with the cross product of T and N
-    vec3 b = cross(n, t);
+    // TODO: I'm not sure why I had to invert the result here, but without it
+    //  the normals were moved the wrong direction across the bitangent.
+    //  Tutorials aren't doing this so I'm not sure what's wrong.
+    vec3 b = -cross(n, t);
     f_tbn = mat3(t, b, n);
 
     // Create all the values the fragment shader will need
