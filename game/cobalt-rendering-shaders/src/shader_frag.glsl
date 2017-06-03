@@ -3,7 +3,8 @@
 
 layout(set = 0, binding = 1) uniform sampler2D u_material_base_color;
 layout(set = 0, binding = 2) uniform sampler2D u_material_normal_map;
-layout(set = 0, binding = 3) uniform LightData {
+layout(set = 0, binding = 3) uniform sampler2D u_material_specular_map;
+layout(set = 0, binding = 4) uniform LightData {
     vec3 camera_position;
     vec3 ambient_light;
     vec3 light_position;
@@ -16,6 +17,37 @@ layout(location = 2) in vec3 f_normal;
 layout(location = 3) in mat3 f_tbn;
 
 layout(location = 0) out vec4 o_color;
+
+vec3 calculate_diffuse(vec3 normal, vec3 light_direction) {
+    // Calculate the diffuse brightness of the light on this fragment
+    float diffuse_angle_dot_product = max(dot(normal, light_direction), 0.0);
+    vec3 diffuse = diffuse_angle_dot_product * u_light_data.light_color;
+
+    return diffuse;
+}
+
+vec3 calculate_specular(vec3 normal, vec3 light_direction, vec3 camera_direction) {
+    // Get the specular for this fragment
+    float specular_strength = texture(u_material_specular_map, f_uv).r;
+
+    // Calculate the specular brightness (using Blinn-Phong)
+    vec3 halfway_direction = normalize(light_direction + camera_direction);
+    float specular_angle_dot_product = pow(max(dot(normal, halfway_direction), 0.0), 16.0);
+    vec3 specular = specular_strength * specular_angle_dot_product * u_light_data.light_color;
+
+    return specular;
+}
+
+float calculate_falloff() {
+    // Calculate how much the light falls off over distance
+    // TODO: Take distance as parameter
+    float light_distance = 5.0f;
+    float distance = length(u_light_data.light_position - f_position);
+    float value = clamp(1 - pow(distance / light_distance, 4), 0.0, 1.0);
+    float falloff = (value * value) / (distance * distance) + 1;
+
+    return falloff;
+}
 
 void main() {
     // Isolate the base color from the texture
@@ -31,25 +63,15 @@ void main() {
     vec3 light_direction = normalize(u_light_data.light_position - f_position);
     vec3 camera_direction = normalize(u_light_data.camera_position - f_position);
 
-    // Calculate the diffuse brightness of the light on this fragment
-    float diffuse_angle_dot_product = max(dot(normal, light_direction), 0.0);
-    vec3 diffuse = diffuse_angle_dot_product * u_light_data.light_color;
+    // Calculate various values about the light on this fragment
+    vec3 diffuse_light = calculate_diffuse(normal, light_direction);
+    vec3 specular_light = calculate_specular(normal, light_direction, camera_direction);
+    float falloff = calculate_falloff();
 
-    // Calculate the specular brightness as well (using Blinn-Phong)
-    float specular_strength = 1.0;
-    vec3 halfway_direction = normalize(light_direction + camera_direction);
-    float specular_angle_dot_product = pow(max(dot(normal, halfway_direction), 0.0), 16.0);
-    vec3 specular = specular_strength * specular_angle_dot_product * u_light_data.light_color;
+    // Combine the values to get the final light value
+    vec3 point_light_value = (diffuse_light + specular_light) * falloff;
+    vec3 final_light = (u_light_data.ambient_light + point_light_value);
 
-    // Calculate how much the light falls off over distance
-    // TODO: Take distance as parameter
-    float light_distance = 5.0f;
-    float distance = length(u_light_data.light_position - f_position);
-    float value = clamp(1 - pow(distance / light_distance, 4), 0.0, 1.0);
-    float falloff = (value * value) / (distance * distance) + 1;
-
-    // Apply all the light values together and re-apply the alpha
-    vec3 final_light = (diffuse + specular) * falloff;
-    vec3 result = (u_light_data.ambient_light + final_light) * base_color;
-    o_color = vec4(result, base_color_full.a);
+    // Apply the final lighting to the base color and re-add the alpha
+    o_color = vec4(final_light * base_color, base_color_full.a);
 }

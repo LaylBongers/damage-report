@@ -157,6 +157,7 @@ impl Renderer {
             u_matrix_data: matrix_data_buffer,
             u_material_base_color: entity.material.base_color.uniform(),
             u_material_normal_map: entity.material.normal_map.uniform(),
+            u_material_specular_map: entity.material.specular_map.uniform(),
             u_light_data: light_data_buffer.clone(),
         }));
 

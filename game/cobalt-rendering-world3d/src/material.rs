@@ -4,4 +4,5 @@ use cobalt_rendering::{Texture};
 pub struct Material {
     pub base_color: Texture,
     pub normal_map: Texture,
+    pub specular_map: Texture,
 }

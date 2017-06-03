@@ -22,6 +22,7 @@ impl GameWorld {
         let floor_material = Material {
             base_color: Texture::load(log, target, "./assets/floor.png", true),
             normal_map: Texture::load(log, target, "./assets/floor_norm.png", false),
+            specular_map: Texture::load(log, target, "./assets/floor_spec.png", false),
         };
         world.add(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
@@ -32,17 +33,21 @@ impl GameWorld {
         // Create the 3 test devices
         let device_model = Model::load(log, target, "./assets/device.obj", 0.1);
         let flat_normal_map = Texture::load(log, target, "./assets/texture_norm.png", false);
+        let flat_specular_map = Texture::load(log, target, "./assets/texture_spec.png", false);
         let material_device = Material {
             base_color: Texture::load(log, target, "./assets/texture.png", true),
             normal_map: flat_normal_map.clone(),
+            specular_map: flat_specular_map.clone(),
         };
         let material_working = Material {
             base_color: Texture::load(log, target, "./assets/texture_broken.png", true),
             normal_map: flat_normal_map.clone(),
+            specular_map: flat_specular_map.clone(),
         };
         let material_broken = Material {
             base_color: Texture::load(log, target, "./assets/texture_working.png", true),
             normal_map: flat_normal_map.clone(),
+            specular_map: flat_specular_map.clone(),
         };
         let d1 = Device::new(
             world, Vector3::new(-2.0, 0.0, -4.0), &device_model,
