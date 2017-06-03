@@ -7,6 +7,6 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 cgmath = "0.14.1"
 image = "0.13.0"
 slog = "2.0.5"
-vulkano = {git = "https://github.com/tomaka/vulkano.git"}
-vulkano-win = {git = "https://github.com/tomaka/vulkano.git"}
+vulkano = "0.4.0"
+vulkano-win = "0.4.0"
 winit = "0.6.4"

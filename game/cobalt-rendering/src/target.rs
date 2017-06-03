@@ -83,7 +83,7 @@ impl Target {
         let window = WindowBuilder::new()
             .with_dimensions(size.x, size.y)
             .with_title(format!("Cobalt"))
-            .build_vk_surface(&events_loop, &instance)
+            .build_vk_surface(&events_loop, instance.clone())
             .map_platform_err()?;
 
         // Find a GPU graphics queue family, we later create a queue from this family to talk to
@@ -92,7 +92,7 @@ impl Target {
         let graphics_queue_family = physical.queue_families().find(|q| {
             // The queue needs to support graphics (of course) and needs to support drawing to
             //  the previously created window's surface
-            q.supports_graphics() && window.surface().is_supported(q).unwrap_or(false)
+            q.supports_graphics() && window.surface().is_supported(*q).unwrap_or(false)
         }).unwrap();
 
         // Finally, we create our actual connection with the GPU. We need a "device", which
@@ -124,7 +124,7 @@ impl Target {
         let (swapchain, images) = {
             // Get what the swap chain we want to create would be capable of, we can't request
             //  anything it can't do
-            let caps = window.surface().get_capabilities(&physical).unwrap();
+            let caps = window.surface().capabilities(physical).unwrap();
 
             // The swap chain's dimensions need to match the window size
             let dimensions = caps.current_extent.unwrap_or([size.x, size.y]);
@@ -144,7 +144,8 @@ impl Target {
 
             // Finally, actually create the swap chain
             Swapchain::new(
-                device.clone(), &window.surface(), caps.min_image_count, format, dimensions, 1,
+                device.clone(), window.surface().clone(), caps.min_image_count, format,
+                dimensions, 1,
                 caps.supported_usage_flags, &graphics_queue, SurfaceTransform::Identity, alpha,
                 present, true, None
             ).unwrap()
@@ -156,26 +157,28 @@ impl Target {
         let depth_buffer = {
             use vulkano::image::{Image};
             use vulkano::image::attachment::{AttachmentImage};
+
             AttachmentImage::transient(
-                device.clone(), (&images[0] as &Image<Access=_>).dimensions().width_height(),
-                D16Unorm
-            ).unwrap().access()
+                device.clone(), images[0].dimensions().width_height(), D16Unorm
+            ).unwrap()
         };
 
         // Set up a render pass TODO: Comment better
+        let color_buffer_format = swapchain.format();
+        let depth_buffer_format = ::vulkano::format::Format::D16Unorm;
         #[allow(dead_code)]
         let render_pass = Arc::new(single_pass_renderpass!(device.clone(),
             attachments: {
                 color: {
                     load: Clear,
                     store: Store,
-                    format: images[0].format(),
+                    format: color_buffer_format,
                     samples: 1,
                 },
                 depth: {
                     load: Clear,
                     store: DontCare,
-                    format: ::vulkano::image::ImageAccess::format(&depth_buffer),
+                    format: depth_buffer_format,
                     samples: 1,
                 }
             },
@@ -188,12 +191,11 @@ impl Target {
         // Set up the frame buffers matching the render pass TODO: Comment better
         debug!(log, "Creating framebuffers for swapchain");
         let framebuffers = images.iter().map(|image| {
-            let attachments = render_pass.desc().start_attachments()
-                .color(image.clone())
-                .depth(depth_buffer.clone());
-            let dimensions = [image.dimensions()[0], image.dimensions()[1], 1];
-            Framebuffer::new(render_pass.clone(), dimensions, attachments).unwrap()
-                as Arc<FramebufferAbstract + Send + Sync>
+            Arc::new(Framebuffer::start(render_pass.clone())
+                .add(image.clone()).unwrap()
+                .add(depth_buffer.clone()).unwrap()
+                .build().unwrap()
+            ) as Arc<FramebufferAbstract + Send + Sync>
         }).collect::<Vec<_>>();
 
         Ok(Target {
@@ -252,7 +254,9 @@ impl Target {
         }
 
         // Get the image for this frame
-        let (image_num, future) = self.swapchain.acquire_next_image(Duration::new(1, 0)).unwrap();
+        let (image_num, future) = ::vulkano::swapchain::acquire_next_image(
+            self.swapchain.clone(), Duration::new(1, 0)
+        ).unwrap();
 
         // Create the command buffer for this frame, this will hold all the draw calls and we'll
         //  submit them all at once
