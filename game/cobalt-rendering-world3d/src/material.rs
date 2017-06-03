@@ -1,7 +1,7 @@
-use cobalt_rendering::{TextureLinear, TextureSrgb};
+use cobalt_rendering::{Texture};
 
 #[derive(Clone)]
 pub struct Material {
-    pub base_color: TextureSrgb,
-    pub normal_map: TextureLinear,
+    pub base_color: Texture,
+    pub normal_map: Texture,
 }

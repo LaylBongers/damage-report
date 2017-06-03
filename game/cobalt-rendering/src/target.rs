@@ -3,7 +3,7 @@ use std::time::{Duration};
 
 use cgmath::{Vector2};
 use slog::{Logger};
-use vulkano::format;
+use vulkano::format::{Format};
 use vulkano::buffer::{CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
 use vulkano::device::{DeviceExtensions, Device, Queue};
@@ -37,14 +37,9 @@ pub struct Target {
     submissions: Vec<Box<GpuFuture>>,
 
     // Queued up things we need to submit as part of command buffers
-    // TODO: Make these generic over formats
-    queued_unorm_texture_copies: Vec<(
+    queued_texture_copies: Vec<(
         Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
-        Arc<ImmutableImage<format::R8G8B8A8Unorm>>
-    )>,
-    queued_srgb_texture_copies: Vec<(
-        Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
-        Arc<ImmutableImage<format::R8G8B8A8Srgb>>
+        Arc<ImmutableImage<Format>>
     )>,
 
     // Generic data
@@ -211,8 +206,7 @@ impl Target {
 
             submissions: Vec::new(),
 
-            queued_unorm_texture_copies: Vec::new(),
-            queued_srgb_texture_copies: Vec::new(),
+            queued_texture_copies: Vec::new(),
 
             size,
             focused: true,
@@ -265,12 +259,7 @@ impl Target {
         ).unwrap();
 
         // Add any textures we need to upload to the command buffer
-        while let Some(val) = self.queued_unorm_texture_copies.pop() {
-            command_buffer_builder = command_buffer_builder
-                .copy_buffer_to_image(val.0, val.1)
-                .unwrap();
-        }
-        while let Some(val) = self.queued_srgb_texture_copies.pop() {
+        while let Some(val) = self.queued_texture_copies.pop() {
             command_buffer_builder = command_buffer_builder
                 .copy_buffer_to_image(val.0, val.1)
                 .unwrap();
@@ -305,20 +294,12 @@ impl Target {
             .unwrap();
     }
 
-    pub fn queue_unorm_texture_copy(
+    pub fn queue_texture_copy(
         &mut self,
         buffer: Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
-        texture: Arc<ImmutableImage<format::R8G8B8A8Unorm>>,
+        texture: Arc<ImmutableImage<Format>>,
     ) {
-        self.queued_unorm_texture_copies.push((buffer, texture));
-    }
-
-    pub fn queue_srgb_texture_copy(
-        &mut self,
-        buffer: Arc<CpuAccessibleBuffer<[[u8; 4]]>>,
-        texture: Arc<ImmutableImage<format::R8G8B8A8Srgb>>,
-    ) {
-        self.queued_srgb_texture_copies.push((buffer, texture));
+        self.queued_texture_copies.push((buffer, texture));
     }
 
     pub fn device(&self) -> &Arc<Device> {

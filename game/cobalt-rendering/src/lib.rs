@@ -13,4 +13,4 @@ mod texture;
 
 pub use error::{Error};
 pub use target::{Target, Event, Frame};
-pub use texture::{TextureSrgb, TextureLinear};
+pub use texture::{Texture};
