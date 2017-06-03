@@ -88,8 +88,8 @@ impl Mesh {
             // Hotfix any bad UV data, most likely these don't have working normal maps anyways
             // If a model has this it probably just has a debug/single color texture applied
             let e = 0.0001;
-            if f32::abs(delta_uv1.x) < e || f32::abs(delta_uv1.y) < e ||
-               f32::abs(delta_uv2.x) < e || f32::abs(delta_uv2.y) < e {
+            if (f32::abs(delta_uv1.x) < e && f32::abs(delta_uv1.y) < e) ||
+               (f32::abs(delta_uv2.x) < e && f32::abs(delta_uv2.y) < e) {
                 hotfixed_uvs = true;
                 delta_uv1 = Vector2::new(0.0, 1.0);
                 delta_uv2 = Vector2::new(1.0, 0.0);
