@@ -17,6 +17,7 @@ use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
 use vulkano::framebuffer::{Subpass, Framebuffer, FramebufferAbstract, RenderPassAbstract};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sync::{GpuFuture};
+use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use cobalt_rendering_shaders::{gbuffer_vs, gbuffer_fs, lighting_vs, lighting_fs};
 
 use cobalt_rendering::{Target, Frame};
@@ -25,6 +26,8 @@ use {Camera, World, Entity};
 pub struct Renderer {
     gbuffer_framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     gbuffer_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    gbuffer_base_color_attachment: Arc<AttachmentImage<format::R8G8B8A8Srgb>>,
+    gbuffer_sampler: Arc<Sampler>,
     lighting_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
 }
 
@@ -34,16 +37,16 @@ impl Renderer {
 
         // Create the attachment images that make up the G-buffer
         debug!(log, "Creating g-buffer attachment images");
-        let position_attachment = AttachmentImage::new(
+        let gbuffer_position_attachment = AttachmentImage::new(
             target.device().clone(), target.size().into(), format::R16G16B16A16Sfloat
         ).unwrap();
-        let base_color_attachment = AttachmentImage::new(
+        let gbuffer_base_color_attachment = AttachmentImage::new(
             target.device().clone(), target.size().into(), format::R8G8B8A8Srgb
         ).unwrap();
-        let normal_attachment = AttachmentImage::new(
+        let gbuffer_normal_attachment = AttachmentImage::new(
             target.device().clone(), target.size().into(), format::R8G8B8A8Unorm
         ).unwrap();
-        let depth_attachment = AttachmentImage::transient(
+        let gbuffer_depth_attachment = AttachmentImage::transient(
             target.device().clone(), target.size().into(), format::D16Unorm
         ).unwrap();
 
@@ -73,7 +76,7 @@ impl Renderer {
                 },
                 depth: {
                     load: Clear,
-                    store: DontCare,
+                    store: Store,
                     format: Format::D16Unorm,
                     samples: 1,
                 }
@@ -88,10 +91,10 @@ impl Renderer {
         //  what images we want to render to
         debug!(log, "Creating g-buffer framebuffer");
         let gbuffer_framebuffer = Arc::new(Framebuffer::start(gbuffer_render_pass.clone())
-            .add(position_attachment.clone()).unwrap()
-            .add(base_color_attachment.clone()).unwrap()
-            .add(normal_attachment.clone()).unwrap()
-            .add(depth_attachment.clone()).unwrap()
+            .add(gbuffer_position_attachment.clone()).unwrap()
+            .add(gbuffer_base_color_attachment.clone()).unwrap()
+            .add(gbuffer_normal_attachment.clone()).unwrap()
+            .add(gbuffer_depth_attachment.clone()).unwrap()
             .build().unwrap()
         ) as Arc<FramebufferAbstract + Send + Sync>;
 
@@ -99,9 +102,24 @@ impl Renderer {
         let gbuffer_pipeline = load_gbuffer_pipeline(log, target, gbuffer_render_pass);
         let lighting_pipeline = load_lighting_pipeline(log, target);
 
+        // Create a sampler that we'll use to sample the gbuffer images, this will map 1:1, so just
+        //  use nearest. TODO: Because it's 1:1 we can move the gbuffer-lighting steps to subpasses
+        let gbuffer_sampler = Sampler::new(
+            target.device().clone(),
+            Filter::Nearest,
+            Filter::Nearest,
+            MipmapMode::Nearest,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            0.0, 1.0, 0.0, 0.0
+        ).unwrap();
+
         Renderer {
             gbuffer_framebuffer,
             gbuffer_pipeline,
+            gbuffer_base_color_attachment,
+            gbuffer_sampler,
             lighting_pipeline,
         }
     }
@@ -226,10 +244,17 @@ impl Renderer {
             sst_vertices.into_iter()
         ).unwrap();
 
+        // Fill the uniforms set with all the gbuffer images
+        let set = Arc::new(simple_descriptor_set!(self.lighting_pipeline.clone(), 0, {
+            u_gbuffer_base_color: (
+                self.gbuffer_base_color_attachment.clone(), self.gbuffer_sampler.clone()
+            ),
+        }));
+
         // Submit the triangle for rendering
         command_buffer_builder = command_buffer_builder
             .draw(
-                self.lighting_pipeline.clone(), DynamicState::none(), vec!(sst_buffer), (), ()
+                self.lighting_pipeline.clone(), DynamicState::none(), vec!(sst_buffer), set, ()
             ).unwrap();
 
         // Finally, finish the render pass

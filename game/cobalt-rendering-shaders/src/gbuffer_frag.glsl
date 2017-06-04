@@ -13,7 +13,7 @@ layout(location = 1) out vec4 o_base_color;
 layout(location = 2) out vec4 o_normal;
 
 void main() {
-    o_position = vec4(f_position, 0.0);
-    o_base_color = vec4(texture(u_material_base_color, f_uv).rgb, 0.0);
-    o_normal = vec4(f_normal, 0.0);
+    o_position = vec4(f_position, 1.0);
+    o_base_color = vec4(texture(u_material_base_color, f_uv).rgb, 1.0);
+    o_normal = vec4(f_normal, 1.0);
 }
