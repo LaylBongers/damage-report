@@ -3,7 +3,7 @@ use std::sync::{Arc};
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
 use slog::{Logger};
 use vulkano::format::{self, Format};
-use vulkano::image::{Image};
+use vulkano::image::{Image, ImageUsage};
 use vulkano::image::attachment::{AttachmentImage};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
@@ -35,16 +35,23 @@ impl Renderer {
     pub fn init(log: &Logger, target: &Target) -> Self {
         info!(log, "Initializing world renderer");
 
+        // The gbuffer attachments we end up using in the final lighting pass need to have sampled
+        //  set to true, or we can't sample them, resulting in a black color result.
+        let attach_usage = ImageUsage {
+            sampled: true,
+            .. ImageUsage::none()
+        };
+
         // Create the attachment images that make up the G-buffer
         debug!(log, "Creating g-buffer attachment images");
-        let gbuffer_position_attachment = AttachmentImage::new(
-            target.device().clone(), target.size().into(), format::R16G16B16A16Sfloat
+        let gbuffer_position_attachment = AttachmentImage::with_usage(
+            target.device().clone(), target.size().into(), format::R16G16B16A16Sfloat, attach_usage
         ).unwrap();
-        let gbuffer_base_color_attachment = AttachmentImage::new(
-            target.device().clone(), target.size().into(), format::R8G8B8A8Srgb
+        let gbuffer_base_color_attachment = AttachmentImage::with_usage(
+            target.device().clone(), target.size().into(), format::R8G8B8A8Srgb, attach_usage
         ).unwrap();
-        let gbuffer_normal_attachment = AttachmentImage::new(
-            target.device().clone(), target.size().into(), format::R8G8B8A8Unorm
+        let gbuffer_normal_attachment = AttachmentImage::with_usage(
+            target.device().clone(), target.size().into(), format::R8G8B8A8Unorm, attach_usage
         ).unwrap();
         let gbuffer_depth_attachment = AttachmentImage::transient(
             target.device().clone(), target.size().into(), format::D16Unorm
@@ -76,7 +83,7 @@ impl Renderer {
                 },
                 depth: {
                     load: Clear,
-                    store: Store,
+                    store: DontCare,
                     format: Format::D16Unorm,
                     samples: 1,
                 }
