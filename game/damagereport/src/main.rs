@@ -96,10 +96,6 @@ fn handle_events(
                 frame_input.pitch += difference.y as f32 * -0.0005;
                 frame_input.yaw += difference.x as f32 * -0.0005;
 
-                // TODO: Remove this, disabled for debugging
-                frame_input.pitch = 0.0;
-                frame_input.yaw = 0.0;
-
                 // Re-center the mouse so it stays in the middle of the screen
                 target.set_cursor_position(center);
             },

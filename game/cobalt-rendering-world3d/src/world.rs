@@ -11,7 +11,7 @@ impl World {
     pub fn new() -> Self {
         World {
             entities: Vec::new(),
-            ambient_light: Vector3::new(0.01, 0.01, 0.01),
+            ambient_light: Vector3::new(0.0, 0.0, 0.0),
             lights: Vec::new(),
         }
     }

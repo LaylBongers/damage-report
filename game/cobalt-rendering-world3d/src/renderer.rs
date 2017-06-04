@@ -26,8 +26,12 @@ use {Camera, World, Entity};
 pub struct Renderer {
     gbuffer_framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     gbuffer_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+
+    gbuffer_position_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
     gbuffer_base_color_attachment: Arc<AttachmentImage<format::R8G8B8A8Srgb>>,
+    gbuffer_normal_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
     gbuffer_sampler: Arc<Sampler>,
+
     lighting_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
 }
 
@@ -51,7 +55,7 @@ impl Renderer {
             target.device().clone(), target.size().into(), format::R8G8B8A8Srgb, attach_usage
         ).unwrap();
         let gbuffer_normal_attachment = AttachmentImage::with_usage(
-            target.device().clone(), target.size().into(), format::R8G8B8A8Unorm, attach_usage
+            target.device().clone(), target.size().into(), format::R16G16B16A16Sfloat, attach_usage
         ).unwrap();
         let gbuffer_depth_attachment = AttachmentImage::transient(
             target.device().clone(), target.size().into(), format::D16Unorm
@@ -78,7 +82,7 @@ impl Renderer {
                 normal: {
                     load: Clear,
                     store: Store,
-                    format: Format::R8G8B8A8Unorm,
+                    format: Format::R16G16B16A16Sfloat,
                     samples: 1,
                 },
                 depth: {
@@ -125,8 +129,12 @@ impl Renderer {
         Renderer {
             gbuffer_framebuffer,
             gbuffer_pipeline,
+
+            gbuffer_position_attachment,
             gbuffer_base_color_attachment,
+            gbuffer_normal_attachment,
             gbuffer_sampler,
+
             lighting_pipeline,
         }
     }
@@ -142,8 +150,9 @@ impl Renderer {
         //  rendering.
         let deferred_command_buffer = self.build_gbuffer_command_buffer(target, camera, world)
             .build().unwrap();
-        let lighting_command_buffer = self.build_lighting_command_buffer(target, frame)
-            .build().unwrap();
+        let lighting_command_buffer = self.build_lighting_command_buffer(
+            target, frame, camera, world
+        ).build().unwrap();
 
         // Add the command buffers to the future we're building up, making sure they're in the
         //  right sequence. G-buffer first, then the lighting pass that depends on the g-buffer.
@@ -209,6 +218,7 @@ impl Renderer {
         let set = Arc::new(simple_descriptor_set!(self.gbuffer_pipeline.clone(), 0, {
             u_matrix_data: matrix_data_buffer,
             u_material_base_color: entity.material.base_color.uniform(),
+            u_material_normal_map: entity.material.normal_map.uniform(),
         }));
 
         // Perform the actual draw
@@ -221,7 +231,7 @@ impl Renderer {
     }
 
     pub fn build_lighting_command_buffer(
-        &mut self, target: &mut Target, frame: &Frame,
+        &mut self, target: &mut Target, frame: &Frame, camera: &Camera, world: &World,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             target.device().clone(), target.graphics_queue().family()
@@ -251,11 +261,38 @@ impl Renderer {
             sst_vertices.into_iter()
         ).unwrap();
 
+        // Retrieve the one point light
+        // TODO: Support variable light amounts
+        assert!(world.lights().len() == 1);
+        let light = &world.lights()[0];
+
+        // Create a buffer with all the lighting data, so we can send it over to the shader which
+        //  needs this data to actually calculate the light for every pixel.
+        let light_data_buffer = CpuAccessibleBuffer::<lighting_fs::ty::LightData>::from_data(
+            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
+            lighting_fs::ty::LightData {
+                camera_position: camera.position.into(),
+                _dummy0: Default::default(),
+                ambient_light: world.ambient_light().into(),
+                _dummy1: Default::default(),
+                light_position: light.position.into(),
+                _dummy2: Default::default(),
+                light_color: light.color.into(),
+            }
+        ).unwrap();
+
         // Fill the uniforms set with all the gbuffer images
         let set = Arc::new(simple_descriptor_set!(self.lighting_pipeline.clone(), 0, {
+            u_gbuffer_position: (
+                self.gbuffer_position_attachment.clone(), self.gbuffer_sampler.clone()
+            ),
             u_gbuffer_base_color: (
                 self.gbuffer_base_color_attachment.clone(), self.gbuffer_sampler.clone()
             ),
+            u_gbuffer_normal: (
+                self.gbuffer_normal_attachment.clone(), self.gbuffer_sampler.clone()
+            ),
+            u_light_data: light_data_buffer,
         }));
 
         // Submit the triangle for rendering
