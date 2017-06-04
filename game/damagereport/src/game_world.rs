@@ -92,7 +92,7 @@ impl GameWorld {
     }
 
     pub fn update(
-        &mut self, log: &Logger, time: f32, world: &mut World,
+        &mut self, time: f32, world: &mut World,
         input_state: &InputState, frame_input: &FrameInput
     ) {
         // Update the player based on the input we got so far
@@ -100,7 +100,7 @@ impl GameWorld {
 
         // Update the devices
         for device in &mut self.devices {
-            device.update(log, time, world);
+            device.update(time, world);
         }
 
         // Rotate the light around
@@ -144,11 +144,11 @@ impl Device {
         }
     }
 
-    fn set_status(&mut self, log: &Logger, value: bool) {
+    fn set_status(&mut self, value: bool) {
         self.status = value;
     }
 
-    fn update(&mut self, log: &Logger, time: f32, world: &mut World) {
+    fn update(&mut self, time: f32, world: &mut World) {
         if self.status {
             self.fixedness -= time;
         } else {
@@ -156,13 +156,13 @@ impl Device {
         }
 
         if self.fixedness < 0.0 && self.status {
-            self.set_status(log, false);
+            self.set_status(false);
 
             let entity = world.entity_mut(self.light_entity);
             entity.material = self.material_broken.clone();
         }
         if self.fixedness > 1.0 && !self.status {
-            self.set_status(log, true);
+            self.set_status(true);
 
             let entity = world.entity_mut(self.light_entity);
             entity.material = self.material_working.clone();

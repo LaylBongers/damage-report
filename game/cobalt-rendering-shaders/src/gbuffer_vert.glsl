@@ -9,10 +9,6 @@ layout(set = 0, binding = 0) uniform MatrixData {
 layout(location = 0) in vec3 v_position;
 layout(location = 1) in vec2 v_uv;
 layout(location = 2) in vec3 v_normal;
-// TODO: Make use of this for normal mapping
-// Right now I think it's not calculated right anyways
-// TODO: I think the reason it didn't work right was actually because of normal
-//  maps being loaded in as sRGB when they shouldn't be.
 layout(location = 3) in vec3 v_tangent;
 
 layout(location = 0) out vec3 f_position;

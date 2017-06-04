@@ -14,16 +14,17 @@ use vulkano::pipeline::input_assembly::{InputAssembly};
 use vulkano::pipeline::multisample::{Multisample};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
-use vulkano::framebuffer::{Subpass, Framebuffer, RenderPassAbstract, FramebufferAbstract};
+use vulkano::framebuffer::{Subpass, Framebuffer, FramebufferAbstract, RenderPassAbstract};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sync::{GpuFuture};
-use cobalt_rendering_shaders::{deferred_vs, deferred_fs, lighting_vs, lighting_fs};
+use cobalt_rendering_shaders::{gbuffer_vs, gbuffer_fs, lighting_vs, lighting_fs};
 
 use cobalt_rendering::{Target, Frame};
 use {Camera, World, Entity};
 
 pub struct Renderer {
-    deferred_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    gbuffer_framebuffer: Arc<FramebufferAbstract + Send + Sync>,
+    gbuffer_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
     lighting_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
 }
 
@@ -36,6 +37,9 @@ impl Renderer {
         let position_attachment = AttachmentImage::new(
             target.device().clone(), target.size().into(), format::R16G16B16A16Sfloat
         ).unwrap();
+        let base_color_attachment = AttachmentImage::new(
+            target.device().clone(), target.size().into(), format::R8G8B8A8Srgb
+        ).unwrap();
         let depth_attachment = AttachmentImage::transient(
             target.device().clone(), target.size().into(), format::D16Unorm
         ).unwrap();
@@ -44,12 +48,18 @@ impl Renderer {
         // TODO: Document better what a render pass does that a framebuffer doesn't
         debug!(log, "Creating g-buffer render pass");
         #[allow(dead_code)]
-        let render_pass = Arc::new(single_pass_renderpass!(target.device().clone(),
+        let gbuffer_render_pass = Arc::new(single_pass_renderpass!(target.device().clone(),
             attachments: {
                 position: {
                     load: Clear,
                     store: Store,
                     format: Format::R16G16B16A16Sfloat,
+                    samples: 1,
+                },
+                base_color: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R8G8B8A8Srgb,
                     samples: 1,
                 },
                 depth: {
@@ -60,7 +70,7 @@ impl Renderer {
                 }
             },
             pass: {
-                color: [position],
+                color: [position, base_color],
                 depth_stencil: {depth}
             }
         ).unwrap());
@@ -68,18 +78,20 @@ impl Renderer {
         // Create the off-screen g-buffer framebuffer that we will use to actually tell vulkano
         //  what images we want to render to
         debug!(log, "Creating g-buffer framebuffer");
-        let framebuffer = Arc::new(Framebuffer::start(render_pass.clone())
+        let gbuffer_framebuffer = Arc::new(Framebuffer::start(gbuffer_render_pass.clone())
             .add(position_attachment.clone()).unwrap()
+            .add(base_color_attachment.clone()).unwrap()
             .add(depth_attachment.clone()).unwrap()
             .build().unwrap()
         ) as Arc<FramebufferAbstract + Send + Sync>;
 
         // Set up the shaders and pipelines
-        let deferred_pipeline = load_deferred_pipeline(log, target);
+        let gbuffer_pipeline = load_gbuffer_pipeline(log, target, gbuffer_render_pass);
         let lighting_pipeline = load_lighting_pipeline(log, target);
 
         Renderer {
-            deferred_pipeline,
+            gbuffer_framebuffer,
+            gbuffer_pipeline,
             lighting_pipeline,
         }
     }
@@ -91,49 +103,84 @@ impl Renderer {
         //  implemented it this way to not stray from the examples
 
         // Build up the command buffers that contain all the rendering commands, telling the driver
-        //  to actually render triangles to buffers
+        //  to actually render triangles to buffers. This is most likely the heaviest part of
+        //  rendering.
+        let deferred_command_buffer = self.build_gbuffer_command_buffer(target, camera, world)
+            .build().unwrap();
         let lighting_command_buffer = self.build_lighting_command_buffer(target, frame)
             .build().unwrap();
 
         // Add the command buffers to the future we're building up, making sure they're in the
         //  right sequence. G-buffer first, then the lighting pass that depends on the g-buffer.
-        // TODO: Actually do that
         let future = frame.future.take().unwrap()
+            .then_execute(target.graphics_queue().clone(), deferred_command_buffer).unwrap()
             .then_execute(target.graphics_queue().clone(), lighting_command_buffer).unwrap();
         frame.future = Some(Box::new(future));
+    }
 
-        /*
-        // Create the projection-view matrix needed for the perspective rendering
-        let projection_view = Self::create_projection_view(target, camera);
-
-        // Retrieve the one point light
-        // TODO: Support variable light amounts
-        assert!(world.lights().len() == 1);
-        let light = &world.lights()[0];
-
-        // Send over the lights information to vulkan
-        let light_data_buffer = CpuAccessibleBuffer::<fs::ty::LightData>::from_data(
-            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
-            fs::ty::LightData {
-                camera_position: camera.position.into(),
-                _dummy0: Default::default(),
-                ambient_light: world.ambient_light().into(),
-                _dummy1: Default::default(),
-                light_position: light.position.into(),
-                _dummy2: Default::default(),
-                light_color: light.color.into(),
-            }
+    pub fn build_gbuffer_command_buffer(
+        &mut self, target: &mut Target, camera: &Camera, world: &World,
+    ) -> AutoCommandBufferBuilder {
+        let mut command_buffer_builder = AutoCommandBufferBuilder::new(
+            target.device().clone(), target.graphics_queue().family()
         ).unwrap();
+
+        let clear_values = vec!(
+            // These colors has no special significance, it's just useful for debugging that a lack
+            //  of a value is set to black.
+            ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
+            ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
+            ClearValue::Depth(1.0)
+        );
+        command_buffer_builder = command_buffer_builder
+            .begin_render_pass(self.gbuffer_framebuffer.clone(), false, clear_values).unwrap();
+
+        // Create the projection-view matrix needed for the perspective rendering
+        let projection_view = create_projection_view_matrix(target, camera);
 
         // Go over everything in the world
         for entity in world.entities() {
-            self.render_entity(entity, target, frame, &projection_view, &light_data_buffer);
+            command_buffer_builder = self.render_entity(
+                entity, target, &projection_view, command_buffer_builder
+            );
         }
 
         // Finish the render pass
-        frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
-            .end_render_pass().unwrap()
-        );*/
+        command_buffer_builder.end_render_pass().unwrap()
+    }
+
+    fn render_entity(
+        &self,
+        entity: &Entity, target: &mut Target,
+        projection_view: &Matrix4<f32>,
+        command_buffer: AutoCommandBufferBuilder,
+    ) -> AutoCommandBufferBuilder {
+        // Create a matrix for this world entity
+        let model = Matrix4::from_translation(entity.position);
+        let total_matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
+        let model_matrix_raw: [[f32; 4]; 4] = model.into();
+
+        // Send the matrices over to the GPU
+        let matrix_data_buffer = CpuAccessibleBuffer::<gbuffer_vs::ty::MatrixData>::from_data(
+            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
+            gbuffer_vs::ty::MatrixData {
+                total: total_matrix_raw,
+                model: model_matrix_raw,
+            }
+        ).unwrap();
+
+        // Create the final uniforms set
+        let set = Arc::new(simple_descriptor_set!(self.gbuffer_pipeline.clone(), 0, {
+            u_matrix_data: matrix_data_buffer,
+        }));
+
+        // Perform the actual draw
+        command_buffer
+            .draw_indexed(
+                self.gbuffer_pipeline.clone(), DynamicState::none(),
+                vec!(entity.mesh.vertex_buffer.clone()), entity.mesh.index_buffer.clone(),
+                set, ()
+            ).unwrap()
     }
 
     pub fn build_lighting_command_buffer(
@@ -176,73 +223,19 @@ impl Renderer {
         // Finally, finish the render pass
         command_buffer_builder.end_render_pass().unwrap()
     }
-
-    /*fn create_projection_view(target: &mut Target, camera: &Camera) -> Matrix4<f32> {
-        let perspective = PerspectiveFov {
-            fovy: Rad::full_turn() * 0.25,
-            aspect: target.size().x as f32 / target.size().y as f32,
-            near: 0.1,
-            far: 500.0,
-        };
-        // Flip the projection upside down, glm expects opengl values, we need vulkan values
-        let projection =
-            Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) * Matrix4::from(perspective);
-        let view = camera.create_world_to_view_matrix();
-
-        // Combine the projection and the view, we don't need them separately
-        projection * view
-    }
-
-    fn render_entity(
-        &self,
-        entity: &Entity, target: &mut Target, frame: &mut Frame,
-        projection_view: &Matrix4<f32>,
-        light_data_buffer: &Arc<CpuAccessibleBuffer<fs::ty::LightData>>
-    ) {
-        // Create a matrix for this world entity
-        let model = Matrix4::from_translation(entity.position);
-        let total_matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
-        let model_matrix_raw: [[f32; 4]; 4] = model.into();
-
-        // Send the matrices over to the GPU
-        let matrix_data_buffer = CpuAccessibleBuffer::<vs::ty::MatrixData>::from_data(
-            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
-            vs::ty::MatrixData {
-                total: total_matrix_raw,
-                model: model_matrix_raw,
-            }
-        ).unwrap();
-
-        // Create the final uniforms set
-        let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
-            u_matrix_data: matrix_data_buffer,
-            u_material_base_color: entity.material.base_color.uniform(),
-            u_material_normal_map: entity.material.normal_map.uniform(),
-            u_material_specular_map: entity.material.specular_map.uniform(),
-            u_light_data: light_data_buffer.clone(),
-        }));
-
-        // Perform the actual draw
-        frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
-            .draw_indexed(
-                self.pipeline.clone(), DynamicState::none(),
-                vec!(entity.mesh.vertex_buffer.clone()), entity.mesh.index_buffer.clone(),
-                set, ()
-            ).unwrap()
-        );
-    }*/
 }
 
-fn load_deferred_pipeline(
-    log: &Logger, target: &Target
+fn load_gbuffer_pipeline(
+    log: &Logger, target: &Target,
+    gbuffer_render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
-    debug!(log, "Loading deferred shaders");
-    let vs = deferred_vs::Shader::load(target.device()).unwrap();
-    let fs = deferred_fs::Shader::load(target.device()).unwrap();
+    debug!(log, "Loading gbuffer shaders");
+    let vs = gbuffer_vs::Shader::load(target.device()).unwrap();
+    let fs = gbuffer_fs::Shader::load(target.device()).unwrap();
 
     // Set up the pipeline
-    debug!(log, "Creating deferred pipeline");
+    debug!(log, "Creating gbuffer pipeline");
     let dimensions = target.images()[0].dimensions().width_height();
     let pipeline_params = GraphicsPipelineParams {
         vertex_input: SingleBufferDefinition::new(),
@@ -268,7 +261,7 @@ fn load_deferred_pipeline(
         fragment_shader: fs.main_entry_point(),
         depth_stencil: DepthStencil::simple_depth_test(),
         blend: Blend::pass_through(),
-        render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
+        render_pass: Subpass::from(gbuffer_render_pass, 0).unwrap(),
     };
 
     Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap())
@@ -323,3 +316,19 @@ pub struct ScreenSizeTriVertex {
 }
 
 impl_vertex!(ScreenSizeTriVertex, v_position, v_uv);
+
+fn create_projection_view_matrix(target: &mut Target, camera: &Camera) -> Matrix4<f32> {
+    let perspective = PerspectiveFov {
+        fovy: Rad::full_turn() * 0.25,
+        aspect: target.size().x as f32 / target.size().y as f32,
+        near: 0.1,
+        far: 500.0,
+    };
+    // Flip the projection upside down, glm expects opengl values, we need vulkan values
+    let projection =
+        Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) * Matrix4::from(perspective);
+    let view = camera.create_world_to_view_matrix();
+
+    // Combine the projection and the view, we don't need them separately
+    projection * view
+}
