@@ -261,10 +261,29 @@ impl Renderer {
             sst_vertices.into_iter()
         ).unwrap();
 
-        // Retrieve the one point light
-        // TODO: Support variable light amounts
-        assert!(world.lights().len() == 1);
-        let light = &world.lights()[0];
+        // Initialize the light array, we need to say how many lights we have and fill it with
+        //  dummy values, we'll add actual light data in the next steps
+        let point_lights_amount = world.lights().len() as i32;
+        let mut point_lights = [lighting_fs::ty::PointLight {
+            position: [0.0, 0.0, 0.0],
+            _dummy0: Default::default(),
+            color: [0.0, 0.0, 0.0],
+            inverse_radius_sqr: 0.0,
+        }; 32];
+
+        // Make sure we're not going over the maximum amount of lights
+        if point_lights_amount > 32 {
+            panic!("Currently a maximum of 32 lights is supported");
+        }
+
+        // Fill the actual light data
+        for i in 0..point_lights_amount as usize {
+            let light = &world.lights()[i];
+            point_lights[i].position = light.position.into();
+            point_lights[i].color = light.color.into();
+            let inverse_radius = 1.0 / light.radius;
+            point_lights[i].inverse_radius_sqr = inverse_radius * inverse_radius;
+        }
 
         // Create a buffer with all the lighting data, so we can send it over to the shader which
         //  needs this data to actually calculate the light for every pixel.
@@ -274,10 +293,8 @@ impl Renderer {
                 camera_position: camera.position.into(),
                 _dummy0: Default::default(),
                 ambient_light: world.ambient_light().into(),
-                _dummy1: Default::default(),
-                light_position: light.position.into(),
-                _dummy2: Default::default(),
-                light_color: light.color.into(),
+                point_lights_amount,
+                point_lights,
             }
         ).unwrap();
 

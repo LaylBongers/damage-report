@@ -66,4 +66,5 @@ pub struct Entity {
 pub struct Light {
     pub position: Vector3<f32>,
     pub color: Vector3<f32>,
+    pub radius: f32,
 }
