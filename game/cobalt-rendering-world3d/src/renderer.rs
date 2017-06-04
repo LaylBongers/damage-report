@@ -40,6 +40,9 @@ impl Renderer {
         let base_color_attachment = AttachmentImage::new(
             target.device().clone(), target.size().into(), format::R8G8B8A8Srgb
         ).unwrap();
+        let normal_attachment = AttachmentImage::new(
+            target.device().clone(), target.size().into(), format::R8G8B8A8Unorm
+        ).unwrap();
         let depth_attachment = AttachmentImage::transient(
             target.device().clone(), target.size().into(), format::D16Unorm
         ).unwrap();
@@ -62,6 +65,12 @@ impl Renderer {
                     format: Format::R8G8B8A8Srgb,
                     samples: 1,
                 },
+                normal: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R8G8B8A8Unorm,
+                    samples: 1,
+                },
                 depth: {
                     load: Clear,
                     store: DontCare,
@@ -70,7 +79,7 @@ impl Renderer {
                 }
             },
             pass: {
-                color: [position, base_color],
+                color: [position, base_color, normal],
                 depth_stencil: {depth}
             }
         ).unwrap());
@@ -81,6 +90,7 @@ impl Renderer {
         let gbuffer_framebuffer = Arc::new(Framebuffer::start(gbuffer_render_pass.clone())
             .add(position_attachment.clone()).unwrap()
             .add(base_color_attachment.clone()).unwrap()
+            .add(normal_attachment.clone()).unwrap()
             .add(depth_attachment.clone()).unwrap()
             .build().unwrap()
         ) as Arc<FramebufferAbstract + Send + Sync>;
@@ -130,6 +140,7 @@ impl Renderer {
             //  of a value is set to black.
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
+            ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Depth(1.0)
         );
         command_buffer_builder = command_buffer_builder
@@ -172,6 +183,7 @@ impl Renderer {
         // Create the final uniforms set
         let set = Arc::new(simple_descriptor_set!(self.gbuffer_pipeline.clone(), 0, {
             u_matrix_data: matrix_data_buffer,
+            u_material_base_color: entity.material.base_color.uniform(),
         }));
 
         // Perform the actual draw
