@@ -183,7 +183,9 @@ impl Target {
             }
         ).unwrap());
 
-        // Set up the frame buffers matching the render pass TODO: Comment better
+        // Set up the frame buffers matching the render pass
+        // For each image in the swap chain, we create a frame buffer that renders to that image
+        //  and to the depth buffer attachment. These attachments are defined by the render pass.
         debug!(log, "Creating framebuffers for swapchain");
         let framebuffers = images.iter().map(|image| {
             Arc::new(Framebuffer::start(render_pass.clone())

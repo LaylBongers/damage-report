@@ -87,7 +87,6 @@ impl Renderer {
 
         // Retrieve the one point light
         // TODO: Support variable light amounts
-        // TODO: Make use of this value
         assert!(world.lights().len() == 1);
         let light = &world.lights()[0];
 

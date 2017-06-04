@@ -11,7 +11,7 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use {Target};
 
-/// An uploaded texture. Internally ref-counted, cheap clone.
+/// An uploaded texture. Internally ref-counted, cheap to clone.
 #[derive(Clone)]
 pub struct Texture {
     texture: Arc<ImmutableImage<Format>>,
