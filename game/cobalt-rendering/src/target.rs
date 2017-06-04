@@ -256,40 +256,46 @@ impl Target {
         let (image_num, future) = ::vulkano::swapchain::acquire_next_image(
             self.swapchain.clone(), Duration::new(1, 0)
         ).unwrap();
+        let mut future: Box<GpuFuture> = Box::new(future);
 
-        // Create the command buffer for this frame, this will hold all the draw calls and we'll
-        //  submit them all at once
-        let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-            self.device.clone(), self.graphics_queue.family()
-        ).unwrap();
+        // If we have any images to load, we need to submit another buffer before anything else
+        if self.queued_texture_copies.len() != 0 {
+            // Create a command buffer to upload the textures with
+            let mut image_copy_buffer_builder = AutoCommandBufferBuilder::new(
+                self.device.clone(), self.graphics_queue.family()
+            ).unwrap();
 
-        // Add any textures we need to upload to the command buffer
-        while let Some(val) = self.queued_texture_copies.pop() {
-            command_buffer_builder = command_buffer_builder
-                .copy_buffer_to_image(val.0, val.1)
-                .unwrap();
+            // Add any textures we need to upload to the command buffer
+            while let Some(val) = self.queued_texture_copies.pop() {
+                image_copy_buffer_builder = image_copy_buffer_builder
+                    .copy_buffer_to_image(val.0, val.1)
+                    .unwrap();
+            }
+
+            // Finally, add the command buffer to the future so it will be executed
+            let image_copy_buffer = image_copy_buffer_builder.build().unwrap();
+            future = Box::new(future
+                .then_execute(self.graphics_queue.clone(), image_copy_buffer).unwrap()
+            );
         }
 
         Frame {
-            command_buffer_builder: Some(command_buffer_builder),
             framebuffer: self.framebuffers[image_num].clone(),
             image_num,
-            future: Box::new(future),
+            future: Some(future),
         }
     }
 
     pub fn finish_frame(&mut self, mut frame: Frame) {
-        // Finish the command buffer
-        let command_buffer = frame.command_buffer_builder.take().unwrap()
-            .build().unwrap();
-
-        // TODO: ???
-        let future = frame.future
-            .then_execute(self.graphics_queue.clone(), command_buffer).unwrap()
+        let future = frame.future.take().unwrap()
+            // Present the image resulting from all the submitted command buffers on the screen
             .then_swapchain_present(
                 self.graphics_queue.clone(), self.swapchain.clone(), frame.image_num
             )
+            // Finally, submit it all to the driver
             .then_signal_fence_and_flush().unwrap();
+
+        // Keep track of these submissions so we can later wait on them
         self.submissions.push(Box::new(future));
     }
 
@@ -336,8 +342,7 @@ pub enum Event {
 }
 
 pub struct Frame {
-    pub command_buffer_builder: Option<AutoCommandBufferBuilder>,
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     image_num: usize,
-    future: Box<GpuFuture>,
+    pub future: Option<Box<GpuFuture>>,
 }

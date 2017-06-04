@@ -6,7 +6,7 @@ use vulkano::format::{self, Format};
 use vulkano::image::{Image};
 use vulkano::image::attachment::{AttachmentImage};
 use vulkano::format::{ClearValue};
-use vulkano::command_buffer::{CommandBufferBuilder, DynamicState};
+use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
 use vulkano::pipeline::blend::{Blend};
 use vulkano::pipeline::depth_stencil::{DepthStencil};
@@ -16,6 +16,7 @@ use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
 use vulkano::framebuffer::{Subpass, Framebuffer, RenderPassAbstract, FramebufferAbstract};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::sync::{GpuFuture};
 use cobalt_rendering_shaders::{deferred_vs, deferred_fs, lighting_vs, lighting_fs};
 
 use cobalt_rendering::{Target, Frame};
@@ -86,18 +87,22 @@ impl Renderer {
     pub fn render(
         &mut self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World
     ) {
-        /*// Start the render pass
-        let clear_values = vec!(
-            ClearValue::Float([0.005, 0.005, 0.005, 1.0]),
-            ClearValue::Depth(1.0)
-        );
-        frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
-            .begin_render_pass(
-                frame.framebuffer.clone(), false,
-                clear_values
-            ).unwrap()
-        );
+        // TODO: This can be done with a single render pass with 3 subpasses, right now I've just
+        //  implemented it this way to not stray from the examples
 
+        // Build up the command buffers that contain all the rendering commands, telling the driver
+        //  to actually render triangles to buffers
+        let lighting_command_buffer = self.build_lighting_command_buffer(target, frame)
+            .build().unwrap();
+
+        // Add the command buffers to the future we're building up, making sure they're in the
+        //  right sequence. G-buffer first, then the lighting pass that depends on the g-buffer.
+        // TODO: Actually do that
+        let future = frame.future.take().unwrap()
+            .then_execute(target.graphics_queue().clone(), lighting_command_buffer).unwrap();
+        frame.future = Some(Box::new(future));
+
+        /*
         // Create the projection-view matrix needed for the perspective rendering
         let projection_view = Self::create_projection_view(target, camera);
 
@@ -129,6 +134,47 @@ impl Renderer {
         frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
             .end_render_pass().unwrap()
         );*/
+    }
+
+    pub fn build_lighting_command_buffer(
+        &mut self, target: &mut Target, frame: &Frame,
+    ) -> AutoCommandBufferBuilder {
+        let mut command_buffer_builder = AutoCommandBufferBuilder::new(
+            target.device().clone(), target.graphics_queue().family()
+        ).unwrap();
+
+        // Begin by starting the render pass, we're rendering the lighting pass directly to the
+        //  final framebuffer for this frame, that framebuffer will be presented to the screen.
+        // Because this is the final screen framebuffer all we need to clear is the color and
+        //  depth. We still use depth because we may want to do another forward render pass for
+        //  transparent objects.
+        let clear_values = vec!(
+            // This color has no special significance, it's just nicer than pure black
+            ClearValue::Float([0.005, 0.005, 0.005, 1.0]),
+            ClearValue::Depth(1.0)
+        );
+        command_buffer_builder = command_buffer_builder
+            .begin_render_pass(frame.framebuffer.clone(), false, clear_values).unwrap();
+
+        // Create a buffer for a single screen-sized triangle TODO: Re-use that buffer
+        let sst_vertices = vec![
+            ScreenSizeTriVertex { v_position: [-1.0, -1.0], v_uv: [0.0, 0.0], },
+            ScreenSizeTriVertex { v_position: [-1.0,  3.0], v_uv: [0.0, 2.0], },
+            ScreenSizeTriVertex { v_position: [ 3.0, -1.0], v_uv: [2.0, 0.0], },
+        ];
+        let sst_buffer = CpuAccessibleBuffer::<[ScreenSizeTriVertex]>::from_iter(
+            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
+            sst_vertices.into_iter()
+        ).unwrap();
+
+        // Submit the triangle for rendering
+        command_buffer_builder = command_buffer_builder
+            .draw(
+                self.lighting_pipeline.clone(), DynamicState::none(), vec!(sst_buffer), (), ()
+            ).unwrap();
+
+        // Finally, finish the render pass
+        command_buffer_builder.end_render_pass().unwrap()
     }
 
     /*fn create_projection_view(target: &mut Target, camera: &Camera) -> Matrix4<f32> {
@@ -262,11 +308,18 @@ fn load_lighting_pipeline(
         raster: Default::default(),
         multisample: Multisample::disabled(),
         fragment_shader: fs.main_entry_point(),
-        depth_stencil: DepthStencil::simple_depth_test(),
+        depth_stencil: DepthStencil::disabled(),
         blend: Blend::pass_through(),
         render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
     };
 
     Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap())
-        as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
+        as Arc<GraphicsPipeline<SingleBufferDefinition<ScreenSizeTriVertex>, _, _>>
 }
+
+pub struct ScreenSizeTriVertex {
+    pub v_position: [f32; 2],
+    pub v_uv: [f32; 2],
+}
+
+impl_vertex!(ScreenSizeTriVertex, v_position, v_uv);
