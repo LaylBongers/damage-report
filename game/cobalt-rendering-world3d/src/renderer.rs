@@ -2,6 +2,9 @@ use std::sync::{Arc};
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
 use slog::{Logger};
+use vulkano::format::{self, Format};
+use vulkano::image::{Image};
+use vulkano::image::attachment::{AttachmentImage};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{CommandBufferBuilder, DynamicState};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
@@ -11,66 +14,79 @@ use vulkano::pipeline::input_assembly::{InputAssembly};
 use vulkano::pipeline::multisample::{Multisample};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
-use vulkano::framebuffer::{Subpass};
+use vulkano::framebuffer::{Subpass, Framebuffer, RenderPassAbstract, FramebufferAbstract};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
-use cobalt_rendering_shaders::{vs, fs};
+use cobalt_rendering_shaders::{deferred_vs, deferred_fs, lighting_vs, lighting_fs};
 
 use cobalt_rendering::{Target, Frame};
 use {Camera, World, Entity};
 
 pub struct Renderer {
-    pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    deferred_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    lighting_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
 }
 
 impl Renderer {
     pub fn init(log: &Logger, target: &Target) -> Self {
         info!(log, "Initializing world renderer");
 
-        // Load in the shaders
-        debug!(log, "Loading shaders");
-        let vs = vs::Shader::load(target.device()).unwrap();
-        let fs = fs::Shader::load(target.device()).unwrap();
+        // Create the attachment images that make up the G-buffer
+        debug!(log, "Creating g-buffer attachment images");
+        let position_attachment = AttachmentImage::new(
+            target.device().clone(), target.size().into(), format::R16G16B16A16Sfloat
+        ).unwrap();
+        let depth_attachment = AttachmentImage::transient(
+            target.device().clone(), target.size().into(), format::D16Unorm
+        ).unwrap();
 
-        // Set up a pipeline TODO: Comment better
-        debug!(log, "Creating render pipeline");
-        let pipeline_params = GraphicsPipelineParams {
-            vertex_input: SingleBufferDefinition::new(),
-            vertex_shader: vs.main_entry_point(),
-            input_assembly: InputAssembly::triangle_list(),
-            tessellation: None,
-            geometry_shader: None,
-            viewport: ViewportsState::Fixed {
-                data: vec![(
-                    Viewport {
-                        origin: [0.0, 0.0],
-                        depth_range: 0.0 .. 1.0,
-                        dimensions: [
-                            target.images()[0].dimensions()[0] as f32,
-                            target.images()[0].dimensions()[1] as f32
-                        ],
-                    },
-                    Scissor::irrelevant()
-                )],
+        // Create the deferred render pass
+        // TODO: Document better what a render pass does that a framebuffer doesn't
+        debug!(log, "Creating g-buffer render pass");
+        #[allow(dead_code)]
+        let render_pass = Arc::new(single_pass_renderpass!(target.device().clone(),
+            attachments: {
+                position: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R16G16B16A16Sfloat,
+                    samples: 1,
+                },
+                depth: {
+                    load: Clear,
+                    store: DontCare,
+                    format: Format::D16Unorm,
+                    samples: 1,
+                }
             },
-            raster: Default::default(),
-            multisample: Multisample::disabled(),
-            fragment_shader: fs.main_entry_point(),
-            depth_stencil: DepthStencil::simple_depth_test(),
-            blend: Blend::pass_through(),
-            render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
-        };
-        let pipeline: Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>> =
-            Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap());
+            pass: {
+                color: [position],
+                depth_stencil: {depth}
+            }
+        ).unwrap());
+
+        // Create the off-screen g-buffer framebuffer that we will use to actually tell vulkano
+        //  what images we want to render to
+        debug!(log, "Creating g-buffer framebuffer");
+        let framebuffer = Arc::new(Framebuffer::start(render_pass.clone())
+            .add(position_attachment.clone()).unwrap()
+            .add(depth_attachment.clone()).unwrap()
+            .build().unwrap()
+        ) as Arc<FramebufferAbstract + Send + Sync>;
+
+        // Set up the shaders and pipelines
+        let deferred_pipeline = load_deferred_pipeline(log, target);
+        let lighting_pipeline = load_lighting_pipeline(log, target);
 
         Renderer {
-            pipeline,
+            deferred_pipeline,
+            lighting_pipeline,
         }
     }
 
     pub fn render(
         &mut self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World
     ) {
-        // Start the render pass
+        /*// Start the render pass
         let clear_values = vec!(
             ClearValue::Float([0.005, 0.005, 0.005, 1.0]),
             ClearValue::Depth(1.0)
@@ -112,10 +128,10 @@ impl Renderer {
         // Finish the render pass
         frame.command_buffer_builder = Some(frame.command_buffer_builder.take().unwrap()
             .end_render_pass().unwrap()
-        );
+        );*/
     }
 
-    fn create_projection_view(target: &mut Target, camera: &Camera) -> Matrix4<f32> {
+    /*fn create_projection_view(target: &mut Target, camera: &Camera) -> Matrix4<f32> {
         let perspective = PerspectiveFov {
             fovy: Rad::full_turn() * 0.25,
             aspect: target.size().x as f32 / target.size().y as f32,
@@ -168,5 +184,89 @@ impl Renderer {
                 set, ()
             ).unwrap()
         );
-    }
+    }*/
+}
+
+fn load_deferred_pipeline(
+    log: &Logger, target: &Target
+) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
+    // Load in the shaders
+    debug!(log, "Loading deferred shaders");
+    let vs = deferred_vs::Shader::load(target.device()).unwrap();
+    let fs = deferred_fs::Shader::load(target.device()).unwrap();
+
+    // Set up the pipeline
+    debug!(log, "Creating deferred pipeline");
+    let dimensions = target.images()[0].dimensions().width_height();
+    let pipeline_params = GraphicsPipelineParams {
+        vertex_input: SingleBufferDefinition::new(),
+        vertex_shader: vs.main_entry_point(),
+        input_assembly: InputAssembly::triangle_list(),
+        tessellation: None,
+        geometry_shader: None,
+        viewport: ViewportsState::Fixed {
+            data: vec![(
+                Viewport {
+                    origin: [0.0, 0.0],
+                    depth_range: 0.0 .. 1.0,
+                    dimensions: [
+                        dimensions[0] as f32,
+                        dimensions[1] as f32
+                    ],
+                },
+                Scissor::irrelevant()
+            )],
+        },
+        raster: Default::default(),
+        multisample: Multisample::disabled(),
+        fragment_shader: fs.main_entry_point(),
+        depth_stencil: DepthStencil::simple_depth_test(),
+        blend: Blend::pass_through(),
+        render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
+    };
+
+    Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap())
+        as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
+}
+
+fn load_lighting_pipeline(
+    log: &Logger, target: &Target
+) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
+    // Load in the shaders
+    debug!(log, "Loading deferred shaders");
+    let vs = lighting_vs::Shader::load(target.device()).unwrap();
+    let fs = lighting_fs::Shader::load(target.device()).unwrap();
+
+    // Set up the pipeline
+    debug!(log, "Creating deferred pipeline");
+    let dimensions = target.images()[0].dimensions().width_height();
+    let pipeline_params = GraphicsPipelineParams {
+        vertex_input: SingleBufferDefinition::new(),
+        vertex_shader: vs.main_entry_point(),
+        input_assembly: InputAssembly::triangle_list(),
+        tessellation: None,
+        geometry_shader: None,
+        viewport: ViewportsState::Fixed {
+            data: vec![(
+                Viewport {
+                    origin: [0.0, 0.0],
+                    depth_range: 0.0 .. 1.0,
+                    dimensions: [
+                        dimensions[0] as f32,
+                        dimensions[1] as f32
+                    ],
+                },
+                Scissor::irrelevant()
+            )],
+        },
+        raster: Default::default(),
+        multisample: Multisample::disabled(),
+        fragment_shader: fs.main_entry_point(),
+        depth_stencil: DepthStencil::simple_depth_test(),
+        blend: Blend::pass_through(),
+        render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
+    };
+
+    Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap())
+        as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
 }

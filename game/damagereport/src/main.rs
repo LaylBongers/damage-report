@@ -40,7 +40,7 @@ fn main() {
 }
 
 fn try_main(log: &Logger) -> Result<(), Error> {
-    info!(log, "Initializing Game");
+    info!(log, "Initializing game");
 
     // Initialize the rendering system
     let mut target = Target::init(log)?;

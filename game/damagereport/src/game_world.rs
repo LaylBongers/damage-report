@@ -146,7 +146,6 @@ impl Device {
 
     fn set_status(&mut self, log: &Logger, value: bool) {
         self.status = value;
-        info!(log, "Switched device status to {}", self.status);
     }
 
     fn update(&mut self, log: &Logger, time: f32, world: &mut World) {

@@ -20,6 +20,9 @@ use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, Element
 use error::{CobaltErrorMap};
 use {Error};
 
+/// Manages the window/screen to render to, and which GPU to render with. Also manages generic
+/// tasks needed for rendering smoothly to the target regardless of game-specific render behavior,
+/// such as v-sync and doube/triplebuffering.
 pub struct Target {
     // Winit window
     events_loop: EventsLoop,
@@ -137,7 +140,7 @@ impl Target {
             // The swap chain needs to be in SRGB, and this format is guaranteed supported
             let format = ::vulkano::format::B8G8R8A8Srgb;
 
-            // Finally, actually create the swap chain
+            // Finally, actually create the swap chain, with all its color images
             Swapchain::new(
                 device.clone(), window.surface().clone(), caps.min_image_count, format,
                 dimensions, 1,
