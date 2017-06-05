@@ -102,6 +102,14 @@ void main() {
     float metallic = texture(u_gbuffer_metallic, f_uv).r;
     float roughness = texture(u_gbuffer_roughness, f_uv).r;
 
+    // Discard this fragment if there isn't actually any data there
+    // TODO: Because this is a shader, early bail optimization doesn't work.
+    //  The purpose of doing this is to show the background color/cubemap. That
+    //  should be moved to emissive color instead.
+    if (base_color_full.a == 0.0) {
+        discard;
+    }
+
     // Calculate the direction from this fragment to the camera, which is
     //  relevant to various light effects
     vec3 camera_direction = normalize(u_light_data.camera_position - position);
