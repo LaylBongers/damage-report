@@ -14,7 +14,9 @@ struct PointLight {
 layout(set = 0, binding = 0) uniform sampler2D u_gbuffer_position;
 layout(set = 0, binding = 1) uniform sampler2D u_gbuffer_base_color;
 layout(set = 0, binding = 2) uniform sampler2D u_gbuffer_normal;
-layout(set = 0, binding = 3) uniform LightData {
+layout(set = 0, binding = 3) uniform sampler2D u_gbuffer_roughness;
+layout(set = 0, binding = 4) uniform sampler2D u_gbuffer_metallic;
+layout(set = 0, binding = 5) uniform LightData {
     vec3 camera_position;
     vec3 ambient_light;
 
@@ -90,8 +92,6 @@ float geometry_smith(vec3 N, vec3 V, vec3 L, float roughness)
 
 void main() {
     // TODO: Allow these values to be specified
-    const float metallic = 0.0;
-    const float roughness = 0.5;
     const float ao = 1.0;
 
     // Retrieve the data for this pixel
@@ -99,6 +99,8 @@ void main() {
     vec4 base_color_full = texture(u_gbuffer_base_color, f_uv);
     vec3 base_color = base_color_full.rgb;
     vec3 normal = texture(u_gbuffer_normal, f_uv).rgb;
+    float metallic = texture(u_gbuffer_roughness, f_uv).r;
+    float roughness = texture(u_gbuffer_metallic, f_uv).r;
 
     // Calculate the direction from this fragment to the camera, which is
     //  relevant to various light effects

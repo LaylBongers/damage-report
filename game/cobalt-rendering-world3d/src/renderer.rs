@@ -31,6 +31,8 @@ pub struct Renderer {
     gbuffer_position_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
     gbuffer_base_color_attachment: Arc<AttachmentImage<format::R8G8B8A8Srgb>>,
     gbuffer_normal_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
+    gbuffer_metallic_attachment: Arc<AttachmentImage<format::R8Unorm>>,
+    gbuffer_roughness_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     gbuffer_sampler: Arc<Sampler>,
 
     lighting_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
@@ -154,6 +156,8 @@ impl Renderer {
             gbuffer_position_attachment,
             gbuffer_base_color_attachment,
             gbuffer_normal_attachment,
+            gbuffer_metallic_attachment,
+            gbuffer_roughness_attachment,
             gbuffer_sampler,
 
             lighting_pipeline,
@@ -342,6 +346,12 @@ impl Renderer {
             ),
             u_gbuffer_normal: (
                 self.gbuffer_normal_attachment.clone(), self.gbuffer_sampler.clone()
+            ),
+            u_gbuffer_roughness: (
+                self.gbuffer_roughness_attachment.clone(), self.gbuffer_sampler.clone()
+            ),
+            u_gbuffer_metallic: (
+                self.gbuffer_metallic_attachment.clone(), self.gbuffer_sampler.clone()
             ),
             u_light_data: light_data_buffer,
         }));
