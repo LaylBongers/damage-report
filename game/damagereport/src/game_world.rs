@@ -79,7 +79,7 @@ impl GameWorld {
         let light = world.add_light(Light {
             position: Vector3::new(0.0, 1.5, 0.0),
             color: Vector3::new(1.0, 1.0, 1.0),
-            radius: 5.0,
+            radius: 7.5,
         });
         world.set_ambient_light(Vector3::new(0.005, 0.005, 0.005));
 
