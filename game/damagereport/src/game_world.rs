@@ -28,7 +28,7 @@ impl GameWorld {
                 log, target, "./assets/floor_spec.png", TextureFormat::LinearRed
             ),
         };
-        world.add(Entity {
+        world.add_entity(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
             mesh: floor_model.meshes[0].clone(),
             material: floor_material.clone(),
@@ -83,6 +83,14 @@ impl GameWorld {
         });
         world.set_ambient_light(Vector3::new(0.005, 0.005, 0.005));
 
+        // Add a test sphere just to be able to better see the effect of lighting
+        let sphere_model = Model::load(log, target, "./assets/sphere.obj", 0.5);
+        world.add_entity(Entity {
+            position: Vector3::new(0.0, 1.0, 0.0),
+            mesh: sphere_model.meshes[0].clone(),
+            material: material_device.clone(),
+        });
+
         GameWorld {
             player,
             devices,
@@ -128,12 +136,12 @@ impl Device {
         material_base: &Material, material_working: &Material, material_broken: &Material
     ) -> Self {
         // Add the meshes for this device to the world
-        world.add(Entity {
+        world.add_entity(Entity {
             position,
             mesh: model.meshes[0].clone(),
             material: material_base.clone(),
         });
-        let light_entity = world.add(Entity {
+        let light_entity = world.add_entity(Entity {
             position,
             mesh: model.meshes[1].clone(),
             material: material_working.clone(),

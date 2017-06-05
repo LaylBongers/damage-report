@@ -18,6 +18,7 @@ use vulkano::framebuffer::{Subpass, Framebuffer, FramebufferAbstract, RenderPass
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sync::{GpuFuture};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
+use vulkano::pipeline::raster::{Rasterization, CullMode, FrontFace};
 use cobalt_rendering_shaders::{gbuffer_vs, gbuffer_fs, lighting_vs, lighting_fs};
 
 use cobalt_rendering::{Target, Frame};
@@ -363,7 +364,11 @@ fn load_gbuffer_pipeline(
                 Scissor::irrelevant()
             )],
         },
-        raster: Default::default(),
+        raster: Rasterization {
+            cull_mode: CullMode::Back,
+            front_face: FrontFace::CounterClockwise,
+            .. Default::default()
+        },
         multisample: Multisample::disabled(),
         fragment_shader: fs.main_entry_point(),
         depth_stencil: DepthStencil::simple_depth_test(),

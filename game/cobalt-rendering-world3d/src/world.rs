@@ -16,7 +16,7 @@ impl World {
         }
     }
 
-    pub fn add(&mut self, entity: Entity) -> EntityId {
+    pub fn add_entity(&mut self, entity: Entity) -> EntityId {
         self.entities.push(entity);
         EntityId(self.entities.len() - 1)
     }

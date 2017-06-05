@@ -13,6 +13,6 @@ Here's a full list of all the projects that make up cobalt.
     representation, and a renderer to put it on screen. Has the following
     features:
     - Perspective Rendering
-    - Basic Lighting
+    - Deferred Lighting
 - **cobalt-utils**: Misc generic game utilities. Contains the following utilities:
     - Game Loop Timer
