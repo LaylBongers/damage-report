@@ -99,8 +99,8 @@ void main() {
     vec4 base_color_full = texture(u_gbuffer_base_color, f_uv);
     vec3 base_color = base_color_full.rgb;
     vec3 normal = texture(u_gbuffer_normal, f_uv).rgb;
-    float metallic = texture(u_gbuffer_roughness, f_uv).r;
-    float roughness = texture(u_gbuffer_metallic, f_uv).r;
+    float metallic = texture(u_gbuffer_metallic, f_uv).r;
+    float roughness = texture(u_gbuffer_roughness, f_uv).r;
 
     // Calculate the direction from this fragment to the camera, which is
     //  relevant to various light effects
