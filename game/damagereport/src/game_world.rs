@@ -20,12 +20,17 @@ impl GameWorld {
         // Create the floor
         let floor_model = Model::load(log, target, "./assets/floor.obj", 0.1);
         let floor_material = Material {
-            base_color: Texture::load(log, target, "./assets/floor.png", TextureFormat::Srgb),
-            normal_map: Texture::load(
-                log, target, "./assets/floor_norm.png", TextureFormat::Linear
+            base_color: Texture::load(
+                log, target, "./assets/floor_base_color.png", TextureFormat::Srgb
             ),
-            specular_map: Texture::load(
-                log, target, "./assets/floor_spec.png", TextureFormat::LinearRed
+            normal_map: Texture::load(
+                log, target, "./assets/floor_normal.png", TextureFormat::Linear
+            ),
+            metallic_map: Texture::load(
+                log, target, "./assets/floor_metallic.png", TextureFormat::LinearRed
+            ),
+            roughness_map: Texture::load(
+                log, target, "./assets/floor_roughness.png", TextureFormat::LinearRed
             ),
         };
         world.add_entity(Entity {
@@ -39,27 +44,33 @@ impl GameWorld {
         let flat_normal_map = Texture::load(
             log, target, "./assets/texture_norm.png", TextureFormat::Linear
         );
-        let flat_specular_map = Texture::load(
-            log, target, "./assets/texture_spec.png", TextureFormat::LinearRed
+        let flat_metallic_map = Texture::load(
+            log, target, "./assets/texture_metallic.png", TextureFormat::LinearRed
+        );
+        let flat_roughness_map = Texture::load(
+            log, target, "./assets/texture_roughness.png", TextureFormat::LinearRed
         );
         let material_device = Material {
             base_color: Texture::load(log, target, "./assets/texture.png", TextureFormat::Srgb),
             normal_map: flat_normal_map.clone(),
-            specular_map: flat_specular_map.clone(),
+            metallic_map: flat_metallic_map.clone(),
+            roughness_map: flat_roughness_map.clone(),
         };
         let material_working = Material {
             base_color: Texture::load(
                 log, target, "./assets/texture_working.png", TextureFormat::Srgb
             ),
             normal_map: flat_normal_map.clone(),
-            specular_map: flat_specular_map.clone(),
+            metallic_map: flat_metallic_map.clone(),
+            roughness_map: flat_roughness_map.clone(),
         };
         let material_broken = Material {
             base_color: Texture::load(
                 log, target, "./assets/texture_broken.png", TextureFormat::Srgb
             ),
             normal_map: flat_normal_map.clone(),
-            specular_map: flat_specular_map.clone(),
+            metallic_map: flat_metallic_map.clone(),
+            roughness_map: flat_roughness_map.clone(),
         };
         let d1 = Device::new(
             world, Vector3::new(-2.0, 0.0, -4.0), &device_model,

@@ -29,7 +29,7 @@ impl Texture {
 
         // Load the image data into a buffer
         let buffer = {
-            let image_data = img.raw_pixels();
+            let image_data = img.to_rgba().into_raw();
 
             // If the format is LinearRed, we need to ignore the GBA elements
             let chunk_size = if format != TextureFormat::LinearRed { 1 } else { 4 };

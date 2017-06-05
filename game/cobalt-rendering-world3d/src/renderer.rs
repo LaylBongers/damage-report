@@ -58,6 +58,12 @@ impl Renderer {
         let gbuffer_normal_attachment = AttachmentImage::with_usage(
             target.device().clone(), target.size().into(), format::R16G16B16A16Sfloat, attach_usage
         ).unwrap();
+        let gbuffer_metallic_attachment = AttachmentImage::with_usage(
+            target.device().clone(), target.size().into(), format::R8Unorm, attach_usage
+        ).unwrap();
+        let gbuffer_roughness_attachment = AttachmentImage::with_usage(
+            target.device().clone(), target.size().into(), format::R8Unorm, attach_usage
+        ).unwrap();
         let gbuffer_depth_attachment = AttachmentImage::transient(
             target.device().clone(), target.size().into(), format::D16Unorm
         ).unwrap();
@@ -86,6 +92,18 @@ impl Renderer {
                     format: Format::R16G16B16A16Sfloat,
                     samples: 1,
                 },
+                metallic: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R8Unorm,
+                    samples: 1,
+                },
+                roughness: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R8Unorm,
+                    samples: 1,
+                },
                 depth: {
                     load: Clear,
                     store: DontCare,
@@ -94,7 +112,7 @@ impl Renderer {
                 }
             },
             pass: {
-                color: [position, base_color, normal],
+                color: [position, base_color, normal, metallic, roughness],
                 depth_stencil: {depth}
             }
         ).unwrap());
@@ -106,6 +124,8 @@ impl Renderer {
             .add(gbuffer_position_attachment.clone()).unwrap()
             .add(gbuffer_base_color_attachment.clone()).unwrap()
             .add(gbuffer_normal_attachment.clone()).unwrap()
+            .add(gbuffer_metallic_attachment.clone()).unwrap()
+            .add(gbuffer_roughness_attachment.clone()).unwrap()
             .add(gbuffer_depth_attachment.clone()).unwrap()
             .build().unwrap()
         ) as Arc<FramebufferAbstract + Send + Sync>;
@@ -178,6 +198,8 @@ impl Renderer {
             // TODO: Replace with emissive color, see shader for info why
             ClearValue::Float([0.0, 0.0, 0.0, 0.0]),
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
+            ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
+            ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Depth(1.0)
         );
         command_buffer_builder = command_buffer_builder
@@ -222,6 +244,8 @@ impl Renderer {
             u_matrix_data: matrix_data_buffer,
             u_material_base_color: entity.material.base_color.uniform(),
             u_material_normal_map: entity.material.normal_map.uniform(),
+            u_material_metallic_map: entity.material.metallic_map.uniform(),
+            u_material_roughness_map: entity.material.roughness_map.uniform(),
         }));
 
         // Perform the actual draw
