@@ -173,7 +173,9 @@ impl Renderer {
             // These colors has no special significance, it's just useful for debugging that a lack
             //  of a value is set to black.
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
-            ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
+            // 0.0 alpha so we can discard unused pixels
+            // TODO: Replace with emissive color, see shader for info why
+            ClearValue::Float([0.0, 0.0, 0.0, 0.0]),
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Depth(1.0)
         );
@@ -236,14 +238,21 @@ impl Renderer {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             target.device().clone(), target.graphics_queue().family()
         ).unwrap();
+        // TODO: This method of lighting uses a full-screen tri with all lights passed to it in a
+        //  big array. Instead, we should render using "light volumes", which just means rendering
+        //  spheres where the light should be one light at a time with the light information, and
+        //  blend light data additively from those passes. That should improve performance further.
+        //  Instead of using UVs for that, just use screen coordinates. We should also use
+        //  instancing to render the spheres, and just use the uniforms to change their size.
 
         // Begin by starting the render pass, we're rendering the lighting pass directly to the
         //  final framebuffer for this frame, that framebuffer will be presented to the screen.
         // Because this is the final screen framebuffer all we need to clear is the color and
         //  depth. We still use depth because we may want to do another forward render pass for
         //  transparent objects.
+        // TODO: Actually make sure the depth ends up in the framebuffer, either through copying or
+        //  by directly using this depth attachment during gbuffer rendering.
         let clear_values = vec!(
-            // This color has no special significance, it's just nicer than pure black
             ClearValue::Float([0.005, 0.005, 0.005, 1.0]),
             ClearValue::Depth(1.0)
         );

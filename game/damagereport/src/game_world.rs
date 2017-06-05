@@ -81,6 +81,7 @@ impl GameWorld {
             color: Vector3::new(1.0, 1.0, 1.0),
             radius: 5.0,
         });
+        world.set_ambient_light(Vector3::new(0.005, 0.005, 0.005));
 
         GameWorld {
             player,

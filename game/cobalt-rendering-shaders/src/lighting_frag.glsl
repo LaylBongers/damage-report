@@ -78,14 +78,21 @@ vec3 calculate_point_light(PointLight light, vec3 position, vec3 normal, vec3 ca
 void main() {
     // Retrieve the data for this pixel
     vec3 position = texture(u_gbuffer_position, f_uv).rgb;
-    vec3 base_color = texture(u_gbuffer_base_color, f_uv).rgb;
+    vec4 base_color_full = texture(u_gbuffer_base_color, f_uv);
+    vec3 base_color = base_color_full.rgb;
     vec3 normal = texture(u_gbuffer_normal, f_uv).rgb;
+
+    // If this is an un-used pixel, discard it
+    // TODO: This is used for backgrounds/skyboxes, replace this with emissive
+    if (base_color_full.a == 0.0) {
+        discard;
+    }
 
     vec3 camera_direction = normalize(u_light_data.camera_position - position);
     vec3 total_light = u_light_data.ambient_light;
 
     // Accumulate data from all the point lights
-    for(int i = 0; i < u_light_data.point_lights_amount; i++) {
+    for (int i = 0; i < u_light_data.point_lights_amount; i++) {
         total_light += calculate_point_light(
             u_light_data.point_lights[i], position, normal, camera_direction
         );
