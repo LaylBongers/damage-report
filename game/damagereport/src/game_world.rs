@@ -106,7 +106,6 @@ impl GameWorld {
             player,
             devices,
 
-            // TODO: Remove these two
             light,
             light_accum: 0.0,
         }
