@@ -3,7 +3,8 @@ use std::sync::{Arc};
 use slog::{Logger};
 use vulkano::image::attachment::{AttachmentImage};
 use vulkano::image::{ImageUsage};
-use vulkano::format::{self};
+use vulkano::format::{self, Format};
+use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract};
 
 use cobalt_rendering::{Target};
 
@@ -14,6 +15,9 @@ pub struct GeometryBuffer {
     pub metallic_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     pub roughness_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     pub depth_attachment: Arc<AttachmentImage<format::D16Unorm>>,
+
+    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
+    pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
 }
 
 impl GeometryBuffer {
@@ -46,6 +50,68 @@ impl GeometryBuffer {
             target.device().clone(), target.size().into(), format::D16Unorm, attach_usage
         ).unwrap();
 
+        // Create the deferred render pass
+        // TODO: Document better what a render pass does that a framebuffer doesn't
+        debug!(log, "Creating g-buffer render pass");
+        #[allow(dead_code)]
+        let render_pass = Arc::new(single_pass_renderpass!(target.device().clone(),
+            attachments: {
+                position: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R16G16B16A16Sfloat,
+                    samples: 1,
+                },
+                base_color: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R8G8B8A8Srgb,
+                    samples: 1,
+                },
+                normal: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R16G16B16A16Sfloat,
+                    samples: 1,
+                },
+                metallic: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R8Unorm,
+                    samples: 1,
+                },
+                roughness: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R8Unorm,
+                    samples: 1,
+                },
+                depth: {
+                    load: Clear,
+                    store: DontCare,
+                    format: Format::D16Unorm,
+                    samples: 1,
+                }
+            },
+            pass: {
+                color: [position, base_color, normal, metallic, roughness],
+                depth_stencil: {depth}
+            }
+        ).unwrap());
+
+        // Create the off-screen g-buffer framebuffer that we will use to actually tell vulkano
+        //  what images we want to render to
+        debug!(log, "Creating g-buffer framebuffer");
+        let framebuffer = Arc::new(Framebuffer::start(render_pass.clone())
+            .add(position_attachment.clone()).unwrap()
+            .add(base_color_attachment.clone()).unwrap()
+            .add(normal_attachment.clone()).unwrap()
+            .add(metallic_attachment.clone()).unwrap()
+            .add(roughness_attachment.clone()).unwrap()
+            .add(depth_attachment.clone()).unwrap()
+            .build().unwrap()
+        ) as Arc<FramebufferAbstract + Send + Sync>;
+
         GeometryBuffer {
             position_attachment,
             base_color_attachment,
@@ -53,6 +119,9 @@ impl GeometryBuffer {
             metallic_attachment,
             roughness_attachment,
             depth_attachment,
+
+            framebuffer,
+            render_pass,
         }
     }
 }

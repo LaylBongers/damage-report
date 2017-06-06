@@ -2,9 +2,9 @@ use std::sync::{Arc};
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
 use slog::{Logger};
-use vulkano::format::{Format, ClearValue};
+use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
-use vulkano::framebuffer::{Subpass, Framebuffer, FramebufferAbstract, RenderPassAbstract};
+use vulkano::framebuffer::{Subpass, RenderPassAbstract};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
 use vulkano::pipeline::depth_stencil::{DepthStencil};
 use vulkano::pipeline::input_assembly::{InputAssembly};
@@ -22,85 +22,22 @@ use geometry_buffer::{GeometryBuffer};
 use {Camera, World, Entity};
 
 pub struct GeometryRenderer {
-    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     pub pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
 }
 
 impl GeometryRenderer {
     pub fn new(log: &Logger, target: &Target, geometry_buffer: &GeometryBuffer) -> Self {
-        // Create the deferred render pass
-        // TODO: Document better what a render pass does that a framebuffer doesn't
-        debug!(log, "Creating g-buffer render pass");
-        #[allow(dead_code)]
-        let render_pass = Arc::new(single_pass_renderpass!(target.device().clone(),
-            attachments: {
-                position: {
-                    load: Clear,
-                    store: Store,
-                    format: Format::R16G16B16A16Sfloat,
-                    samples: 1,
-                },
-                base_color: {
-                    load: Clear,
-                    store: Store,
-                    format: Format::R8G8B8A8Srgb,
-                    samples: 1,
-                },
-                normal: {
-                    load: Clear,
-                    store: Store,
-                    format: Format::R16G16B16A16Sfloat,
-                    samples: 1,
-                },
-                metallic: {
-                    load: Clear,
-                    store: Store,
-                    format: Format::R8Unorm,
-                    samples: 1,
-                },
-                roughness: {
-                    load: Clear,
-                    store: Store,
-                    format: Format::R8Unorm,
-                    samples: 1,
-                },
-                depth: {
-                    load: Clear,
-                    store: DontCare,
-                    format: Format::D16Unorm,
-                    samples: 1,
-                }
-            },
-            pass: {
-                color: [position, base_color, normal, metallic, roughness],
-                depth_stencil: {depth}
-            }
-        ).unwrap());
-
-        // Create the off-screen g-buffer framebuffer that we will use to actually tell vulkano
-        //  what images we want to render to
-        debug!(log, "Creating g-buffer framebuffer");
-        let framebuffer = Arc::new(Framebuffer::start(render_pass.clone())
-            .add(geometry_buffer.position_attachment.clone()).unwrap()
-            .add(geometry_buffer.base_color_attachment.clone()).unwrap()
-            .add(geometry_buffer.normal_attachment.clone()).unwrap()
-            .add(geometry_buffer.metallic_attachment.clone()).unwrap()
-            .add(geometry_buffer.roughness_attachment.clone()).unwrap()
-            .add(geometry_buffer.depth_attachment.clone()).unwrap()
-            .build().unwrap()
-        ) as Arc<FramebufferAbstract + Send + Sync>;
-
         // Set up the shaders and pipelines
-        let pipeline = load_pipeline(log, target, render_pass);
+        let pipeline = load_pipeline(log, target, geometry_buffer.render_pass.clone());
 
         GeometryRenderer {
-            framebuffer,
             pipeline,
         }
     }
 
     pub fn build_command_buffer(
-        &mut self, target: &mut Target, camera: &Camera, world: &World,
+        &mut self, target: &mut Target, geometry_buffer: &GeometryBuffer,
+        camera: &Camera, world: &World,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             target.device().clone(), target.graphics_queue().family()
@@ -119,7 +56,7 @@ impl GeometryRenderer {
             ClearValue::Depth(1.0)
         );
         command_buffer_builder = command_buffer_builder
-            .begin_render_pass(self.framebuffer.clone(), false, clear_values).unwrap();
+            .begin_render_pass(geometry_buffer.framebuffer.clone(), false, clear_values).unwrap();
 
         // Create the projection-view matrix needed for the perspective rendering
         let projection_view = create_projection_view_matrix(target, camera);

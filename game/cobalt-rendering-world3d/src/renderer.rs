@@ -34,13 +34,14 @@ impl Renderer {
         &mut self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World
     ) {
         // TODO: This can be done with a single render pass with 3 subpasses, right now I've just
-        //  implemented it this way to not stray from the examples
+        //  implemented it with separate submitted command buffers way because I understand it
+        //  better than subpasses at the moment
 
         // Build up the command buffers that contain all the rendering commands, telling the driver
         //  to actually render triangles to buffers. This is most likely the heaviest part of
         //  rendering.
         let geometry_command_buffer = self.geometry_renderer.build_command_buffer(
-            target, camera, world
+            target, &self.geometry_buffer, camera, world
         ).build().unwrap();
         let lighting_command_buffer = self.lighting_renderer.build_command_buffer(
             target, frame, &self.geometry_buffer, camera, world
