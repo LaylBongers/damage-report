@@ -33,13 +33,20 @@ impl Renderer {
     pub fn render(
         &mut self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World
     ) {
-        // TODO: This can be done with a single render pass with 3 subpasses, right now I've just
-        //  implemented it with separate submitted command buffers way because I understand it
-        //  better than subpasses at the moment
+        // This is a deferred renderer, so what we will do is first build up the "geometry buffer",
+        //  which is a framebuffer made up from various images to keep track of the data needed for
+        //  lighting for every pixel. Then, we run the lighting pass over the geometry buffer,
+        //  meaning we only have to do lighting "per-screen-pixel" rather than "per-triangle-pixel"
+        // TODO: A further optimization is using light geometry to only light the pixels relevant
+        //  to the light. This involves using additive blending rather than adding it all up in the
+        //  shader while looping through all lights.
+        // TODO: This can be done with a single render pass with subpasses, right now I've just
+        //  implemented it with separate submitted command buffers because I understand it better
+        //  than subpasses at the moment.
 
         // Build up the command buffers that contain all the rendering commands, telling the driver
-        //  to actually render triangles to buffers. This is most likely the heaviest part of
-        //  rendering.
+        //  to actually render triangles to buffers. No actual rendering is done here, we just
+        //  prepare the render passes and drawcalls.
         let geometry_command_buffer = self.geometry_renderer.build_command_buffer(
             target, &self.geometry_buffer, camera, world
         ).build().unwrap();
@@ -48,7 +55,8 @@ impl Renderer {
         ).build().unwrap();
 
         // Add the command buffers to the future we're building up, making sure they're in the
-        //  right sequence. G-buffer first, then the lighting pass that depends on the g-buffer.
+        //  right sequence. geometry buffer first, then the lighting pass that depends on the
+        //  geometry buffer.
         let future = frame.future.take().unwrap()
             .then_execute(target.graphics_queue().clone(), geometry_command_buffer).unwrap()
             .then_execute(target.graphics_queue().clone(), lighting_command_buffer).unwrap();

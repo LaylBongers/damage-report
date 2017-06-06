@@ -140,7 +140,7 @@ impl Target {
             // The swap chain needs to be in SRGB, and this format is guaranteed supported
             let format = ::vulkano::format::B8G8R8A8Srgb;
 
-            // Finally, actually create the swap chain, with all its color images
+            // Finally, actually create the swapchain, with all its color images
             Swapchain::new(
                 device.clone(), window.surface().clone(), caps.min_image_count, format,
                 dimensions, 1,
@@ -148,6 +148,7 @@ impl Target {
                 present, true, None
             ).unwrap()
         };
+        debug!(log, "Created swapchain"; "images" => images.len());
 
         // To render in 3D, we need an extra buffer to keep track of the depth. Since this won't be
         //  displayed, it doesn't need to be part of the swapchain.
