@@ -6,7 +6,6 @@ use vulkano::format::{Format, ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
 use vulkano::framebuffer::{Subpass, Framebuffer, FramebufferAbstract, RenderPassAbstract};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
-use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::pipeline::depth_stencil::{DepthStencil};
 use vulkano::pipeline::input_assembly::{InputAssembly};
 use vulkano::pipeline::multisample::{Multisample};
@@ -25,7 +24,6 @@ use {Camera, World, Entity};
 pub struct GeometryRenderer {
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     pub pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
-    pub sampler: Arc<Sampler>,
 }
 
 impl GeometryRenderer {
@@ -95,23 +93,9 @@ impl GeometryRenderer {
         // Set up the shaders and pipelines
         let pipeline = load_pipeline(log, target, render_pass);
 
-        // Create a sampler that we'll use to sample the gbuffer images, this will map 1:1, so just
-        //  use nearest. TODO: Because it's 1:1 we can move the gbuffer-lighting steps to subpasses
-        let sampler = Sampler::new(
-            target.device().clone(),
-            Filter::Nearest,
-            Filter::Nearest,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
-        ).unwrap();
-
         GeometryRenderer {
             framebuffer,
             pipeline,
-            sampler,
         }
     }
 
