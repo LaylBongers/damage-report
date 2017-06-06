@@ -14,7 +14,7 @@ pub struct GameWorld {
 }
 
 impl GameWorld {
-    pub fn init(log: &Logger, target: &mut Target, world: &mut World) -> Self {
+    pub fn new(log: &Logger, target: &mut Target, world: &mut World) -> Self {
         let player = Player::new();
 
         // Create the floor

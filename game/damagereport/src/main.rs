@@ -43,8 +43,8 @@ fn try_main(log: &Logger) -> Result<(), Error> {
     info!(log, "Initializing game");
 
     // Initialize the rendering system
-    let mut target = Target::init(log)?;
-    let mut renderer = Renderer::init(log, &target);
+    let mut target = Target::new(log)?;
+    let mut renderer = Renderer::new(log, &target);
     let mut world = World::new();
 
     // Initialize generic utilities
@@ -52,7 +52,7 @@ fn try_main(log: &Logger) -> Result<(), Error> {
     let mut input_state = InputState::default();
 
     // Initialize the game world
-    let mut game_world = GameWorld::init(log, &mut target, &mut world);
+    let mut game_world = GameWorld::new(log, &mut target, &mut world);
 
     // The main game loop
     info!(log, "Starting game loop");
