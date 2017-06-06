@@ -51,7 +51,7 @@ pub struct Target {
 }
 
 impl Target {
-    pub fn init(log: &Logger) -> Result<Self, Error> {
+    pub fn new(log: &Logger) -> Result<Self, Error> {
         info!(log, "Initializing target"; "backend" => "vulkan");
         let size = Vector2::new(1280, 720);
 

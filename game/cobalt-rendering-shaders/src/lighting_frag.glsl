@@ -144,7 +144,6 @@ void main() {
         // Calculate how much this surface reflects instead of refracting. This
         //  depends on how much of a metal our surface is, and what angle the
         //  camera is at depending on the surface and the light.
-        // TODO Make sure it's a reflection amount and not a refraction amount
         vec3 headon_reflection = mix(vec3(0.04), base_color, metallic);
         float cos_theta = max(dot(halfway_vector, camera_direction), 0.0);
         vec3 reflection_ratio = fresnel_schlick(cos_theta, headon_reflection);

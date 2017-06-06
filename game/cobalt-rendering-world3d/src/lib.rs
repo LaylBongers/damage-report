@@ -9,6 +9,8 @@ extern crate cobalt_rendering;
 extern crate cobalt_rendering_shaders;
 
 mod camera;
+mod geometry_buffer;
+mod geometry_renderer;
 mod material;
 mod mesh;
 mod model;
