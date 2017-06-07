@@ -9,13 +9,11 @@ use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
 use vulkano::device::{DeviceExtensions, Device, Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
 use vulkano::format::{D16Unorm};
-use vulkano::instance::{Instance, PhysicalDevice};
-use vulkano::swapchain::{Swapchain, SurfaceTransform};
+use vulkano::instance::{Instance, PhysicalDevice, InstanceExtensions};
+use vulkano::swapchain::{Swapchain, SurfaceTransform, Surface};
 use vulkano::image::{SwapchainImage};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sync::{GpuFuture};
-use vulkano_win::{self, VkSurfaceBuild, Window};
-use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, ScanCode, VirtualKeyCode, ModifiersState};
 
 use error::{CobaltErrorMap};
 use {Error};
@@ -24,10 +22,6 @@ use {Error};
 /// tasks needed for rendering smoothly to the target regardless of game-specific render behavior,
 /// such as v-sync and doube/triplebuffering.
 pub struct Target {
-    // Winit window
-    events_loop: EventsLoop,
-    window: Window,
-
     // Persistent values needed for vulkan rendering
     device: Arc<Device>,
     graphics_queue: Arc<Queue>,
@@ -47,11 +41,10 @@ pub struct Target {
 
     // Generic data
     size: Vector2<u32>,
-    focused: bool,
 }
 
 impl Target {
-    pub fn new(log: &Logger) -> Result<Self, Error> {
+    pub fn new<W: WindowCreator>(log: &Logger, window_creator: W) -> Result<(Self, W::W), Error> {
         info!(log, "Initializing target"; "backend" => "vulkan");
         let size = Vector2::new(1280, 720);
 
@@ -60,8 +53,7 @@ impl Target {
         debug!(log, "Creating Vulkan instance");
         let instance = {
             // Tell it we need at least the extensions vulkano-win needs
-            let extensions = vulkano_win::required_extensions();
-            Instance::new(None, &extensions, None)
+            Instance::new(None, &window_creator.required_extensions(), None)
                 .map_platform_err()?
         };
 
@@ -77,12 +69,7 @@ impl Target {
         // Set up the window we want to render to, along with an EventsLoop we can use to listen
         //  for input and other events happening to the window coming from the OS
         debug!(log, "Creating window");
-        let events_loop = EventsLoop::new();
-        let window = WindowBuilder::new()
-            .with_dimensions(size.x, size.y)
-            .with_title(format!("Cobalt"))
-            .build_vk_surface(&events_loop, instance.clone())
-            .map_platform_err()?;
+        let window = window_creator.create_window(instance.clone(), size);
 
         // Find a GPU graphics queue family, we later create a queue from this family to talk to
         //  the GPU
@@ -199,10 +186,7 @@ impl Target {
             ) as Arc<FramebufferAbstract + Send + Sync>
         }).collect::<Vec<_>>();
 
-        Ok(Target {
-            events_loop,
-            window,
-
+        Ok((Target {
             device,
             graphics_queue,
             images,
@@ -215,35 +199,7 @@ impl Target {
             queued_texture_copies: Vec::new(),
 
             size,
-            focused: true,
-        })
-    }
-
-    pub fn poll_events(&mut self) -> Vec<Event> {
-        let mut event = Vec::new();
-        let focused = &mut self.focused;
-
-        self.events_loop.poll_events(|ev| {
-            match ev {
-                WinitEvent::WindowEvent { event: ev, .. } => {
-                    match ev {
-                        WindowEvent::Closed => event.push(Event::Closed),
-                        WindowEvent::Focused(efocused) => *focused = efocused,
-                        WindowEvent::KeyboardInput(state, scan_code, key_code, modifiers) =>
-                            event.push(
-                                Event::KeyboardInput(state, scan_code, key_code, modifiers)
-                            ),
-                        WindowEvent::MouseMoved(x, y) =>
-                            if *focused {
-                                event.push(Event::MouseMoved(Vector2::new(x as u32, y as u32)))
-                            },
-                        _ => (),
-                    }
-                },
-            }
-        });
-
-        event
+        }, window))
     }
 
     pub fn start_frame(&mut self) -> Frame {
@@ -300,12 +256,6 @@ impl Target {
         self.submissions.push(Box::new(future));
     }
 
-    pub fn set_cursor_position(&self, position: Vector2<u32>) {
-        self.window.window()
-            .set_cursor_position(position.x as i32, position.y as i32)
-            .unwrap();
-    }
-
     pub fn queue_texture_copy(
         &mut self,
         buffer: Arc<CpuAccessibleBuffer<[u8]>>,
@@ -335,15 +285,19 @@ impl Target {
     }
 }
 
-#[derive(Debug)]
-pub enum Event {
-    Closed,
-    KeyboardInput(ElementState, ScanCode, Option<VirtualKeyCode>, ModifiersState),
-    MouseMoved(Vector2<u32>),
-}
-
 pub struct Frame {
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     image_num: usize,
     pub future: Option<Box<GpuFuture>>,
+}
+
+pub trait WindowCreator {
+    type W: WindowRemoveThisPart;
+
+    fn required_extensions(&self) -> InstanceExtensions;
+    fn create_window(&self, instance: Arc<Instance>, size: Vector2<u32>) -> Self::W;
+}
+
+pub trait WindowRemoveThisPart {
+    fn surface(&self) -> &Arc<Surface>;
 }
