@@ -1,5 +1,4 @@
 use std::sync::{Arc};
-use std::time::{Duration};
 
 use cgmath::{Vector2};
 use slog::{Logger};
@@ -7,31 +6,22 @@ use vulkano::format::{Format};
 use vulkano::buffer::{CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
 use vulkano::device::{DeviceExtensions, Device, Queue};
-use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
-use vulkano::format::{D16Unorm};
-use vulkano::instance::{Instance, PhysicalDevice, InstanceExtensions};
-use vulkano::swapchain::{Swapchain, SurfaceTransform, Surface};
-use vulkano::image::{SwapchainImage};
+use vulkano::framebuffer::{FramebufferAbstract};
+use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sync::{GpuFuture};
 
 use error::{CobaltErrorMap};
-use {Error};
+use target_swapchain::{TargetSwapchain};
+use {Error, Window, WindowCreator};
 
-/// Manages the window/screen to render to, and which GPU to render with. Also manages generic
-/// tasks needed for rendering smoothly to the target regardless of game-specific render behavior,
-/// such as v-sync and doube/triplebuffering.
+/// A representation of a render target, manages the initial connection with the drivers, and
+/// presenting images on the target window.
 pub struct Target {
     // Persistent values needed for vulkan rendering
     device: Arc<Device>,
     graphics_queue: Arc<Queue>,
-    images: Vec<Arc<SwapchainImage>>,
-    swapchain: Arc<Swapchain>,
-    render_pass: Arc<RenderPassAbstract + Send + Sync>,
-    framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
-
-    // Submissions from previous frames
-    submissions: Vec<Box<GpuFuture>>,
+    target_swapchain: TargetSwapchain,
 
     // Queued up things we need to submit as part of command buffers
     queued_texture_copies: Vec<(
@@ -103,98 +93,15 @@ impl Target {
         // Get the graphics queue we requested
         let graphics_queue = queues.next().unwrap();
 
-        // Now create the swapchain, we need this to actually swap between our back buffer and the
-        //  window's front buffer, without it we can't show anything
-        debug!(log, "Creating swapchain");
-        let (swapchain, images) = {
-            // Get what the swap chain we want to create would be capable of, we can't request
-            //  anything it can't do
-            let caps = window.surface().capabilities(physical).unwrap();
-
-            // The swap chain's dimensions need to match the window size
-            let dimensions = caps.current_extent.unwrap_or([size.x, size.y]);
-
-            // The present mode is things like vsync and vsync-framerate, right now pick the first
-            //  one, we're sure it will work but it's probably not optimal
-            // TODO: Let the user decide
-            let present = caps.present_modes.iter().next().unwrap();
-
-            // This decides how alpha will be composited by the OS' window manager, we just pick
-            //  the first available option
-            let alpha = caps.supported_composite_alpha.iter().next().unwrap();
-
-            // And finally, chose the internal format that images will have
-            // The swap chain needs to be in SRGB, and this format is guaranteed supported
-            let format = ::vulkano::format::B8G8R8A8Srgb;
-
-            // Finally, actually create the swapchain, with all its color images
-            Swapchain::new(
-                device.clone(), window.surface().clone(), caps.min_image_count, format,
-                dimensions, 1,
-                caps.supported_usage_flags, &graphics_queue, SurfaceTransform::Identity, alpha,
-                present, true, None
-            ).unwrap()
-        };
-        debug!(log, "Created swapchain"; "images" => images.len());
-
-        // To render in 3D, we need an extra buffer to keep track of the depth. Since this won't be
-        //  displayed, it doesn't need to be part of the swapchain.
-        debug!(log, "Creating depth buffer");
-        let depth_buffer = {
-            use vulkano::image::{Image};
-            use vulkano::image::attachment::{AttachmentImage};
-
-            AttachmentImage::transient(
-                device.clone(), images[0].dimensions().width_height(), D16Unorm
-            ).unwrap()
-        };
-
-        // Set up a render pass TODO: Comment better
-        let color_buffer_format = swapchain.format();
-        let depth_buffer_format = ::vulkano::format::Format::D16Unorm;
-        #[allow(dead_code)]
-        let render_pass = Arc::new(single_pass_renderpass!(device.clone(),
-            attachments: {
-                color: {
-                    load: Clear,
-                    store: Store,
-                    format: color_buffer_format,
-                    samples: 1,
-                },
-                depth: {
-                    load: Clear,
-                    store: DontCare,
-                    format: depth_buffer_format,
-                    samples: 1,
-                }
-            },
-            pass: {
-                color: [color],
-                depth_stencil: {depth}
-            }
-        ).unwrap());
-
-        // Set up the frame buffers matching the render pass
-        // For each image in the swap chain, we create a frame buffer that renders to that image
-        //  and to the depth buffer attachment. These attachments are defined by the render pass.
-        debug!(log, "Creating framebuffers for swapchain");
-        let framebuffers = images.iter().map(|image| {
-            Arc::new(Framebuffer::start(render_pass.clone())
-                .add(image.clone()).unwrap()
-                .add(depth_buffer.clone()).unwrap()
-                .build().unwrap()
-            ) as Arc<FramebufferAbstract + Send + Sync>
-        }).collect::<Vec<_>>();
+        // Create the swapchain we'll have to render to to make things actually show up on screen
+        let target_swapchain = TargetSwapchain::new(
+            log, &window, size, physical, device.clone(), &graphics_queue
+        );
 
         Ok((Target {
             device,
             graphics_queue,
-            images,
-            swapchain,
-            render_pass,
-            framebuffers,
-
-            submissions: Vec::new(),
+            target_swapchain,
 
             queued_texture_copies: Vec::new(),
 
@@ -203,17 +110,11 @@ impl Target {
     }
 
     pub fn start_frame(&mut self) -> Frame {
-        // Clearing the old submissions by keeping alive only the ones which probably aren't
-        //  finished
-        while self.submissions.len() >= 4 {
-            self.submissions.remove(0);
-        }
+        self.target_swapchain.clean_old_submissions();
 
-        // Get the image for this frame
-        let (image_num, future) = ::vulkano::swapchain::acquire_next_image(
-            self.swapchain.clone(), Duration::new(1, 0)
-        ).unwrap();
-        let mut future: Box<GpuFuture> = Box::new(future);
+        // Get the image for this frame, along with a future that will let us queue up the order of
+        //  command buffer submissions.
+        let (framebuffer, image_num, mut future) = self.target_swapchain.start_frame();
 
         // If we have any images to load, we need to submit another buffer before anything else
         if self.queued_texture_copies.len() != 0 {
@@ -237,23 +138,16 @@ impl Target {
         }
 
         Frame {
-            framebuffer: self.framebuffers[image_num].clone(),
+            framebuffer,
             image_num,
             future: Some(future),
         }
     }
 
-    pub fn finish_frame(&mut self, mut frame: Frame) {
-        let future = frame.future.take().unwrap()
-            // Present the image resulting from all the submitted command buffers on the screen
-            .then_swapchain_present(
-                self.graphics_queue.clone(), self.swapchain.clone(), frame.image_num
-            )
-            // Finally, submit it all to the driver
-            .then_signal_fence_and_flush().unwrap();
-
-        // Keep track of these submissions so we can later wait on them
-        self.submissions.push(Box::new(future));
+    pub fn finish_frame(&mut self, frame: Frame) {
+        self.target_swapchain.finish_frame(
+            frame.future.unwrap(), self.graphics_queue.clone(), frame.image_num
+        );
     }
 
     pub fn queue_texture_copy(
@@ -272,12 +166,8 @@ impl Target {
         &self.graphics_queue
     }
 
-    pub fn images(&self) -> &Vec<Arc<SwapchainImage>> {
-        &self.images
-    }
-
-    pub fn render_pass(&self) -> &Arc<RenderPassAbstract + Send + Sync> {
-        &self.render_pass
+    pub fn swapchain(&self) -> &TargetSwapchain {
+        &self.target_swapchain
     }
 
     pub fn size(&self) -> Vector2<u32> {
@@ -289,15 +179,4 @@ pub struct Frame {
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     image_num: usize,
     pub future: Option<Box<GpuFuture>>,
-}
-
-pub trait WindowCreator {
-    type W: WindowRemoveThisPart;
-
-    fn required_extensions(&self) -> InstanceExtensions;
-    fn create_window(&self, instance: Arc<Instance>, size: Vector2<u32>) -> Self::W;
-}
-
-pub trait WindowRemoveThisPart {
-    fn surface(&self) -> &Arc<Surface>;
 }

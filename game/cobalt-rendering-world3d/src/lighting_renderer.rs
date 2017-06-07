@@ -1,7 +1,6 @@
 use std::sync::{Arc};
 
 use slog::{Logger};
-use vulkano::image::{Image};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
@@ -165,7 +164,7 @@ fn load_lighting_pipeline(
 
     // Set up the pipeline
     debug!(log, "Creating deferred pipeline");
-    let dimensions = target.images()[0].dimensions().width_height();
+    let dimensions = target.size();
     let pipeline_params = GraphicsPipelineParams {
         vertex_input: SingleBufferDefinition::new(),
         vertex_shader: vs.main_entry_point(),
@@ -178,8 +177,8 @@ fn load_lighting_pipeline(
                     origin: [0.0, 0.0],
                     depth_range: 0.0 .. 1.0,
                     dimensions: [
-                        dimensions[0] as f32,
-                        dimensions[1] as f32
+                        dimensions.x as f32,
+                        dimensions.y as f32
                     ],
                 },
                 Scissor::irrelevant()
@@ -190,7 +189,7 @@ fn load_lighting_pipeline(
         fragment_shader: fs.main_entry_point(),
         depth_stencil: DepthStencil::disabled(),
         blend: Blend::pass_through(),
-        render_pass: Subpass::from(target.render_pass().clone(), 0).unwrap(),
+        render_pass: Subpass::from(target.swapchain().render_pass.clone(), 0).unwrap(),
     };
 
     Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap())

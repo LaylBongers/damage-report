@@ -13,7 +13,6 @@ use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
 use vulkano::pipeline::raster::{Rasterization, CullMode, FrontFace};
 use vulkano::pipeline::blend::{Blend};
-use vulkano::image::{Image};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use cobalt_rendering::{Target};
@@ -22,7 +21,7 @@ use geometry_buffer::{GeometryBuffer};
 use {Camera, World, Entity};
 
 pub struct GeometryRenderer {
-    pub pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
 }
 
 impl GeometryRenderer {
@@ -122,7 +121,7 @@ fn load_pipeline(
 
     // Set up the pipeline
     debug!(log, "Creating gbuffer pipeline");
-    let dimensions = target.images()[0].dimensions().width_height();
+    let dimensions = target.size();
     let pipeline_params = GraphicsPipelineParams {
         vertex_input: SingleBufferDefinition::new(),
         vertex_shader: vs.main_entry_point(),

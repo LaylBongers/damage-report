@@ -16,8 +16,8 @@ pub struct GeometryBuffer {
     pub roughness_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     pub depth_attachment: Arc<AttachmentImage<format::D16Unorm>>,
 
-    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
+    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
 }
 
 impl GeometryBuffer {
@@ -120,8 +120,8 @@ impl GeometryBuffer {
             roughness_attachment,
             depth_attachment,
 
-            framebuffer,
             render_pass,
+            framebuffer,
         }
     }
 }
