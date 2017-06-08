@@ -26,7 +26,7 @@ This is a list of Epics with corresponding tasks.
 ## Breaking Devices
 | Task                                                                | Status |
 |---------------------------------------------------------------------|--------|
-| Devices have color changing status lights                           | In Progress |
+| Devices have color changing status lights                           | Done   |
 | Devices break randomly controlled by a god AI                       |        |
 | Player can repair devices by clicking them                          |        |
 | Points are generated depending on certain devices being on (multiplier with base of 0x or 1x) |  |

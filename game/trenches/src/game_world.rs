@@ -59,7 +59,7 @@ fn floor_vertices() -> Vec<Vertex> {
             normal: Vector3::new(0.0, 1.0, 0.0),
         },
         Vertex {
-            position: Vector3::new(-10.0, 0.0, 10.0),
+            position: Vector3::new(-20.0, 0.0, 20.0),
             uv: Vector2::new(0.0, 1.0),
             normal: Vector3::new(0.0, 1.0, 0.0),
         },
