@@ -9,7 +9,7 @@ use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use {Target};
+use {Target, Backend};
 
 /// An uploaded texture. Internally ref-counted, cheap to clone.
 #[derive(Clone)]
@@ -19,8 +19,8 @@ pub struct Texture {
 }
 
 impl Texture {
-    pub fn load<P: AsRef<Path>>(
-        log: &Logger, target: &mut Target, path: P, format: TextureFormat
+    pub fn load<P: AsRef<Path>, B: Backend>(
+        log: &Logger, target: &mut Target<B>, path: P, format: TextureFormat
     ) -> Self {
         // Load in the image file
         info!(log, "Loading texture"; "path" => path.as_ref().display().to_string());
@@ -37,8 +37,8 @@ impl Texture {
 
             // TODO: staging buffer instead
             CpuAccessibleBuffer::<[u8]>::from_iter(
-                target.device().clone(), BufferUsage::all(),
-                Some(target.graphics_queue().family()), image_data_iter
+                target.backend().device().clone(), BufferUsage::all(),
+                Some(target.backend().graphics_queue().family()), image_data_iter
             ).unwrap()
         };
 
@@ -52,12 +52,12 @@ impl Texture {
         // Create the texture and sampler for the image, the texture data will later be copied in
         //  a command buffer
         let texture = ImmutableImage::new(
-            target.device().clone(),
+            target.backend().device().clone(),
             Dimensions::Dim2d { width: img_dimensions.0, height: img_dimensions.1 },
-            format, Some(target.graphics_queue().family())
+            format, Some(target.backend().graphics_queue().family())
         ).unwrap();
         let sampler = Sampler::new(
-            target.device().clone(),
+            target.backend().device().clone(),
             Filter::Linear,
             Filter::Linear,
             MipmapMode::Nearest,
@@ -68,7 +68,7 @@ impl Texture {
         ).unwrap();
 
         // Make sure the buffer's actually put into the texture
-        target.queue_texture_copy(buffer, texture.clone());
+        target.backend_mut().queue_texture_copy(buffer, texture.clone());
 
         Texture {
             texture,
