@@ -11,6 +11,8 @@ use cobalt_rendering::{Target};
 pub struct GeometryBuffer {
     pub position_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
     pub base_color_attachment: Arc<AttachmentImage<format::R8G8B8A8Srgb>>,
+    // TODO: This one can be changed to R8G8B8A8Unorm if the geometry shader converts the values
+    //  back to a 0.0-1.0 range
     pub normal_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
     pub metallic_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     pub roughness_attachment: Arc<AttachmentImage<format::R8Unorm>>,
@@ -21,7 +23,9 @@ pub struct GeometryBuffer {
 }
 
 impl GeometryBuffer {
-    pub fn new(log: &Logger, target: &Target) -> Self {
+    pub fn new(
+        log: &Logger, target: &Target, depth_attachment: Arc<AttachmentImage<format::D16Unorm>>
+    ) -> Self {
         // The gbuffer attachments we end up using in the final lighting pass need to have sampled
         //  set to true, or we can't sample them, resulting in a black color result.
         let attach_usage = ImageUsage {
@@ -46,9 +50,9 @@ impl GeometryBuffer {
         let roughness_attachment = AttachmentImage::with_usage(
             target.device().clone(), target.size().into(), format::R8Unorm, attach_usage
         ).unwrap();
-        let depth_attachment = AttachmentImage::with_usage(
-            target.device().clone(), target.size().into(), format::D16Unorm, attach_usage
-        ).unwrap();
+        // Rather than create our own depth attachment, we re-use the one of the framebuffer the
+        // lighting will eventually render to. A later forward rendering pass for transparent
+        // objects will need the depth buffer, so we avoid a duplicate buffer and a copy this way.
 
         // Create the deferred render pass
         // TODO: Document better what a render pass does that a framebuffer doesn't

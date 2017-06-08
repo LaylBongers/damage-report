@@ -18,7 +18,9 @@ impl Renderer {
     pub fn new(log: &Logger, target: &Target) -> Self {
         info!(log, "Initializing world renderer");
 
-        let geometry_buffer = GeometryBuffer::new(log, target);
+        let geometry_buffer = GeometryBuffer::new(
+            log, target, target.swapchain().depth_attachment.clone()
+        );
         let geometry_renderer = GeometryRenderer::new(log, target, &geometry_buffer);
 
         let lighting_renderer = LightingRenderer::new(log, target);

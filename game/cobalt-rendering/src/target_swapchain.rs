@@ -5,16 +5,19 @@ use cgmath::{Vector2};
 use slog::{Logger};
 use vulkano::device::{Device, Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
-use vulkano::format::{D16Unorm};
+use vulkano::format::{self, D16Unorm};
 use vulkano::instance::{PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform};
 use vulkano::sync::{GpuFuture};
+use vulkano::image::{Image};
+use vulkano::image::attachment::{AttachmentImage};
 
 use {Window};
 
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
 pub struct TargetSwapchain {
     swapchain: Arc<Swapchain>,
+    pub depth_attachment: Arc<AttachmentImage<format::D16Unorm>>,
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
 
@@ -62,16 +65,13 @@ impl TargetSwapchain {
         debug!(log, "Created swapchain"; "images" => images.len());
 
         // To render in 3D, we need an extra buffer to keep track of the depth. Since this won't be
-        //  displayed, it doesn't need to be part of the swapchain.
+        //  displayed, we don't need multiple of it like we do with the color swapchain. This isn't
+        //  marked as transient as we'll have to use its values across multiple framebuffers and
+        //  render passes.
         debug!(log, "Creating depth buffer");
-        let depth_buffer = {
-            use vulkano::image::{Image};
-            use vulkano::image::attachment::{AttachmentImage};
-
-            AttachmentImage::transient(
-                device.clone(), images[0].dimensions().width_height(), D16Unorm
-            ).unwrap()
-        };
+        let depth_attachment = AttachmentImage::new(
+            device.clone(), images[0].dimensions().width_height(), D16Unorm
+        ).unwrap();
 
         // Set up a render pass TODO: Comment better
         let color_buffer_format = swapchain.format();
@@ -105,13 +105,14 @@ impl TargetSwapchain {
         let framebuffers = images.iter().map(|image| {
             Arc::new(Framebuffer::start(render_pass.clone())
                 .add(image.clone()).unwrap()
-                .add(depth_buffer.clone()).unwrap()
+                .add(depth_attachment.clone()).unwrap()
                 .build().unwrap()
             ) as Arc<FramebufferAbstract + Send + Sync>
         }).collect::<Vec<_>>();
 
         TargetSwapchain {
             swapchain,
+            depth_attachment,
             render_pass,
             framebuffers,
             submissions: Vec::new(),
