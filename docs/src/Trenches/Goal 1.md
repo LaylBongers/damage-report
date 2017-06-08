@@ -10,6 +10,7 @@ be used to create a small game.
 | Render randomly wandering enemies (no animation)                    |        |
 | Render player gun model                                             |        |
 | Light the game with directional sunlight                            |        |
+| Add gfx-rs support                                                  |        |
 
 ## Low Priority Tasks
 

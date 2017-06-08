@@ -130,7 +130,7 @@ impl Target {
                     .unwrap();
             }
 
-            // Finally, add the command buffer to the future so it will be executed
+            // Add the command buffer to the future so it will be executed
             let image_copy_buffer = image_copy_buffer_builder.build().unwrap();
             future = Box::new(future
                 .then_execute(self.graphics_queue.clone(), image_copy_buffer).unwrap()
