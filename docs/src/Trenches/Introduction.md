@@ -1,6 +1,6 @@
 # Trenches
 Trenches is a project to create a game based on the original Ace of Spades using
-the Cobalt rendering engine. It's important that this remains a small and simple
+the Calcium rendering engine. It's important that this remains a small and simple
 project, it's not meant to have a complex sprawling feature set. However, it
 should have some unique twist to the original concept, though that twist can be
 decided on after the base mechanics are in there as it's not the primary goal.

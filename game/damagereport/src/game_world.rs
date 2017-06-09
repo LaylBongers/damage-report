@@ -1,7 +1,7 @@
 use cgmath::{Vector3};
 use slog::{Logger};
-use cobalt_rendering::{Target, Texture, TextureFormat};
-use cobalt_rendering_world3d::{World, Model, Entity, Light, EntityId, LightId, Material};
+use calcium_rendering::{Target, Texture, TextureFormat};
+use calcium_rendering_world3d::{World, Model, Entity, Light, EntityId, LightId, Material};
 
 use input::{InputState, FrameInput};
 use player::{Player};

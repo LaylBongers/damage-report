@@ -6,7 +6,7 @@ use vulkano::swapchain::{Surface};
 use vulkano_win::{self, VkSurfaceBuild, Window as VulkanWinWindow};
 use winit::{EventsLoop, WindowBuilder, Event, WindowEvent};
 
-use cobalt_rendering_vulkano::{WindowCreator, Window};
+use calcium_rendering_vulkano::{WindowCreator, Window};
 
 use input::{InputState, FrameInput};
 

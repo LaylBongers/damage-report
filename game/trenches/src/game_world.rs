@@ -1,9 +1,9 @@
 use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 
-use cobalt_rendering::{Target, Texture, TextureFormat};
-use cobalt_rendering_vulkano::{VulkanoBackend};
-use cobalt_rendering_world3d::{World, Entity, Material, Mesh, Vertex};
+use calcium_rendering::{Target, Texture, TextureFormat};
+use calcium_rendering_vulkano::{VulkanoBackend};
+use calcium_rendering_world3d::{World, Entity, Material, Mesh, Vertex};
 
 use input::{InputState, FrameInput};
 use player::{Player};

@@ -1,0 +1,14 @@
+[package]
+name = "calcium-rendering-world3d"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+cgmath = "0.14.1"
+image = "0.13.0"
+slog = "2.0.5"
+vulkano = "0.4.0"
+wavefront_obj = "5.0.0"
+calcium-rendering = {path = "../calcium-rendering"}
+calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
+calcium-rendering-vulkano-shaders = {path = "../calcium-rendering-vulkano-shaders"}

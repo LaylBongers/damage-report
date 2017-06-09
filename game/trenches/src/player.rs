@@ -1,5 +1,5 @@
 use cgmath::{Vector3, Euler, Rad, Zero, Angle, Quaternion, InnerSpace, Vector2};
-use cobalt_rendering_world3d::{Camera};
+use calcium_rendering_world3d::{Camera};
 
 use input::{InputState, FrameInput};
 

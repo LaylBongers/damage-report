@@ -1,5 +1,5 @@
 # Goal 1
-Use Trenches to improve and guide Cobalt development to the point where it can
+Use Trenches to improve and guide Calcium development to the point where it can
 be used to create a small game.
 
 ## Required Tasks
