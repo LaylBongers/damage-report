@@ -1,83 +1,33 @@
-use std::sync::{Arc};
-use std::path::{Path};
+use std::path::{PathBuf};
 
-use image::{self, GenericImage};
-use slog::{Logger};
-use vulkano::format::{Format};
-use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
-use vulkano::image::{Dimensions};
-use vulkano::image::immutable::{ImmutableImage};
-use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
-
-use {Target, Backend};
-
-/// An uploaded texture. Internally ref-counted, cheap to clone.
-#[derive(Clone)]
 pub struct Texture {
-    texture: Arc<ImmutableImage<Format>>,
-    sampler: Arc<Sampler>,
+    // Texture needs to track the data to load a texture internally because the backend may need to
+    // be re-loaded, in which case the backend data gets purged.
+    // TODO: Make fields that can be private private, improve encapsulation
+    pub source: PathBuf,
+    pub format: TextureFormat,
+    pub submitted: bool,
 }
 
 impl Texture {
-    pub fn load<P: AsRef<Path>, B: Backend>(
-        log: &Logger, target: &mut Target<B>, path: P, format: TextureFormat
-    ) -> Self {
-        // Load in the image file
-        info!(log, "Loading texture"; "path" => path.as_ref().display().to_string());
-        let img = image::open(path.as_ref()).unwrap();
-        let img_dimensions = img.dimensions();
-
-        // Load the image data into a buffer
-        let buffer = {
-            let image_data = img.to_rgba().into_raw();
-
-            // If the format is LinearRed, we need to ignore the GBA elements
-            let chunk_size = if format != TextureFormat::LinearRed { 1 } else { 4 };
-            let image_data_iter = image_data.chunks(chunk_size).map(|c| c[0]);
-
-            // TODO: staging buffer instead
-            CpuAccessibleBuffer::<[u8]>::from_iter(
-                target.backend().device().clone(), BufferUsage::all(),
-                Some(target.backend().graphics_queue().family()), image_data_iter
-            ).unwrap()
-        };
-
-        // Get the correct format for the srgb parameter we got passed
-        let format = match format {
-            TextureFormat::Srgb => Format::R8G8B8A8Srgb,
-            TextureFormat::Linear => Format::R8G8B8A8Unorm,
-            TextureFormat::LinearRed => Format::R8Unorm,
-        };
-
-        // Create the texture and sampler for the image, the texture data will later be copied in
-        //  a command buffer
-        let texture = ImmutableImage::new(
-            target.backend().device().clone(),
-            Dimensions::Dim2d { width: img_dimensions.0, height: img_dimensions.1 },
-            format, Some(target.backend().graphics_queue().family())
-        ).unwrap();
-        let sampler = Sampler::new(
-            target.backend().device().clone(),
-            Filter::Linear,
-            Filter::Linear,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
-        ).unwrap();
-
-        // Make sure the buffer's actually put into the texture
-        target.backend_mut().queue_texture_copy(buffer, texture.clone());
+    pub fn new<P: Into<PathBuf>>(path: P, format: TextureFormat) -> Self {
+        // TODO: Remove this note when implementation is done
+        // Texture will be loaded on-demand or when told, but always on a separate thread. This
+        //  allows cobalt to provide non-blocking texture loading. Sometimes this means that during
+        //  rendering a model has to be skipped (or rendered without texture, provide choice!)
+        //  because there's no texture loaded yet. The game using cobalt needs to be able to detect
+        //  if the needed textures are loaded and show loading screens otherwise.
+        // Create a "Texture Set" or something similar that can be easily used to check if textures
+        //  are loaded and submit them for loading on backend switch. This may need to be some more
+        //  generic type of asset set, perhaps including non-core assets in some way. This wouldn't
+        //  be the required way to upload textures but just a way to pre-load a bunch at once, and
+        //  detect if they're loaded.
 
         Texture {
-            texture,
-            sampler,
+            source: path.into(),
+            format,
+            submitted: false,
         }
-    }
-
-    pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
-        (self.texture.clone(), self.sampler.clone())
     }
 }
 

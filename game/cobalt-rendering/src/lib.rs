@@ -10,7 +10,7 @@ mod error;
 mod target_swapchain;
 mod target;
 mod texture;
-mod vulkano_backend;
+pub mod vulkano_backend;
 mod window;
 
 pub use backend::{Backend};
@@ -18,5 +18,4 @@ pub use error::{Error};
 pub use target_swapchain::{TargetSwapchain};
 pub use target::{Target, Frame};
 pub use texture::{Texture, TextureFormat};
-pub use vulkano_backend::{VulkanoBackend};
 pub use window::{WindowCreator, Window};
