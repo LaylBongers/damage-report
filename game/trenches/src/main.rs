@@ -19,7 +19,8 @@ use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
-use cobalt_rendering::{Error, Target};
+use cobalt_rendering::vulkano_backend::{VulkanoBackend};
+use cobalt_rendering::{Error, Target, Backend};
 use cobalt_rendering_world3d::{Renderer, Camera, World};
 use cobalt_utils::{LoopTimer};
 
@@ -47,7 +48,8 @@ fn try_main(log: &Logger) -> Result<(), Error> {
     info!(log, "Initializing game");
 
     // Initialize the rendering system
-    let (mut target, mut window) = Target::new(log, VulkanWinWindowCreator)?;
+    let (backend, mut window) = VulkanoBackend::new(log, VulkanWinWindowCreator)?;
+    let mut target = Target::new(log, backend);
     let mut renderer = Renderer::new(log, &target);
     let mut world = World::new();
 
@@ -74,19 +76,22 @@ fn try_main(log: &Logger) -> Result<(), Error> {
 
         // Perform the actual rendering
         let camera = game_world.player.create_camera();
-        render_frame(&mut target, &mut renderer, &camera, &world);
+        render_frame(log, &mut target, &mut renderer, &camera, &world);
     }
     info!(log, "Ending game loop");
 
     Ok(())
 }
 
-fn render_frame(target: &mut Target, renderer: &mut Renderer, camera: &Camera, world: &World) {
+fn render_frame(
+    log: &Logger, target: &mut Target<VulkanoBackend>, renderer: &mut Renderer,
+    camera: &Camera, world: &World
+) {
     // Start the frame
     let mut frame = target.start_frame();
 
     // Render the world itself
-    renderer.render(target, &mut frame, camera, world);
+    renderer.render(log, target, &mut frame, camera, world);
 
     // Finish the frame
     target.finish_frame(frame);

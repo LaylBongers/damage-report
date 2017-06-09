@@ -6,6 +6,7 @@ use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
+use cobalt_rendering::vulkano_backend::{VulkanoBackend};
 use cobalt_rendering::{Target};
 use {Mesh, Vertex};
 
@@ -14,7 +15,7 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn load<P: AsRef<Path>>(log: &Logger, target: &Target, path: P, scale: f32) -> Self {
+    pub fn load<P: AsRef<Path>>(log: &Logger, target: &Target<VulkanoBackend>, path: P, scale: f32) -> Self {
         // TODO: Change unwraps to proper error handling
         info!(log, "Loading model"; "path" => path.as_ref().display().to_string());
 
@@ -35,7 +36,7 @@ impl Model {
     }
 
     fn obj_set_to_meshes(
-        log: &Logger, target: &Target, obj_set: &ObjSet, scale: f32
+        log: &Logger, target: &Target<VulkanoBackend>, obj_set: &ObjSet, scale: f32
     ) -> Vec<Mesh> {
         let mut meshes = Vec::new();
 

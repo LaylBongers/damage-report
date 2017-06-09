@@ -2,7 +2,8 @@ use slog::{Logger};
 use vulkano::command_buffer::{CommandBufferBuilder};
 use vulkano::sync::{GpuFuture};
 
-use cobalt_rendering::{Target, Frame};
+use cobalt_rendering::vulkano_backend::{VulkanoBackend};
+use cobalt_rendering::{Target, Frame, Backend};
 use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
@@ -15,11 +16,11 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(log: &Logger, target: &Target) -> Self {
+    pub fn new(log: &Logger, target: &Target<VulkanoBackend>) -> Self {
         info!(log, "Initializing world renderer");
 
         let geometry_buffer = GeometryBuffer::new(
-            log, target, target.swapchain().depth_attachment.clone()
+            log, target, target.backend().swapchain().depth_attachment.clone()
         );
         let geometry_renderer = GeometryRenderer::new(log, target, &geometry_buffer);
 
@@ -33,7 +34,8 @@ impl Renderer {
     }
 
     pub fn render(
-        &mut self, target: &mut Target, frame: &mut Frame, camera: &Camera, world: &World
+        &mut self, log: &Logger,
+        target: &mut Target<VulkanoBackend>, frame: &mut Frame, camera: &Camera, world: &World
     ) {
         // This is a deferred renderer, so what we will do is first build up the "geometry buffer",
         //  which is a framebuffer made up from various images to keep track of the data needed for
@@ -50,7 +52,7 @@ impl Renderer {
         //  to actually render triangles to buffers. No actual rendering is done here, we just
         //  prepare the render passes and drawcalls.
         let geometry_command_buffer = self.geometry_renderer.build_command_buffer(
-            target, &self.geometry_buffer, camera, world
+            log, target, &self.geometry_buffer, camera, world
         ).build().unwrap();
         let lighting_command_buffer = self.lighting_renderer.build_command_buffer(
             target, frame, &self.geometry_buffer, camera, world
@@ -60,8 +62,8 @@ impl Renderer {
         //  right sequence. geometry buffer first, then the lighting pass that depends on the
         //  geometry buffer.
         let future = frame.future.take().unwrap()
-            .then_execute(target.graphics_queue().clone(), geometry_command_buffer).unwrap()
-            .then_execute(target.graphics_queue().clone(), lighting_command_buffer).unwrap();
+            .then_execute(target.backend().graphics_queue().clone(), geometry_command_buffer).unwrap()
+            .then_execute(target.backend().graphics_queue().clone(), lighting_command_buffer).unwrap();
         frame.future = Some(Box::new(future));
     }
 }

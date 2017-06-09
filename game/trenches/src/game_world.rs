@@ -1,6 +1,8 @@
 use cgmath::{Vector2, Vector3};
 use slog::{Logger};
-use cobalt_rendering::{Target, Texture, TextureFormat};
+
+use cobalt_rendering::vulkano_backend::{VulkanoBackend};
+use cobalt_rendering::{Target, Texture, TextureFormat, Backend};
 use cobalt_rendering_world3d::{World, Entity, Material, Mesh, Vertex};
 
 use input::{InputState, FrameInput};
@@ -11,24 +13,24 @@ pub struct GameWorld {
 }
 
 impl GameWorld {
-    pub fn new(log: &Logger, target: &mut Target, world: &mut World) -> Self {
+    pub fn new(log: &Logger, target: &mut Target<VulkanoBackend>, world: &mut World) -> Self {
         let player = Player::new();
         world.set_ambient_light(Vector3::new(0.005, 0.005, 0.005));
 
         // Add a flat floor to have something as reference
         let floor_mesh = Mesh::from_flat_vertices(log, target, &floor_vertices());
         let floor_material = Material {
-            base_color: Texture::load(
-                log, target, "./assets/texture_normal.png", TextureFormat::Srgb
+            base_color: Texture::new(
+                "./assets/texture_normal.png", TextureFormat::Srgb
             ),
-            normal_map: Texture::load(
-                log, target, "./assets/texture_normal.png", TextureFormat::Linear
+            normal_map: Texture::new(
+                "./assets/texture_normal.png", TextureFormat::Linear
             ),
-            metallic_map: Texture::load(
-                log, target, "./assets/texture_metallic.png", TextureFormat::LinearRed
+            metallic_map: Texture::new(
+                "./assets/texture_metallic.png", TextureFormat::LinearRed
             ),
-            roughness_map: Texture::load(
-                log, target, "./assets/texture_roughness.png", TextureFormat::LinearRed
+            roughness_map: Texture::new(
+                "./assets/texture_roughness.png", TextureFormat::LinearRed
             ),
         };
         world.add_entity(Entity {

@@ -4,7 +4,8 @@ use cgmath::{Vector2, Vector3, InnerSpace};
 use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use cobalt_rendering::{Target};
+use cobalt_rendering::vulkano_backend::{VulkanoBackend};
+use cobalt_rendering::{Target, Backend};
 
 #[derive(Clone, PartialEq)]
 pub struct Vertex {
@@ -32,7 +33,7 @@ pub struct Mesh {
 impl Mesh {
     /// Creates a mesh from vertcies. Will eliminate duplicate vertices using indices. Avoid using
     /// if you can directly provide vertices/indices without duplicate checking instead.
-    pub fn from_flat_vertices(log: &Logger, target: &Target, flat_vertices: &Vec<Vertex>) -> Mesh {
+    pub fn from_flat_vertices(log: &Logger, target: &Target<VulkanoBackend>, flat_vertices: &Vec<Vertex>) -> Mesh {
         debug!(log, "Converting flat vertices to indexed";
             "vertices" => flat_vertices.len()
         );
@@ -65,7 +66,7 @@ impl Mesh {
 
     /// Creates a mesh from vertices and indices. Performs no duplicate checking.
     pub fn from_vertices_indices(
-        log: &Logger, target: &Target, vertices: &Vec<Vertex>, indices: &Vec<u16>
+        log: &Logger, target: &Target<VulkanoBackend>, vertices: &Vec<Vertex>, indices: &Vec<u16>
     ) -> Mesh {
         let mut hotfixed_uvs = false;
 
@@ -134,11 +135,13 @@ impl Mesh {
 
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
-            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
+            target.backend().device().clone(), BufferUsage::all(),
+            Some(target.backend().graphics_queue().family()),
             vk_vertices.into_iter()
         ).unwrap();
         let index_buffer = CpuAccessibleBuffer::from_iter(
-            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
+            target.backend().device().clone(), BufferUsage::all(),
+            Some(target.backend().graphics_queue().family()),
             indices.iter().map(|v| *v)
         ).unwrap();
 

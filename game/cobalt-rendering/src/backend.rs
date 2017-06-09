@@ -15,11 +15,6 @@ pub trait Backend {
 
     // TODO: These functions are implementation-specific, they're here right now while
     //  transitioning to a flexible backend system
-    fn queue_texture_copy(
-        &mut self,
-        buffer: Arc<CpuAccessibleBuffer<[u8]>>,
-        texture: Arc<ImmutableImage<Format>>,
-    );
     fn device(&self) -> &Arc<Device>;
     fn graphics_queue(&self) -> &Arc<Queue>;
     fn swapchain(&self) -> &TargetSwapchain;

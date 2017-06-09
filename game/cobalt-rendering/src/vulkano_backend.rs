@@ -1,5 +1,6 @@
 use std::sync::{Arc};
-use std::path::{Path, PathBuf};
+use std::path::{Path};
+use std::collections::{HashMap};
 
 use cgmath::{Vector2};
 use slog::{Logger};
@@ -16,7 +17,10 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use error::{CobaltErrorMap};
 use target_swapchain::{TargetSwapchain};
-use {Error, Window, WindowCreator, Backend, Frame, Target, Texture, TextureFormat};
+use {Error, Window, WindowCreator, Backend, Frame, TextureFormat, Texture};
+
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
+struct TextureId(usize);
 
 // TODO: Move this module to its own crate, completely remove Vulkano dependencies from the base
 //  crate.
@@ -27,12 +31,10 @@ pub struct VulkanoBackend {
     target_swapchain: TargetSwapchain,
 
     // Queued up things we need to submit as part of command buffers
-    queued_texture_copies: Vec<(
-        Arc<CpuAccessibleBuffer<[u8]>>,
-        Arc<ImmutableImage<Format>>
-    )>,
+    queued_texture_copies: Vec<(Arc<CpuAccessibleBuffer<[u8]>>, TextureId)>,
 
     size: Vector2<u32>,
+    textures: HashMap<TextureId, TextureBackend>,
 }
 
 impl VulkanoBackend {
@@ -108,8 +110,86 @@ impl VulkanoBackend {
             queued_texture_copies: Vec::new(),
 
             size,
+            textures: HashMap::new(),
         }, window))
     }
+
+    /// Requests a backend texture for a frontend texture. Submits the texture for loading if not
+    /// yet submitted.
+    pub fn request_texture(
+        &mut self, log: &Logger, texture: &Arc<Texture>
+    ) -> Option<&TextureBackend> {
+        if texture.is_submitted() {
+            // Look up the texture from the texture backend storage
+            let texture_backend = self.lookup_texture_backend(texture)
+                .expect("Texture marked submitted was not in the submitted textures");
+
+            // Check if it's ready for rendering
+            if texture_backend.is_ready() {
+                Some(texture_backend)
+            } else {
+                None
+            }
+        } else {
+            // The texture hasn't been submitted yet, so submit it
+            self.submit_texture(log, texture);
+            None
+        }
+    }
+
+    fn lookup_texture_backend(&self, texture: &Arc<Texture>) -> Option<&TextureBackend> {
+        let key = TextureId(arc_key(&texture));
+        self.textures.get(&key)
+    }
+
+    fn submit_texture(&mut self, log: &Logger, texture: &Arc<Texture>) {
+        // TODO: Offload loading to a separate thread
+
+        // Start by loading in the actual image
+        let (texture_backend, buffer) = TextureBackend::load(
+            log, self, &texture.source, texture.format
+        );
+
+        // Store the texture backend, maintaining its ID so we can look it back up
+        let texture_id = self.store_texture(&texture, texture_backend);
+
+        // Then submit the buffer and texture for copying, it will be picked up later at the start
+        //  of a frame to actually be copied over
+        self.queue_texture_copy(buffer, texture_id);
+        texture.mark_submitted();
+    }
+
+    fn store_texture(
+        &mut self, texture: &Arc<Texture>, texture_backend: TextureBackend
+    ) -> TextureId {
+        let key = TextureId(arc_key(texture));
+
+        // First make sure this texture doesn't already exist, this shouldn't ever happen, but it's
+        // not that expensive to make sure
+        if self.textures.contains_key(&key) {
+            panic!("Texture backend already exists for texture")
+        }
+
+        // Now that we're sure, we can submit the texture
+        self.textures.insert(key, texture_backend);
+
+        key
+    }
+
+    fn queue_texture_copy(
+        &mut self,
+        buffer: Arc<CpuAccessibleBuffer<[u8]>>,
+        texture: TextureId,
+    ) {
+        self.queued_texture_copies.push((buffer, texture));
+    }
+}
+
+/// Creates a value to use as key in a hashmap for referring to the abstract existence of a value
+/// in an arc. This is equivalent to using a reference as key in a hashmap/dictionary in other
+/// languages.
+fn arc_key<T>(value: &Arc<T>) -> usize {
+    value.as_ref() as *const T as usize
 }
 
 impl Backend for VulkanoBackend {
@@ -129,9 +209,16 @@ impl Backend for VulkanoBackend {
 
             // Add any textures we need to upload to the command buffer
             while let Some(val) = self.queued_texture_copies.pop() {
+                // Look up the actual texture
+                let texture = self.textures.get_mut(&val.1).unwrap();
+
+                // Add the copy to the buffer
                 image_copy_buffer_builder = image_copy_buffer_builder
-                    .copy_buffer_to_image(val.0, val.1)
+                    .copy_buffer_to_image(val.0, texture.image.clone())
                     .unwrap();
+
+                // Now that the texture's copied, we can mark it ready
+                texture.mark_ready();
             }
 
             // Add the command buffer to the future so it will be executed
@@ -154,14 +241,6 @@ impl Backend for VulkanoBackend {
         );
     }
 
-    fn queue_texture_copy(
-        &mut self,
-        buffer: Arc<CpuAccessibleBuffer<[u8]>>,
-        texture: Arc<ImmutableImage<Format>>,
-    ) {
-        self.queued_texture_copies.push((buffer, texture));
-    }
-
     fn device(&self) -> &Arc<Device> {
         &self.device
     }
@@ -180,14 +259,15 @@ impl Backend for VulkanoBackend {
 }
 
 pub struct TextureBackend {
-    texture: Arc<ImmutableImage<Format>>,
+    pub image: Arc<ImmutableImage<Format>>,
     sampler: Arc<Sampler>,
+    copied: bool,
 }
 
 impl TextureBackend {
-    fn load<P: AsRef<Path>, B: Backend>(
-        log: &Logger, target: &mut Target<B>, path: P, format: TextureFormat
-    ) -> Self {
+    fn load<P: AsRef<Path>>(
+        log: &Logger, backend: &VulkanoBackend, path: P, format: TextureFormat
+    ) -> (Self, Arc<CpuAccessibleBuffer<[u8]>>) {
         // Load in the image file
         info!(log, "Loading texture"; "path" => path.as_ref().display().to_string());
         let img = image::open(path.as_ref()).unwrap();
@@ -203,8 +283,8 @@ impl TextureBackend {
 
             // TODO: staging buffer instead
             CpuAccessibleBuffer::<[u8]>::from_iter(
-                target.backend().device().clone(), BufferUsage::all(),
-                Some(target.backend().graphics_queue().family()), image_data_iter
+                backend.device().clone(), BufferUsage::all(),
+                Some(backend.graphics_queue().family()), image_data_iter
             ).unwrap()
         };
 
@@ -217,13 +297,13 @@ impl TextureBackend {
 
         // Create the texture and sampler for the image, the texture data will later be copied in
         //  a command buffer
-        let texture = ImmutableImage::new(
-            target.backend().device().clone(),
+        let image = ImmutableImage::new(
+            backend.device().clone(),
             Dimensions::Dim2d { width: img_dimensions.0, height: img_dimensions.1 },
-            format, Some(target.backend().graphics_queue().family())
+            format, Some(backend.graphics_queue().family())
         ).unwrap();
         let sampler = Sampler::new(
-            target.backend().device().clone(),
+            backend.device().clone(),
             Filter::Linear,
             Filter::Linear,
             MipmapMode::Nearest,
@@ -233,16 +313,22 @@ impl TextureBackend {
             0.0, 1.0, 0.0, 0.0
         ).unwrap();
 
-        // Make sure the buffer's actually put into the texture
-        target.backend_mut().queue_texture_copy(buffer, texture.clone());
-
-        TextureBackend {
-            texture,
+        (TextureBackend {
+            image,
             sampler,
-        }
+            copied: false,
+        }, buffer)
+    }
+
+    pub fn is_ready(&self) -> bool {
+        self.copied
+    }
+
+    pub fn mark_ready(&mut self) {
+        self.copied = true;
     }
 
     pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
-        (self.texture.clone(), self.sampler.clone())
+        (self.image.clone(), self.sampler.clone())
     }
 }

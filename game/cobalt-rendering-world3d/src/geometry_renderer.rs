@@ -15,7 +15,8 @@ use vulkano::pipeline::raster::{Rasterization, CullMode, FrontFace};
 use vulkano::pipeline::blend::{Blend};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use cobalt_rendering::{Target};
+use cobalt_rendering::vulkano_backend::{VulkanoBackend};
+use cobalt_rendering::{Target, Backend};
 use cobalt_rendering_shaders::{gbuffer_vs, gbuffer_fs};
 use geometry_buffer::{GeometryBuffer};
 use {Camera, World, Entity};
@@ -25,7 +26,7 @@ pub struct GeometryRenderer {
 }
 
 impl GeometryRenderer {
-    pub fn new(log: &Logger, target: &Target, geometry_buffer: &GeometryBuffer) -> Self {
+    pub fn new(log: &Logger, target: &Target<VulkanoBackend>, geometry_buffer: &GeometryBuffer) -> Self {
         // Set up the shaders and pipelines
         let pipeline = load_pipeline(log, target, geometry_buffer.render_pass.clone());
 
@@ -35,11 +36,12 @@ impl GeometryRenderer {
     }
 
     pub fn build_command_buffer(
-        &mut self, target: &mut Target, geometry_buffer: &GeometryBuffer,
+        &mut self, log: &Logger,
+        target: &mut Target<VulkanoBackend>, geometry_buffer: &GeometryBuffer,
         camera: &Camera, world: &World,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-            target.device().clone(), target.graphics_queue().family()
+            target.backend().device().clone(), target.backend().graphics_queue().family()
         ).unwrap();
 
         let clear_values = vec!(
@@ -63,7 +65,7 @@ impl GeometryRenderer {
         // Go over everything in the world
         for entity in world.entities() {
             command_buffer_builder = self.render_entity(
-                entity, target, &projection_view, command_buffer_builder
+                log, entity, target, &projection_view, command_buffer_builder
             );
         }
 
@@ -72,11 +74,37 @@ impl GeometryRenderer {
     }
 
     fn render_entity(
-        &self,
-        entity: &Entity, target: &mut Target,
+        &self, log: &Logger,
+        entity: &Entity, target: &mut Target<VulkanoBackend>,
         projection_view: &Matrix4<f32>,
         command_buffer: AutoCommandBufferBuilder,
     ) -> AutoCommandBufferBuilder {
+        let backend = target.backend_mut();
+
+        // Retrieve the backend textures for the frontend textures, but early-bail if we have any
+        //  textures that aren't uploaded yet, this notifies the backend that they should be queued
+        //  up for uploading if they aren't yet as well.
+        // TODO: Check all textures before returning, so they're all submitted at once
+        let (base_color, normal_map, metallic_map, roughness_map) = {
+            let base_color = if let Some(base_color) =
+                backend.request_texture(log, &entity.material.base_color) {
+                base_color
+            } else { return command_buffer }.uniform();
+            let normal_map = if let Some(normal_map) =
+                backend.request_texture(log, &entity.material.normal_map) {
+                normal_map
+            } else { return command_buffer }.uniform();
+            let metallic_map = if let Some(metallic_map) =
+                backend.request_texture(log, &entity.material.metallic_map) {
+                metallic_map
+            } else { return command_buffer }.uniform();
+            let roughness_map = if let Some(roughness_map) =
+                backend.request_texture(log, &entity.material.roughness_map) {
+                roughness_map
+            } else { return command_buffer }.uniform();
+            (base_color, normal_map, metallic_map, roughness_map)
+        };
+
         // Create a matrix for this world entity
         let model = Matrix4::from_translation(entity.position);
         let total_matrix_raw: [[f32; 4]; 4] = (projection_view * model).into();
@@ -84,7 +112,8 @@ impl GeometryRenderer {
 
         // Send the matrices over to the GPU
         let matrix_data_buffer = CpuAccessibleBuffer::<gbuffer_vs::ty::MatrixData>::from_data(
-            target.device().clone(), BufferUsage::all(), Some(target.graphics_queue().family()),
+            backend.device().clone(), BufferUsage::all(),
+            Some(backend.graphics_queue().family()),
             gbuffer_vs::ty::MatrixData {
                 total: total_matrix_raw,
                 model: model_matrix_raw,
@@ -94,10 +123,10 @@ impl GeometryRenderer {
         // Create the final uniforms set
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
             u_matrix_data: matrix_data_buffer,
-            u_material_base_color: entity.material.base_color.uniform(),
-            u_material_normal_map: entity.material.normal_map.uniform(),
-            u_material_metallic_map: entity.material.metallic_map.uniform(),
-            u_material_roughness_map: entity.material.roughness_map.uniform(),
+            u_material_base_color: base_color,
+            u_material_normal_map: normal_map,
+            u_material_metallic_map: metallic_map,
+            u_material_roughness_map: roughness_map,
         }));
 
         // Perform the actual draw
@@ -111,17 +140,17 @@ impl GeometryRenderer {
 }
 
 fn load_pipeline(
-    log: &Logger, target: &Target,
+    log: &Logger, target: &Target<VulkanoBackend>,
     gbuffer_render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
     debug!(log, "Loading gbuffer shaders");
-    let vs = gbuffer_vs::Shader::load(target.device()).unwrap();
-    let fs = gbuffer_fs::Shader::load(target.device()).unwrap();
+    let vs = gbuffer_vs::Shader::load(target.backend().device()).unwrap();
+    let fs = gbuffer_fs::Shader::load(target.backend().device()).unwrap();
 
     // Set up the pipeline
     debug!(log, "Creating gbuffer pipeline");
-    let dimensions = target.size();
+    let dimensions = target.backend().size();
     let pipeline_params = GraphicsPipelineParams {
         vertex_input: SingleBufferDefinition::new(),
         vertex_shader: vs.main_entry_point(),
@@ -153,14 +182,14 @@ fn load_pipeline(
         render_pass: Subpass::from(gbuffer_render_pass, 0).unwrap(),
     };
 
-    Arc::new(GraphicsPipeline::new(target.device().clone(), pipeline_params).unwrap())
+    Arc::new(GraphicsPipeline::new(target.backend().device().clone(), pipeline_params).unwrap())
         as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
 }
 
-fn create_projection_view_matrix(target: &mut Target, camera: &Camera) -> Matrix4<f32> {
+fn create_projection_view_matrix(target: &mut Target<VulkanoBackend>, camera: &Camera) -> Matrix4<f32> {
     let perspective = PerspectiveFov {
         fovy: Rad::full_turn() * 0.25,
-        aspect: target.size().x as f32 / target.size().y as f32,
+        aspect: target.backend().size().x as f32 / target.backend().size().y as f32,
         near: 0.1,
         far: 500.0,
     };

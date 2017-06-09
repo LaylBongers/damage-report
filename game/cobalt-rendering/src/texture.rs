@@ -1,4 +1,6 @@
 use std::path::{PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc};
 
 pub struct Texture {
     // Texture needs to track the data to load a texture internally because the backend may need to
@@ -6,11 +8,11 @@ pub struct Texture {
     // TODO: Make fields that can be private private, improve encapsulation
     pub source: PathBuf,
     pub format: TextureFormat,
-    pub submitted: bool,
+    submitted: AtomicBool,
 }
 
 impl Texture {
-    pub fn new<P: Into<PathBuf>>(path: P, format: TextureFormat) -> Self {
+    pub fn new<P: Into<PathBuf>>(path: P, format: TextureFormat) -> Arc<Self> {
         // TODO: Remove this note when implementation is done
         // Texture will be loaded on-demand or when told, but always on a separate thread. This
         //  allows cobalt to provide non-blocking texture loading. Sometimes this means that during
@@ -23,15 +25,27 @@ impl Texture {
         //  be the required way to upload textures but just a way to pre-load a bunch at once, and
         //  detect if they're loaded.
 
-        Texture {
+        Arc::new(Texture {
             source: path.into(),
             format,
-            submitted: false,
-        }
+            submitted: AtomicBool::new(false),
+        })
     }
+
+    pub fn is_submitted(&self) -> bool {
+        self.submitted.load(Ordering::Relaxed)
+    }
+
+    pub(crate) fn mark_submitted(&self) {
+        self.submitted.store(true, Ordering::Relaxed);
+    }
+
+    /*pub(crate) fn clear_submitted(&self) {
+        self.submitted.store(false, Ordering::Relaxed);
+    }*/
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Copy)]
 pub enum TextureFormat {
     Srgb,
     Linear,
