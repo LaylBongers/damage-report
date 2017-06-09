@@ -1,14 +1,14 @@
 use slog::{Logger};
 
-use {Backend};
+use {TargetBackend};
 
 /// A representation of a render target, manages the initial connection with the drivers, and
 /// presenting images on the target window.
-pub struct Target<B: Backend> {
+pub struct Target<B: TargetBackend> {
     backend: B,
 }
 
-impl<B: Backend> Target<B> {
+impl<B: TargetBackend> Target<B> {
     pub fn new(log: &Logger, backend: B) -> Self {
         info!(log, "Initializing high-level target");
         Target { backend }

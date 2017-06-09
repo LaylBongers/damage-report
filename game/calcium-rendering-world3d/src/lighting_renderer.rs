@@ -15,7 +15,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoBackend, Frame};
+use calcium_rendering_vulkano::{VulkanoTargetBackend, Frame};
 use calcium_rendering_vulkano_shaders::{lighting_vs, lighting_fs};
 use geometry_buffer::{GeometryBuffer};
 use {Camera, World};
@@ -26,7 +26,7 @@ pub struct LightingRenderer {
 }
 
 impl LightingRenderer {
-    pub fn new(log: &Logger, target: &Target<VulkanoBackend>) -> Self {
+    pub fn new(log: &Logger, target: &Target<VulkanoTargetBackend>) -> Self {
         let lighting_pipeline = load_lighting_pipeline(log, target);
 
         // Create a sampler that we'll use to sample the gbuffer images, this will map 1:1, so just
@@ -49,7 +49,8 @@ impl LightingRenderer {
     }
 
     pub fn build_command_buffer(
-        &mut self, target: &mut Target<VulkanoBackend>, frame: &Frame, geometry_buffer: &GeometryBuffer,
+        &mut self,
+        target: &mut Target<VulkanoTargetBackend>, frame: &Frame, geometry_buffer: &GeometryBuffer,
         camera: &Camera, world: &World,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
@@ -158,7 +159,7 @@ impl LightingRenderer {
 }
 
 fn load_lighting_pipeline(
-    log: &Logger, target: &Target<VulkanoBackend>
+    log: &Logger, target: &Target<VulkanoTargetBackend>
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
     debug!(log, "Loading deferred shaders");

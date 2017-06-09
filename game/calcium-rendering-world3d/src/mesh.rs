@@ -5,7 +5,7 @@ use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoBackend};
+use calcium_rendering_vulkano::{VulkanoTargetBackend};
 
 #[derive(Clone, PartialEq)]
 pub struct Vertex {
@@ -33,7 +33,9 @@ pub struct Mesh {
 impl Mesh {
     /// Creates a mesh from vertcies. Will eliminate duplicate vertices using indices. Avoid using
     /// if you can directly provide vertices/indices without duplicate checking instead.
-    pub fn from_flat_vertices(log: &Logger, target: &Target<VulkanoBackend>, flat_vertices: &Vec<Vertex>) -> Mesh {
+    pub fn from_flat_vertices(
+        log: &Logger, target: &Target<VulkanoTargetBackend>, flat_vertices: &Vec<Vertex>
+    ) -> Mesh {
         debug!(log, "Converting flat vertices to indexed";
             "vertices" => flat_vertices.len()
         );
@@ -66,7 +68,8 @@ impl Mesh {
 
     /// Creates a mesh from vertices and indices. Performs no duplicate checking.
     pub fn from_vertices_indices(
-        log: &Logger, target: &Target<VulkanoBackend>, vertices: &Vec<Vertex>, indices: &Vec<u16>
+        log: &Logger, target: &Target<VulkanoTargetBackend>,
+        vertices: &Vec<Vertex>, indices: &Vec<u16>
     ) -> Mesh {
         let mut hotfixed_uvs = false;
 

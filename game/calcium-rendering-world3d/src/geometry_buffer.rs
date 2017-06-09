@@ -7,7 +7,7 @@ use vulkano::format::{self, Format};
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract};
 
 use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoBackend};
+use calcium_rendering_vulkano::{VulkanoTargetBackend};
 
 pub struct GeometryBuffer {
     pub position_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
@@ -25,7 +25,7 @@ pub struct GeometryBuffer {
 
 impl GeometryBuffer {
     pub fn new(
-        log: &Logger, target: &Target<VulkanoBackend>, depth_attachment: Arc<AttachmentImage<format::D16Unorm>>
+        log: &Logger, target: &Target<VulkanoTargetBackend>, depth_attachment: Arc<AttachmentImage<format::D16Unorm>>
     ) -> Self {
         // The gbuffer attachments we end up using in the final lighting pass need to have sampled
         //  set to true, or we can't sample them, resulting in a black color result.

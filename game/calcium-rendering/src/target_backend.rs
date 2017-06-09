@@ -1,4 +1,4 @@
-pub trait Backend {
+pub trait TargetBackend {
     type Frame;
 
     fn start_frame(&mut self) -> Self::Frame;

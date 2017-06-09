@@ -2,7 +2,7 @@ use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 
 use calcium_rendering::{Target, Texture, TextureFormat};
-use calcium_rendering_vulkano::{VulkanoBackend};
+use calcium_rendering_vulkano::{VulkanoTargetBackend};
 use calcium_rendering_world3d::{World, Entity, Material, Mesh, Vertex};
 
 use input::{InputState, FrameInput};
@@ -13,7 +13,7 @@ pub struct GameWorld {
 }
 
 impl GameWorld {
-    pub fn new(log: &Logger, target: &mut Target<VulkanoBackend>, world: &mut World) -> Self {
+    pub fn new(log: &Logger, target: &mut Target<VulkanoTargetBackend>, world: &mut World) -> Self {
         let player = Player::new();
         world.set_ambient_light(Vector3::new(0.005, 0.005, 0.005));
 

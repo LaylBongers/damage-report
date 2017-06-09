@@ -9,6 +9,8 @@ extern crate calcium_rendering;
 extern crate calcium_rendering_vulkano;
 extern crate calcium_rendering_vulkano_shaders;
 
+pub mod vulkano_backend;
+mod backend;
 mod camera;
 mod geometry_buffer;
 mod geometry_renderer;
@@ -19,6 +21,7 @@ mod model;
 mod renderer;
 mod world;
 
+pub use self::backend::{RendererBackend};
 pub use self::camera::{Camera};
 pub use self::material::{Material};
 pub use self::mesh::{VkVertex, Vertex, Mesh};

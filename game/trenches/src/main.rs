@@ -21,8 +21,9 @@ use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
 use calcium_rendering::{Error, Target};
-use calcium_rendering_vulkano::{VulkanoBackend};
+use calcium_rendering_vulkano::{VulkanoTargetBackend};
 use calcium_rendering_world3d::{Renderer, Camera, World};
+use calcium_rendering_world3d::vulkano_backend::{VulkanoRendererBackend};
 use calcium_utils::{LoopTimer};
 
 use game_world::{GameWorld};
@@ -49,9 +50,10 @@ fn try_main(log: &Logger) -> Result<(), Error> {
     info!(log, "Initializing game");
 
     // Initialize the rendering system
-    let (backend, mut window) = VulkanoBackend::new(log, VulkanWinWindowCreator)?;
-    let mut target = Target::new(log, backend);
-    let mut renderer = Renderer::new(log, &target);
+    let (target_backend, mut window) = VulkanoTargetBackend::new(log, VulkanWinWindowCreator)?;
+    let mut target = Target::new(log, target_backend);
+    let renderer_backend = VulkanoRendererBackend::new(log, &target);
+    let mut renderer = Renderer::new(log, renderer_backend);
     let mut world = World::new();
 
     // Initialize generic utilities
@@ -85,7 +87,8 @@ fn try_main(log: &Logger) -> Result<(), Error> {
 }
 
 fn render_frame(
-    log: &Logger, target: &mut Target<VulkanoBackend>, renderer: &mut Renderer,
+    log: &Logger,
+    target: &mut Target<VulkanoTargetBackend>, renderer: &mut Renderer<VulkanoRendererBackend>,
     camera: &Camera, world: &World
 ) {
     // Start the frame
