@@ -1,8 +1,8 @@
 use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 
-use cobalt_rendering::vulkano_backend::{VulkanoBackend};
-use cobalt_rendering::{Target, Texture, TextureFormat, Backend};
+use cobalt_rendering::{Target, Texture, TextureFormat};
+use cobalt_rendering_vulkano::{VulkanoBackend};
 use cobalt_rendering_world3d::{World, Entity, Material, Mesh, Vertex};
 
 use input::{InputState, FrameInput};

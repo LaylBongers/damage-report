@@ -4,6 +4,7 @@ extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
 extern crate cobalt_rendering;
+extern crate cobalt_rendering_vulkano;
 extern crate cobalt_rendering_world3d;
 extern crate cobalt_utils;
 extern crate vulkano;
@@ -19,8 +20,8 @@ use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
-use cobalt_rendering::vulkano_backend::{VulkanoBackend};
-use cobalt_rendering::{Error, Target, Backend};
+use cobalt_rendering::{Error, Target};
+use cobalt_rendering_vulkano::{VulkanoBackend};
 use cobalt_rendering_world3d::{Renderer, Camera, World};
 use cobalt_utils::{LoopTimer};
 

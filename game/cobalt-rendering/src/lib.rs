@@ -2,20 +2,13 @@ extern crate cgmath;
 extern crate image;
 #[macro_use]
 extern crate slog;
-#[macro_use]
-extern crate vulkano;
 
 mod backend;
 mod error;
-mod target_swapchain;
 mod target;
 mod texture;
-pub mod vulkano_backend;
-mod window;
 
 pub use backend::{Backend};
-pub use error::{Error};
-pub use target_swapchain::{TargetSwapchain};
-pub use target::{Target, Frame};
+pub use error::{Error, CobaltErrorMap};
+pub use target::{Target};
 pub use texture::{Texture, TextureFormat};
-pub use window::{WindowCreator, Window};

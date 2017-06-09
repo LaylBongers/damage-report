@@ -14,9 +14,9 @@ use vulkano::framebuffer::{Subpass};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use cobalt_rendering::vulkano_backend::{VulkanoBackend};
-use cobalt_rendering::{Target, Frame, Backend};
+use cobalt_rendering::{Target};
 use cobalt_rendering_shaders::{lighting_vs, lighting_fs};
+use cobalt_rendering_vulkano::{VulkanoBackend, Frame};
 use geometry_buffer::{GeometryBuffer};
 use {Camera, World};
 

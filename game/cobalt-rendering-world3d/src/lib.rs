@@ -7,6 +7,7 @@ extern crate vulkano;
 extern crate wavefront_obj;
 extern crate cobalt_rendering;
 extern crate cobalt_rendering_shaders;
+extern crate cobalt_rendering_vulkano;
 
 mod camera;
 mod geometry_buffer;

@@ -6,8 +6,8 @@ use vulkano::image::{ImageUsage};
 use vulkano::format::{self, Format};
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract};
 
-use cobalt_rendering::vulkano_backend::{VulkanoBackend};
-use cobalt_rendering::{Target, Backend};
+use cobalt_rendering::{Target};
+use cobalt_rendering_vulkano::{VulkanoBackend};
 
 pub struct GeometryBuffer {
     pub position_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,

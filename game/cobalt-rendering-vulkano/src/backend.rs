@@ -15,15 +15,13 @@ use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sync::{GpuFuture};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use error::{CobaltErrorMap};
+use cobalt_rendering::{Error, Backend, TextureFormat, Texture, CobaltErrorMap};
 use target_swapchain::{TargetSwapchain};
-use {Error, Window, WindowCreator, Backend, Frame, TextureFormat, Texture};
+use {Window, WindowCreator, Frame};
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
 struct TextureId(usize);
 
-// TODO: Move this module to its own crate, completely remove Vulkano dependencies from the base
-//  crate.
 pub struct VulkanoBackend {
     // Persistent values needed for vulkan rendering
     device: Arc<Device>,
@@ -183,6 +181,22 @@ impl VulkanoBackend {
     ) {
         self.queued_texture_copies.push((buffer, texture));
     }
+
+    pub fn device(&self) -> &Arc<Device> {
+        &self.device
+    }
+
+    pub fn graphics_queue(&self) -> &Arc<Queue> {
+        &self.graphics_queue
+    }
+
+    pub fn swapchain(&self) -> &TargetSwapchain {
+        &self.target_swapchain
+    }
+
+    pub fn size(&self) -> Vector2<u32> {
+        self.size
+    }
 }
 
 /// Creates a value to use as key in a hashmap for referring to the abstract existence of a value
@@ -193,6 +207,8 @@ fn arc_key<T>(value: &Arc<T>) -> usize {
 }
 
 impl Backend for VulkanoBackend {
+    type Frame = Frame;
+
     fn start_frame(&mut self) -> Frame {
         self.target_swapchain.clean_old_submissions();
 
@@ -239,22 +255,6 @@ impl Backend for VulkanoBackend {
         self.target_swapchain.finish_frame(
             frame.future.unwrap(), self.graphics_queue.clone(), frame.image_num
         );
-    }
-
-    fn device(&self) -> &Arc<Device> {
-        &self.device
-    }
-
-    fn graphics_queue(&self) -> &Arc<Queue> {
-        &self.graphics_queue
-    }
-
-    fn swapchain(&self) -> &TargetSwapchain {
-        &self.target_swapchain
-    }
-
-    fn size(&self) -> Vector2<u32> {
-        self.size
     }
 }
 

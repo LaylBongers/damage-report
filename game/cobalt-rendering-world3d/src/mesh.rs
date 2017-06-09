@@ -4,8 +4,8 @@ use cgmath::{Vector2, Vector3, InnerSpace};
 use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use cobalt_rendering::vulkano_backend::{VulkanoBackend};
-use cobalt_rendering::{Target, Backend};
+use cobalt_rendering::{Target};
+use cobalt_rendering_vulkano::{VulkanoBackend};
 
 #[derive(Clone, PartialEq)]
 pub struct Vertex {

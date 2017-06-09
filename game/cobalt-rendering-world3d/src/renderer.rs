@@ -2,8 +2,8 @@ use slog::{Logger};
 use vulkano::command_buffer::{CommandBufferBuilder};
 use vulkano::sync::{GpuFuture};
 
-use cobalt_rendering::vulkano_backend::{VulkanoBackend};
-use cobalt_rendering::{Target, Frame, Backend};
+use cobalt_rendering::{Target};
+use cobalt_rendering_vulkano::{VulkanoBackend, Frame};
 use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};

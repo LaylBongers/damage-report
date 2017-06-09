@@ -1,8 +1,4 @@
-use std::sync::{Arc};
-
 use slog::{Logger};
-use vulkano::framebuffer::{FramebufferAbstract};
-use vulkano::sync::{GpuFuture};
 
 use {Backend};
 
@@ -18,11 +14,11 @@ impl<B: Backend> Target<B> {
         Target { backend }
     }
 
-    pub fn start_frame(&mut self) -> Frame {
+    pub fn start_frame(&mut self) -> B::Frame {
         self.backend.start_frame()
     }
 
-    pub fn finish_frame(&mut self, frame: Frame) {
+    pub fn finish_frame(&mut self, frame: B::Frame) {
         self.backend.finish_frame(frame);
     }
 
@@ -33,10 +29,4 @@ impl<B: Backend> Target<B> {
     pub fn backend_mut(&mut self) -> &mut B {
         &mut self.backend
     }
-}
-
-pub struct Frame {
-    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
-    pub image_num: usize,
-    pub future: Option<Box<GpuFuture>>,
 }

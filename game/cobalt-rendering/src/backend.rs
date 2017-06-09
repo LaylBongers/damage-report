@@ -1,22 +1,6 @@
-use std::sync::{Arc};
-
-use cgmath::{Vector2};
-use vulkano::format::{Format};
-use vulkano::buffer::{CpuAccessibleBuffer};
-use vulkano::device::{Device, Queue};
-use vulkano::image::immutable::{ImmutableImage};
-
-use target_swapchain::{TargetSwapchain};
-use {Frame};
-
 pub trait Backend {
-    fn start_frame(&mut self) -> Frame;
-    fn finish_frame(&mut self, Frame);
+    type Frame;
 
-    // TODO: These functions are implementation-specific, they're here right now while
-    //  transitioning to a flexible backend system
-    fn device(&self) -> &Arc<Device>;
-    fn graphics_queue(&self) -> &Arc<Queue>;
-    fn swapchain(&self) -> &TargetSwapchain;
-    fn size(&self) -> Vector2<u32>;
+    fn start_frame(&mut self) -> Self::Frame;
+    fn finish_frame(&mut self, Self::Frame);
 }

@@ -6,8 +6,8 @@ use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
-use cobalt_rendering::vulkano_backend::{VulkanoBackend};
 use cobalt_rendering::{Target};
+use cobalt_rendering_vulkano::{VulkanoBackend};
 use {Mesh, Vertex};
 
 pub struct Model {

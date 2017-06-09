@@ -15,9 +15,9 @@ use vulkano::pipeline::raster::{Rasterization, CullMode, FrontFace};
 use vulkano::pipeline::blend::{Blend};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use cobalt_rendering::vulkano_backend::{VulkanoBackend};
-use cobalt_rendering::{Target, Backend};
+use cobalt_rendering::{Target};
 use cobalt_rendering_shaders::{gbuffer_vs, gbuffer_fs};
+use cobalt_rendering_vulkano::{VulkanoBackend};
 use geometry_buffer::{GeometryBuffer};
 use {Camera, World, Entity};
 

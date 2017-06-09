@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = [
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cobalt-rendering 0.1.0",
+ "cobalt-rendering-vulkano 0.1.0",
  "cobalt-rendering-world3d 0.1.0",
  "cobalt-utils 0.1.0",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -87,7 +88,6 @@ dependencies = [
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
- "vulkano 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -99,12 +99,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "cobalt-rendering-vulkano"
+version = "0.1.0"
+dependencies = [
+ "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cobalt-rendering 0.1.0",
+ "image 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vulkano 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "cobalt-rendering-world3d"
 version = "0.1.0"
 dependencies = [
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cobalt-rendering 0.1.0",
  "cobalt-rendering-shaders 0.1.0",
+ "cobalt-rendering-vulkano 0.1.0",
  "image 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",

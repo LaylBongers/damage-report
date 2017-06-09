@@ -36,13 +36,15 @@ impl Texture {
         self.submitted.load(Ordering::Relaxed)
     }
 
-    pub(crate) fn mark_submitted(&self) {
+    /// TODO: This function should be limited in accessibility to the backend
+    pub fn mark_submitted(&self) {
         self.submitted.store(true, Ordering::Relaxed);
     }
 
-    /*pub(crate) fn clear_submitted(&self) {
+    /// TODO: This function should be limited in accessibility to the backend
+    pub fn clear_submitted(&self) {
         self.submitted.store(false, Ordering::Relaxed);
-    }*/
+    }
 }
 
 #[derive(PartialEq, Clone, Copy)]
