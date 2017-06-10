@@ -112,27 +112,28 @@ impl VulkanoTargetBackend {
     pub fn request_texture(
         &mut self, log: &Logger, texture: &Arc<Texture>
     ) -> Option<&VulkanoTextureBackend> {
-        if texture.is_submitted() {
-            // Look up the texture from the texture backend storage
-            let texture_backend = self.lookup_texture_backend(texture)
-                .expect("Texture marked submitted was not in the submitted textures");
+        // Look up the texture from the texture backend storage, or add it if it isn't there yet
+        let texture_backend = self.lookup_or_submit_texture(log, texture);
 
-            // Check if it's ready for rendering
-            if texture_backend.is_ready() {
-                Some(texture_backend)
-            } else {
-                None
-            }
+        // Check if it's ready for rendering
+        return if texture_backend.is_ready() {
+            Some(texture_backend)
         } else {
-            // The texture hasn't been submitted yet, so submit it
-            self.submit_texture(log, texture);
             None
-        }
+        };
     }
 
-    fn lookup_texture_backend(&self, texture: &Arc<Texture>) -> Option<&VulkanoTextureBackend> {
+    fn lookup_or_submit_texture(
+        &mut self, log: &Logger, texture: &Arc<Texture>
+    ) -> &VulkanoTextureBackend {
         let key = TextureId(arc_key(&texture));
-        self.textures.get(&key)
+
+        // If we don't have this texture yet, submit it first
+        if !self.textures.contains_key(&key) {
+            self.submit_texture(log, texture);
+        }
+
+        self.textures.get(&key).unwrap()
     }
 
     fn submit_texture(&mut self, log: &Logger, texture: &Arc<Texture>) {
@@ -149,7 +150,6 @@ impl VulkanoTargetBackend {
         // Then submit the buffer and texture for copying, it will be picked up later at the start
         //  of a frame to actually be copied over
         self.queue_texture_copy(buffer, texture_id);
-        texture.mark_submitted();
     }
 
     fn store_texture(

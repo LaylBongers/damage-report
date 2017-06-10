@@ -1,6 +1,7 @@
 use std::path::{Path};
 use std::io::{Read};
 use std::fs::{File};
+use std::sync::{Arc};
 
 use cgmath::{Vector2, Vector3};
 use slog::{Logger};
@@ -11,7 +12,7 @@ use calcium_rendering_vulkano::{VulkanoTargetBackend};
 use {Mesh, Vertex};
 
 pub struct Model {
-    pub meshes: Vec<Mesh>,
+    pub meshes: Vec<Arc<Mesh>>,
 }
 
 impl Model {
@@ -39,7 +40,7 @@ impl Model {
 
     fn obj_set_to_meshes(
         log: &Logger, target: &Target<VulkanoTargetBackend>, obj_set: &ObjSet, scale: f32
-    ) -> Vec<Mesh> {
+    ) -> Vec<Arc<Mesh>> {
         let mut meshes = Vec::new();
 
         // Go over all objects in the file

@@ -50,11 +50,11 @@ impl LightingRenderer {
 
     pub fn build_command_buffer(
         &mut self,
-        target: &mut Target<VulkanoTargetBackend>, frame: &Frame, geometry_buffer: &GeometryBuffer,
+        backend: &mut VulkanoTargetBackend, frame: &Frame, geometry_buffer: &GeometryBuffer,
         camera: &Camera, world: &World,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-            target.backend().device().clone(), target.backend().graphics_queue().family()
+            backend.device().clone(), backend.graphics_queue().family()
         ).unwrap();
         // TODO: This method of lighting uses a full-screen tri with all lights passed to it in a
         //  big array. Instead, we should render using "light volumes", which just means rendering
@@ -84,8 +84,8 @@ impl LightingRenderer {
             ScreenSizeTriVertex { v_position: [ 3.0, -1.0], v_uv: [2.0, 0.0], },
         ];
         let sst_buffer = CpuAccessibleBuffer::<[ScreenSizeTriVertex]>::from_iter(
-            target.backend().device().clone(), BufferUsage::all(),
-            Some(target.backend().graphics_queue().family()),
+            backend.device().clone(), BufferUsage::all(),
+            Some(backend.graphics_queue().family()),
             sst_vertices.into_iter()
         ).unwrap();
 
@@ -116,8 +116,8 @@ impl LightingRenderer {
         // Create a buffer with all the lighting data, so we can send it over to the shader which
         //  needs this data to actually calculate the light for every pixel.
         let light_data_buffer = CpuAccessibleBuffer::<lighting_fs::ty::LightData>::from_data(
-            target.backend().device().clone(), BufferUsage::all(),
-            Some(target.backend().graphics_queue().family()),
+            backend.device().clone(), BufferUsage::all(),
+            Some(backend.graphics_queue().family()),
             lighting_fs::ty::LightData {
                 camera_position: camera.position.into(),
                 _dummy0: Default::default(),

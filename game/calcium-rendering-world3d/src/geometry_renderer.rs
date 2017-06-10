@@ -18,6 +18,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use calcium_rendering::{Target};
 use calcium_rendering_vulkano::{VulkanoTargetBackend};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs};
+use vulkano_backend::{VulkanoRendererBackend, BackendMeshes};
 use geometry_buffer::{GeometryBuffer};
 use {Camera, World, Entity};
 
@@ -38,12 +39,13 @@ impl GeometryRenderer {
     }
 
     pub fn build_command_buffer(
-        &mut self, log: &Logger,
-        target: &mut Target<VulkanoTargetBackend>, geometry_buffer: &GeometryBuffer,
+        &self, log: &Logger,
+        backend: &mut VulkanoTargetBackend,
+        meshes: &mut BackendMeshes, geometry_buffer: &GeometryBuffer,
         camera: &Camera, world: &World,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-            target.backend().device().clone(), target.backend().graphics_queue().family()
+            backend.device().clone(), backend.graphics_queue().family()
         ).unwrap();
 
         let clear_values = vec!(
@@ -62,12 +64,12 @@ impl GeometryRenderer {
             .begin_render_pass(geometry_buffer.framebuffer.clone(), false, clear_values).unwrap();
 
         // Create the projection-view matrix needed for the perspective rendering
-        let projection_view = create_projection_view_matrix(target, camera);
+        let projection_view = create_projection_view_matrix(backend, camera);
 
         // Go over everything in the world
         for entity in world.entities() {
             command_buffer_builder = self.render_entity(
-                log, entity, target, &projection_view, command_buffer_builder
+                log, entity, backend, meshes, &projection_view, command_buffer_builder
             );
         }
 
@@ -77,12 +79,11 @@ impl GeometryRenderer {
 
     fn render_entity(
         &self, log: &Logger,
-        entity: &Entity, target: &mut Target<VulkanoTargetBackend>,
+        entity: &Entity,
+        backend: &mut VulkanoTargetBackend, meshes: &mut BackendMeshes,
         projection_view: &Matrix4<f32>,
         command_buffer: AutoCommandBufferBuilder,
     ) -> AutoCommandBufferBuilder {
-        let backend = target.backend_mut();
-
         // Retrieve the backend textures for the frontend textures, but early-bail if we have any
         //  textures that aren't uploaded yet, this notifies the backend that they should be queued
         //  up for uploading if they aren't yet as well.
@@ -105,6 +106,15 @@ impl GeometryRenderer {
                 roughness_map
             } else { return command_buffer }.uniform();
             (base_color, normal_map, metallic_map, roughness_map)
+        };
+
+        // Retrieve the backend mesh for the frontend mesh
+        // TODO: If one of the textures is missing the mesh isn't submitted for loading even though
+        //  it should be.
+        let mesh = if let Some(mesh) = meshes.request_mesh(&log, backend, &entity.mesh) {
+            mesh
+        } else {
+            return command_buffer;
         };
 
         // Create a matrix for this world entity
@@ -135,7 +145,7 @@ impl GeometryRenderer {
         command_buffer
             .draw_indexed(
                 self.pipeline.clone(), DynamicState::none(),
-                vec!(entity.mesh.vertex_buffer.clone()), entity.mesh.index_buffer.clone(),
+                vec!(mesh.vertex_buffer.clone()), mesh.index_buffer.clone(),
                 set, ()
             ).unwrap()
     }
@@ -185,15 +195,15 @@ fn load_pipeline(
     };
 
     Arc::new(GraphicsPipeline::new(target.backend().device().clone(), pipeline_params).unwrap())
-        as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
+        as Arc<GraphicsPipeline<SingleBufferDefinition<::vulkano_backend::VkVertex>, _, _>>
 }
 
 fn create_projection_view_matrix(
-    target: &mut Target<VulkanoTargetBackend>, camera: &Camera
+    backend: &VulkanoTargetBackend, camera: &Camera
 ) -> Matrix4<f32> {
     let perspective = PerspectiveFov {
         fovy: Rad::full_turn() * 0.25,
-        aspect: target.backend().size().x as f32 / target.backend().size().y as f32,
+        aspect: backend.size().x as f32 / backend.size().y as f32,
         near: 0.1,
         far: 500.0,
     };

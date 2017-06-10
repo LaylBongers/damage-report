@@ -38,7 +38,7 @@ fn main() {
     info!(log, "Damage Report Version {}", env!("CARGO_PKG_VERSION"));
 
     // Run the actual game
-    let result = try_main(&log);
+    let result = run_game(&log);
 
     // Check the result of running the game
     if let Err(err) = result {
@@ -46,7 +46,7 @@ fn main() {
     }
 }
 
-fn try_main(log: &Logger) -> Result<(), Error> {
+fn run_game(log: &Logger) -> Result<(), Error> {
     info!(log, "Initializing game");
 
     // Initialize the rendering system

@@ -1,3 +1,4 @@
+use std::sync::{Arc};
 use cgmath::{Vector3};
 use {Mesh, Material};
 
@@ -59,7 +60,7 @@ pub struct LightId(usize);
 
 pub struct Entity {
     pub position: Vector3<f32>,
-    pub mesh: Mesh,
+    pub mesh: Arc<Mesh>,
     pub material: Material,
 }
 

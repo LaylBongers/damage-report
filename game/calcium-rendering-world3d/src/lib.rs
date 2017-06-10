@@ -24,7 +24,7 @@ mod world;
 pub use self::backend::{RendererBackend};
 pub use self::camera::{Camera};
 pub use self::material::{Material};
-pub use self::mesh::{VkVertex, Vertex, Mesh};
+pub use self::mesh::{Vertex, Mesh};
 pub use self::model::{Model};
 pub use self::renderer::{Renderer};
 pub use self::world::{World, Entity, Light, EntityId, LightId};
