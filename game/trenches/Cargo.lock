@@ -5,6 +5,7 @@ dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
  "calcium-rendering-world3d 0.1.0",
+ "calcium-rendering-world3d-vulkano 0.1.0",
  "calcium-utils 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -77,13 +78,22 @@ name = "calcium-rendering-world3d"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
+ "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wavefront_obj 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "calcium-rendering-world3d-vulkano"
+version = "0.1.0"
+dependencies = [
+ "calcium-rendering 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
  "calcium-rendering-vulkano-shaders 0.1.0",
+ "calcium-rendering-world3d 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "image 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "wavefront_obj 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

@@ -1,10 +1,7 @@
 use std::sync::{Arc};
 
-use cgmath::{Vector2, Vector3, InnerSpace};
+use cgmath::{Vector2, Vector3};
 use slog::{Logger};
-
-use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoTargetBackend};
 
 #[derive(Clone, PartialEq)]
 pub struct Vertex {
@@ -24,7 +21,7 @@ impl Mesh {
     /// Creates a mesh from vertcies. Will eliminate duplicate vertices using indices. Avoid using
     /// if you can directly provide vertices/indices without duplicate checking instead.
     pub fn from_flat_vertices(
-        log: &Logger, target: &Target<VulkanoTargetBackend>, flat_vertices: &Vec<Vertex>
+        log: &Logger, flat_vertices: &Vec<Vertex>
     ) -> Arc<Mesh> {
         debug!(log, "Converting flat vertices to indexed";
             "vertices" => flat_vertices.len()

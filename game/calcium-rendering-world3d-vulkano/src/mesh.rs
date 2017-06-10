@@ -6,8 +6,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use calcium_rendering::{Target};
 use calcium_rendering_vulkano::{VulkanoTargetBackend};
-
-use {Vertex};
+use calcium_rendering_world3d::{Vertex};
 
 pub struct VkVertex {
     pub v_position: [f32; 3],

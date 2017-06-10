@@ -6,6 +6,7 @@ extern crate slog_term;
 extern crate calcium_rendering;
 extern crate calcium_rendering_vulkano;
 extern crate calcium_rendering_world3d;
+extern crate calcium_rendering_world3d_vulkano;
 extern crate calcium_utils;
 extern crate vulkano;
 extern crate vulkano_win;
@@ -23,7 +24,7 @@ use slog_term::{CompactFormat, TermDecorator};
 use calcium_rendering::{Error, Target};
 use calcium_rendering_vulkano::{VulkanoTargetBackend};
 use calcium_rendering_world3d::{Renderer, Camera, World};
-use calcium_rendering_world3d::vulkano_backend::{VulkanoRendererBackend};
+use calcium_rendering_world3d_vulkano::{VulkanoRendererBackend};
 use calcium_utils::{LoopTimer};
 
 use game_world::{GameWorld};
@@ -61,7 +62,7 @@ fn run_game(log: &Logger) -> Result<(), Error> {
     let mut input_state = InputState::default();
 
     // Initialize the game world
-    let mut game_world = GameWorld::new(log, &mut target, &mut world);
+    let mut game_world = GameWorld::new(log, &mut world);
 
     // The main game loop
     info!(log, "Starting game loop");

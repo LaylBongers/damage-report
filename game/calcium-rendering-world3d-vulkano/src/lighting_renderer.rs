@@ -17,8 +17,9 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use calcium_rendering::{Target};
 use calcium_rendering_vulkano::{VulkanoTargetBackend, Frame};
 use calcium_rendering_vulkano_shaders::{lighting_vs, lighting_fs};
+use calcium_rendering_world3d::{Camera, World};
+
 use geometry_buffer::{GeometryBuffer};
-use {Camera, World};
 
 pub struct LightingRenderer {
     lighting_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,

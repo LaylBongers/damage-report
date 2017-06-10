@@ -6,12 +6,12 @@ use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{Target};
 use calcium_rendering_vulkano::{VulkanoTargetBackend, Frame};
+use calcium_rendering_world3d::{Camera, World, RendererBackend, Mesh};
 
 use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
-use vulkano_backend::mesh::{VulkanoMeshBackend};
-use {Camera, World, RendererBackend, Mesh};
+use mesh::{VulkanoMeshBackend};
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
 struct MeshId(usize);

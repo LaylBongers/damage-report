@@ -1,18 +1,13 @@
 [package]
-name = "trenches"
+name = "calcium-rendering-world3d-vulkano"
 version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
 cgmath = "0.14.1"
+slog = "2.0.5"
+vulkano = "0.4.0"
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
+calcium-rendering-vulkano-shaders = {path = "../calcium-rendering-vulkano-shaders"}
 calcium-rendering-world3d = {path = "../calcium-rendering-world3d"}
-calcium-rendering-world3d-vulkano = {path = "../calcium-rendering-world3d-vulkano"}
-calcium-utils = {path = "../calcium-utils"}
-slog = "2.0.5"
-slog-async = "2.0.1"
-slog-term = "2.0.1"
-vulkano = "0.4.0"
-vulkano-win = "0.4.0"
-winit = "0.6.4"

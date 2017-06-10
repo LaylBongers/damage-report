@@ -7,8 +7,6 @@ use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
-use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoTargetBackend};
 use {Mesh, Vertex};
 
 pub struct Model {
@@ -17,7 +15,7 @@ pub struct Model {
 
 impl Model {
     pub fn load<P: AsRef<Path>>(
-        log: &Logger, target: &Target<VulkanoTargetBackend>, path: P, scale: f32
+        log: &Logger, path: P, scale: f32
     ) -> Self {
         // TODO: Change unwraps to proper error handling
         info!(log, "Loading model"; "path" => path.as_ref().display().to_string());
@@ -31,7 +29,7 @@ impl Model {
         let obj_set = obj::parse(obj_file_data).unwrap();
 
         // Convert all the objects to meshes
-        let meshes = Self::obj_set_to_meshes(log, target, &obj_set, scale);
+        let meshes = Self::obj_set_to_meshes(log, &obj_set, scale);
 
         Model {
             meshes
@@ -39,7 +37,7 @@ impl Model {
     }
 
     fn obj_set_to_meshes(
-        log: &Logger, target: &Target<VulkanoTargetBackend>, obj_set: &ObjSet, scale: f32
+        log: &Logger, obj_set: &ObjSet, scale: f32
     ) -> Vec<Arc<Mesh>> {
         let mut meshes = Vec::new();
 
@@ -71,7 +69,7 @@ impl Model {
             }
 
             // Convert the vertices to a mesh
-            meshes.push(Mesh::from_flat_vertices(log, target, &vertices));
+            meshes.push(Mesh::from_flat_vertices(log, &vertices));
         }
 
         meshes
