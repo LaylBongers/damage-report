@@ -1,15 +1,13 @@
 extern crate cgmath;
 #[macro_use]
 extern crate slog;
+#[macro_use]
+extern crate mopa;
 
 mod error;
 mod render_system;
-mod target_backend;
-mod target;
 mod texture;
 
 pub use error::{Error, CalciumErrorMap};
-pub use render_system::{RenderSystem, RenderBackend};
-pub use target_backend::{TargetBackend};
-pub use target::{Target};
+pub use render_system::{RenderSystem, RenderBackend, Frame};
 pub use texture::{Texture, TextureFormat};

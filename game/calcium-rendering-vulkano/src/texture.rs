@@ -10,7 +10,7 @@ use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use calcium_rendering::{TextureFormat};
-use {VulkanoTargetBackend};
+use {VulkanoRenderBackend};
 
 pub struct VulkanoTextureBackend {
     pub image: Arc<ImmutableImage<Format>>,
@@ -20,7 +20,7 @@ pub struct VulkanoTextureBackend {
 
 impl VulkanoTextureBackend {
     pub fn load<P: AsRef<Path>>(
-        log: &Logger, backend: &VulkanoTargetBackend, path: P, format: TextureFormat
+        log: &Logger, backend: &VulkanoRenderBackend, path: P, format: TextureFormat
     ) -> (Self, Arc<CpuAccessibleBuffer<[u8]>>) {
         // Load in the image file
         info!(log, "Loading texture"; "path" => path.as_ref().display().to_string());
@@ -37,8 +37,8 @@ impl VulkanoTextureBackend {
 
             // TODO: staging buffer instead
             CpuAccessibleBuffer::<[u8]>::from_iter(
-                backend.device().clone(), BufferUsage::all(),
-                Some(backend.graphics_queue().family()), image_data_iter
+                backend.device.clone(), BufferUsage::all(),
+                Some(backend.graphics_queue.family()), image_data_iter
             ).unwrap()
         };
 
@@ -52,12 +52,12 @@ impl VulkanoTextureBackend {
         // Create the texture and sampler for the image, the texture data will later be copied in
         //  a command buffer
         let image = ImmutableImage::new(
-            backend.device().clone(),
+            backend.device.clone(),
             Dimensions::Dim2d { width: img_dimensions.0, height: img_dimensions.1 },
-            format, Some(backend.graphics_queue().family())
+            format, Some(backend.graphics_queue.family())
         ).unwrap();
         let sampler = Sampler::new(
-            backend.device().clone(),
+            backend.device.clone(),
             Filter::Linear,
             Filter::Linear,
             MipmapMode::Nearest,

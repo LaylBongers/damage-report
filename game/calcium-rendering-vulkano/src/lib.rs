@@ -6,15 +6,11 @@ extern crate slog;
 extern crate vulkano;
 extern crate calcium_rendering;
 
-mod frame;
 mod render_backend;
 mod target_swapchain;
 mod target;
 mod texture;
-mod window;
 
-pub use frame::{Frame};
-pub use render_backend::{VulkanoRenderBackend};
+pub use render_backend::{VulkanoRenderBackend, VulkanoFrame};
 pub use target_swapchain::{TargetSwapchain};
-pub use target::{VulkanoTargetBackend};
-pub use window::{WindowCreator, Window, VulkanoTargetSystem};
+pub use target::{VulkanoTargetSystem};

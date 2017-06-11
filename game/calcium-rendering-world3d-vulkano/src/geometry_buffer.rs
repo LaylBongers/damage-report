@@ -6,8 +6,7 @@ use vulkano::image::{ImageUsage};
 use vulkano::format::{self, Format};
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract};
 
-use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoTargetBackend};
+use calcium_rendering_vulkano::{VulkanoRenderBackend};
 
 pub struct GeometryBuffer {
     pub position_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
@@ -25,7 +24,8 @@ pub struct GeometryBuffer {
 
 impl GeometryBuffer {
     pub fn new(
-        log: &Logger, target: &Target<VulkanoTargetBackend>, depth_attachment: Arc<AttachmentImage<format::D16Unorm>>
+        log: &Logger,
+        backend: &VulkanoRenderBackend, depth_attachment: Arc<AttachmentImage<format::D16Unorm>>
     ) -> Self {
         // The gbuffer attachments we end up using in the final lighting pass need to have sampled
         //  set to true, or we can't sample them, resulting in a black color result.
@@ -37,23 +37,23 @@ impl GeometryBuffer {
         // Create the attachment images that make up the G-buffer
         debug!(log, "Creating g-buffer attachment images");
         let position_attachment = AttachmentImage::with_usage(
-            target.backend().device().clone(), target.backend().size().into(),
+            backend.device.clone(), backend.size.into(),
             format::R16G16B16A16Sfloat, attach_usage
         ).unwrap();
         let base_color_attachment = AttachmentImage::with_usage(
-            target.backend().device().clone(), target.backend().size().into(),
+            backend.device.clone(), backend.size.into(),
             format::R8G8B8A8Srgb, attach_usage
         ).unwrap();
         let normal_attachment = AttachmentImage::with_usage(
-            target.backend().device().clone(), target.backend().size().into(),
+            backend.device.clone(), backend.size.into(),
             format::R16G16B16A16Sfloat, attach_usage
         ).unwrap();
         let metallic_attachment = AttachmentImage::with_usage(
-            target.backend().device().clone(), target.backend().size().into(),
+            backend.device.clone(), backend.size.into(),
             format::R8Unorm, attach_usage
         ).unwrap();
         let roughness_attachment = AttachmentImage::with_usage(
-            target.backend().device().clone(), target.backend().size().into(),
+            backend.device.clone(), backend.size.into(),
             format::R8Unorm, attach_usage
         ).unwrap();
         // Rather than create our own depth attachment, we re-use the one of the framebuffer the
@@ -64,7 +64,7 @@ impl GeometryBuffer {
         // TODO: Document better what a render pass does that a framebuffer doesn't
         debug!(log, "Creating g-buffer render pass");
         #[allow(dead_code)]
-        let render_pass = Arc::new(single_pass_renderpass!(target.backend().device().clone(),
+        let render_pass = Arc::new(single_pass_renderpass!(backend.device.clone(),
             attachments: {
                 position: {
                     load: Clear,

@@ -7,16 +7,14 @@ use vulkano::device::{Device, Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
 use vulkano::format::{self, D16Unorm};
 use vulkano::instance::{PhysicalDevice};
-use vulkano::swapchain::{Swapchain, SurfaceTransform};
+use vulkano::swapchain::{Swapchain, SurfaceTransform, Surface};
 use vulkano::sync::{GpuFuture};
 use vulkano::image::{Image};
 use vulkano::image::attachment::{AttachmentImage};
 
-use {Window};
-
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
 pub struct TargetSwapchain {
-    swapchain: Arc<Swapchain>,
+    pub swapchain: Arc<Swapchain>,
     pub depth_attachment: Arc<AttachmentImage<format::D16Unorm>>,
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
@@ -26,8 +24,8 @@ pub struct TargetSwapchain {
 }
 
 impl TargetSwapchain {
-    pub fn new<W: Window>(
-        log: &Logger, window: &W, size: Vector2<u32>,
+    pub fn new(
+        log: &Logger, target_surface: &Arc<Surface>, size: Vector2<u32>,
         physical: PhysicalDevice, device: Arc<Device>, graphics_queue: &Arc<Queue>,
     ) -> Self {
         // Now create the swapchain, we need this to actually swap between our back buffer and the
@@ -36,7 +34,7 @@ impl TargetSwapchain {
         let (swapchain, images) = {
             // Get what the swap chain we want to create would be capable of, we can't request
             //  anything it can't do
-            let caps = window.surface().capabilities(physical).unwrap();
+            let caps = target_surface.capabilities(physical).unwrap();
 
             // The swap chain's dimensions need to match the window size
             let dimensions = caps.current_extent.unwrap_or([size.x, size.y]);
@@ -56,7 +54,7 @@ impl TargetSwapchain {
 
             // Finally, actually create the swapchain, with all its color images
             Swapchain::new(
-                device.clone(), window.surface().clone(), caps.min_image_count, format,
+                device.clone(), target_surface.clone(), caps.min_image_count, format,
                 dimensions, 1,
                 caps.supported_usage_flags, graphics_queue, SurfaceTransform::Identity, alpha,
                 present, true, None

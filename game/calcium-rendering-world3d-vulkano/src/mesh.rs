@@ -1,12 +1,15 @@
+use std::collections::{HashMap};
 use std::sync::{Arc};
 
 use cgmath::{Vector2, Vector3, InnerSpace};
 use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoTargetBackend};
-use calcium_rendering_world3d::{Vertex};
+use calcium_rendering_vulkano::{VulkanoRenderBackend};
+use calcium_rendering_world3d::{Vertex, Mesh};
+
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
+struct MeshId(usize);
 
 pub struct VkVertex {
     pub v_position: [f32; 3],
@@ -25,7 +28,7 @@ pub struct VulkanoMeshBackend {
 impl VulkanoMeshBackend {
     /// Creates a mesh from vertices and indices. Performs no duplicate checking.
     pub fn from_vertices_indices(
-        log: &Logger, backend: &VulkanoTargetBackend,
+        log: &Logger, backend: &VulkanoRenderBackend,
         vertices: &Vec<Vertex>, indices: &Vec<u16>
     ) -> VulkanoMeshBackend {
         let mut hotfixed_uvs = false;
@@ -95,13 +98,13 @@ impl VulkanoMeshBackend {
 
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
-            backend.device().clone(), BufferUsage::all(),
-            Some(backend.graphics_queue().family()),
+            backend.device.clone(), BufferUsage::all(),
+            Some(backend.graphics_queue.family()),
             vk_vertices.into_iter()
         ).unwrap();
         let index_buffer = CpuAccessibleBuffer::from_iter(
-            backend.device().clone(), BufferUsage::all(),
-            Some(backend.graphics_queue().family()),
+            backend.device.clone(), BufferUsage::all(),
+            Some(backend.graphics_queue.family()),
             indices.iter().map(|v| *v)
         ).unwrap();
 
@@ -143,4 +146,75 @@ impl TangentCalcEntry {
     fn average(&self) -> Vector3<f32> {
         (self.value / self.amount as f32).normalize()
     }
+}
+
+pub struct BackendMeshes {
+    meshes: HashMap<MeshId, VulkanoMeshBackend>,
+}
+
+impl BackendMeshes {
+    pub fn new() -> BackendMeshes {
+        BackendMeshes {
+            meshes: HashMap::new(),
+        }
+    }
+
+    // TODO: This is a near-exact copy of the backend texture loading system, make a common helper
+    //  structure so the functionality can be rolled into that.
+    pub fn request_mesh(
+        &mut self, log: &Logger, target_backend: &VulkanoRenderBackend, texture: &Arc<Mesh>
+    ) -> Option<&VulkanoMeshBackend> {
+        // Look up the texture from the texture backend storage, or add it if it isn't there yet
+        let mesh_backend = self.lookup_or_submit_mesh(log, target_backend, texture);
+
+        // Right now it will be immediately ready
+        // TODO: Offload mesh loading to a separate thread and check if it's ready
+        Some(mesh_backend)
+    }
+
+    fn lookup_or_submit_mesh(
+        &mut self, log: &Logger, target_backend: &VulkanoRenderBackend, texture: &Arc<Mesh>
+    ) -> &VulkanoMeshBackend {
+        let key = MeshId(arc_key(&texture));
+
+        // If we don't have this texture yet, submit it first
+        if !self.meshes.contains_key(&key) {
+            self.submit_mesh(log, target_backend, texture);
+        }
+
+        self.meshes.get(&key).unwrap()
+    }
+
+    fn submit_mesh(&mut self, log: &Logger, target_backend: &VulkanoRenderBackend, mesh: &Arc<Mesh>) {
+        // TODO: Offload loading to a separate thread
+
+        // Start by loading in the actual mesh
+        let mesh_backend = VulkanoMeshBackend::from_vertices_indices(
+            log, target_backend, &mesh.vertices, &mesh.indices
+        );
+
+        // Store the mesh backend, maintaining its ID so we can look it back up
+        let texture_id = self.store_mesh(&mesh, mesh_backend);
+    }
+
+    fn store_mesh(
+        &mut self, texture: &Arc<Mesh>, texture_backend: VulkanoMeshBackend
+    ) -> MeshId {
+        let key = MeshId(arc_key(texture));
+
+        // First make sure this texture doesn't already exist, this shouldn't ever happen, but it's
+        // not that expensive to make sure
+        if self.meshes.contains_key(&key) {
+            panic!("Mesh backend already exists for mesh")
+        }
+
+        // Now that we're sure, we can submit the texture
+        self.meshes.insert(key, texture_backend);
+
+        key
+    }
+}
+
+fn arc_key<T>(value: &Arc<T>) -> usize {
+    value.as_ref() as *const T as usize
 }

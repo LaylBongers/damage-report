@@ -21,10 +21,10 @@ use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
-use calcium_rendering::{Error, Target, RenderSystem};
-use calcium_rendering_vulkano::{VulkanoTargetBackend, VulkanoRenderBackend};
-use calcium_rendering_world3d::{Renderer, Camera, RenderWorld, WorldRenderSystem};
-use calcium_rendering_world3d_vulkano::{VulkanoRendererBackend, VulkanoWorldRenderBackend};
+use calcium_rendering::{Error, RenderSystem};
+use calcium_rendering_vulkano::{VulkanoRenderBackend};
+use calcium_rendering_world3d::{RenderWorld, WorldRenderSystem};
+use calcium_rendering_world3d_vulkano::{VulkanoWorldRenderBackend};
 use calcium_utils::{LoopTimer};
 
 use game_world::{GameWorld};
@@ -60,14 +60,18 @@ fn run_game(log: &Logger) -> Result<(), Error> {
 
     // Create the backends based on what we were told to
     let (render_backend, world_render_backend) = match backend {
-        Backend::Vulkano => (VulkanoRenderBackend::new(), VulkanoWorldRenderBackend::new()),
+        Backend::Vulkano => {
+            let render = VulkanoRenderBackend::new(log, &mut window_system)?;
+            let world = VulkanoWorldRenderBackend::new(log, &render);
+            (Box::new(render), Box::new(world))
+        },
         Backend::GfxOpenGl => unimplemented!(),
         Backend::GfxDirectX => unimplemented!(),
     };
 
     // Initialize the rendering system
-    let render_system = RenderSystem::new(render_backend);
-    let world_render_system = WorldRenderSystem::new(world_render_backend);
+    let mut render_system = RenderSystem::new(log, render_backend);
+    let mut world_render_system = WorldRenderSystem::new(log, world_render_backend);
 
     // Initialize generic utilities
     let mut timer = LoopTimer::start();
@@ -93,9 +97,9 @@ fn run_game(log: &Logger) -> Result<(), Error> {
 
         // Perform the actual rendering
         let camera = game_world.player.create_camera();
-        //let mut frame = target.start_frame();
-        //renderer.render(log, target, &mut frame, camera, world);
-        //target.finish_frame(frame);
+        let mut frame = render_system.start_frame();
+        world_render_system.render(log, &mut render_system, frame.as_mut(), &camera, &render_world);
+        render_system.finish_frame(frame);
     }
     info!(log, "Ending game loop");
 

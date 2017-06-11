@@ -6,3 +6,4 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.14.1"
 slog = "2.0.5"
+mopa = "0.2.2"

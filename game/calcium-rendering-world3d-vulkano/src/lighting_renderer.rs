@@ -14,8 +14,7 @@ use vulkano::framebuffer::{Subpass};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoTargetBackend, Frame};
+use calcium_rendering_vulkano::{VulkanoRenderBackend, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{lighting_vs, lighting_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld};
 
@@ -27,13 +26,13 @@ pub struct LightingRenderer {
 }
 
 impl LightingRenderer {
-    pub fn new(log: &Logger, target: &Target<VulkanoTargetBackend>) -> Self {
-        let lighting_pipeline = load_lighting_pipeline(log, target);
+    pub fn new(log: &Logger, backend: &VulkanoRenderBackend) -> Self {
+        let lighting_pipeline = load_lighting_pipeline(log, backend);
 
         // Create a sampler that we'll use to sample the gbuffer images, this will map 1:1, so just
         //  use nearest. TODO: Because it's 1:1 we can move the gbuffer-lighting steps to subpasses
         let sampler = Sampler::new(
-            target.backend().device().clone(),
+            backend.device.clone(),
             Filter::Nearest,
             Filter::Nearest,
             MipmapMode::Nearest,
@@ -51,11 +50,11 @@ impl LightingRenderer {
 
     pub fn build_command_buffer(
         &mut self,
-        backend: &mut VulkanoTargetBackend, frame: &Frame, geometry_buffer: &GeometryBuffer,
+        backend: &mut VulkanoRenderBackend, frame: &VulkanoFrame, geometry_buffer: &GeometryBuffer,
         camera: &Camera, world: &RenderWorld,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-            backend.device().clone(), backend.graphics_queue().family()
+            backend.device.clone(), backend.graphics_queue.family()
         ).unwrap();
         // TODO: This method of lighting uses a full-screen tri with all lights passed to it in a
         //  big array. Instead, we should render using "light volumes", which just means rendering
@@ -85,8 +84,8 @@ impl LightingRenderer {
             ScreenSizeTriVertex { v_position: [ 3.0, -1.0], v_uv: [2.0, 0.0], },
         ];
         let sst_buffer = CpuAccessibleBuffer::<[ScreenSizeTriVertex]>::from_iter(
-            backend.device().clone(), BufferUsage::all(),
-            Some(backend.graphics_queue().family()),
+            backend.device.clone(), BufferUsage::all(),
+            Some(backend.graphics_queue.family()),
             sst_vertices.into_iter()
         ).unwrap();
 
@@ -117,8 +116,8 @@ impl LightingRenderer {
         // Create a buffer with all the lighting data, so we can send it over to the shader which
         //  needs this data to actually calculate the light for every pixel.
         let light_data_buffer = CpuAccessibleBuffer::<lighting_fs::ty::LightData>::from_data(
-            backend.device().clone(), BufferUsage::all(),
-            Some(backend.graphics_queue().family()),
+            backend.device.clone(), BufferUsage::all(),
+            Some(backend.graphics_queue.family()),
             lighting_fs::ty::LightData {
                 camera_position: camera.position.into(),
                 _dummy0: Default::default(),
@@ -160,16 +159,16 @@ impl LightingRenderer {
 }
 
 fn load_lighting_pipeline(
-    log: &Logger, target: &Target<VulkanoTargetBackend>
+    log: &Logger, backend: &VulkanoRenderBackend
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
     debug!(log, "Loading deferred shaders");
-    let vs = lighting_vs::Shader::load(target.backend().device()).unwrap();
-    let fs = lighting_fs::Shader::load(target.backend().device()).unwrap();
+    let vs = lighting_vs::Shader::load(&backend.device).unwrap();
+    let fs = lighting_fs::Shader::load(&backend.device).unwrap();
 
     // Set up the pipeline
     debug!(log, "Creating deferred pipeline");
-    let dimensions = target.backend().size();
+    let dimensions = backend.size;
     let pipeline_params = GraphicsPipelineParams {
         vertex_input: SingleBufferDefinition::new(),
         vertex_shader: vs.main_entry_point(),
@@ -194,10 +193,10 @@ fn load_lighting_pipeline(
         fragment_shader: fs.main_entry_point(),
         depth_stencil: DepthStencil::disabled(),
         blend: Blend::pass_through(),
-        render_pass: Subpass::from(target.backend().swapchain().render_pass.clone(), 0).unwrap(),
+        render_pass: Subpass::from(backend.target_swapchain.render_pass.clone(), 0).unwrap(),
     };
 
-    Arc::new(GraphicsPipeline::new(target.backend().device().clone(), pipeline_params).unwrap())
+    Arc::new(GraphicsPipeline::new(backend.device.clone(), pipeline_params).unwrap())
         as Arc<GraphicsPipeline<SingleBufferDefinition<ScreenSizeTriVertex>, _, _>>
 }
 

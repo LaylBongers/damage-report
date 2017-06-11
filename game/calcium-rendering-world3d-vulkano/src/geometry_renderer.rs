@@ -15,13 +15,12 @@ use vulkano::pipeline::raster::{Rasterization, CullMode, FrontFace};
 use vulkano::pipeline::blend::{Blend};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use calcium_rendering::{Target};
-use calcium_rendering_vulkano::{VulkanoTargetBackend};
+use calcium_rendering_vulkano::{VulkanoRenderBackend};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity};
 
 use geometry_buffer::{GeometryBuffer};
-use {VulkanoRendererBackend, BackendMeshes};
+use {BackendMeshes};
 
 pub struct GeometryRenderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
@@ -29,10 +28,10 @@ pub struct GeometryRenderer {
 
 impl GeometryRenderer {
     pub fn new(
-        log: &Logger, target: &Target<VulkanoTargetBackend>, geometry_buffer: &GeometryBuffer
+        log: &Logger, backend: &VulkanoRenderBackend, geometry_buffer: &GeometryBuffer
     ) -> Self {
         // Set up the shaders and pipelines
-        let pipeline = load_pipeline(log, target, geometry_buffer.render_pass.clone());
+        let pipeline = load_pipeline(log, backend, geometry_buffer.render_pass.clone());
 
         GeometryRenderer {
             pipeline,
@@ -41,12 +40,12 @@ impl GeometryRenderer {
 
     pub fn build_command_buffer(
         &self, log: &Logger,
-        backend: &mut VulkanoTargetBackend,
+        backend: &mut VulkanoRenderBackend,
         meshes: &mut BackendMeshes, geometry_buffer: &GeometryBuffer,
         camera: &Camera, world: &RenderWorld,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-            backend.device().clone(), backend.graphics_queue().family()
+            backend.device.clone(), backend.graphics_queue.family()
         ).unwrap();
 
         let clear_values = vec!(
@@ -81,7 +80,7 @@ impl GeometryRenderer {
     fn render_entity(
         &self, log: &Logger,
         entity: &Entity,
-        backend: &mut VulkanoTargetBackend, meshes: &mut BackendMeshes,
+        backend: &mut VulkanoRenderBackend, meshes: &mut BackendMeshes,
         projection_view: &Matrix4<f32>,
         command_buffer: AutoCommandBufferBuilder,
     ) -> AutoCommandBufferBuilder {
@@ -125,8 +124,8 @@ impl GeometryRenderer {
 
         // Send the matrices over to the GPU
         let matrix_data_buffer = CpuAccessibleBuffer::<gbuffer_vs::ty::MatrixData>::from_data(
-            backend.device().clone(), BufferUsage::all(),
-            Some(backend.graphics_queue().family()),
+            backend.device.clone(), BufferUsage::all(),
+            Some(backend.graphics_queue.family()),
             gbuffer_vs::ty::MatrixData {
                 total: total_matrix_raw,
                 model: model_matrix_raw,
@@ -153,17 +152,17 @@ impl GeometryRenderer {
 }
 
 fn load_pipeline(
-    log: &Logger, target: &Target<VulkanoTargetBackend>,
+    log: &Logger, backend: &VulkanoRenderBackend,
     gbuffer_render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
     debug!(log, "Loading gbuffer shaders");
-    let vs = gbuffer_vs::Shader::load(target.backend().device()).unwrap();
-    let fs = gbuffer_fs::Shader::load(target.backend().device()).unwrap();
+    let vs = gbuffer_vs::Shader::load(&backend.device).unwrap();
+    let fs = gbuffer_fs::Shader::load(&backend.device).unwrap();
 
     // Set up the pipeline
     debug!(log, "Creating gbuffer pipeline");
-    let dimensions = target.backend().size();
+    let dimensions = backend.size;
     let pipeline_params = GraphicsPipelineParams {
         vertex_input: SingleBufferDefinition::new(),
         vertex_shader: vs.main_entry_point(),
@@ -195,16 +194,16 @@ fn load_pipeline(
         render_pass: Subpass::from(gbuffer_render_pass, 0).unwrap(),
     };
 
-    Arc::new(GraphicsPipeline::new(target.backend().device().clone(), pipeline_params).unwrap())
+    Arc::new(GraphicsPipeline::new(backend.device.clone(), pipeline_params).unwrap())
         as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
 }
 
 fn create_projection_view_matrix(
-    backend: &VulkanoTargetBackend, camera: &Camera
+    backend: &VulkanoRenderBackend, camera: &Camera
 ) -> Matrix4<f32> {
     let perspective = PerspectiveFov {
         fovy: Rad::full_turn() * 0.25,
-        aspect: backend.size().x as f32 / backend.size().y as f32,
+        aspect: backend.size.x as f32 / backend.size.y as f32,
         near: 0.1,
         far: 500.0,
     };
