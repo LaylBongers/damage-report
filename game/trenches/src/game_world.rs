@@ -14,7 +14,14 @@ pub struct GameWorld {
 impl GameWorld {
     pub fn new(log: &Logger, world: &mut RenderWorld) -> Self {
         let player = Player::new();
-        world.set_ambient_light(Vector3::new(0.005, 0.005, 0.005));
+
+        world.ambient_light = Vector3::new(0.005, 0.005, 0.005);
+        world.directional_light = Vector3::new(0.5, 0.5, 0.5);
+        world.add_light(::calcium_rendering_world3d::Light {
+            position: Vector3::new(0.0, 1.0, 0.0),
+            color: Vector3::new(1.0, 1.0, 1.0),
+            radius: 10.0,
+        });
 
         // Add a flat floor to have something as reference
         let floor_mesh = Mesh::from_flat_vertices(log, &floor_vertices());
@@ -36,12 +43,6 @@ impl GameWorld {
             position: Vector3::new(0.0, 0.0, 0.0),
             mesh: floor_mesh,
             material: floor_material,
-        });
-
-        world.add_light(::calcium_rendering_world3d::Light {
-            position: Vector3::new(0.0, 1.0, 0.0),
-            color: Vector3::new(1.0, 1.0, 1.0),
-            radius: 10.0,
         });
 
         GameWorld {

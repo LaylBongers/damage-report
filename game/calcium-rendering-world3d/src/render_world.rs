@@ -1,19 +1,25 @@
 use std::sync::{Arc};
-use cgmath::{Vector3};
+use cgmath::{Vector3, InnerSpace};
 use {Mesh, Material};
 
 pub struct RenderWorld {
     entities: Vec<Entity>,
-    ambient_light: Vector3<f32>,
     lights: Vec<Light>,
+
+    pub ambient_light: Vector3<f32>,
+    pub directional_light: Vector3<f32>,
+    pub directional_direction: Vector3<f32>,
 }
 
 impl RenderWorld {
     pub fn new() -> Self {
         RenderWorld {
             entities: Vec::new(),
-            ambient_light: Vector3::new(0.0, 0.0, 0.0),
             lights: Vec::new(),
+
+            ambient_light: Vector3::new(0.0, 0.0, 0.0),
+            directional_light: Vector3::new(0.0, 0.0, 0.0),
+            directional_direction: Vector3::new(-1.0, 1.5, -0.5).normalize(),
         }
     }
 
@@ -28,14 +34,6 @@ impl RenderWorld {
 
     pub fn entity_mut(&mut self, id: EntityId) -> &mut Entity {
         &mut self.entities[id.0]
-    }
-
-    pub fn set_ambient_light(&mut self, value: Vector3<f32>) {
-        self.ambient_light = value;
-    }
-
-    pub fn ambient_light(&self) -> Vector3<f32> {
-        self.ambient_light
     }
 
     pub fn add_light(&mut self, light: Light) -> LightId {

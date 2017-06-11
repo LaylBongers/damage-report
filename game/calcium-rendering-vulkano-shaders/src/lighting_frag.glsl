@@ -19,7 +19,11 @@ layout(set = 0, binding = 3) uniform sampler2D u_gbuffer_roughness;
 layout(set = 0, binding = 4) uniform sampler2D u_gbuffer_metallic;
 layout(set = 0, binding = 5) uniform LightData {
     vec3 camera_position;
-    vec3 ambient_light;
+
+    vec3 ambient_color;
+
+    vec3 directional_color;
+    vec3 directional_direction;
 
     int point_lights_amount;
     PointLight point_lights[AMOUNT_POINTLIGHT];
@@ -188,8 +192,15 @@ void main() {
         );
     }
 
+    // Improvised directional lighting TODO: Investigate what other engines use
+    total_light += calculate_light(
+        u_light_data.directional_color, u_light_data.directional_direction,
+        camera_direction, 1.0,
+        base_color, normal, metallic, roughness
+    );
+
     // Improvised ambient lighting TODO: Investigate what other engines use
-    total_light += u_light_data.ambient_light * base_color * ao;
+    total_light += u_light_data.ambient_color * base_color * ao;
 
     // Finally, apply the resulting lighting on the base color
     o_color = vec4(total_light, 1.0);

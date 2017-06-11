@@ -119,9 +119,13 @@ impl LightingRenderer {
             backend.device.clone(), BufferUsage::all(),
             Some(backend.graphics_queue.family()),
             lighting_fs::ty::LightData {
-                camera_position: camera.position.into(),
                 _dummy0: Default::default(),
-                ambient_light: world.ambient_light().into(),
+                _dummy1: Default::default(),
+                _dummy2: Default::default(),
+                camera_position: camera.position.into(),
+                ambient_color: world.ambient_light.into(),
+                directional_color: world.directional_light.into(),
+                directional_direction: world.directional_direction.into(),
                 point_lights_amount,
                 point_lights,
             }
