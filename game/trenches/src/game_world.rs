@@ -2,7 +2,7 @@ use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 
 use calcium_rendering::{Texture, TextureFormat};
-use calcium_rendering_world3d::{World, Entity, Material, Mesh, Vertex};
+use calcium_rendering_world3d::{RenderWorld, Entity, Material, Mesh, Vertex};
 
 use input::{InputState, FrameInput};
 use player::{Player};
@@ -12,7 +12,7 @@ pub struct GameWorld {
 }
 
 impl GameWorld {
-    pub fn new(log: &Logger, world: &mut World) -> Self {
+    pub fn new(log: &Logger, world: &mut RenderWorld) -> Self {
         let player = Player::new();
         world.set_ambient_light(Vector3::new(0.005, 0.005, 0.005));
 
@@ -44,7 +44,7 @@ impl GameWorld {
     }
 
     pub fn update(
-        &mut self, time: f32, _world: &mut World,
+        &mut self, time: f32, _world: &mut RenderWorld,
         input_state: &InputState, frame_input: &FrameInput
     ) {
         // Update the player based on the input we got so far

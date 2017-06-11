@@ -2,7 +2,7 @@ use slog::{Logger};
 
 use calcium_rendering::{Target, TargetBackend};
 
-use {Camera, World, RendererBackend};
+use {Camera, RenderWorld, RendererBackend};
 
 pub struct Renderer<B: RendererBackend> {
     backend: B,
@@ -21,7 +21,7 @@ impl<B: RendererBackend> Renderer<B> {
         &mut self, log: &Logger,
         target: &mut Target<B::TargetBackend>,
         frame: &mut <<B as RendererBackend>::TargetBackend as TargetBackend>::Frame,
-        camera: &Camera, world: &World
+        camera: &Camera, world: &RenderWorld
     ) {
         self.backend.render(log, target, frame, camera, world);
     }

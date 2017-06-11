@@ -2,15 +2,15 @@ use std::sync::{Arc};
 use cgmath::{Vector3};
 use {Mesh, Material};
 
-pub struct World {
+pub struct RenderWorld {
     entities: Vec<Entity>,
     ambient_light: Vector3<f32>,
     lights: Vec<Light>,
 }
 
-impl World {
+impl RenderWorld {
     pub fn new() -> Self {
-        World {
+        RenderWorld {
             entities: Vec::new(),
             ambient_light: Vector3::new(0.0, 0.0, 0.0),
             lights: Vec::new(),

@@ -6,50 +6,29 @@ use vulkano::swapchain::{Surface};
 use vulkano_win::{self, VkSurfaceBuild, Window as VulkanWinWindow};
 use winit::{EventsLoop, WindowBuilder, Event, WindowEvent};
 
-use calcium_rendering_vulkano::{WindowCreator, Window};
+use calcium_rendering_vulkano::{VulkanoTargetSystem};
 
 use input::{InputState, FrameInput};
 
-pub struct VulkanWinWindowCreator;
-
-impl WindowCreator for VulkanWinWindowCreator {
-    type W = VulkanWinWindowWrapper;
-
-    fn required_extensions(&self) -> InstanceExtensions {
-        vulkano_win::required_extensions()
-    }
-
-    fn create_window(&self, instance: Arc<Instance>, size: Vector2<u32>) -> Self::W {
-        let events_loop = EventsLoop::new();
-        let window = WindowBuilder::new()
-            .with_dimensions(size.x, size.y)
-            .with_title(format!("Damage Report"))
-            .build_vk_surface(&events_loop, instance)
-            .unwrap();
-        VulkanWinWindowWrapper { window, events_loop, size }
-    }
+pub struct WinitTargetSystem {
+    data: Option<WinitData>,
 }
 
-pub struct VulkanWinWindowWrapper {
-    window: VulkanWinWindow,
-    events_loop: EventsLoop,
-    size: Vector2<u32>,
-}
-
-impl Window for VulkanWinWindowWrapper {
-    fn surface(&self) -> &Arc<Surface> {
-        self.window.surface()
+impl WinitTargetSystem {
+    pub fn new() -> Self {
+        WinitTargetSystem {
+            data: None,
+        }
     }
-}
 
-impl VulkanWinWindowWrapper {
     pub fn handle_events(
         &mut self,
         input_state: &mut InputState, frame_input: &mut FrameInput
     ) -> bool {
+        let data = self.data.as_mut().unwrap();
         let mut should_continue = true;
 
-        self.events_loop.poll_events(|event| {
+        data.events_loop.poll_events(|event| {
             match event {
                 Event::WindowEvent { event: ev, .. } => {
                     match ev {
@@ -57,7 +36,7 @@ impl VulkanWinWindowWrapper {
                         WindowEvent::KeyboardInput(key_state, _, Some(key_code), _) =>
                             input_state.handle_key(key_state, key_code),
                         WindowEvent::MouseMoved(x, y) => {
-                            let center = (self.size/2).cast();
+                            let center = (data.size/2).cast();
 
                             // Check how far away from the center we are and use that to calculate input
                             let difference: Vector2<i32> = Vector2::new(x, y) - center;
@@ -65,7 +44,8 @@ impl VulkanWinWindowWrapper {
                             frame_input.yaw += difference.x as f32 * -0.0005;
 
                             // Re-center the mouse so it stays in the middle of the screen
-                            self.window.window().set_cursor_position(center.x, center.y).unwrap();
+                            data.window.window()
+                                .set_cursor_position(center.x, center.y).unwrap();
                         },
                         _ => (),
                     }
@@ -75,4 +55,31 @@ impl VulkanWinWindowWrapper {
 
         should_continue
     }
+}
+
+impl VulkanoTargetSystem for WinitTargetSystem {
+    fn required_extensions(&self) -> InstanceExtensions {
+        vulkano_win::required_extensions()
+    }
+
+    fn create_surface(&mut self, instance: Arc<Instance>, size: Vector2<u32>) -> Arc<Surface> {
+        let events_loop = EventsLoop::new();
+        let window = WindowBuilder::new()
+            .with_dimensions(size.x, size.y)
+            .with_title(format!("Damage Report"))
+            .build_vk_surface(&events_loop, instance)
+            .unwrap();
+        self.data = Some(WinitData {
+            window,
+            events_loop,
+            size,
+        });
+        self.data.as_ref().unwrap().window.surface().clone()
+    }
+}
+
+pub struct WinitData {
+    window: VulkanWinWindow,
+    events_loop: EventsLoop,
+    size: Vector2<u32>,
 }

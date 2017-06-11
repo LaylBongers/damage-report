@@ -6,7 +6,7 @@ use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{Target};
 use calcium_rendering_vulkano::{VulkanoTargetBackend, Frame};
-use calcium_rendering_world3d::{Camera, World, RendererBackend, Mesh};
+use calcium_rendering_world3d::{Camera, RenderWorld, RendererBackend, Mesh};
 
 use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
@@ -49,7 +49,7 @@ impl RendererBackend for VulkanoRendererBackend {
     fn render(
         &mut self, log: &Logger,
         target: &mut Target<VulkanoTargetBackend>, frame: &mut Frame,
-        camera: &Camera, world: &World
+        camera: &Camera, world: &RenderWorld
     ) {
         // This is a deferred renderer, so what we will do is first build up the "geometry buffer",
         //  which is a framebuffer made up from various images to keep track of the data needed for

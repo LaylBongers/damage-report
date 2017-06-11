@@ -13,6 +13,8 @@ mod geometry_renderer;
 mod lighting_renderer;
 mod mesh;
 mod renderer;
+mod world_render_backend;
 
-pub use self::mesh::{VulkanoMeshBackend, VkVertex};
-pub use self::renderer::{VulkanoRendererBackend, BackendMeshes};
+pub use mesh::{VulkanoMeshBackend, VkVertex};
+pub use renderer::{VulkanoRendererBackend, BackendMeshes};
+pub use world_render_backend::{VulkanoWorldRenderBackend};

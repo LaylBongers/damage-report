@@ -2,7 +2,7 @@ use slog::{Logger};
 
 use calcium_rendering::{Target, TargetBackend};
 
-use {Camera, World};
+use {Camera, RenderWorld};
 
 pub trait RendererBackend {
     type TargetBackend: TargetBackend;
@@ -11,6 +11,6 @@ pub trait RendererBackend {
         &mut self, log: &Logger,
         target: &mut Target<Self::TargetBackend>,
         frame: &mut <<Self as RendererBackend>::TargetBackend as TargetBackend>::Frame,
-        camera: &Camera, world: &World
+        camera: &Camera, world: &RenderWorld
     );
 }

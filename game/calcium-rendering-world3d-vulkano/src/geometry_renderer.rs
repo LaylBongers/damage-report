@@ -18,7 +18,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use calcium_rendering::{Target};
 use calcium_rendering_vulkano::{VulkanoTargetBackend};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs};
-use calcium_rendering_world3d::{Camera, World, Entity};
+use calcium_rendering_world3d::{Camera, RenderWorld, Entity};
 
 use geometry_buffer::{GeometryBuffer};
 use {VulkanoRendererBackend, BackendMeshes};
@@ -43,7 +43,7 @@ impl GeometryRenderer {
         &self, log: &Logger,
         backend: &mut VulkanoTargetBackend,
         meshes: &mut BackendMeshes, geometry_buffer: &GeometryBuffer,
-        camera: &Camera, world: &World,
+        camera: &Camera, world: &RenderWorld,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             backend.device().clone(), backend.graphics_queue().family()
