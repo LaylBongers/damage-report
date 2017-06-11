@@ -93,6 +93,7 @@ fn run_game(log: &Logger) -> Result<(), Error> {
             break
         }
 
+        // Update the gameworld itself
         game_world.update(time, &mut render_world, &input_state, &frame_input);
 
         // Perform the actual rendering

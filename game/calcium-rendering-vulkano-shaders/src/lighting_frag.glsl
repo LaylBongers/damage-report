@@ -3,6 +3,7 @@
 
 const float PI = 3.14159265359;
 
+// TODO: Move the lighting pass to additive lighting geometry passes.
 const int AMOUNT_POINTLIGHT = 32;
 
 struct PointLight {
@@ -80,6 +81,7 @@ float geometry_schlick_ggx(float NdotV, float roughness)
 
     return nom / denom;
 }
+
 float geometry_smith(vec3 N, vec3 V, vec3 L, float roughness)
 {
     float NdotV = max(dot(N, V), 0.0);
@@ -88,6 +90,54 @@ float geometry_smith(vec3 N, vec3 V, vec3 L, float roughness)
     float ggx1  = geometry_schlick_ggx(NdotL, roughness);
 
     return ggx1 * ggx2;
+}
+
+vec3 calculate_light(
+    vec3 light_color, vec3 light_direction, vec3 camera_direction, float attenuation,
+    vec3 base_color, vec3 normal, float metallic, float roughness
+) {
+    // Calculate the "halfway vector", the halfway vector is exactly between the
+    //  direction the camera and the light are at, and we can use how much it
+    //  aligns with the normal to calculate the amount of specular.
+    vec3 halfway_vector = normalize(camera_direction + light_direction);
+
+    // Calculate the "radiance" of this light on this fragment. This means
+    //  if the light were traveling in a straight line to this fragment's
+    //  position, how strong it would be. This means it doesn't take into
+    //  account which side the light is hitting, only base light strength
+    //  and distance.
+    vec3 radiance = light_color * attenuation;
+
+    // Calculate how much this surface reflects instead of refracting. This
+    //  depends on how much of a metal our surface is, and what angle the
+    //  camera is at depending on the surface and the light.
+    vec3 headon_reflection = mix(vec3(0.04), base_color, metallic);
+    float cos_theta = max(dot(halfway_vector, camera_direction), 0.0);
+    vec3 reflection_ratio = fresnel_schlick(cos_theta, headon_reflection);
+
+    // TODO: Comment what the heck the NDF and G are
+    float NDF = distribution_ggx(normal, halfway_vector, roughness);
+    float G   = geometry_smith(normal, camera_direction, light_direction, roughness);
+
+    // Calculate the Cook-Torrance BRDF
+    // TODO: Rename various values to better reflect what they are and
+    //  comment what exactly this process is better
+    // 0.001 is added at the end to prevent a divide by zero crash, for
+    //  weird spooky border cases
+    vec3 nominator = NDF * G * reflection_ratio;
+    float denominator = 4 * max(dot(normal, camera_direction), 0.0) * max(dot(normal, light_direction), 0.0) + 0.001;
+    vec3 specular = nominator / denominator;
+
+    // Calculate the light's contribution to the reflectance equation
+    // TODO: Needs the same treatment as the code above here does
+    vec3 kS = reflection_ratio;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallic;
+
+    // Finally add all the light values together and apply it to the base_color
+    // TODO: Needs the same treatment as the code above here does
+    float NdotL = max(dot(normal, light_direction), 0.0);
+    return (kD * base_color / PI + specular) * radiance * NdotL;
 }
 
 void main() {
@@ -123,54 +173,19 @@ void main() {
         vec3 light_color = u_light_data.point_lights[i].color;
         float light_inverse_radius_sqr = u_light_data.point_lights[i].inverse_radius_sqr;
 
-        // Calculate the direction the light is at relative to the fragment, and
-        //  the "halfway vector", the halfway vector is exactly between the
-        //  direction the camera and the light are at, and we can use how much
-        //  it aligns with the normal to calculate the amount of specular.
+        // Calculate the direction the light is at relative to the fragment
         vec3 light_direction = normalize(light_position - position);
-        vec3 halfway_vector = normalize(camera_direction + light_direction);
 
-        // Calculate the "radiance" of this light on this fragment. This means
-        //  if the light were traveling in a straight line to this fragment's
-        //  position, how strong it would be. This means it doesn't take into
-        //  account which side the light is hitting, only base light strength
-        //  and distance.
         float light_distance = length(light_position - position);
         float attenuation = calculate_attenuation(
             light_position, light_inverse_radius_sqr, position
         );
-        vec3 radiance = light_color * attenuation;
 
-        // Calculate how much this surface reflects instead of refracting. This
-        //  depends on how much of a metal our surface is, and what angle the
-        //  camera is at depending on the surface and the light.
-        vec3 headon_reflection = mix(vec3(0.04), base_color, metallic);
-        float cos_theta = max(dot(halfway_vector, camera_direction), 0.0);
-        vec3 reflection_ratio = fresnel_schlick(cos_theta, headon_reflection);
-
-        // TODO: Comment what the heck the NDF and G are
-        float NDF = distribution_ggx(normal, halfway_vector, roughness);
-        float G   = geometry_smith(normal, camera_direction, light_direction, roughness);
-
-        // Calculate the Cook-Torrance BRDF
-        // TODO: Rename various values to better reflect what they are and
-        //  comment what exactly this process is better
-        // 0.001 is added at the end to prevent a divide by zero crash, for
-        //  weird spooky border cases
-        vec3 nominator = NDF * G * reflection_ratio;
-        float denominator = 4 * max(dot(normal, camera_direction), 0.0) * max(dot(normal, light_direction), 0.0) + 0.001;
-        vec3 specular = nominator / denominator;
-
-        // Calculate the light's contribution to the reflectance equation
-        // TODO: Needs the same treatment as the code above here does
-        vec3 kS = reflection_ratio;
-        vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - metallic;
-
-        // Finally add all the light values together and apply it to the base_color
-        // TODO: Needs the same treatment as the code above here does
-        float NdotL = max(dot(normal, light_direction), 0.0);
-        total_light += (kD * base_color / PI + specular) * radiance * NdotL;
+        // Perform the actual light calculation and add it to the rest
+        total_light += calculate_light(
+            light_color, light_direction, camera_direction, attenuation,
+            base_color, normal, metallic, roughness
+        );
     }
 
     // Improvised ambient lighting TODO: Investigate what other engines use

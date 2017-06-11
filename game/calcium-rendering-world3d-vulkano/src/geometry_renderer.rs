@@ -202,7 +202,7 @@ fn create_projection_view_matrix(
     backend: &VulkanoRenderBackend, camera: &Camera
 ) -> Matrix4<f32> {
     let perspective = PerspectiveFov {
-        fovy: Rad::full_turn() * 0.25,
+        fovy: Rad::full_turn() * 0.1638,
         aspect: backend.size.x as f32 / backend.size.y as f32,
         near: 0.1,
         far: 500.0,
