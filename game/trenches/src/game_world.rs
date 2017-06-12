@@ -1,8 +1,8 @@
-use cgmath::{Vector2, Vector3};
+use cgmath::{Vector3};
 use slog::{Logger};
 
 use calcium_rendering::{Texture, TextureFormat};
-use calcium_rendering_world3d::{RenderWorld, Entity, Material, Mesh, Vertex};
+use calcium_rendering_world3d::{RenderWorld, Entity, Material, Mesh};
 
 use input::{InputState, FrameInput};
 use player::{Player};

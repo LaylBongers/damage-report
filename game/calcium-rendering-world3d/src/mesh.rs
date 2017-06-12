@@ -15,7 +15,7 @@ pub struct Vertex {
 
 impl Vertex {
     /// This is a potentially messy hash function, but merging vertices this close together is
-    ///  acceptable, at least for now
+    ///  acceptable.
     fn calculate_lossy_hash(&self) -> u64 {
         let mut state = DefaultHasher::new();
 
@@ -63,7 +63,10 @@ impl Mesh {
         vertices: &mut Vec<Vertex>, indices: &mut Vec<u16>, lookup: &mut HashMap<u64, u16>,
         i: &mut u16
     ) {
-        // Check if we found a matchin vertex before
+        // Check if we found a matching vertex before. This is the reason we need a hash map of
+        //  indices, a linear vector equality lookup would make this O(n^2). To generate the hash
+        //  we make a few assumptions, it's quite a lossy hash but it should be good enough for
+        //  most situations.
         let hash = vertex.calculate_lossy_hash();
         if let Some(value) = lookup.get(&hash) {
             // We found a match, go with the existing index

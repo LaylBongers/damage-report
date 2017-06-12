@@ -9,7 +9,7 @@ use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend};
 use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
-use mesh::{VulkanoMeshBackend, BackendMeshes};
+use mesh::{BackendMeshes};
 
 pub struct VulkanoWorldRenderBackend {
     pub geometry_buffer: GeometryBuffer,

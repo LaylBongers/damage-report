@@ -194,7 +194,7 @@ impl BackendMeshes {
         );
 
         // Store the mesh backend, maintaining its ID so we can look it back up
-        let texture_id = self.store_mesh(&mesh, mesh_backend);
+        self.store_mesh(&mesh, mesh_backend);
     }
 
     fn store_mesh(
