@@ -51,70 +51,73 @@ impl VoxelGrid {
     }
 }
 
-fn add_cube(vertices: &mut Vec<Vertex>, offset: Vector3<usize>) {
+fn add_cube(vertices: &mut Vec<Vertex>, offset: Vector3<i32>) {
+    // A cube is calculated entirely using integers until the last possible point, using this we
+    //  can avoid gaps in the mesh caused by floating point precision errors.
+
     // Sides
     add_square(
         vertices, offset,
-        Vector3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0), Vector3::new(0.0, 0.0, -1.0)
+        Vector3::new(1, 0, 0), Vector3::new(0, 1, 0), Vector3::new(0, 0, -1)
     );
     add_square(
         vertices, offset + Vector3::new(1, 0, 0),
-        Vector3::new(0.0, 0.0, 1.0), Vector3::new(0.0, 1.0, 0.0), Vector3::new(1.0, 0.0, 0.0)
+        Vector3::new(0, 0, 1), Vector3::new(0, 1, 0), Vector3::new(1, 0, 0)
     );
     add_square(
         vertices, offset + Vector3::new(1, 0, 1),
-        Vector3::new(-1.0, 0.0, 0.0), Vector3::new(0.0, 1.0, 0.0), Vector3::new(0.0, 0.0, 1.0)
+        Vector3::new(-1, 0, 0), Vector3::new(0, 1, 0), Vector3::new(0, 0, 1)
     );
     add_square(
         vertices, offset + Vector3::new(0, 0, 1),
-        Vector3::new(0.0, 0.0, -1.0), Vector3::new(0.0, 1.0, 0.0), Vector3::new(-1.0, 0.0, 0.0)
+        Vector3::new(0, 0, -1), Vector3::new(0, 1, 0), Vector3::new(-1, 0, 0)
     );
 
     // Top/Bottom
     add_square(
         vertices, offset + Vector3::new(0, 1, 0),
-        Vector3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0), Vector3::new(0.0, 1.0, 0.0)
+        Vector3::new(1, 0, 0), Vector3::new(0, 0, 1), Vector3::new(0, 1, 0)
     );
     add_square(
         vertices, offset + Vector3::new(0, 0, 1),
-        Vector3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, -1.0), Vector3::new(0.0, -1.0, 0.0)
+        Vector3::new(1, 0, 0), Vector3::new(0, 0, -1), Vector3::new(0, -1, 0)
     );
 }
 
 fn add_square(
-    vertices: &mut Vec<Vertex>, offset: Vector3<usize>,
-    tangent: Vector3<f32>, bitangent: Vector3<f32>, normal: Vector3<f32>
+    vertices: &mut Vec<Vertex>, offset: Vector3<i32>,
+    tangent: Vector3<i32>, bitangent: Vector3<i32>, normal: Vector3<i32>
 ) {
-    let offset = offset.cast();
+    let normal = normal.cast();
 
     vertices.push(Vertex {
-        position: offset,
+        position: offset.cast(),
         uv: Vector2::new(0.0, 1.0),
         normal,
     });
     vertices.push(Vertex {
-        position: offset + bitangent,
+        position: (offset + bitangent).cast(),
         uv: Vector2::new(0.0, 0.0),
         normal,
     });
     vertices.push(Vertex {
-        position: offset + tangent,
+        position: (offset + tangent).cast(),
         uv: Vector2::new(1.0, 1.0),
         normal,
     });
 
     vertices.push(Vertex {
-        position: offset + tangent + bitangent,
+        position: (offset + tangent + bitangent).cast(),
         uv: Vector2::new(1.0, 0.0),
         normal,
     });
     vertices.push(Vertex {
-        position: offset + tangent,
+        position: (offset + tangent).cast(),
         uv: Vector2::new(1.0, 1.0),
         normal,
     });
     vertices.push(Vertex {
-        position: offset + bitangent,
+        position: (offset + bitangent).cast(),
         uv: Vector2::new(0.0, 0.0),
         normal,
     });
