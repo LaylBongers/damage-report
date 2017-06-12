@@ -6,9 +6,11 @@ use calcium_rendering_world3d::{RenderWorld, Entity, Material, Mesh, Vertex};
 
 use input::{InputState, FrameInput};
 use player::{Player};
+use voxel_grid::{VoxelGrid};
 
 pub struct GameWorld {
     pub player: Player,
+    _voxels: VoxelGrid,
 }
 
 impl GameWorld {
@@ -18,7 +20,7 @@ impl GameWorld {
         world.ambient_light = Vector3::new(0.005, 0.005, 0.005);
         world.directional_light = Vector3::new(0.5, 0.5, 0.5);
         world.add_light(::calcium_rendering_world3d::Light {
-            position: Vector3::new(0.0, 1.0, 0.0),
+            position: Vector3::new(0.0, 1.5, 0.0),
             color: Vector3::new(1.0, 1.0, 1.0),
             radius: 10.0,
         });
@@ -42,11 +44,31 @@ impl GameWorld {
         world.add_entity(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
             mesh: floor_mesh,
-            material: floor_material,
+            material: floor_material.clone(),
         });
+
+        // Create the in-world voxels
+        let mut voxels = VoxelGrid::new(Vector3::new(32, 32, 32));
+        for x in 0..voxels.size().x {
+            for z in 0..voxels.size().z {
+                voxels.set_at(Vector3::new(x, 0, z), true);
+            }
+        }
+        // Remove the positive X 1 voxel just to test
+        voxels.set_at(Vector3::new(1, 0, 0), false);
+
+        // Create a mesh from the voxel grid
+        if let Some(triangles) = voxels.triangulate() {
+            world.add_entity(Entity {
+                position: Vector3::new(0.0, 0.0, 0.0),
+                mesh: Mesh::from_flat_vertices(log, &triangles),
+                material: floor_material,
+            });
+        }
 
         GameWorld {
             player,
+            _voxels: voxels,
         }
     }
 
@@ -62,7 +84,7 @@ impl GameWorld {
 fn floor_vertices() -> Vec<Vertex> {
     vec!(
         Vertex {
-            position: Vector3::new(-10.0, 0.0, -10.0),
+            position: Vector3::new(-20.0, 0.0, -20.0),
             uv: Vector2::new(0.0, 0.0),
             normal: Vector3::new(0.0, 1.0, 0.0),
         },

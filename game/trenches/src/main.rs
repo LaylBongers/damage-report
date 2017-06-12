@@ -16,6 +16,7 @@ mod game_world;
 mod input;
 mod player;
 mod target;
+mod voxel_grid;
 
 use slog::{Logger, Drain};
 use slog_async::{Async};

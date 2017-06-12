@@ -20,8 +20,8 @@ impl Player {
 
     pub fn update(&mut self, input_state: &InputState, frame_input: &FrameInput, time: f32) {
         // Rotate the player's yaw depending on input
-        self.pitch += frame_input.pitch;
-        self.yaw += frame_input.yaw;
+        self.pitch += frame_input.pitch * 0.5;
+        self.yaw += frame_input.yaw * 0.5;
 
         // Limit the pitch
         if self.pitch > 0.25 {
@@ -45,7 +45,8 @@ impl Player {
         // Remove the Y component of the movement and normalize it
         // We know normalization will work because we early bail if we don't have input
         rotated_movement.y = 0.0;
-        let final_movement = rotated_movement.normalize();
+        let speed = 2.0;
+        let final_movement = rotated_movement.normalize() * speed;
 
         // Finally, apply the final movement
         self.position += final_movement * time;
