@@ -1,6 +1,6 @@
 use cgmath::{Vector3, Vector2};
 use slog::{Logger};
-use noise::{Fbm, Point2, NoiseModule};
+use noise::{Fbm, Point2, NoiseModule, Turbulence, Exponent};
 use num::{clamp};
 
 use calcium_rendering::{Texture, TextureFormat};
@@ -42,9 +42,10 @@ impl GameWorld {
         };
 
         // Create the in-world voxels
-        let noise = Fbm::new();
-        for x in -4..3 {
-            for z in -4..3 {
+        let noise = Turbulence::new(Exponent::new(Fbm::new()));
+        for x in -8..8 {
+            for z in -8..8 {
+                debug!(log, "Generating terrain chunks {}/{}", (x + 8)*16 + (z + 8), 16 * 16);
                 let offset = Vector2::new(x, z) * 32;
 
                 // Generate this chunk of terrain
@@ -75,12 +76,14 @@ impl GameWorld {
     }
 }
 
-fn generate_voxels(offset: Vector2<i32>, noise: &Fbm<f32>) -> VoxelGrid {
-    let mut voxels = VoxelGrid::new(Vector3::new(64, 32, 64));
+fn generate_voxels<N: NoiseModule<Point2<f32>, Output=f32>>(
+    offset: Vector2<i32>, noise: &N
+) -> VoxelGrid {
+    let mut voxels = VoxelGrid::new(Vector3::new(32, 128, 32));
 
     // Terrain gen parameters
-    let noise_scale = 0.01;
-    let height = 30.0;
+    let noise_scale = 0.0025;
+    let height = 126.0;
 
     // Generate terrain
     for x in 0..voxels.size().x {

@@ -36,6 +36,8 @@ impl WinitTargetSystem {
                         WindowEvent::KeyboardInput(key_state, _, Some(key_code), _) =>
                             input_state.handle_key(key_state, key_code),
                         WindowEvent::MouseMoved(x, y) => {
+                            // TODO: The mouse rotate speed changes based on framerate, fix that
+
                             let center = (data.size/2).cast();
 
                             // Check how far away from the center we are and use that to calculate input
