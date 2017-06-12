@@ -113,7 +113,7 @@ impl VulkanoMeshBackend {
             warn!(log, "Found triangles with bad UVs, tangents may be wrong");
         }
 
-        debug!(log, "Created new mesh with";
+        debug!(log, "Created new mesh";
             "vertices" => vertices.len(), "indices" => indices.len()
         );
         VulkanoMeshBackend {
