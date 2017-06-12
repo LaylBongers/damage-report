@@ -13,20 +13,19 @@ pub struct Vertex {
     pub normal: Vector3<f32>,
 }
 
-impl Hash for Vertex {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        // This is a potentially buggy hash function, but merging vertices this close together is
-        //  acceptable, at least for now.
-        (self.position * 10000.0).cast::<i64>().hash(state);
-        (self.uv * 10000.0).cast::<i64>().hash(state);
-        (self.normal * 10000.0).cast::<i64>().hash(state);
-    }
-}
+impl Vertex {
+    /// This is a potentially messy hash function, but merging vertices this close together is
+    ///  acceptable, at least for now
+    fn calculate_lossy_hash(&self) -> u64 {
+        let mut state = DefaultHasher::new();
 
-fn calculate_hash<T: Hash>(t: &T) -> u64 {
-    let mut s = DefaultHasher::new();
-    t.hash(&mut s);
-    s.finish()
+        let scale = 10_000.0;
+        (self.position * scale).cast::<i64>().hash(&mut state);
+        (self.uv * scale).cast::<i64>().hash(&mut state);
+        (self.normal * scale).cast::<i64>().hash(&mut state);
+
+        state.finish()
+    }
 }
 
 /// An uploaded mesh. Internally ref-counted, cheap to clone.
@@ -65,7 +64,7 @@ impl Mesh {
         i: &mut u16
     ) {
         // Check if we found a matchin vertex before
-        let hash = calculate_hash(&vertex);
+        let hash = vertex.calculate_lossy_hash();
         if let Some(value) = lookup.get(&hash) {
             // We found a match, go with the existing index
             indices.push(*value);
@@ -75,6 +74,7 @@ impl Mesh {
         // We didn't find a match, create a new one
         vertices.push(vertex);
         indices.push(*i);
+        lookup.insert(hash, *i);
         *i += 1;
     }
 
