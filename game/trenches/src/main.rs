@@ -1,13 +1,15 @@
 extern crate cgmath;
-#[macro_use]
-extern crate slog;
-extern crate slog_async;
-extern crate slog_term;
 extern crate calcium_rendering;
 extern crate calcium_rendering_vulkano;
 extern crate calcium_rendering_world3d;
 extern crate calcium_rendering_world3d_vulkano;
 extern crate calcium_utils;
+extern crate noise;
+extern crate num;
+#[macro_use]
+extern crate slog;
+extern crate slog_async;
+extern crate slog_term;
 extern crate vulkano;
 extern crate vulkano_win;
 extern crate winit;

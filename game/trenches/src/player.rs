@@ -12,7 +12,7 @@ pub struct Player {
 impl Player {
     pub fn new() -> Self {
         Player {
-            position: Vector3::new(0.0, 0.0, 0.0),
+            position: Vector3::new(0.0, 40.0, 0.0),
             pitch: 0.0,
             yaw: 0.0,
         }
@@ -45,7 +45,7 @@ impl Player {
         // Remove the Y component of the movement and normalize it
         // We know normalization will work because we early bail if we don't have input
         rotated_movement.y = 0.0;
-        let speed = 2.0;
+        let speed = 10.0;
         let final_movement = rotated_movement.normalize() * speed;
 
         // Finally, apply the final movement

@@ -1,5 +1,7 @@
-use cgmath::{Vector3};
+use cgmath::{Vector3, Vector2};
 use slog::{Logger};
+use noise::{Fbm, Point2, NoiseModule};
+use num::{clamp};
 
 use calcium_rendering::{Texture, TextureFormat};
 use calcium_rendering_world3d::{RenderWorld, Entity, Material, Mesh};
@@ -10,7 +12,6 @@ use voxel_grid::{VoxelGrid};
 
 pub struct GameWorld {
     pub player: Player,
-    _voxels: VoxelGrid,
 }
 
 impl GameWorld {
@@ -41,28 +42,27 @@ impl GameWorld {
         };
 
         // Create the in-world voxels
-        let mut voxels = VoxelGrid::new(Vector3::new(32, 32, 32));
-        for x in 0..voxels.size().x {
-            for z in 0..voxels.size().z {
-                voxels.set_at(Vector3::new(x, 0, z), true);
-            }
-        }
-        // Move the positive X 1 voxel just to test the coordinate system
-        voxels.set_at(Vector3::new(1, 0, 0), false);
-        voxels.set_at(Vector3::new(1, 2, 0), true);
+        let noise = Fbm::new();
+        for x in -4..3 {
+            for z in -4..3 {
+                let offset = Vector2::new(x, z) * 32;
 
-        // Create a mesh from the voxel grid
-        if let Some(triangles) = voxels.triangulate() {
-            world.add_entity(Entity {
-                position: Vector3::new(0.0, 0.0, 0.0),
-                mesh: Mesh::from_flat_vertices(log, &triangles),
-                material: floor_material,
-            });
+                // Generate this chunk of terrain
+                let voxels = generate_voxels(offset, &noise);
+
+                // Add it to the world
+                if let Some(triangles) = voxels.triangulate() {
+                    world.add_entity(Entity {
+                        position: Vector3::new(offset.x, 0, offset.y).cast(),
+                        mesh: Mesh::from_flat_vertices(log, &triangles),
+                        material: floor_material.clone(),
+                    });
+                }
+            }
         }
 
         GameWorld {
             player,
-            _voxels: voxels,
         }
     }
 
@@ -73,4 +73,29 @@ impl GameWorld {
         // Update the player based on the input we got so far
         self.player.update(&input_state, &frame_input, time);
     }
+}
+
+fn generate_voxels(offset: Vector2<i32>, noise: &Fbm<f32>) -> VoxelGrid {
+    let mut voxels = VoxelGrid::new(Vector3::new(64, 32, 64));
+
+    // Terrain gen parameters
+    let noise_scale = 0.01;
+    let height = 30.0;
+
+    // Generate terrain
+    for x in 0..voxels.size().x {
+        for z in 0..voxels.size().z {
+            let offset_coord = Vector2::new(x, z) + offset;
+            let scaled_coord: Point2<f32> = (offset_coord.cast() * noise_scale).into();
+            let noise_value: f32 = clamp((noise.get(scaled_coord) + 1.0) * 0.5, 0.0, 1.0);
+            let height = (noise_value * height + 1.0) as i32;
+
+            // Actually set the voxels along the height
+            for y in 0..height {
+                voxels.set_at(Vector3::new(x, y, z), true);
+            }
+        }
+    }
+
+    voxels
 }

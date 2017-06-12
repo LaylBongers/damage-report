@@ -61,7 +61,7 @@ impl VoxelGrid {
         if position.x < 0 || position.x >= self.size.x ||
            position.y < 0 || position.y >= self.size.y ||
            position.z < 0 || position.z >= self.size.z {
-            true
+            false
         } else {
             self.voxels[self.index_at(position)]
         }
