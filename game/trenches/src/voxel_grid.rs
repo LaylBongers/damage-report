@@ -70,10 +70,14 @@ fn add_cube(vertices: &mut Vec<Vertex>, offset: Vector3<usize>) {
         Vector3::new(0.0, 0.0, -1.0), Vector3::new(0.0, 1.0, 0.0), Vector3::new(-1.0, 0.0, 0.0)
     );
 
-    // Top
+    // Top/Bottom
     add_square(
         vertices, offset + Vector3::new(0, 1, 0),
         Vector3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0), Vector3::new(0.0, 1.0, 0.0)
+    );
+    add_square(
+        vertices, offset + Vector3::new(0, 0, 1),
+        Vector3::new(1.0, 0.0, 0.0), Vector3::new(0.0, 0.0, -1.0), Vector3::new(0.0, -1.0, 0.0)
     );
 }
 

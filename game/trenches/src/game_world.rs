@@ -25,8 +25,6 @@ impl GameWorld {
             radius: 10.0,
         });
 
-        // Add a flat floor to have something as reference
-        let floor_mesh = Mesh::from_flat_vertices(log, &floor_vertices());
         let floor_material = Material {
             base_color: Texture::new(
                 "./assets/texture_normal.png", TextureFormat::Srgb
@@ -41,11 +39,6 @@ impl GameWorld {
                 "./assets/texture_roughness.png", TextureFormat::LinearRed
             ),
         };
-        world.add_entity(Entity {
-            position: Vector3::new(0.0, 0.0, 0.0),
-            mesh: floor_mesh,
-            material: floor_material.clone(),
-        });
 
         // Create the in-world voxels
         let mut voxels = VoxelGrid::new(Vector3::new(32, 32, 32));
@@ -54,8 +47,9 @@ impl GameWorld {
                 voxels.set_at(Vector3::new(x, 0, z), true);
             }
         }
-        // Remove the positive X 1 voxel just to test
+        // Move the positive X 1 voxel just to test the coordinate system
         voxels.set_at(Vector3::new(1, 0, 0), false);
+        voxels.set_at(Vector3::new(1, 2, 0), true);
 
         // Create a mesh from the voxel grid
         if let Some(triangles) = voxels.triangulate() {
@@ -79,39 +73,4 @@ impl GameWorld {
         // Update the player based on the input we got so far
         self.player.update(&input_state, &frame_input, time);
     }
-}
-
-fn floor_vertices() -> Vec<Vertex> {
-    vec!(
-        Vertex {
-            position: Vector3::new(-20.0, 0.0, -20.0),
-            uv: Vector2::new(0.0, 0.0),
-            normal: Vector3::new(0.0, 1.0, 0.0),
-        },
-        Vertex {
-            position: Vector3::new(-20.0, 0.0, 20.0),
-            uv: Vector2::new(0.0, 1.0),
-            normal: Vector3::new(0.0, 1.0, 0.0),
-        },
-        Vertex {
-            position: Vector3::new(20.0, 0.0, -20.0),
-            uv: Vector2::new(1.0, 0.0),
-            normal: Vector3::new(0.0, 1.0, 0.0),
-        },
-        Vertex {
-            position: Vector3::new(20.0, 0.0, 20.0),
-            uv: Vector2::new(1.0, 1.0),
-            normal: Vector3::new(0.0, 1.0, 0.0),
-        },
-        Vertex {
-            position: Vector3::new(20.0, 0.0, -20.0),
-            uv: Vector2::new(1.0, 0.0),
-            normal: Vector3::new(0.0, 1.0, 0.0),
-        },
-        Vertex {
-            position: Vector3::new(-20.0, 0.0, 20.0),
-            uv: Vector2::new(0.0, 1.0),
-            normal: Vector3::new(0.0, 1.0, 0.0),
-        },
-    )
 }
