@@ -19,8 +19,6 @@ impl VoxelGrid {
     pub fn triangulate(&self) -> Option<Vec<Vertex>> {
         let mut vertices = Vec::new();
 
-        // TODO: Eliminate invisible faces
-
         for x in 0..self.size.x {
             for y in 0..self.size.y {
                 for z in 0..self.size.z {

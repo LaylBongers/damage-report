@@ -21,12 +21,7 @@ impl GameWorld {
         let player = Player::new();
 
         world.ambient_light = Vector3::new(0.005, 0.005, 0.005);
-        world.directional_light = Vector3::new(0.5, 0.5, 0.5);
-        world.add_light(::calcium_rendering_world3d::Light {
-            position: Vector3::new(0.0, 1.5, 0.0),
-            color: Vector3::new(1.0, 1.0, 1.0),
-            radius: 10.0,
-        });
+        world.directional_light = Vector3::new(0.8, 0.75, 0.7);
 
         let floor_material = Material {
             base_color: Texture::new(
@@ -49,8 +44,10 @@ impl GameWorld {
             chunk: Vector2<i32>,
             vert_ind: Option<(Vec<Vertex>, Vec<u16>)>,
         }
-        let mut parallel_data: Vec<_> = (0..16*16)
-            .map(|v| (v/16 - 8, v%16 - 8))
+        let size = 16;
+        let half_size = size/2;
+        let mut parallel_data: Vec<_> = (0..size*size)
+            .map(|v| (v/size - half_size, v%size - half_size))
             .map(|v| ParEntry { chunk: Vector2::new(v.0, v.1), vert_ind: None })
             .collect();
         parallel_data

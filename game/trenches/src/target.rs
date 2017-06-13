@@ -28,32 +28,50 @@ impl WinitTargetSystem {
         let data = self.data.as_mut().unwrap();
         let mut should_continue = true;
 
+        // We need to check for any mouse movements relative to the center, but there may have been
+        //  multiple, so we store the last mouse every time we do a check rather than checking
+        //  relative to the center every time.
+        let center = (data.size/2).cast();
+        let mut last_mouse = center;
+        let mut should_reset_mouse = false;
+
         data.events_loop.poll_events(|event| {
             match event {
                 Event::WindowEvent { event: ev, .. } => {
                     match ev {
                         WindowEvent::Closed => should_continue = false,
-                        WindowEvent::KeyboardInput(key_state, _, Some(key_code), _) =>
-                            input_state.handle_key(key_state, key_code),
+                        WindowEvent::KeyboardInput(key_state, _, Some(key_code), _) => {
+                            input_state.handle_key(key_state, key_code)
+                        },
                         WindowEvent::MouseMoved(x, y) => {
-                            // TODO: The mouse rotate speed changes based on framerate, fix that
+                            // Check how far away from the last position the cursor is
+                            let position = Vector2::new(x, y);
+                            let difference: Vector2<i32> = position - last_mouse;
+                            last_mouse = position;
 
-                            let center = (data.size/2).cast();
+                            // If the difference is zero, just stop handling this event
+                            if difference.x == 0 && difference.y == 0 {
+                                return;
+                            }
 
-                            // Check how far away from the center we are and use that to calculate input
-                            let difference: Vector2<i32> = Vector2::new(x, y) - center;
+                            // Use the distance from center to calculate input
                             frame_input.pitch += difference.y as f32 * -0.0005;
                             frame_input.yaw += difference.x as f32 * -0.0005;
 
                             // Re-center the mouse so it stays in the middle of the screen
-                            data.window.window()
-                                .set_cursor_position(center.x, center.y).unwrap();
+                            should_reset_mouse = true;
                         },
                         _ => (),
                     }
                 }
             }
         });
+
+        // This is done at the end so it doesn't affect last_mouse, next update we'll assume it's
+        // at the center again
+        if should_reset_mouse {
+            data.window.window().set_cursor_position(center.x, center.y).unwrap();
+        }
 
         should_continue
     }
