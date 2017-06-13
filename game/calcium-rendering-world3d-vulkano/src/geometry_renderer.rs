@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 
 use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
+use collision::{Frustum, Relation};
 use slog::{Logger};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
@@ -66,10 +67,15 @@ impl GeometryRenderer {
         // Create the projection-view matrix needed for the perspective rendering
         let projection_view = create_projection_view_matrix(backend, camera);
 
+        // Create a culling frustum from that matrix
+        let culling_frustum = Frustum::from_matrix4(projection_view).unwrap();
+
         // Go over everything in the world
         for entity in world.entities() {
             command_buffer_builder = self.render_entity(
-                log, entity, backend, meshes, &projection_view, command_buffer_builder
+                log, entity, backend, meshes,
+                &projection_view, &culling_frustum,
+                command_buffer_builder
             );
         }
 
@@ -82,12 +88,16 @@ impl GeometryRenderer {
         entity: &Entity,
         backend: &mut VulkanoRenderBackend, meshes: &mut BackendMeshes,
         projection_view: &Matrix4<f32>,
+        culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,
     ) -> AutoCommandBufferBuilder {
+        // TODO: The creation of the backend data for textures and meshes should be started
+        //  immediately when the Mesh and Texture structures are created. Currently it's being
+        //  loaded lazily below. This results in unexpected lag which we don't want.
+
         // Retrieve the backend textures for the frontend textures, but early-bail if we have any
         //  textures that aren't uploaded yet, this notifies the backend that they should be queued
         //  up for uploading if they aren't yet as well.
-        // TODO: Check all textures before returning, so they're all submitted at once
         let (base_color, normal_map, metallic_map, roughness_map) = {
             let base_color = if let Some(base_color) =
                 backend.request_texture(log, &entity.material.base_color) {
@@ -109,13 +119,21 @@ impl GeometryRenderer {
         };
 
         // Retrieve the backend mesh for the frontend mesh
-        // TODO: If one of the textures is missing the mesh isn't submitted for loading even though
-        //  it should be.
         let mesh = if let Some(mesh) = meshes.request_mesh(&log, backend, &entity.mesh) {
             mesh
         } else {
             return command_buffer;
         };
+
+        // Check if this entity's mesh is visible to the current camera
+        let mut culling_sphere = mesh.culling_sphere;
+        culling_sphere.center.x += entity.position.x;
+        culling_sphere.center.y += entity.position.y;
+        culling_sphere.center.z += entity.position.z;
+        if culling_frustum.contains(culling_sphere) == Relation::Out {
+            // It's not visible, so don't make any attempt at rendering it
+            return command_buffer;
+        }
 
         // Create a matrix for this world entity
         let model = Matrix4::from_translation(entity.position);

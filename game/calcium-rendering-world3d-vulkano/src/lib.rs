@@ -1,4 +1,5 @@
 extern crate cgmath;
+extern crate collision;
 #[macro_use]
 extern crate slog;
 #[macro_use]
