@@ -1,10 +1,12 @@
 use cgmath::{Vector3, Vector2};
+use rayon::prelude::*;
 use slog::{Logger};
 use noise::{Fbm, Point2, NoiseModule, Turbulence, Exponent};
 use num::{clamp};
 
 use calcium_rendering::{Texture, TextureFormat};
-use calcium_rendering_world3d::{RenderWorld, Entity, Material, Mesh};
+use calcium_rendering_world3d::mesh::{self, Mesh, Vertex};
+use calcium_rendering_world3d::{RenderWorld, Entity, Material};
 
 use input::{InputState, FrameInput};
 use player::{Player};
@@ -43,22 +45,37 @@ impl GameWorld {
 
         // Create the in-world voxels
         let noise = Turbulence::new(Exponent::new(Fbm::new()));
-        for x in -8..8 {
-            for z in -8..8 {
-                debug!(log, "Generating terrain chunks {}/{}", (x + 8)*16 + (z + 8), 16 * 16);
-                let offset = Vector2::new(x, z) * 32;
+        struct ParEntry {
+            chunk: Vector2<i32>,
+            vert_ind: Option<(Vec<Vertex>, Vec<u16>)>,
+        }
+        let mut parallel_data: Vec<_> = (0..16*16)
+            .map(|v| (v/16 - 8, v%16 - 8))
+            .map(|v| ParEntry { chunk: Vector2::new(v.0, v.1), vert_ind: None })
+            .collect();
+        parallel_data
+            .par_iter_mut()
+            .for_each(|v| {
+                debug!(log, "Generating terrain chunk ({}, {})", v.chunk.x, v.chunk.y);
 
-                // Generate this chunk of terrain
+                let offset = v.chunk * 32;
                 let voxels = generate_voxels(offset, &noise);
 
-                // Add it to the world
+                // Triangulate this voxel grid
                 if let Some(triangles) = voxels.triangulate() {
-                    world.add_entity(Entity {
-                        position: Vector3::new(offset.x, 0, offset.y).cast(),
-                        mesh: Mesh::from_flat_vertices(log, &triangles),
-                        material: floor_material.clone(),
-                    });
+                    v.vert_ind = Some(mesh::flat_vertices_to_indexed(&triangles));
                 }
+            });
+        for v in parallel_data {
+            if let Some(vert_ind) = v.vert_ind {
+                let offset = v.chunk * 32;
+
+                // Finally add the triangles to the world
+                world.add_entity(Entity {
+                    position: Vector3::new(offset.x, 0, offset.y).cast(),
+                    mesh: Mesh::new(vert_ind.0, vert_ind.1),
+                    material: floor_material.clone(),
+                });
             }
         }
 

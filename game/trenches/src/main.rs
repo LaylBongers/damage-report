@@ -6,6 +6,7 @@ extern crate calcium_rendering_world3d_vulkano;
 extern crate calcium_utils;
 extern crate noise;
 extern crate num;
+extern crate rayon;
 #[macro_use]
 extern crate slog;
 extern crate slog_async;

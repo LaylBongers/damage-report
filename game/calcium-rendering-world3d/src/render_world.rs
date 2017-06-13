@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 use cgmath::{Vector3, InnerSpace};
-use {Mesh, Material};
+use mesh::{Mesh};
+use {Material};
 
 pub struct RenderWorld {
     entities: Vec<Entity>,

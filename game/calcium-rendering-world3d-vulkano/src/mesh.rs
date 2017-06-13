@@ -6,7 +6,7 @@ use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use calcium_rendering_vulkano::{VulkanoRenderBackend};
-use calcium_rendering_world3d::{Vertex, Mesh};
+use calcium_rendering_world3d::mesh::{Vertex, Mesh};
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
 struct MeshId(usize);

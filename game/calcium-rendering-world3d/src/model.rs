@@ -7,7 +7,7 @@ use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
-use {Mesh, Vertex};
+use mesh::{self, Mesh, Vertex};
 
 pub struct Model {
     pub meshes: Vec<Arc<Mesh>>,
@@ -69,7 +69,8 @@ impl Model {
             }
 
             // Convert the vertices to a mesh
-            meshes.push(Mesh::from_flat_vertices(log, &vertices));
+            let v = mesh::flat_vertices_to_indexed(&vertices);
+            meshes.push(Mesh::new(v.0, v.1));
         }
 
         meshes
