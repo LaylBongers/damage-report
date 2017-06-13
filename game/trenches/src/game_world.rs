@@ -42,7 +42,7 @@ impl GameWorld {
         let noise = Turbulence::new(Exponent::new(Fbm::new()));
         struct ParEntry {
             chunk: Vector2<i32>,
-            vert_ind: Option<(Vec<Vertex>, Vec<u16>)>,
+            vert_ind: Option<(Vec<Vertex>, Vec<u32>)>,
         }
         let size = 16;
         let half_size = size/2;

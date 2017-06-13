@@ -22,14 +22,14 @@ impl_vertex!(VkVertex, v_position, v_uv, v_normal, v_tangent);
 
 pub struct VulkanoMeshBackend {
     pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,
-    pub index_buffer: Arc<CpuAccessibleBuffer<[u16]>>
+    pub index_buffer: Arc<CpuAccessibleBuffer<[u32]>>
 }
 
 impl VulkanoMeshBackend {
     /// Creates a mesh from vertices and indices. Performs no duplicate checking.
     pub fn from_vertices_indices(
         log: &Logger, backend: &VulkanoRenderBackend,
-        vertices: &Vec<Vertex>, indices: &Vec<u16>
+        vertices: &Vec<Vertex>, indices: &Vec<u32>
     ) -> VulkanoMeshBackend {
         let mut hotfixed_uvs = false;
         let indices_len = indices.len();
@@ -187,7 +187,9 @@ impl BackendMeshes {
         self.meshes.get(&key).unwrap()
     }
 
-    fn submit_mesh(&mut self, log: &Logger, target_backend: &VulkanoRenderBackend, mesh: &Arc<Mesh>) {
+    fn submit_mesh(
+        &mut self, log: &Logger, target_backend: &VulkanoRenderBackend, mesh: &Arc<Mesh>
+    ) {
         // TODO: Offload loading to a separate thread
 
         // Start by loading in the actual mesh
