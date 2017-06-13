@@ -32,9 +32,10 @@ impl VulkanoMeshBackend {
         vertices: &Vec<Vertex>, indices: &Vec<u16>
     ) -> VulkanoMeshBackend {
         let mut hotfixed_uvs = false;
+        let indices_len = indices.len();
 
         // Seed the tangent calculation data, we will accumulate data as we go over the triangles
-        let mut tri_tangents = vec!(TangentCalcEntry::new(); vertices.len());
+        let mut tri_tangents = vec![TangentCalcEntry::new(); vertices.len()];
 
         // Go over all triangles and calculate tangents for them
         for tri in indices.chunks(3) {
@@ -88,19 +89,20 @@ impl VulkanoMeshBackend {
         }
 
         // Convert all vertices into final vertices taken by our shader
-        // Here we also take out the final tangent values
-        let vk_vertices: Vec<_> = vertices.iter().enumerate().map(|(i, v)| VkVertex {
+        // Here we also calculate the final tangent values, finishing the averaging process
+        // Since CpuAccessibleBuffer::from_iter takes an iterator, we don't collect
+        let vk_vertices = vertices.iter().enumerate().map(|(i, v)| VkVertex {
             v_position: v.position.into(),
             v_uv: v.uv.into(),
             v_normal: v.normal.into(),
             v_tangent: tri_tangents[i].average().into(),
-        }).collect();
+        });
 
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
             backend.device.clone(), BufferUsage::all(),
             Some(backend.graphics_queue.family()),
-            vk_vertices.into_iter()
+            vk_vertices
         ).unwrap();
         let index_buffer = CpuAccessibleBuffer::from_iter(
             backend.device.clone(), BufferUsage::all(),
@@ -114,7 +116,7 @@ impl VulkanoMeshBackend {
         }
 
         debug!(log, "Created new mesh";
-            "vertices" => vertices.len(), "indices" => indices.len()
+            "vertices" => vertices.len(), "indices" => indices_len
         );
         VulkanoMeshBackend {
             vertex_buffer,

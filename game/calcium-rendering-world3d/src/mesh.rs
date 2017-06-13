@@ -51,7 +51,8 @@ impl Mesh {
 pub fn flat_vertices_to_indexed(flat_vertices: &Vec<Vertex>) -> (Vec<Vertex>, Vec<u16>) {
     let mut vertices = Vec::new();
     let mut indices = Vec::new();
-    let mut lookup = HashMap::new();
+    // There's no big significance to this capacity, other than leaving it at lowest is likely slow
+    let mut lookup = HashMap::with_capacity(flat_vertices.len()/2);
     let mut i = 0;
 
     for vertex in flat_vertices {

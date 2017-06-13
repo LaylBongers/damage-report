@@ -20,7 +20,7 @@ impl GameWorld {
     pub fn new(log: &Logger, world: &mut RenderWorld) -> Self {
         let player = Player::new();
 
-        world.ambient_light = Vector3::new(0.005, 0.005, 0.005);
+        world.ambient_light = Vector3::new(0.015, 0.015, 0.02);
         world.directional_light = Vector3::new(0.8, 0.75, 0.7);
 
         let floor_material = Material {

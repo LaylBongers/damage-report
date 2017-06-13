@@ -86,7 +86,7 @@ impl VulkanoTargetSystem for WinitTargetSystem {
         let events_loop = EventsLoop::new();
         let window = WindowBuilder::new()
             .with_dimensions(size.x, size.y)
-            .with_title(format!("Damage Report"))
+            .with_title(format!("Trenches"))
             .build_vk_surface(&events_loop, instance)
             .unwrap();
         self.data = Some(WinitData {
