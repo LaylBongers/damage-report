@@ -1,35 +1,55 @@
 use slog::{Logger};
-use calcium_rendering::{RenderSystem, Frame};
+use calcium_rendering::{RenderSystem, FrameAbstract, RenderSystemAbstract, RenderBackend};
 use {Camera, RenderWorld};
 
-pub struct WorldRenderSystem {
-    backend: Box<WorldRenderBackend>,
-}
-
-impl WorldRenderSystem {
-    pub fn new(log: &Logger, backend: Box<WorldRenderBackend>) -> WorldRenderSystem {
-        info!(log, "Initializing high-level world3d renderer");
-
-        WorldRenderSystem {
-            backend,
-        }
-    }
-
-    pub fn render(
-        &mut self, log: &Logger,
-        target: &mut RenderSystem,
-        frame: &mut Frame,
-        camera: &Camera, world: &RenderWorld
-    ) {
-        self.backend.render(log, target, frame, camera, world);
-    }
-}
-
-pub trait WorldRenderBackend {
+pub trait WorldRenderSystemAbstract {
     fn render(
         &mut self, log: &Logger,
-        target: &mut RenderSystem,
-        frame: &mut Frame,
+        target: &mut RenderSystemAbstract,
+        frame: &mut FrameAbstract,
+        camera: &Camera, world: &RenderWorld
+    );
+}
+
+pub struct WorldRenderSystem<B: WorldRenderBackend> {
+    backend: B,
+}
+
+impl<B: WorldRenderBackend> WorldRenderSystem<B> {
+    pub fn new(log: &Logger, backend: B) -> Box<WorldRenderSystemAbstract> {
+        info!(log, "Initializing world3d render system");
+
+        Box::new(WorldRenderSystem {
+            backend,
+        })
+    }
+}
+
+impl<B: WorldRenderBackend> WorldRenderSystemAbstract for WorldRenderSystem<B> {
+    fn render(
+        &mut self, log: &Logger,
+        render_system: &mut RenderSystemAbstract,
+        frame: &mut FrameAbstract,
+        camera: &Camera, world: &RenderWorld
+    ) {
+        // Make life easier for the backend
+        let render_system = render_system
+            .downcast_mut::<RenderSystem<B::RenderBackend>>().unwrap();
+        let frame = frame
+            .downcast_mut::<B::Frame>().unwrap();
+
+        self.backend.render(log, render_system, frame, camera, world);
+    }
+}
+
+pub trait WorldRenderBackend: 'static {
+    type RenderBackend: RenderBackend;
+    type Frame: FrameAbstract;
+
+    fn render(
+        &mut self, log: &Logger,
+        render_system: &mut RenderSystem<Self::RenderBackend>,
+        frame: &mut Self::Frame,
         camera: &Camera, world: &RenderWorld
     );
 }

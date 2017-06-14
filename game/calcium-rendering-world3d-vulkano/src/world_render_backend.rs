@@ -2,7 +2,7 @@ use slog::{Logger};
 use vulkano::command_buffer::{CommandBufferBuilder};
 use vulkano::sync::{GpuFuture};
 
-use calcium_rendering::{RenderSystem, Frame};
+use calcium_rendering::{RenderSystem};
 use calcium_rendering_vulkano::{VulkanoFrame, VulkanoRenderBackend};
 use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend};
 
@@ -39,10 +39,13 @@ impl VulkanoWorldRenderBackend {
 }
 
 impl WorldRenderBackend for VulkanoWorldRenderBackend {
+    type RenderBackend = VulkanoRenderBackend;
+    type Frame = VulkanoFrame;
+
     fn render(
         &mut self, log: &Logger,
-        target: &mut RenderSystem,
-        frame: &mut Frame,
+        render_system: &mut RenderSystem<VulkanoRenderBackend>,
+        frame: &mut VulkanoFrame,
         camera: &Camera, world: &RenderWorld
     ) {
         // This is a deferred renderer, so what we will do is first build up the "geometry buffer",
@@ -56,25 +59,24 @@ impl WorldRenderBackend for VulkanoWorldRenderBackend {
         //  implemented it with separate submitted command buffers because I understand it better
         //  than subpasses at the moment.
 
-        let frame = frame.downcast_mut::<VulkanoFrame>().unwrap();
-        let backend = target.backend_mut().downcast_mut::<VulkanoRenderBackend>().unwrap();
-
         // Build up the command buffers that contain all the rendering commands, telling the driver
         //  to actually render triangles to buffers. No actual rendering is done here, we just
         //  prepare the render passes and drawcalls.
         let geometry_command_buffer = self.geometry_renderer.build_command_buffer(
-            log, backend, &mut self.meshes, &self.geometry_buffer, camera, world
+            log, &mut render_system.backend, &mut self.meshes, &self.geometry_buffer, camera, world
         ).build().unwrap();
         let lighting_command_buffer = self.lighting_renderer.build_command_buffer(
-            backend, frame, &self.geometry_buffer, camera, world
+            &mut render_system.backend, frame, &self.geometry_buffer, camera, world
         ).build().unwrap();
 
         // Add the command buffers to the future we're building up, making sure they're in the
         //  right sequence. geometry buffer first, then the lighting pass that depends on the
         //  geometry buffer.
         let future = frame.future.take().unwrap()
-            .then_execute(backend.graphics_queue.clone(), geometry_command_buffer).unwrap()
-            .then_execute(backend.graphics_queue.clone(), lighting_command_buffer).unwrap();
+            .then_execute(render_system.backend.graphics_queue.clone(), geometry_command_buffer)
+            .unwrap()
+            .then_execute(render_system.backend.graphics_queue.clone(), lighting_command_buffer)
+            .unwrap();
         frame.future = Some(Box::new(future));
     }
 }

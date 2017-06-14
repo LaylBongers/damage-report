@@ -1,44 +1,45 @@
 use slog::{Logger};
 use mopa::{Any};
 
-pub struct RenderSystem {
-    backend: Box<RenderBackend>,
+pub trait RenderSystemAbstract: Any {
+    fn start_frame(&mut self) -> Box<FrameAbstract>;
+    fn finish_frame(&mut self, frame: Box<FrameAbstract>);
 }
 
-impl RenderSystem {
-    pub fn new(log: &Logger, backend: Box<RenderBackend>) -> Self {
+mopafy!(RenderSystemAbstract);
+
+pub struct RenderSystem<B: RenderBackend> {
+    pub backend: B,
+}
+
+impl<B: RenderBackend> RenderSystem<B> {
+    pub fn new(log: &Logger, backend: B) -> Box<RenderSystemAbstract> {
         info!(log, "Initializing render system");
 
-        RenderSystem {
+        Box::new(RenderSystem {
             backend,
-        }
+        })
     }
+}
 
-    pub fn start_frame(&mut self) -> Box<Frame> {
+impl<B: RenderBackend> RenderSystemAbstract for RenderSystem<B> {
+    fn start_frame(&mut self) -> Box<FrameAbstract> {
         self.backend.start_frame()
     }
 
-    pub fn finish_frame(&mut self, frame: Box<Frame>) {
+    fn finish_frame(&mut self, frame: Box<FrameAbstract>) {
         self.backend.finish_frame(frame);
-    }
-
-    pub fn backend(&self) -> &RenderBackend {
-        self.backend.as_ref()
-    }
-
-    pub fn backend_mut(&mut self) -> &mut RenderBackend {
-        self.backend.as_mut()
     }
 }
 
 pub trait RenderBackend: Any {
-    fn start_frame(&mut self) -> Box<Frame>;
-    fn finish_frame(&mut self, frame: Box<Frame>);
+    fn start_frame(&mut self) -> Box<FrameAbstract>;
+    fn finish_frame(&mut self, frame: Box<FrameAbstract>);
 }
 
 mopafy!(RenderBackend);
 
-pub trait Frame: Any {
+pub trait FrameAbstract: Any {
 }
 
-mopafy!(Frame);
+mopafy!(FrameAbstract);

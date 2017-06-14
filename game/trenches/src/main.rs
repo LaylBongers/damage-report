@@ -62,20 +62,16 @@ fn run_game(log: &Logger) -> Result<(), Error> {
     //  Window System which implements the initialization traits required by the backends.
     let mut window_system = WinitTargetSystem::new();
 
-    // Create the backends based on what we were told to
-    let (render_backend, world_render_backend) = match backend {
+    // Create the backends and render system based on what we were told to
+    let (mut render_system, mut world_render_system) = match backend {
         Backend::Vulkano => {
             let render = VulkanoRenderBackend::new(log, &mut window_system)?;
             let world = VulkanoWorldRenderBackend::new(log, &render);
-            (Box::new(render), Box::new(world))
+            (RenderSystem::new(log, render), WorldRenderSystem::new(log, world))
         },
         Backend::GfxOpenGl => unimplemented!(),
         Backend::GfxDirectX => unimplemented!(),
     };
-
-    // Initialize the rendering system
-    let mut render_system = RenderSystem::new(log, render_backend);
-    let mut world_render_system = WorldRenderSystem::new(log, world_render_backend);
 
     // Initialize generic utilities
     let mut timer = LoopTimer::start();
@@ -103,7 +99,9 @@ fn run_game(log: &Logger) -> Result<(), Error> {
         // Perform the actual rendering
         let camera = game_world.player.create_camera();
         let mut frame = render_system.start_frame();
-        world_render_system.render(log, &mut render_system, frame.as_mut(), &camera, &render_world);
+        world_render_system.render(
+            log, render_system.as_mut(), frame.as_mut(), &camera, &render_world
+        );
         render_system.finish_frame(frame);
     }
     info!(log, "Ending game loop");
