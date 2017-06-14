@@ -1,7 +1,0 @@
-[package]
-name = "calcium"
-version = "0.1.0"
-authors = ["Layl <LaylConway@users.noreply.github.com>"]
-description = "The future home of the calcium rendering library"
-
-[dependencies]
