@@ -4,7 +4,7 @@ use calcium_rendering_world3d::{Camera};
 use input::{InputState, FrameInput};
 
 pub struct Player {
-    position: Vector3<f32>,
+    pub position: Vector3<f32>,
     pitch: f32,
     yaw: f32,
 }

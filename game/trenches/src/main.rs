@@ -6,7 +6,6 @@ extern crate calcium_rendering_world3d;
 extern crate calcium_game;
 extern crate noise;
 extern crate num;
-extern crate rayon;
 #[macro_use]
 extern crate slog;
 extern crate slog_async;
@@ -87,7 +86,7 @@ fn run_game(log: &Logger) -> Result<(), Error> {
         }
 
         // Update the gameworld itself
-        game_world.update(time, &mut render_world, &input_state, &frame_input);
+        game_world.update(log, time, &mut render_world, &input_state, &frame_input);
 
         // Perform the actual rendering
         let camera = game_world.player.create_camera();

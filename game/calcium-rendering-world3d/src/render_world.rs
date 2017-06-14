@@ -4,7 +4,7 @@ use mesh::{Mesh};
 use {Material};
 
 pub struct RenderWorld {
-    entities: Vec<Entity>,
+    entities: Vec<Option<Entity>>,
     lights: Vec<Light>,
 
     pub ambient_light: Vector3<f32>,
@@ -25,16 +25,23 @@ impl RenderWorld {
     }
 
     pub fn add_entity(&mut self, entity: Entity) -> EntityId {
-        self.entities.push(entity);
+        // TODO: Find an empty entity
+
+        self.entities.push(Some(entity));
         EntityId(self.entities.len() - 1)
     }
 
-    pub fn entities(&self) -> &Vec<Entity> {
+    pub fn remove_entity(&mut self, id: EntityId) {
+        // TODO: IMPORTANT, implement backend mesh unloading
+        self.entities[id.0] = None;
+    }
+
+    pub fn entities(&self) -> &Vec<Option<Entity>> {
         &self.entities
     }
 
     pub fn entity_mut(&mut self, id: EntityId) -> &mut Entity {
-        &mut self.entities[id.0]
+        self.entities[id.0].as_mut().unwrap()
     }
 
     pub fn add_light(&mut self, light: Light) -> LightId {

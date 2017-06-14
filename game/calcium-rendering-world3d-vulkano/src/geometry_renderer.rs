@@ -72,11 +72,13 @@ impl GeometryRenderer {
 
         // Go over everything in the world
         for entity in world.entities() {
-            command_buffer_builder = self.render_entity(
-                log, entity, backend, meshes,
-                &projection_view, &culling_frustum,
-                command_buffer_builder
-            );
+            if let &Some(ref entity) = entity {
+                command_buffer_builder = self.render_entity(
+                    log, entity, backend, meshes,
+                    &projection_view, &culling_frustum,
+                    command_buffer_builder
+                );
+            }
         }
 
         // Finish the render pass
