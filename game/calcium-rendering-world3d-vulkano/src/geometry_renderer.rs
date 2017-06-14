@@ -141,6 +141,8 @@ impl GeometryRenderer {
         let model_matrix_raw: [[f32; 4]; 4] = model.into();
 
         // Send the matrices over to the GPU
+        // TODO: Instead of creating a new buffer, re-use the descriptor set and overwrite the same
+        //  buffer's data (update_buffer)
         let matrix_data_buffer = CpuAccessibleBuffer::<gbuffer_vs::ty::MatrixData>::from_data(
             backend.device.clone(), BufferUsage::all(),
             Some(backend.graphics_queue.family()),
@@ -151,6 +153,7 @@ impl GeometryRenderer {
         ).unwrap();
 
         // Create the final uniforms set
+        // TODO: Re-use the descriptor set for this entity across frames
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
             u_matrix_data: matrix_data_buffer,
             u_material_base_color: base_color,
@@ -160,6 +163,8 @@ impl GeometryRenderer {
         }));
 
         // Perform the actual draw
+        // TODO: Investigate the possibility of using draw_indexed_indirect (when it's added to
+        //  vulkano)
         command_buffer
             .draw_indexed(
                 self.pipeline.clone(), DynamicState::none(),

@@ -9,14 +9,17 @@ calcium = {path = "../calcium"}
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
 calcium-rendering-world3d = {path = "../calcium-rendering-world3d"}
-calcium-rendering-world3d-vulkano = {path = "../calcium-rendering-world3d-vulkano"}
 calcium-game = {path = "../calcium-game"}
 noise = "0.4.1"
 num = "0.1.39"
-rayon = "0.7.1"
+rayon = "0.8.0"
 slog = "2.0.5"
 slog-async = "2.0.1"
 slog-term = "2.0.1"
 vulkano = "0.4.0"
 vulkano-win = "0.4.0"
 winit = "0.6.4"
+
+# If you want optimizations in dev while keeping debug symbols, enable this
+#[profile.dev]
+#opt-level = 3

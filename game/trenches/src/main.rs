@@ -3,7 +3,6 @@ extern crate calcium;
 extern crate calcium_rendering;
 extern crate calcium_rendering_vulkano;
 extern crate calcium_rendering_world3d;
-extern crate calcium_rendering_world3d_vulkano;
 extern crate calcium_game;
 extern crate noise;
 extern crate num;
@@ -28,10 +27,8 @@ use slog_term::{CompactFormat, TermDecorator};
 
 use calcium::rendering::{self, Backend};
 use calcium_game::{LoopTimer};
-use calcium_rendering::{Error, RenderSystem};
-use calcium_rendering_vulkano::{VulkanoRenderBackend};
-use calcium_rendering_world3d::{RenderWorld, WorldRenderSystem};
-use calcium_rendering_world3d_vulkano::{VulkanoWorldRenderBackend};
+use calcium_rendering::{Error};
+use calcium_rendering_world3d::{RenderWorld};
 
 use game_world::{GameWorld};
 use input::{InputState, FrameInput};

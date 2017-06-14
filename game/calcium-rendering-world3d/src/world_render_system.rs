@@ -33,10 +33,10 @@ impl<B: WorldRenderBackend> WorldRenderSystemAbstract for WorldRenderSystem<B> {
         camera: &Camera, world: &RenderWorld
     ) {
         // Make life easier for the backend
-        let render_system = render_system
-            .downcast_mut::<RenderSystem<B::RenderBackend>>().unwrap();
-        let frame = frame
-            .downcast_mut::<B::Frame>().unwrap();
+        let render_system: &mut RenderSystem<B::RenderBackend> = render_system
+            .downcast_mut().unwrap();
+        let frame: &mut B::Frame = frame
+            .downcast_mut().unwrap();
 
         self.backend.render(log, render_system, frame, camera, world);
     }
