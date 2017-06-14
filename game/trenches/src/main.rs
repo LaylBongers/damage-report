@@ -1,9 +1,10 @@
 extern crate cgmath;
+extern crate calcium;
 extern crate calcium_rendering;
 extern crate calcium_rendering_vulkano;
 extern crate calcium_rendering_world3d;
 extern crate calcium_rendering_world3d_vulkano;
-extern crate calcium_utils;
+extern crate calcium_game;
 extern crate noise;
 extern crate num;
 extern crate rayon;
@@ -25,11 +26,12 @@ use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
+use calcium::rendering::{self, Backend};
+use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, RenderSystem};
 use calcium_rendering_vulkano::{VulkanoRenderBackend};
 use calcium_rendering_world3d::{RenderWorld, WorldRenderSystem};
 use calcium_rendering_world3d_vulkano::{VulkanoWorldRenderBackend};
-use calcium_utils::{LoopTimer};
 
 use game_world::{GameWorld};
 use input::{InputState, FrameInput};
@@ -63,15 +65,9 @@ fn run_game(log: &Logger) -> Result<(), Error> {
     let mut window_system = WinitTargetSystem::new();
 
     // Create the backends and render system based on what we were told to
-    let (mut render_system, mut world_render_system) = match backend {
-        Backend::Vulkano => {
-            let render = VulkanoRenderBackend::new(log, &mut window_system)?;
-            let world = VulkanoWorldRenderBackend::new(log, &render);
-            (RenderSystem::new(log, render), WorldRenderSystem::new(log, world))
-        },
-        Backend::GfxOpenGl => unimplemented!(),
-        Backend::GfxDirectX => unimplemented!(),
-    };
+    let (mut render_system, mut world_render_system) = rendering::new_renderer_systems(
+        log, backend, &mut window_system
+    )?;
 
     // Initialize generic utilities
     let mut timer = LoopTimer::start();
@@ -107,12 +103,4 @@ fn run_game(log: &Logger) -> Result<(), Error> {
     info!(log, "Ending game loop");
 
     Ok(())
-}
-
-// TODO: Remove this allow and make sure they're used
-#[allow(dead_code)]
-enum Backend {
-    Vulkano,
-    GfxOpenGl,
-    GfxDirectX,
 }
