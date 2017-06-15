@@ -1,3 +1,7 @@
+use std::thread::{self, JoinHandle};
+use std::sync::{Arc};
+use std::sync::mpsc::{self, Sender, Receiver};
+
 use cgmath::{Vector3, Vector2, MetricSpace};
 use slog::{Logger};
 use noise::{Fbm, Point2, NoiseModule, Turbulence, Exponent};
@@ -13,7 +17,6 @@ use voxel_grid::{VoxelGrid};
 
 struct ChunkEntry {
     pub chunk: Vector2<i32>,
-    pub grid: VoxelGrid,
     pub entity: Option<EntityId>,
 }
 
@@ -21,6 +24,9 @@ pub struct GameWorld {
     pub player: Player,
     voxel_material: Material,
     chunks: Vec<ChunkEntry>,
+    _chunk_load_thread: JoinHandle<()>,
+    chunk_load_sender: Sender<ClrCommand>,
+    chunk_load_return_receiver: Receiver<(Vector2<i32>, Arc<Mesh>)>,
 }
 
 impl GameWorld {
@@ -45,15 +51,26 @@ impl GameWorld {
             ),
         };
 
+        // Spawn the chunk loading thread
+        let (chunk_load_sender, chunk_load_receiver) = mpsc::channel();
+        let (chunk_load_return_sender, chunk_load_return_receiver) = mpsc::channel();
+        let _chunk_load_thread = thread::Builder::new()
+            .spawn(move || {
+                chunk_load_runtime(chunk_load_receiver, chunk_load_return_sender);
+            }).unwrap();
+
         GameWorld {
             player,
             voxel_material,
             chunks: Vec::new(),
+            _chunk_load_thread,
+            chunk_load_sender,
+            chunk_load_return_receiver,
         }
     }
 
     pub fn update(
-        &mut self, log: &Logger, time: f32, render_world: &mut RenderWorld,
+        &mut self, _log: &Logger, time: f32, render_world: &mut RenderWorld,
         input_state: &InputState, frame_input: &FrameInput
     ) {
         let view_radius = 100.0;
@@ -63,7 +80,6 @@ impl GameWorld {
 
         let view_raidus2 = view_radius * view_radius;
         let unload_radius2 = unload_radius * unload_radius;
-        let noise = Turbulence::new(Exponent::new(Fbm::new()));
 
         // Update the player based on the input we got so far
         self.player.update(&input_state, &frame_input, time);
@@ -96,31 +112,34 @@ impl GameWorld {
                     continue;
                 }
 
-                // We don't have a chunk for this yet, generate and add it
-                info!(log, "Generating terrain chunk ({}, {})", chunk.x, chunk.y);
+                // Submit this chunk for loading
+                self.chunk_load_sender.send(ClrCommand::Load(chunk)).unwrap();
 
-                let offset = chunk * chunk_size;
-                let grid = generate_chunk(offset, &noise);
-
-                // Triangulate this voxel grid
-                let entity = if let Some(triangles) = grid.triangulate() {
-                    let (vertices, indices) = mesh::flat_vertices_to_indexed(&triangles);
-
-                    // Add the triangles to the world
-                    Some(render_world.add_entity(Entity {
-                        position: Vector3::new(offset.x, 0, offset.y).cast(),
-                        mesh: Mesh::new(vertices, indices),
-                        material: self.voxel_material.clone(),
-                    }))
-                } else { None };
-
-                // Add the chunk
+                // Remember the chunk
                 self.chunks.push(ChunkEntry {
                     chunk,
-                    grid,
-                    entity,
+                    entity: None,
                 });
             }
+        }
+
+        // Check if we got back any meshes from the chunk generation backend
+        while let Ok(value) = self.chunk_load_return_receiver.try_recv() {
+            // Try to find a chunk for this returned mesh
+            if let Some(ref mut chunk) = self.chunks.iter_mut().find(|c| c.chunk == value.0) {
+                let offset = chunk.chunk.cast() * 32.0;
+
+                // Add the mesh to an entity in the world
+                let entity = render_world.add_entity(Entity {
+                    position: Vector3::new(offset.x, 0.0, offset.y),
+                    mesh: value.1,
+                    material: self.voxel_material.clone(),
+                });
+                chunk.entity = Some(entity);
+            }
+
+            // If we couldn't find a stored chunk, it was probably removed before we got a mesh
+            //  back from the load thread. TODO: Avoid loading in already removed chunks
         }
 
         // Eliminate any chunks too far away
@@ -131,6 +150,7 @@ impl GameWorld {
             // If this is going to be removed, remove it from the world
             if !retain {
                 if let Some(entity) = c.entity {
+                    // TODO: The mesh is not cleaned up yet, implement this in calcium
                     render_world.remove_entity(entity);
                 }
             }
@@ -138,6 +158,46 @@ impl GameWorld {
             retain
         });
     }
+}
+
+impl Drop for GameWorld {
+    fn drop(&mut self) {
+        self.chunk_load_sender.send(ClrCommand::Stop).unwrap();
+    }
+}
+
+fn chunk_load_runtime(receiver: Receiver<ClrCommand>, sender: Sender<(Vector2<i32>, Arc<Mesh>)>) {
+    let chunk_size = 32;
+    let noise = Turbulence::new(Exponent::new(Fbm::new()));
+
+    for command in receiver {
+        match command {
+            ClrCommand::Load(chunk) => {
+                // We don't have a chunk for this yet, generate and add it
+                //info!(log, "Generating terrain chunk ({}, {})", chunk.x, chunk.y);
+
+                let offset = chunk * chunk_size;
+                let grid = generate_chunk(offset, &noise);
+
+                // Triangulate this voxel grid
+                if let Some(triangles) = grid.triangulate() {
+                    let (vertices, indices) = mesh::flat_vertices_to_indexed(&triangles);
+
+                    // Create a mesh from the triangle data
+                    let mesh = Mesh::new(vertices, indices);
+
+                    // Return the mesh so the main thread can add it
+                    sender.send((chunk, mesh)).unwrap();
+                }
+            },
+            ClrCommand::Stop => return,
+        }
+    }
+}
+
+enum ClrCommand {
+    Load(Vector2<i32>),
+    Stop
 }
 
 fn generate_chunk<N: NoiseModule<Point2<f32>, Output=f32>>(
