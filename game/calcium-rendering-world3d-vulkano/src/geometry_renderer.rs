@@ -232,9 +232,8 @@ fn create_projection_view_matrix(
         near: 0.1,
         far: 500.0,
     };
-    // Flip the projection upside down, glm expects opengl values, we need vulkan values
-    let projection =
-        Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) * Matrix4::from(perspective);
+    // Flip the projection upside down, cgmath expects opengl values, we need vulkan values
+    let projection = Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) * Matrix4::from(perspective);
     let view = camera.create_world_to_view_matrix();
 
     // Combine the projection and the view, we don't need them separately
