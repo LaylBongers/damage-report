@@ -25,10 +25,10 @@ use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
-use calcium::rendering::{self, Backend};
+use calcium::rendering::{self, Backend, StaticRuntime};
 use calcium_game::{LoopTimer};
-use calcium_rendering::{Error};
-use calcium_rendering_world3d::{RenderWorld};
+use calcium_rendering::{Error, RenderSystemAbstract};
+use calcium_rendering_world3d::{RenderWorld, WorldRenderSystemAbstract};
 
 use game_world::{GameWorld};
 use input::{InputState, FrameInput};
@@ -59,45 +59,61 @@ fn run_game(log: &Logger) -> Result<(), Error> {
     // Regardless of what backend we're using right now, it will always have a winit window, but
     //  it depends on the backend how it should be initialized. For this reason we use a
     //  Window System which implements the initialization traits required by the backends.
-    let mut window_system = WinitTargetSystem::new();
+    // TODO: Replace vulkano target with generic target system
+    let target = WinitTargetSystem::new();
 
-    // Create the backends and render system based on what we were told to
-    let (mut render_system, mut world_render_system) = rendering::new_renderer_systems(
-        log, backend, &mut window_system
-    )?;
-
-    // Initialize generic utilities
-    let mut timer = LoopTimer::start();
-    let mut input_state = InputState::default();
-
-    // Initialize the game world
-    let mut render_world = RenderWorld::new();
-    let mut game_world = GameWorld::new(log, &mut render_world);
-
-    // The main game loop
-    info!(log, "Starting game loop");
-    loop {
-        let time = timer.tick();
-
-        // Handle any events in the target
-        let mut frame_input = FrameInput::default();
-        let should_continue = window_system.handle_events(&mut input_state, &mut frame_input);
-        if !should_continue || input_state.escape_pressed {
-            break
+    // Run the game's runtime with the appropriate backends
+    rendering::run_with_backend(
+        log, backend, target,
+        StaticGameRuntime {
+            log: log.clone(),
         }
+    )
+}
 
-        // Update the gameworld itself
-        game_world.update(log, time, &mut render_world, &input_state, &frame_input);
+struct StaticGameRuntime {
+    log: Logger,
+}
 
-        // Perform the actual rendering
-        let camera = game_world.player.create_camera();
-        let mut frame = render_system.start_frame();
-        world_render_system.render(
-            log, render_system.as_mut(), frame.as_mut(), &camera, &render_world
-        );
-        render_system.finish_frame(frame);
+impl StaticRuntime<WinitTargetSystem> for StaticGameRuntime {
+    fn run<RS: RenderSystemAbstract, WRS: WorldRenderSystemAbstract>(
+        self, mut target: WinitTargetSystem, mut render_system: RS, mut world_render_system: WRS
+    ) -> Result<(), Error> {
+        // Initialize generic utilities
+        let mut timer = LoopTimer::start();
+        let mut input_state = InputState::default();
+
+        // Initialize the game world
+        let mut render_world = RenderWorld::new();
+        let mut game_world = GameWorld::new(&self.log, &mut render_world);
+
+        // The main game loop
+        info!(self.log, "Starting game loop");
+        loop {
+            let time = timer.tick();
+
+            // Handle any events in the target
+            let mut frame_input = FrameInput::default();
+            let should_continue = target.handle_events(
+                &mut input_state, &mut frame_input
+            );
+            if !should_continue || input_state.escape_pressed {
+                break
+            }
+
+            // Update the gameworld itself
+            game_world.update(&self.log, time, &mut render_world, &input_state, &frame_input);
+
+            // Perform the actual rendering
+            let camera = game_world.player.create_camera();
+            let mut frame = render_system.start_frame();
+            world_render_system.render(
+                &self.log, &mut render_system, frame.as_mut(), &camera, &render_world
+            );
+            render_system.finish_frame(frame);
+        }
+        info!(self.log, "Ending game loop");
+
+        Ok(())
     }
-    info!(log, "Ending game loop");
-
-    Ok(())
 }

@@ -13,12 +13,12 @@ pub struct RenderSystem<B: RenderBackend> {
 }
 
 impl<B: RenderBackend> RenderSystem<B> {
-    pub fn new(log: &Logger, backend: B) -> Box<RenderSystemAbstract> {
+    pub fn new(log: &Logger, backend: B) -> Self {
         info!(log, "Initializing render system");
 
-        Box::new(RenderSystem {
+        RenderSystem {
             backend,
-        })
+        }
     }
 }
 

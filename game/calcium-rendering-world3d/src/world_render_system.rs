@@ -16,12 +16,12 @@ pub struct WorldRenderSystem<B: WorldRenderBackend> {
 }
 
 impl<B: WorldRenderBackend> WorldRenderSystem<B> {
-    pub fn new(log: &Logger, backend: B) -> Box<WorldRenderSystemAbstract> {
+    pub fn new(log: &Logger, backend: B) -> Self {
         info!(log, "Initializing world3d render system");
 
-        Box::new(WorldRenderSystem {
+        WorldRenderSystem {
             backend,
-        })
+        }
     }
 }
 
