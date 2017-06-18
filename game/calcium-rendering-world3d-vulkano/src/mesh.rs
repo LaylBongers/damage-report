@@ -25,26 +25,29 @@ pub struct VulkanoMeshBackend {
     pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,
     pub index_buffer: Arc<CpuAccessibleBuffer<[u32]>>,
     pub culling_sphere: Sphere<f32>,
+    // This is a hack to keep the arc alive since it's used as key and may be re-used
+    // TODO: Entirely revamp the backend texture/mesh system as planned so arcs aren't needed
+    //  anymore
+    _keepalive: Arc<Mesh>,
 }
 
 impl VulkanoMeshBackend {
     /// Creates a mesh from vertices and indices. Performs no duplicate checking.
-    pub fn from_vertices_indices(
-        log: &Logger, backend: &VulkanoRenderBackend,
-        vertices: &Vec<Vertex>, indices: &Vec<u32>
+    pub fn from_mesh(
+        log: &Logger, backend: &VulkanoRenderBackend, mesh: Arc<Mesh>,
     ) -> VulkanoMeshBackend {
-        let indices_len = indices.len();
+        let indices_len = mesh.indices.len();
 
         // We need tangents for proper normal mapping
-        let tri_tangents = calculate_tangents(log, vertices, indices);
+        let tri_tangents = calculate_tangents(log, &mesh.vertices, &mesh.indices);
 
         // We also need a culling sphere so we can avoid rendering unneeded meshes
-        let culling_sphere = calculate_culling_sphere(vertices);
+        let culling_sphere = calculate_culling_sphere(&mesh.vertices);
 
         // Convert all vertices into final vertices taken by our shader
         // Here we also calculate the final tangent values, finishing the averaging process
         // Since CpuAccessibleBuffer::from_iter takes an iterator, we don't collect
-        let vk_vertices = vertices.iter().enumerate().map(|(i, v)| VkVertex {
+        let vk_vertices = mesh.vertices.iter().enumerate().map(|(i, v)| VkVertex {
             v_position: v.position.into(),
             v_uv: v.uv.into(),
             v_normal: v.normal.into(),
@@ -60,16 +63,17 @@ impl VulkanoMeshBackend {
         let index_buffer = CpuAccessibleBuffer::from_iter(
             backend.device.clone(), BufferUsage::all(),
             Some(backend.graphics_queue.family()),
-            indices.iter().map(|v| *v)
+            mesh.indices.iter().map(|v| *v)
         ).unwrap();
 
         debug!(log, "Created new mesh";
-            "vertices" => vertices.len(), "indices" => indices_len
+            "vertices" => mesh.vertices.len(), "indices" => indices_len
         );
         VulkanoMeshBackend {
             vertex_buffer,
             index_buffer,
             culling_sphere,
+            _keepalive: mesh.clone(),
         }
     }
 }
@@ -239,6 +243,7 @@ impl BackendMeshes {
             self.submit_mesh(log, target_backend, texture);
         }
 
+        // Get the mesh that should now definitely be there
         self.meshes.get(&key).unwrap()
     }
 
@@ -248,8 +253,8 @@ impl BackendMeshes {
         // TODO: Offload loading to a separate thread
 
         // Start by loading in the actual mesh
-        let mesh_backend = VulkanoMeshBackend::from_vertices_indices(
-            log, target_backend, &mesh.vertices, &mesh.indices
+        let mesh_backend = VulkanoMeshBackend::from_mesh(
+            log, target_backend, mesh.clone()
         );
 
         // Store the mesh backend, maintaining its ID so we can look it back up
