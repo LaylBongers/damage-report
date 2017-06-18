@@ -1,7 +1,7 @@
 use slog::{Logger};
-use calcium_rendering::{RenderSystem, RenderSystemAbstract, Error};
+use calcium_rendering::{Resources, RenderBackend, RenderSystem, Error};
 use calcium_rendering_vulkano::{VulkanoRenderBackend, VulkanoTargetSystem};
-use calcium_rendering_world3d::{WorldRenderSystem, WorldRenderSystemAbstract};
+use calcium_rendering_world3d::{WorldRenderSystem, WorldRenderBackend};
 use calcium_rendering_world3d_vulkano::{VulkanoWorldRenderBackend};
 
 // TODO: Replace vulkano target with generic target system
@@ -30,7 +30,11 @@ pub enum Backend {
 
 // TODO: Replace vulkano target with generic target system
 pub trait StaticRuntime<T: VulkanoTargetSystem> {
-    fn run<RS: RenderSystemAbstract, WRS: WorldRenderSystemAbstract>(
-        self, target: T, render_system: RS, world_render_system: WRS
+    fn run<
+        R: Resources,
+        RB: RenderBackend<Resources=R>, WRB: WorldRenderBackend<Resources=R, RenderBackend=RB>
+    >(
+        self, target: T,
+        render_system: RenderSystem<RB>, world_render_system: WorldRenderSystem<WRB>,
     ) -> Result<(), Error>;
 }

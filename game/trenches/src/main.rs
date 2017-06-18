@@ -27,8 +27,8 @@ use slog_term::{CompactFormat, TermDecorator};
 
 use calcium::rendering::{self, Backend, StaticRuntime};
 use calcium_game::{LoopTimer};
-use calcium_rendering::{Error, RenderSystemAbstract};
-use calcium_rendering_world3d::{RenderWorld, WorldRenderSystemAbstract};
+use calcium_rendering::{Resources, Error, RenderBackend, RenderSystem};
+use calcium_rendering_world3d::{RenderWorld, WorldRenderBackend, WorldRenderSystem};
 
 use game_world::{GameWorld};
 use input::{InputState, FrameInput};
@@ -76,8 +76,12 @@ struct StaticGameRuntime {
 }
 
 impl StaticRuntime<WinitTargetSystem> for StaticGameRuntime {
-    fn run<RS: RenderSystemAbstract, WRS: WorldRenderSystemAbstract>(
-        self, mut target: WinitTargetSystem, mut render_system: RS, mut world_render_system: WRS
+    fn run<
+        R: Resources,
+        RB: RenderBackend<Resources=R>, WRB: WorldRenderBackend<Resources=R, RenderBackend=RB>
+    >(
+        self, mut target: WinitTargetSystem,
+        mut render_system: RenderSystem<RB>, mut world_render_system: WorldRenderSystem<WRB>,
     ) -> Result<(), Error> {
         // Initialize generic utilities
         let mut timer = LoopTimer::start();
@@ -94,9 +98,7 @@ impl StaticRuntime<WinitTargetSystem> for StaticGameRuntime {
 
             // Handle any events in the target
             let mut frame_input = FrameInput::default();
-            let should_continue = target.handle_events(
-                &mut input_state, &mut frame_input
-            );
+            let should_continue = target.handle_events(&mut input_state, &mut frame_input);
             if !should_continue || input_state.escape_pressed {
                 break
             }
@@ -108,7 +110,7 @@ impl StaticRuntime<WinitTargetSystem> for StaticGameRuntime {
             let camera = game_world.player.create_camera();
             let mut frame = render_system.start_frame();
             world_render_system.render(
-                &self.log, &mut render_system, frame.as_mut(), &camera, &render_world
+                &self.log, &mut render_system, &mut frame, &camera, &render_world
             );
             render_system.finish_frame(frame);
         }

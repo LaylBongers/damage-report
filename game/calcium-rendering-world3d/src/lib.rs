@@ -14,5 +14,5 @@ mod render_world;
 pub use camera::{Camera};
 pub use material::{Material};
 pub use model::{Model};
-pub use world_render_system::{WorldRenderSystem, WorldRenderBackend, WorldRenderSystemAbstract};
+pub use world_render_system::{WorldRenderSystem, WorldRenderBackend};
 pub use render_world::{RenderWorld, Entity, Light, EntityId, LightId};

@@ -3,7 +3,7 @@ use vulkano::command_buffer::{CommandBufferBuilder};
 use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{RenderSystem};
-use calcium_rendering_vulkano::{VulkanoFrame, VulkanoRenderBackend};
+use calcium_rendering_vulkano::{VulkanoFrame, VulkanoRenderBackend, Resources};
 use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend};
 
 use geometry_buffer::{GeometryBuffer};
@@ -39,8 +39,8 @@ impl VulkanoWorldRenderBackend {
 }
 
 impl WorldRenderBackend for VulkanoWorldRenderBackend {
+    type Resources = Resources;
     type RenderBackend = VulkanoRenderBackend;
-    type Frame = VulkanoFrame;
 
     fn render(
         &mut self, log: &Logger,

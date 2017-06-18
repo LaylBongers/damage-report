@@ -10,10 +10,16 @@ use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::sync::{GpuFuture};
 use vulkano::framebuffer::{FramebufferAbstract};
 
-use calcium_rendering::{Error, RenderBackend, CalciumErrorMap, FrameAbstract, Texture};
+use calcium_rendering::{self, Error, RenderBackend, CalciumErrorMap, Texture};
 use target_swapchain::{TargetSwapchain};
 use texture::{VulkanoTextureBackend};
 use {VulkanoTargetSystem};
+
+pub struct Resources;
+
+impl calcium_rendering::Resources for self::Resources {
+    type Frame = VulkanoFrame;
+}
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
 struct TextureId(usize);
@@ -187,7 +193,9 @@ fn arc_key<T>(value: &Arc<T>) -> usize {
 }
 
 impl RenderBackend for VulkanoRenderBackend {
-    fn start_frame(&mut self) -> Box<FrameAbstract> {
+    type Resources = Resources;
+
+    fn start_frame(&mut self) -> VulkanoFrame {
         self.target_swapchain.clean_old_submissions();
 
         // Get the image for this frame, along with a future that will let us queue up the order of
@@ -222,15 +230,14 @@ impl RenderBackend for VulkanoRenderBackend {
             );
         }
 
-        Box::new(VulkanoFrame {
+        VulkanoFrame {
             framebuffer,
             image_num,
             future: Some(future),
-        })
+        }
     }
 
-    fn finish_frame(&mut self, mut frame: Box<FrameAbstract>) {
-        let frame = frame.downcast_mut::<VulkanoFrame>().unwrap();
+    fn finish_frame(&mut self, mut frame: VulkanoFrame) {
         self.target_swapchain.finish_frame(
             frame.future.take().unwrap(), self.graphics_queue.clone(), frame.image_num
         );
@@ -241,7 +248,4 @@ pub struct VulkanoFrame {
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     pub image_num: usize,
     pub future: Option<Box<GpuFuture>>,
-}
-
-impl FrameAbstract for VulkanoFrame {
 }

@@ -19,6 +19,8 @@ be used to create a small game.
 | Improve mesh loading speed by creating a custom fast loading format and an OBJ converter |        |
 | Add HDR/Tone Mapping support and make it noticeable when entering buildings or caves |        |
 | Add bloom support                                                   |        |
+| Add SSAO support (expected to significantly improve visuals)        |        |
+| Match stb_voxel's "a thousand blocks view distance easily"          |        |
 
 ## Reflection
 *This goal is not yet finished, reflection is either incomplete or missing.*

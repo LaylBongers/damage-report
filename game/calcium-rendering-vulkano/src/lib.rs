@@ -11,6 +11,6 @@ mod target_swapchain;
 mod target;
 mod texture;
 
-pub use render_backend::{VulkanoRenderBackend, VulkanoFrame};
+pub use render_backend::{Resources, VulkanoRenderBackend, VulkanoFrame};
 pub use target_swapchain::{TargetSwapchain};
 pub use target::{VulkanoTargetSystem};

@@ -1,12 +1,8 @@
 use slog::{Logger};
-use mopa::{Any};
 
-pub trait RenderSystemAbstract: Any {
-    fn start_frame(&mut self) -> Box<FrameAbstract>;
-    fn finish_frame(&mut self, frame: Box<FrameAbstract>);
+pub trait Resources {
+    type Frame;
 }
-
-mopafy!(RenderSystemAbstract);
 
 pub struct RenderSystem<B: RenderBackend> {
     pub backend: B,
@@ -22,24 +18,19 @@ impl<B: RenderBackend> RenderSystem<B> {
     }
 }
 
-impl<B: RenderBackend> RenderSystemAbstract for RenderSystem<B> {
-    fn start_frame(&mut self) -> Box<FrameAbstract> {
+impl<B: RenderBackend> RenderSystem<B> {
+    pub fn start_frame(&mut self) -> <B::Resources as Resources>::Frame {
         self.backend.start_frame()
     }
 
-    fn finish_frame(&mut self, frame: Box<FrameAbstract>) {
+    pub fn finish_frame(&mut self, frame: <B::Resources as Resources>::Frame) {
         self.backend.finish_frame(frame);
     }
 }
 
-pub trait RenderBackend: Any {
-    fn start_frame(&mut self) -> Box<FrameAbstract>;
-    fn finish_frame(&mut self, frame: Box<FrameAbstract>);
+pub trait RenderBackend {
+    type Resources: Resources;
+
+    fn start_frame(&mut self) -> <Self::Resources as Resources>::Frame;
+    fn finish_frame(&mut self, frame: <Self::Resources as Resources>::Frame);
 }
-
-mopafy!(RenderBackend);
-
-pub trait FrameAbstract: Any {
-}
-
-mopafy!(FrameAbstract);
