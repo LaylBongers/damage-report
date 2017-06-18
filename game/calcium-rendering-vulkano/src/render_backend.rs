@@ -192,9 +192,7 @@ fn arc_key<T>(value: &Arc<T>) -> usize {
     value.as_ref() as *const T as usize
 }
 
-impl RenderBackend for VulkanoRenderBackend {
-    type Resources = Resources;
-
+impl RenderBackend<Resources> for VulkanoRenderBackend {
     fn start_frame(&mut self) -> VulkanoFrame {
         self.target_swapchain.clean_old_submissions();
 

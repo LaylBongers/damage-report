@@ -30,11 +30,8 @@ pub enum Backend {
 
 // TODO: Replace vulkano target with generic target system
 pub trait StaticRuntime<T: VulkanoTargetSystem> {
-    fn run<
-        R: Resources,
-        RB: RenderBackend<Resources=R>, WRB: WorldRenderBackend<Resources=R, RenderBackend=RB>
-    >(
+    fn run<R: Resources, B: RenderBackend<R>, WB: WorldRenderBackend<R, B>>(
         self, target: T,
-        render_system: RenderSystem<RB>, world_render_system: WorldRenderSystem<WRB>,
+        render_system: RenderSystem<R, B>, world_render_system: WorldRenderSystem<R, B, WB>,
     ) -> Result<(), Error>;
 }

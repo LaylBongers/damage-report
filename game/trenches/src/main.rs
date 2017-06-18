@@ -76,12 +76,11 @@ struct StaticGameRuntime {
 }
 
 impl StaticRuntime<WinitTargetSystem> for StaticGameRuntime {
-    fn run<
-        R: Resources,
-        RB: RenderBackend<Resources=R>, WRB: WorldRenderBackend<Resources=R, RenderBackend=RB>
-    >(
-        self, mut target: WinitTargetSystem,
-        mut render_system: RenderSystem<RB>, mut world_render_system: WorldRenderSystem<WRB>,
+    fn run<R: Resources, B: RenderBackend<R>, WB: WorldRenderBackend<R, B>>(
+        self,
+        mut target: WinitTargetSystem,
+        mut render_system: RenderSystem<R, B>,
+        mut world_render_system: WorldRenderSystem<R, B, WB>,
     ) -> Result<(), Error> {
         // Initialize generic utilities
         let mut timer = LoopTimer::start();

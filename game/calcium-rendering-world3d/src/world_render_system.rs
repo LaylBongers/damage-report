@@ -1,40 +1,42 @@
+use std::marker::{PhantomData};
 use slog::{Logger};
 use calcium_rendering::{RenderSystem, RenderBackend, Resources};
 use {Camera, RenderWorld};
 
-pub struct WorldRenderSystem<B: WorldRenderBackend> {
-    backend: B,
+pub struct WorldRenderSystem<R, B, WB> {
+    backend: WB,
+    _r: PhantomData<R>,
+    _b: PhantomData<B>,
 }
 
-impl<B: WorldRenderBackend> WorldRenderSystem<B> {
-    pub fn new(log: &Logger, backend: B) -> Self {
+impl<R: Resources, B: RenderBackend<R>, WB: WorldRenderBackend<R, B>> WorldRenderSystem<R, B, WB> {
+    pub fn new(log: &Logger, backend: WB) -> Self {
         info!(log, "Initializing world3d render system");
 
         WorldRenderSystem {
             backend,
+            _r: Default::default(),
+            _b: Default::default(),
         }
     }
 }
 
-impl<B: WorldRenderBackend> WorldRenderSystem<B> {
+impl<R: Resources, B: RenderBackend<R>, WB: WorldRenderBackend<R, B>> WorldRenderSystem<R, B, WB> {
     pub fn render(
         &mut self, log: &Logger,
-        render_system: &mut RenderSystem<B::RenderBackend>,
-        frame: &mut <B::Resources as Resources>::Frame,
+        render_system: &mut RenderSystem<R, B>,
+        frame: &mut R::Frame,
         camera: &Camera, world: &RenderWorld,
     ) {
         self.backend.render(log, render_system, frame, camera, world);
     }
 }
 
-pub trait WorldRenderBackend: 'static {
-    type Resources: Resources;
-    type RenderBackend: RenderBackend;
-
+pub trait WorldRenderBackend<R: Resources, B: RenderBackend<R>> {
     fn render(
         &mut self, log: &Logger,
-        render_system: &mut RenderSystem<Self::RenderBackend>,
-        frame: &mut <Self::Resources as Resources>::Frame,
+        render_system: &mut RenderSystem<R, B>,
+        frame: &mut R::Frame,
         camera: &Camera, world: &RenderWorld
     );
 }

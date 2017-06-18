@@ -38,13 +38,10 @@ impl VulkanoWorldRenderBackend {
     }
 }
 
-impl WorldRenderBackend for VulkanoWorldRenderBackend {
-    type Resources = Resources;
-    type RenderBackend = VulkanoRenderBackend;
-
+impl WorldRenderBackend<Resources, VulkanoRenderBackend> for VulkanoWorldRenderBackend {
     fn render(
         &mut self, log: &Logger,
-        render_system: &mut RenderSystem<VulkanoRenderBackend>,
+        render_system: &mut RenderSystem<Resources, VulkanoRenderBackend>,
         frame: &mut VulkanoFrame,
         camera: &Camera, world: &RenderWorld
     ) {
