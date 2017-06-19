@@ -1,13 +1,13 @@
 use std::sync::{Arc};
 
-use cgmath::{Rad, PerspectiveFov, Angle, Matrix4};
+use cgmath::{Rad, Angle, Matrix4};
 use collision::{Frustum, Relation};
 use slog::{Logger};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
 use vulkano::framebuffer::{Subpass, RenderPassAbstract};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
-use vulkano::pipeline::depth_stencil::{DepthStencil};
+use vulkano::pipeline::depth_stencil::{DepthStencil, Compare};
 use vulkano::pipeline::input_assembly::{InputAssembly};
 use vulkano::pipeline::multisample::{Multisample};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
@@ -54,12 +54,12 @@ impl GeometryRenderer {
             //  of a value is set to black.
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             // 0.0 alpha so we can discard unused pixels
-            // TODO: Replace with emissive color, see shader for info why
+            // TODO: Replace that discard test with emissive color, see shader for info why
             ClearValue::Float([0.0, 0.0, 0.0, 0.0]),
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
-            ClearValue::Depth(1.0)
+            ClearValue::Depth(0.0)
         );
         command_buffer_builder = command_buffer_builder
             .begin_render_pass(geometry_buffer.framebuffer.clone(), false, clear_values).unwrap();
@@ -214,7 +214,10 @@ fn load_pipeline(
         },
         multisample: Multisample::disabled(),
         fragment_shader: fs.main_entry_point(),
-        depth_stencil: DepthStencil::simple_depth_test(),
+        depth_stencil: DepthStencil {
+            depth_compare: Compare::Greater,
+            .. DepthStencil::simple_depth_test()
+        },
         blend: Blend::pass_through(),
         render_pass: Subpass::from(gbuffer_render_pass, 0).unwrap(),
     };
@@ -226,16 +229,37 @@ fn load_pipeline(
 fn create_projection_view_matrix(
     backend: &VulkanoRenderBackend, camera: &Camera
 ) -> Matrix4<f32> {
-    let perspective = PerspectiveFov {
-        fovy: Rad::full_turn() * 0.1638,
-        aspect: backend.size.x as f32 / backend.size.y as f32,
-        near: 0.1,
-        far: 500.0,
-    };
-    // Flip the projection upside down, cgmath expects opengl values, we need vulkan values
-    let projection = Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) * Matrix4::from(perspective);
-    let view = camera.create_world_to_view_matrix();
+    // Create the projection matrix, which is what makes this a 3D perspective renderer
+    let y_fov = Rad::full_turn() * 0.1638; // 90 deg x-fov for this aspect ratio
+    let aspect = backend.size.x as f32 / backend.size.y as f32;
+    let projection = create_infinity_projection(y_fov, aspect, 0.1);
 
     // Combine the projection and the view, we don't need them separately
+    let view = camera.create_world_to_view_matrix();
     projection * view
+}
+
+/// This projection function creates a "Reverse-Z Infinity Far Plane" projection. It has various
+/// advantages over a traditional forward Z near/far projection.
+///
+/// The reverse Z improves precision on floating point depth buffers, because the Z in projection
+/// matrices isn't linear, values near the camera will take up a lot more of the number line than
+/// values far away will. Reverse-Z allows values far away to use floating point values closer to
+/// zero, taking advantage of the ability of floating point values to adjust precision. This will
+/// give identical results for integer depth buffers, so we might as well make use of it.
+///
+/// The infinity far plane makes it much easier to create games with extremely long view distances.
+/// It also means you don't actually have to worry about the far clipping plane removing things
+/// you want on screen.
+///
+/// This projection matrix gives depth values in the 0..1 range, and Y values matching Vulkan's
+/// screen space (Y is down).
+fn create_infinity_projection(y_fov: Rad<f32>, aspect: f32, z_near: f32) -> Matrix4<f32> {
+    let f = 1.0 / (y_fov.0 / 2.0).tan();
+    Matrix4::new(
+        f / aspect, 0.0,  0.0,  0.0,
+        0.0, -f, 0.0, 0.0,
+        0.0, 0.0, 0.0, -1.0,
+        0.0, 0.0, z_near, 0.0
+    )
 }

@@ -43,8 +43,10 @@ impl VoxelSystem {
         top_player_pos: Vector2<f32>,
         mut loader: L
     ) {
-        let view_radius = 100.0;
-        // This is larger to avoid constant loading/unloading
+        let view_radius = 150.0;
+        // This is larger to give a bit of slack between loading and unloading, so when a player
+        //  moves around a bit in a small area it won't constantly keep loading/unloading the same
+        //  chunks.
         let unload_radius = view_radius + 50.0;
         let chunk_size: i32 = 32;
 

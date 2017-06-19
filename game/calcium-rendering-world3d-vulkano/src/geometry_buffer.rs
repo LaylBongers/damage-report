@@ -16,7 +16,7 @@ pub struct GeometryBuffer {
     pub normal_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
     pub metallic_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     pub roughness_attachment: Arc<AttachmentImage<format::R8Unorm>>,
-    pub depth_attachment: Arc<AttachmentImage<format::D24Unorm_S8Uint>>,
+    pub depth_attachment: Arc<AttachmentImage<format::D32Sfloat_S8Uint>>,
 
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
@@ -26,7 +26,7 @@ impl GeometryBuffer {
     pub fn new(
         log: &Logger,
         backend: &VulkanoRenderBackend,
-        depth_attachment: Arc<AttachmentImage<format::D24Unorm_S8Uint>>
+        depth_attachment: Arc<AttachmentImage<format::D32Sfloat_S8Uint>>
     ) -> Self {
         // The gbuffer attachments we end up using in the final lighting pass need to have sampled
         //  set to true, or we can't sample them, resulting in a black color result.
@@ -100,7 +100,7 @@ impl GeometryBuffer {
                 depth: {
                     load: Clear,
                     store: DontCare,
-                    format: Format::D24Unorm_S8Uint,
+                    format: Format::D32Sfloat_S8Uint,
                     samples: 1,
                 }
             },

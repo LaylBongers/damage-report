@@ -5,7 +5,7 @@ use cgmath::{Vector2};
 use slog::{Logger};
 use vulkano::device::{Device, Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
-use vulkano::format::{self, D24Unorm_S8Uint};
+use vulkano::format::{self};
 use vulkano::instance::{PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform, Surface};
 use vulkano::sync::{GpuFuture};
@@ -15,7 +15,7 @@ use vulkano::image::attachment::{AttachmentImage};
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
 pub struct TargetSwapchain {
     pub swapchain: Arc<Swapchain>,
-    pub depth_attachment: Arc<AttachmentImage<format::D24Unorm_S8Uint>>,
+    pub depth_attachment: Arc<AttachmentImage<format::D32Sfloat_S8Uint>>,
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
 
@@ -67,17 +67,16 @@ impl TargetSwapchain {
         //  marked as transient as we'll have to use its values across multiple framebuffers and
         //  render passes.
         // A format more precise than D16Unorm had to be used. That precision ended up giving
-        //  noticeable rendering artifacts at relatively nearby depths.
-        // TODO: Investigate the effect of the difference between D24Unorm_S8Uint and
-        //  D32Sfloat_S8Uint. Also investigate the effect of Reversed-Z, which may improve quality.
+        //  noticeable rendering artifacts at relatively nearby depths. A floating point format is
+        //  used to take advantage of the increased precision given by the reversed-z technique.
         debug!(log, "Creating depth buffer");
         let depth_attachment = AttachmentImage::new(
-            device.clone(), images[0].dimensions().width_height(), D24Unorm_S8Uint
+            device.clone(), images[0].dimensions().width_height(), format::D32Sfloat_S8Uint
         ).unwrap();
 
         // Set up a render pass TODO: Comment better
         let color_buffer_format = swapchain.format();
-        let depth_buffer_format = ::vulkano::format::Format::D24Unorm_S8Uint;
+        let depth_buffer_format = ::vulkano::format::Format::D32Sfloat_S8Uint;
         #[allow(dead_code)]
         let render_pass = Arc::new(single_pass_renderpass!(device.clone(),
             attachments: {
