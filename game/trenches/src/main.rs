@@ -27,8 +27,8 @@ use slog_term::{CompactFormat, TermDecorator};
 
 use calcium::rendering::{self, Backend, StaticRuntime};
 use calcium_game::{LoopTimer};
-use calcium_rendering::{Resources, Error, RenderBackend, RenderSystem};
-use calcium_rendering_world3d::{RenderWorld, WorldRenderBackend, WorldRenderSystem};
+use calcium_rendering::{BackendTypes, Error, RenderSystem};
+use calcium_rendering_world3d::{WorldBackendTypes, RenderWorld, WorldRenderSystem};
 
 use game_world::{GameWorld};
 use input::{InputState, FrameInput};
@@ -76,11 +76,11 @@ struct StaticGameRuntime {
 }
 
 impl StaticRuntime<WinitTargetSystem> for StaticGameRuntime {
-    fn run<R: Resources, B: RenderBackend<R>, WB: WorldRenderBackend<R, B>>(
+    fn run<T: BackendTypes, WT: WorldBackendTypes<T>>(
         self,
         mut target: WinitTargetSystem,
-        mut render_system: RenderSystem<R, B>,
-        mut world_render_system: WorldRenderSystem<R, B, WB>,
+        mut render_system: RenderSystem<T>,
+        mut world_render_system: WorldRenderSystem<T, WT>,
     ) -> Result<(), Error> {
         // Initialize generic utilities
         let mut timer = LoopTimer::start();

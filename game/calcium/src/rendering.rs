@@ -1,8 +1,8 @@
 use slog::{Logger};
-use calcium_rendering::{Resources, RenderBackend, RenderSystem, Error};
-use calcium_rendering_vulkano::{VulkanoRenderBackend, VulkanoTargetSystem};
-use calcium_rendering_world3d::{WorldRenderSystem, WorldRenderBackend};
-use calcium_rendering_world3d_vulkano::{VulkanoWorldRenderBackend};
+use calcium_rendering::{BackendTypes, RenderSystem, Error};
+use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoRenderBackend, VulkanoTargetSystem};
+use calcium_rendering_world3d::{WorldBackendTypes, WorldRenderSystem};
+use calcium_rendering_world3d_vulkano::{VulkanoWorldBackendTypes, VulkanoWorldRenderBackend};
 
 // TODO: Replace vulkano target with generic target system
 pub fn run_with_backend<T: VulkanoTargetSystem, R: StaticRuntime<T>>(
@@ -12,8 +12,10 @@ pub fn run_with_backend<T: VulkanoTargetSystem, R: StaticRuntime<T>>(
         Backend::Vulkano => {
             let render = VulkanoRenderBackend::new(log, &mut target)?;
             let world = VulkanoWorldRenderBackend::new(log, &render);
-            let render_system = RenderSystem::new(log, render);
-            let world_render_system = WorldRenderSystem::new(log, world);
+            let render_system: RenderSystem<VulkanoBackendTypes> =
+                RenderSystem::new(log, render);
+            let world_render_system: WorldRenderSystem<_, VulkanoWorldBackendTypes> =
+                WorldRenderSystem::new(log, world);
             runtime.run(target, render_system, world_render_system)
         },
         Backend::GfxOpenGl => unimplemented!(),
@@ -29,9 +31,9 @@ pub enum Backend {
 }
 
 // TODO: Replace vulkano target with generic target system
-pub trait StaticRuntime<T: VulkanoTargetSystem> {
-    fn run<R: Resources, B: RenderBackend<R>, WB: WorldRenderBackend<R, B>>(
-        self, target: T,
-        render_system: RenderSystem<R, B>, world_render_system: WorldRenderSystem<R, B, WB>,
+pub trait StaticRuntime<TT: VulkanoTargetSystem> {
+    fn run<T: BackendTypes, WT: WorldBackendTypes<T>>(
+        self, target: TT,
+        render_system: RenderSystem<T>, world_render_system: WorldRenderSystem<T, WT>,
     ) -> Result<(), Error>;
 }

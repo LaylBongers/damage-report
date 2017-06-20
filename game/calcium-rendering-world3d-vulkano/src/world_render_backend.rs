@@ -3,13 +3,19 @@ use vulkano::command_buffer::{CommandBufferBuilder};
 use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{RenderSystem};
-use calcium_rendering_vulkano::{VulkanoFrame, VulkanoRenderBackend, Resources};
-use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend};
+use calcium_rendering_vulkano::{VulkanoFrame, VulkanoRenderBackend, VulkanoBackendTypes};
+use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend, WorldBackendTypes};
 
 use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
 use mesh::{BackendMeshes};
+
+pub struct VulkanoWorldBackendTypes;
+
+impl WorldBackendTypes<VulkanoBackendTypes> for VulkanoWorldBackendTypes {
+    type WorldRenderBackend = VulkanoWorldRenderBackend;
+}
 
 pub struct VulkanoWorldRenderBackend {
     pub geometry_buffer: GeometryBuffer,
@@ -38,10 +44,10 @@ impl VulkanoWorldRenderBackend {
     }
 }
 
-impl WorldRenderBackend<Resources, VulkanoRenderBackend> for VulkanoWorldRenderBackend {
+impl WorldRenderBackend<VulkanoBackendTypes, VulkanoWorldBackendTypes> for VulkanoWorldRenderBackend {
     fn render(
         &mut self, log: &Logger,
-        render_system: &mut RenderSystem<Resources, VulkanoRenderBackend>,
+        render_system: &mut RenderSystem<VulkanoBackendTypes>,
         frame: &mut VulkanoFrame,
         camera: &Camera, world: &RenderWorld
     ) {

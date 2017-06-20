@@ -10,14 +10,15 @@ use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::sync::{GpuFuture};
 use vulkano::framebuffer::{FramebufferAbstract};
 
-use calcium_rendering::{self, Error, RenderBackend, CalciumErrorMap, Texture};
+use calcium_rendering::{BackendTypes, Error, RenderBackend, CalciumErrorMap, Texture};
 use target_swapchain::{TargetSwapchain};
 use texture::{VulkanoTextureBackend};
 use {VulkanoTargetSystem};
 
-pub struct Resources;
+pub struct VulkanoBackendTypes;
 
-impl calcium_rendering::Resources for self::Resources {
+impl BackendTypes for VulkanoBackendTypes {
+    type RenderBackend = VulkanoRenderBackend;
     type Frame = VulkanoFrame;
 }
 
@@ -192,7 +193,7 @@ fn arc_key<T>(value: &Arc<T>) -> usize {
     value.as_ref() as *const T as usize
 }
 
-impl RenderBackend<Resources> for VulkanoRenderBackend {
+impl RenderBackend<VulkanoBackendTypes> for VulkanoRenderBackend {
     fn start_frame(&mut self) -> VulkanoFrame {
         self.target_swapchain.clean_old_submissions();
 

@@ -16,4 +16,4 @@ mod mesh;
 mod world_render_backend;
 
 pub use mesh::{VulkanoMeshBackend, VkVertex, BackendMeshes};
-pub use world_render_backend::{VulkanoWorldRenderBackend};
+pub use world_render_backend::{VulkanoWorldRenderBackend, VulkanoWorldBackendTypes};

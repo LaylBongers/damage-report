@@ -1,42 +1,44 @@
 use std::marker::{PhantomData};
 use slog::{Logger};
-use calcium_rendering::{RenderSystem, RenderBackend, Resources};
+use calcium_rendering::{RenderSystem, BackendTypes};
 use {Camera, RenderWorld};
 
-pub struct WorldRenderSystem<R, B, WB> {
-    backend: WB,
-    _r: PhantomData<R>,
-    _b: PhantomData<B>,
+pub trait WorldBackendTypes<T: BackendTypes> where Self: Sized {
+    type WorldRenderBackend: WorldRenderBackend<T, Self>;
 }
 
-impl<R: Resources, B: RenderBackend<R>, WB: WorldRenderBackend<R, B>> WorldRenderSystem<R, B, WB> {
-    pub fn new(log: &Logger, backend: WB) -> Self {
+pub struct WorldRenderSystem<T: BackendTypes, WT: WorldBackendTypes<T>> {
+    backend: WT::WorldRenderBackend,
+    _t: PhantomData<T>
+}
+
+impl<T: BackendTypes, WT: WorldBackendTypes<T>> WorldRenderSystem<T, WT> {
+    pub fn new(log: &Logger, backend: WT::WorldRenderBackend) -> Self {
         info!(log, "Initializing world3d render system");
 
         WorldRenderSystem {
             backend,
-            _r: Default::default(),
-            _b: Default::default(),
+            _t: Default::default(),
         }
     }
 }
 
-impl<R: Resources, B: RenderBackend<R>, WB: WorldRenderBackend<R, B>> WorldRenderSystem<R, B, WB> {
+impl<T: BackendTypes, WT: WorldBackendTypes<T>> WorldRenderSystem<T, WT> {
     pub fn render(
         &mut self, log: &Logger,
-        render_system: &mut RenderSystem<R, B>,
-        frame: &mut R::Frame,
+        render_system: &mut RenderSystem<T>,
+        frame: &mut T::Frame,
         camera: &Camera, world: &RenderWorld,
     ) {
         self.backend.render(log, render_system, frame, camera, world);
     }
 }
 
-pub trait WorldRenderBackend<R: Resources, B: RenderBackend<R>> {
+pub trait WorldRenderBackend<T: BackendTypes, WT: WorldBackendTypes<T>> {
     fn render(
         &mut self, log: &Logger,
-        render_system: &mut RenderSystem<R, B>,
-        frame: &mut R::Frame,
+        render_system: &mut RenderSystem<T>,
+        frame: &mut T::Frame,
         camera: &Camera, world: &RenderWorld
     );
 }

@@ -1,37 +1,35 @@
-use std::marker::{PhantomData};
 use slog::{Logger};
 
-pub trait Resources {
+pub trait BackendTypes where Self: Sized {
+    type RenderBackend: RenderBackend<Self>;
     type Frame;
 }
 
-pub struct RenderSystem<R, B> {
-    pub backend: B,
-    _r: PhantomData<R>,
+pub struct RenderSystem<T: BackendTypes> {
+    pub backend: T::RenderBackend,
 }
 
-impl<R: Resources, B: RenderBackend<R>> RenderSystem<R, B> {
-    pub fn new(log: &Logger, backend: B) -> Self {
+impl<T: BackendTypes> RenderSystem<T> {
+    pub fn new(log: &Logger, backend: T::RenderBackend) -> Self {
         info!(log, "Initializing render system");
 
         RenderSystem {
             backend,
-            _r: Default::default(),
         }
     }
 }
 
-impl<R: Resources, B: RenderBackend<R>> RenderSystem<R, B> {
-    pub fn start_frame(&mut self) -> R::Frame {
+impl<T: BackendTypes> RenderSystem<T> {
+    pub fn start_frame(&mut self) -> T::Frame {
         self.backend.start_frame()
     }
 
-    pub fn finish_frame(&mut self, frame: R::Frame) {
+    pub fn finish_frame(&mut self, frame: T::Frame) {
         self.backend.finish_frame(frame);
     }
 }
 
-pub trait RenderBackend<R: Resources> {
-    fn start_frame(&mut self) -> R::Frame;
-    fn finish_frame(&mut self, frame: R::Frame);
+pub trait RenderBackend<T: BackendTypes> {
+    fn start_frame(&mut self) -> T::Frame;
+    fn finish_frame(&mut self, frame: T::Frame);
 }
