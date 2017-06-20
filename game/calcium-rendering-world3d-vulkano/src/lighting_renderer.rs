@@ -1,15 +1,12 @@
 use std::sync::{Arc};
+use std::iter;
 
 use slog::{Logger};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
-use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
-use vulkano::pipeline::blend::{Blend};
-use vulkano::pipeline::depth_stencil::{DepthStencil};
-use vulkano::pipeline::input_assembly::{InputAssembly};
-use vulkano::pipeline::multisample::{Multisample};
+use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
-use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
+use vulkano::pipeline::viewport::{Viewport};
 use vulkano::framebuffer::{Subpass};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
@@ -65,11 +62,9 @@ impl LightingRenderer {
 
         // Begin by starting the render pass, we're rendering the lighting pass directly to the
         //  final framebuffer for this frame, that framebuffer will be presented to the screen.
-        // Because this is the final screen framebuffer all we need to clear is the color and
-        //  depth. We still use depth because we may want to do another forward render pass for
-        //  transparent objects.
-        // TODO: Actually make sure the depth ends up in the framebuffer, either through copying or
-        //  by directly using this depth attachment during gbuffer rendering.
+        // TODO: Actually make sure the depth ends up in the framebuffer, we're already using the
+        //  depth buffer during geometry rendering but now we're clearing it, we still need it for
+        //  further transparent render passes.
         let clear_values = vec!(
             ClearValue::Float([0.005, 0.005, 0.005, 1.0]),
             ClearValue::Depth(1.0)
@@ -170,38 +165,30 @@ fn load_lighting_pipeline(
     let vs = lighting_vs::Shader::load(&backend.device).unwrap();
     let fs = lighting_fs::Shader::load(&backend.device).unwrap();
 
-    // Set up the pipeline
-    debug!(log, "Creating deferred pipeline");
+    // Set up the pipeline itself
+    debug!(log, "Creating lighting pipeline");
     let dimensions = backend.size;
-    let pipeline_params = GraphicsPipelineParams {
-        vertex_input: SingleBufferDefinition::new(),
-        vertex_shader: vs.main_entry_point(),
-        input_assembly: InputAssembly::triangle_list(),
-        tessellation: None,
-        geometry_shader: None,
-        viewport: ViewportsState::Fixed {
-            data: vec![(
-                Viewport {
-                    origin: [0.0, 0.0],
-                    depth_range: 0.0 .. 1.0,
-                    dimensions: [
-                        dimensions.x as f32,
-                        dimensions.y as f32
-                    ],
-                },
-                Scissor::irrelevant()
-            )],
-        },
-        raster: Default::default(),
-        multisample: Multisample::disabled(),
-        fragment_shader: fs.main_entry_point(),
-        depth_stencil: DepthStencil::disabled(),
-        blend: Blend::pass_through(),
-        render_pass: Subpass::from(backend.target_swapchain.render_pass.clone(), 0).unwrap(),
-    };
+    Arc::new(GraphicsPipeline::start()
+        .vertex_input_single_buffer()
+        .triangle_list()
+        .viewports(iter::once(Viewport {
+            origin: [0.0, 0.0],
+            depth_range: 0.0 .. 1.0,
+            dimensions: [
+                dimensions[0] as f32,
+                dimensions[1] as f32
+            ],
+        }))
 
-    Arc::new(GraphicsPipeline::new(backend.device.clone(), pipeline_params).unwrap())
-        as Arc<GraphicsPipeline<SingleBufferDefinition<ScreenSizeTriVertex>, _, _>>
+        // Which shaders to use
+        .vertex_shader(vs.main_entry_point(), ())
+        .fragment_shader(fs.main_entry_point(), ())
+
+        .depth_stencil_disabled()
+
+        .render_pass(Subpass::from(backend.target_swapchain.render_pass.clone(), 0).unwrap())
+        .build(backend.device.clone()).unwrap()
+    ) as Arc<GraphicsPipeline<SingleBufferDefinition<ScreenSizeTriVertex>, _, _>>
 }
 
 pub struct ScreenSizeTriVertex {

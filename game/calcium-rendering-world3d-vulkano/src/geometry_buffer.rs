@@ -9,10 +9,14 @@ use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract}
 use calcium_rendering_vulkano::{VulkanoRenderBackend};
 
 pub struct GeometryBuffer {
-    pub position_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
+    // TODO: This can be changed to R16G16B16A16Sfloat if lighting its positions are relative to
+    //  the camera rather than relative to the world origin, precision quickly causes bugs. This is
+    //  a high priority as R32G32B32A32Sfloat isn't gurenteed to be supported but
+    //  R16G16B16A16Sfloat is.
+    pub position_attachment: Arc<AttachmentImage<format::R32G32B32A32Sfloat>>,
     pub base_color_attachment: Arc<AttachmentImage<format::R8G8B8A8Srgb>>,
     // TODO: This one can be changed to R8G8B8A8Unorm if the geometry shader converts the values
-    //  back to a 0.0-1.0 range
+    //  back to a 0.0-1.0 range.
     pub normal_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
     pub metallic_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     pub roughness_attachment: Arc<AttachmentImage<format::R8Unorm>>,
@@ -39,7 +43,7 @@ impl GeometryBuffer {
         debug!(log, "Creating g-buffer attachment images");
         let position_attachment = AttachmentImage::with_usage(
             backend.device.clone(), backend.size.into(),
-            format::R16G16B16A16Sfloat, attach_usage
+            format::R32G32B32A32Sfloat, attach_usage
         ).unwrap();
         let base_color_attachment = AttachmentImage::with_usage(
             backend.device.clone(), backend.size.into(),
@@ -70,7 +74,7 @@ impl GeometryBuffer {
                 position: {
                     load: Clear,
                     store: Store,
-                    format: Format::R16G16B16A16Sfloat,
+                    format: Format::R32G32B32A32Sfloat,
                     samples: 1,
                 },
                 base_color: {

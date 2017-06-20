@@ -70,7 +70,9 @@ impl WinitTargetSystem {
         // This is done at the end so it doesn't affect last_mouse, next update we'll assume it's
         // at the center again
         if should_reset_mouse {
-            data.window.window().set_cursor_position(center.x, center.y).unwrap();
+            // Just ignore if it failed TODO: Instead make sure we can do this, by making sure the
+            //  window is focused
+            let _ = data.window.window().set_cursor_position(center.x, center.y);
         }
 
         should_continue

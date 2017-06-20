@@ -1,4 +1,5 @@
 use std::sync::{Arc};
+use std::iter;
 
 use cgmath::{Rad, Angle, Matrix4};
 use collision::{Frustum, Relation};
@@ -6,14 +7,10 @@ use slog::{Logger};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
 use vulkano::framebuffer::{Subpass, RenderPassAbstract};
-use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineParams, GraphicsPipelineAbstract};
+use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::depth_stencil::{DepthStencil, Compare};
-use vulkano::pipeline::input_assembly::{InputAssembly};
-use vulkano::pipeline::multisample::{Multisample};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
-use vulkano::pipeline::viewport::{ViewportsState, Viewport, Scissor};
-use vulkano::pipeline::raster::{Rasterization, CullMode, FrontFace};
-use vulkano::pipeline::blend::{Blend};
+use vulkano::pipeline::viewport::{Viewport};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use calcium_rendering_vulkano::{VulkanoRenderBackend};
@@ -185,45 +182,38 @@ fn load_pipeline(
     let vs = gbuffer_vs::Shader::load(&backend.device).unwrap();
     let fs = gbuffer_fs::Shader::load(&backend.device).unwrap();
 
-    // Set up the pipeline
+    // Set up the pipeline itself
     debug!(log, "Creating gbuffer pipeline");
     let dimensions = backend.size;
-    let pipeline_params = GraphicsPipelineParams {
-        vertex_input: SingleBufferDefinition::new(),
-        vertex_shader: vs.main_entry_point(),
-        input_assembly: InputAssembly::triangle_list(),
-        tessellation: None,
-        geometry_shader: None,
-        viewport: ViewportsState::Fixed {
-            data: vec![(
-                Viewport {
-                    origin: [0.0, 0.0],
-                    depth_range: 0.0 .. 1.0,
-                    dimensions: [
-                        dimensions[0] as f32,
-                        dimensions[1] as f32
-                    ],
-                },
-                Scissor::irrelevant()
-            )],
-        },
-        raster: Rasterization {
-            cull_mode: CullMode::Back,
-            front_face: FrontFace::CounterClockwise,
-            .. Default::default()
-        },
-        multisample: Multisample::disabled(),
-        fragment_shader: fs.main_entry_point(),
-        depth_stencil: DepthStencil {
+    Arc::new(GraphicsPipeline::start()
+        .vertex_input_single_buffer()
+        .triangle_list()
+        .viewports(iter::once(Viewport {
+            origin: [0.0, 0.0],
+            depth_range: 0.0 .. 1.0,
+            dimensions: [
+                dimensions[0] as f32,
+                dimensions[1] as f32
+            ],
+        }))
+
+        // Which shaders to use
+        .vertex_shader(vs.main_entry_point(), ())
+        .fragment_shader(fs.main_entry_point(), ())
+
+        // Cull back faces
+        .cull_mode_back()
+        .front_face_counter_clockwise()
+
+        // Reverse-Z depth testing
+        .depth_stencil(DepthStencil {
             depth_compare: Compare::Greater,
             .. DepthStencil::simple_depth_test()
-        },
-        blend: Blend::pass_through(),
-        render_pass: Subpass::from(gbuffer_render_pass, 0).unwrap(),
-    };
+        })
 
-    Arc::new(GraphicsPipeline::new(backend.device.clone(), pipeline_params).unwrap())
-        as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
+        .render_pass(Subpass::from(gbuffer_render_pass, 0).unwrap())
+        .build(backend.device.clone()).unwrap()
+    ) as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
 }
 
 fn create_projection_view_matrix(
