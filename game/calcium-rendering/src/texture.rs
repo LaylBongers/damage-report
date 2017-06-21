@@ -1,18 +1,22 @@
 use std::path::{PathBuf};
 use std::sync::{Arc};
 
-pub struct Texture {
-    // Texture needs to track the data to load a texture internally because the backend may need to
-    // be re-loaded, in which case the backend data gets purged.
-    pub source: PathBuf,
-    pub format: TextureFormat,
+use slog::{Logger};
+
+use {BackendTypes, RenderSystem};
+
+pub struct Texture<T: BackendTypes> {
+    pub backend: T::TextureBackend,
 }
 
-impl Texture {
-    pub fn new<P: Into<PathBuf>>(path: P, format: TextureFormat) -> Arc<Self> {
+impl<T: BackendTypes> Texture<T> {
+    pub fn new<P: Into<PathBuf>>(
+        log: &Logger, render_system: &mut RenderSystem<T>, path: P, format: TextureFormat
+    ) -> Arc<Self> {
+        let backend = T::TextureBackend::load(log, &mut render_system.backend, path.into(), format);
+
         Arc::new(Texture {
-            source: path.into(),
-            format,
+            backend,
         })
     }
 }
@@ -22,4 +26,8 @@ pub enum TextureFormat {
     Srgb,
     Linear,
     LinearRed,
+}
+
+pub trait TextureBackend<T: BackendTypes> {
+    fn load(log: &Logger, backend: &mut T::RenderBackend, path: PathBuf, format: TextureFormat) -> Self;
 }

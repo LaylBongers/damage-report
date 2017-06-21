@@ -3,7 +3,7 @@ use std::sync::{Arc};
 use cgmath::{Vector3, Vector2};
 use slog::{Logger};
 
-use calcium_rendering::{Texture, TextureFormat};
+use calcium_rendering::{BackendTypes, Texture, TextureFormat, RenderSystem};
 use calcium_rendering_world3d::mesh::{Mesh};
 use calcium_rendering_world3d::{RenderWorld, Entity, Material, EntityId};
 
@@ -11,14 +11,16 @@ use input::{InputState, FrameInput};
 use player::{Player};
 use voxel_system::{VoxelSystem, ChunkEntry};
 
-pub struct GameWorld {
+pub struct GameWorld<T: BackendTypes> {
     pub player: Player,
     voxel_system: VoxelSystem,
-    voxel_material: Material,
+    voxel_material: Material<T>,
 }
 
-impl GameWorld {
-    pub fn new(log: &Logger, world: &mut RenderWorld) -> Self {
+impl<T: BackendTypes> GameWorld<T> {
+    pub fn new(
+        log: &Logger, render_system: &mut RenderSystem<T>, world: &mut RenderWorld<T>
+    ) -> Self {
         let player = Player::new();
 
         world.ambient_light = Vector3::new(0.015, 0.015, 0.02);
@@ -26,16 +28,16 @@ impl GameWorld {
 
         let voxel_material = Material {
             base_color: Texture::new(
-                "./assets/texture_base_color.png", TextureFormat::Srgb
+                log, render_system, "./assets/texture_base_color.png", TextureFormat::Srgb
             ),
             normal_map: Texture::new(
-                "./assets/texture_normal.png", TextureFormat::Linear
+                log, render_system, "./assets/texture_normal.png", TextureFormat::Linear
             ),
             metallic_map: Texture::new(
-                "./assets/texture_metallic.png", TextureFormat::LinearRed
+                log, render_system, "./assets/texture_metallic.png", TextureFormat::LinearRed
             ),
             roughness_map: Texture::new(
-                "./assets/texture_roughness.png", TextureFormat::LinearRed
+                log, render_system, "./assets/texture_roughness.png", TextureFormat::LinearRed
             ),
         };
 
@@ -48,7 +50,7 @@ impl GameWorld {
 
     pub fn update(
         &mut self, log: &Logger, time: f32,
-        render_world: &mut RenderWorld,
+        render_world: &mut RenderWorld<T>,
         input_state: &InputState, frame_input: &FrameInput
     ) {
         // Update the player based on the input we got so far
@@ -62,18 +64,18 @@ impl GameWorld {
     }
 }
 
-struct LoaderUnloader<'a> {
-    render_world: &'a mut RenderWorld,
-    voxel_material: &'a Material,
+struct LoaderUnloader<'a, T: BackendTypes> {
+    render_world: &'a mut RenderWorld<T>,
+    voxel_material: &'a Material<T>,
 }
 
-impl<'a> ::voxel_system::LoaderUnloader for LoaderUnloader<'a> {
+impl<'a, T: BackendTypes> ::voxel_system::LoaderUnloader for LoaderUnloader<'a, T> {
     fn load(&mut self, entry: &mut ChunkEntry, offset: Vector2<f32>, mesh: Arc<Mesh>) {
         // Add the mesh to an entity in the world
         let entity = self.render_world.add_entity(Entity {
             position: Vector3::new(offset.x, 0.0, offset.y),
             mesh: mesh,
-            material: self.voxel_material.clone(),
+            material: (*self.voxel_material).clone(),
         });
         entry.entity = Some(entity);
     }

@@ -1,26 +1,19 @@
 use std::sync::{Arc};
-use std::collections::{HashMap};
 
 use cgmath::{Vector2};
 use slog::{Logger};
+use vulkano::format::{Format};
 use vulkano::buffer::{CpuAccessibleBuffer};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
 use vulkano::device::{DeviceExtensions, Device, Queue};
 use vulkano::instance::{Instance, PhysicalDevice};
+use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sync::{GpuFuture};
 use vulkano::framebuffer::{FramebufferAbstract};
 
-use calcium_rendering::{BackendTypes, Error, RenderBackend, CalciumErrorMap, Texture};
+use calcium_rendering::{Error, RenderBackend, CalciumErrorMap};
 use target_swapchain::{TargetSwapchain};
-use texture::{VulkanoTextureBackend};
-use {VulkanoTargetSystem};
-
-pub struct VulkanoBackendTypes;
-
-impl BackendTypes for VulkanoBackendTypes {
-    type RenderBackend = VulkanoRenderBackend;
-    type Frame = VulkanoFrame;
-}
+use {VulkanoTargetSystem, VulkanoBackendTypes};
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone)]
 struct TextureId(usize);
@@ -32,14 +25,15 @@ pub struct VulkanoRenderBackend {
     pub target_swapchain: TargetSwapchain,
 
     // Queued up things we need to submit as part of command buffers
-    queued_texture_copies: Vec<(Arc<CpuAccessibleBuffer<[u8]>>, TextureId)>,
+    queued_image_copies: Vec<(Arc<CpuAccessibleBuffer<[u8]>>, Arc<ImmutableImage<Format>>)>,
 
     pub size: Vector2<u32>,
-    textures: HashMap<TextureId, VulkanoTextureBackend>,
 }
 
 impl VulkanoRenderBackend {
-    pub fn new(log: &Logger, target: &mut VulkanoTargetSystem) -> Result<VulkanoRenderBackend, Error> {
+    pub fn new(
+        log: &Logger, target: &mut VulkanoTargetSystem
+    ) -> Result<VulkanoRenderBackend, Error> {
         info!(log, "Initializing vulkano backend");
         let size = Vector2::new(1280, 720);
 
@@ -108,89 +102,19 @@ impl VulkanoRenderBackend {
             graphics_queue,
             target_swapchain,
 
-            queued_texture_copies: Vec::new(),
+            queued_image_copies: Vec::new(),
 
             size,
-            textures: HashMap::new(),
         })
     }
 
-    /// Requests a backend texture for a frontend texture. Submits the texture for loading if not
-    /// yet submitted.
-    pub fn request_texture(
-        &mut self, log: &Logger, texture: &Arc<Texture>
-    ) -> Option<&VulkanoTextureBackend> {
-        // Look up the texture from the texture backend storage, or add it if it isn't there yet
-        let texture_backend = self.lookup_or_submit_texture(log, texture);
-
-        // Check if it's ready for rendering
-        return if texture_backend.is_ready() {
-            Some(texture_backend)
-        } else {
-            None
-        };
-    }
-
-    fn lookup_or_submit_texture(
-        &mut self, log: &Logger, texture: &Arc<Texture>
-    ) -> &VulkanoTextureBackend {
-        let key = TextureId(arc_key(&texture));
-
-        // If we don't have this texture yet, submit it first
-        if !self.textures.contains_key(&key) {
-            self.submit_texture(log, texture);
-        }
-
-        self.textures.get(&key).unwrap()
-    }
-
-    fn submit_texture(&mut self, log: &Logger, texture: &Arc<Texture>) {
-        // TODO: Offload loading to a separate thread
-
-        // Start by loading in the actual image
-        let (texture_backend, buffer) = VulkanoTextureBackend::load(
-            log, self, &texture.source, texture.format
-        );
-
-        // Store the texture backend, maintaining its ID so we can look it back up
-        let texture_id = self.store_texture(&texture, texture_backend);
-
-        // Then submit the buffer and texture for copying, it will be picked up later at the start
-        //  of a frame to actually be copied over
-        self.queue_texture_copy(buffer, texture_id);
-    }
-
-    fn store_texture(
-        &mut self, texture: &Arc<Texture>, texture_backend: VulkanoTextureBackend
-    ) -> TextureId {
-        let key = TextureId(arc_key(texture));
-
-        // First make sure this texture doesn't already exist, this shouldn't ever happen, but it's
-        // not that expensive to make sure
-        if self.textures.contains_key(&key) {
-            panic!("Texture backend already exists for texture")
-        }
-
-        // Now that we're sure, we can submit the texture
-        self.textures.insert(key, texture_backend);
-
-        key
-    }
-
-    fn queue_texture_copy(
+    pub fn queue_image_copy(
         &mut self,
         buffer: Arc<CpuAccessibleBuffer<[u8]>>,
-        texture: TextureId,
+        image: Arc<ImmutableImage<Format>>,
     ) {
-        self.queued_texture_copies.push((buffer, texture));
+        self.queued_image_copies.push((buffer, image));
     }
-}
-
-/// Creates a value to use as key in a hashmap for referring to the abstract existence of a value
-/// in an arc. This is equivalent to using a reference as key in a hashmap/dictionary in other
-/// languages.
-fn arc_key<T>(value: &Arc<T>) -> usize {
-    value.as_ref() as *const T as usize
 }
 
 impl RenderBackend<VulkanoBackendTypes> for VulkanoRenderBackend {
@@ -202,24 +126,18 @@ impl RenderBackend<VulkanoBackendTypes> for VulkanoRenderBackend {
         let (framebuffer, image_num, mut future) = self.target_swapchain.start_frame();
 
         // If we have any images to load, we need to submit another buffer before anything else
-        if self.queued_texture_copies.len() != 0 {
+        if self.queued_image_copies.len() != 0 {
             // Create a command buffer to upload the textures with
             let mut image_copy_buffer_builder = AutoCommandBufferBuilder::new(
                 self.device.clone(), self.graphics_queue.family()
             ).unwrap();
 
             // Add any textures we need to upload to the command buffer
-            while let Some(val) = self.queued_texture_copies.pop() {
-                // Look up the actual texture
-                let texture = self.textures.get_mut(&val.1).unwrap();
-
+            while let Some(val) = self.queued_image_copies.pop() {
                 // Add the copy to the buffer
                 image_copy_buffer_builder = image_copy_buffer_builder
-                    .copy_buffer_to_image(val.0, texture.image.clone())
+                    .copy_buffer_to_image(val.0, val.1)
                     .unwrap();
-
-                // Now that the texture's copied, we can mark it ready
-                texture.mark_ready();
             }
 
             // Add the command buffer to the future so it will be executed

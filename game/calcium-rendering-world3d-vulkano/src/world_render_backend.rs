@@ -4,18 +4,13 @@ use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{RenderSystem};
 use calcium_rendering_vulkano::{VulkanoFrame, VulkanoRenderBackend, VulkanoBackendTypes};
-use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend, WorldBackendTypes};
+use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend};
 
 use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
 use mesh::{BackendMeshes};
-
-pub struct VulkanoWorldBackendTypes;
-
-impl WorldBackendTypes<VulkanoBackendTypes> for VulkanoWorldBackendTypes {
-    type WorldRenderBackend = VulkanoWorldRenderBackend;
-}
+use {VulkanoWorldBackendTypes};
 
 pub struct VulkanoWorldRenderBackend {
     pub geometry_buffer: GeometryBuffer,
@@ -49,7 +44,7 @@ impl WorldRenderBackend<VulkanoBackendTypes, VulkanoWorldBackendTypes> for Vulka
         &mut self, log: &Logger,
         render_system: &mut RenderSystem<VulkanoBackendTypes>,
         frame: &mut VulkanoFrame,
-        camera: &Camera, world: &RenderWorld
+        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes>
     ) {
         // This is a deferred renderer, so what we will do is first build up the "geometry buffer",
         //  which is a framebuffer made up from various images to keep track of the data needed for

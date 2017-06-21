@@ -1,9 +1,5 @@
 use slog::{Logger};
-
-pub trait BackendTypes where Self: Sized {
-    type RenderBackend: RenderBackend<Self>;
-    type Frame;
-}
+use {BackendTypes};
 
 pub struct RenderSystem<T: BackendTypes> {
     pub backend: T::RenderBackend,

@@ -1,10 +1,13 @@
 use std::sync::{Arc};
 use cgmath::{Vector3, InnerSpace};
+
+use calcium_rendering::{BackendTypes};
+
 use mesh::{Mesh};
 use {Material};
 
-pub struct RenderWorld {
-    entities: Vec<Option<Entity>>,
+pub struct RenderWorld<T: BackendTypes> {
+    entities: Vec<Option<Entity<T>>>,
     lights: Vec<Light>,
 
     pub ambient_light: Vector3<f32>,
@@ -12,7 +15,7 @@ pub struct RenderWorld {
     pub directional_direction: Vector3<f32>,
 }
 
-impl RenderWorld {
+impl<T: BackendTypes> RenderWorld<T> {
     pub fn new() -> Self {
         RenderWorld {
             entities: Vec::new(),
@@ -24,7 +27,7 @@ impl RenderWorld {
         }
     }
 
-    pub fn add_entity(&mut self, entity: Entity) -> EntityId {
+    pub fn add_entity(&mut self, entity: Entity<T>) -> EntityId {
         // TODO: Find an empty entity
 
         self.entities.push(Some(entity));
@@ -36,11 +39,11 @@ impl RenderWorld {
         self.entities[id.0] = None;
     }
 
-    pub fn entities(&self) -> &Vec<Option<Entity>> {
+    pub fn entities(&self) -> &Vec<Option<Entity<T>>> {
         &self.entities
     }
 
-    pub fn entity_mut(&mut self, id: EntityId) -> &mut Entity {
+    pub fn entity_mut(&mut self, id: EntityId) -> &mut Entity<T> {
         self.entities[id.0].as_mut().unwrap()
     }
 
@@ -64,10 +67,10 @@ pub struct EntityId(usize);
 #[derive(Copy, Clone)]
 pub struct LightId(usize);
 
-pub struct Entity {
+pub struct Entity<T: BackendTypes> {
     pub position: Vector3<f32>,
     pub mesh: Arc<Mesh>,
-    pub material: Material,
+    pub material: Material<T>,
 }
 
 pub struct Light {

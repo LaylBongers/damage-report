@@ -13,7 +13,7 @@ use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{Viewport};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use calcium_rendering_vulkano::{VulkanoRenderBackend};
+use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoRenderBackend};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity};
 
@@ -40,7 +40,7 @@ impl GeometryRenderer {
         &self, log: &Logger,
         backend: &mut VulkanoRenderBackend,
         meshes: &mut BackendMeshes, geometry_buffer: &GeometryBuffer,
-        camera: &Camera, world: &RenderWorld,
+        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes>,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             backend.device.clone(), backend.graphics_queue.family()
@@ -84,40 +84,14 @@ impl GeometryRenderer {
 
     fn render_entity(
         &self, log: &Logger,
-        entity: &Entity,
+        entity: &Entity<VulkanoBackendTypes>,
         backend: &mut VulkanoRenderBackend, meshes: &mut BackendMeshes,
         projection_view: &Matrix4<f32>,
         culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,
     ) -> AutoCommandBufferBuilder {
-        // TODO: The creation of the backend data for textures and meshes should be started
-        //  immediately when the Mesh and Texture structures are created. Currently it's being
-        //  loaded lazily below. This results in unexpected lag which we don't want.
-
-        // Retrieve the backend textures for the frontend textures, but early-bail if we have any
-        //  textures that aren't uploaded yet, this notifies the backend that they should be queued
-        //  up for uploading if they aren't yet as well.
-        let (base_color, normal_map, metallic_map, roughness_map) = {
-            let base_color = if let Some(base_color) =
-                backend.request_texture(log, &entity.material.base_color) {
-                base_color
-            } else { return command_buffer }.uniform();
-            let normal_map = if let Some(normal_map) =
-                backend.request_texture(log, &entity.material.normal_map) {
-                normal_map
-            } else { return command_buffer }.uniform();
-            let metallic_map = if let Some(metallic_map) =
-                backend.request_texture(log, &entity.material.metallic_map) {
-                metallic_map
-            } else { return command_buffer }.uniform();
-            let roughness_map = if let Some(roughness_map) =
-                backend.request_texture(log, &entity.material.roughness_map) {
-                roughness_map
-            } else { return command_buffer }.uniform();
-            (base_color, normal_map, metallic_map, roughness_map)
-        };
-
         // Retrieve the backend mesh for the frontend mesh
+        // TODO: Migrate this to a backend field on meshes similar to Texture
         let mesh = if let Some(mesh) = meshes.request_mesh(&log, backend, &entity.mesh) {
             mesh
         } else {
@@ -155,10 +129,10 @@ impl GeometryRenderer {
         // TODO: Re-use the descriptor set for this entity across frames
         let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
             u_matrix_data: matrix_data_buffer,
-            u_material_base_color: base_color,
-            u_material_normal_map: normal_map,
-            u_material_metallic_map: metallic_map,
-            u_material_roughness_map: roughness_map,
+            u_material_base_color: entity.material.base_color.backend.uniform(),
+            u_material_normal_map: entity.material.normal_map.backend.uniform(),
+            u_material_metallic_map: entity.material.metallic_map.backend.uniform(),
+            u_material_roughness_map: entity.material.roughness_map.backend.uniform(),
         }));
 
         // Perform the actual draw

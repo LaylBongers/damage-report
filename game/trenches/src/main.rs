@@ -88,7 +88,7 @@ impl StaticRuntime<WinitTargetSystem> for StaticGameRuntime {
 
         // Initialize the game world
         let mut render_world = RenderWorld::new();
-        let mut game_world = GameWorld::new(&self.log, &mut render_world);
+        let mut game_world = GameWorld::new(&self.log, &mut render_system, &mut render_world);
 
         // The main game loop
         info!(self.log, "Starting game loop");

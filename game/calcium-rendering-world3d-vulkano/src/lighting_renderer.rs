@@ -11,7 +11,7 @@ use vulkano::framebuffer::{Subpass};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering_vulkano::{VulkanoRenderBackend, VulkanoFrame};
+use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoRenderBackend, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{lighting_vs, lighting_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld};
 
@@ -48,7 +48,7 @@ impl LightingRenderer {
     pub fn build_command_buffer(
         &mut self,
         backend: &mut VulkanoRenderBackend, frame: &VulkanoFrame, geometry_buffer: &GeometryBuffer,
-        camera: &Camera, world: &RenderWorld,
+        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes>,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             backend.device.clone(), backend.graphics_queue.family()

@@ -1,5 +1,5 @@
 use std::sync::{Arc};
-use std::path::{Path};
+use std::path::{PathBuf};
 
 use slog::{Logger};
 use image::{self, GenericImage};
@@ -9,22 +9,27 @@ use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::{TextureFormat};
-use {VulkanoRenderBackend};
+use calcium_rendering::{TextureFormat, TextureBackend};
+use {VulkanoBackendTypes, VulkanoRenderBackend};
 
 pub struct VulkanoTextureBackend {
-    pub image: Arc<ImmutableImage<Format>>,
+    image: Arc<ImmutableImage<Format>>,
     sampler: Arc<Sampler>,
-    copied: bool,
 }
 
 impl VulkanoTextureBackend {
-    pub fn load<P: AsRef<Path>>(
-        log: &Logger, backend: &VulkanoRenderBackend, path: P, format: TextureFormat
-    ) -> (Self, Arc<CpuAccessibleBuffer<[u8]>>) {
+    pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
+        (self.image.clone(), self.sampler.clone())
+    }
+}
+
+impl TextureBackend<VulkanoBackendTypes> for VulkanoTextureBackend {
+    fn load(
+        log: &Logger, backend: &mut VulkanoRenderBackend, path: PathBuf, format: TextureFormat
+    ) -> Self {
         // Load in the image file
-        info!(log, "Loading texture"; "path" => path.as_ref().display().to_string());
-        let img = image::open(path.as_ref()).unwrap();
+        info!(log, "Loading texture"; "path" => path.display().to_string());
+        let img = image::open(path).unwrap();
         let img_dimensions = img.dimensions();
 
         // Load the image data into a buffer
@@ -67,22 +72,12 @@ impl VulkanoTextureBackend {
             0.0, 1.0, 0.0, 0.0
         ).unwrap();
 
-        (VulkanoTextureBackend {
+        // Queue copying the data to the image so it will be available when rendering
+        backend.queue_image_copy(buffer, image.clone());
+
+        VulkanoTextureBackend {
             image,
             sampler,
-            copied: false,
-        }, buffer)
-    }
-
-    pub fn is_ready(&self) -> bool {
-        self.copied
-    }
-
-    pub fn mark_ready(&mut self) {
-        self.copied = true;
-    }
-
-    pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
-        (self.image.clone(), self.sampler.clone())
+        }
     }
 }
