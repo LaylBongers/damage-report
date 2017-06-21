@@ -3,23 +3,24 @@ use std::sync::{Arc};
 use cgmath::{Vector3, Vector2};
 use slog::{Logger};
 
-use calcium_rendering::{BackendTypes, Texture, TextureFormat, RenderSystem};
+use calcium_rendering::texture::{Texture, TextureFormat};
+use calcium_rendering::{BackendTypes, RenderSystem};
 use calcium_rendering_world3d::mesh::{Mesh};
-use calcium_rendering_world3d::{RenderWorld, Entity, Material, EntityId};
+use calcium_rendering_world3d::{RenderWorld, Entity, Material, EntityId, WorldBackendTypes};
 
 use input::{InputState, FrameInput};
 use player::{Player};
 use voxel_system::{VoxelSystem, ChunkEntry};
 
-pub struct GameWorld<T: BackendTypes> {
+pub struct GameWorld<T: BackendTypes, WT: WorldBackendTypes<T>> {
     pub player: Player,
-    voxel_system: VoxelSystem,
+    voxel_system: VoxelSystem<T, WT>,
     voxel_material: Material<T>,
 }
 
-impl<T: BackendTypes> GameWorld<T> {
+impl<T: BackendTypes, WT: WorldBackendTypes<T>> GameWorld<T, WT> {
     pub fn new(
-        log: &Logger, render_system: &mut RenderSystem<T>, world: &mut RenderWorld<T>
+        log: &Logger, render_system: &mut RenderSystem<T>, world: &mut RenderWorld<T, WT>
     ) -> Self {
         let player = Player::new();
 
@@ -43,14 +44,14 @@ impl<T: BackendTypes> GameWorld<T> {
 
         GameWorld {
             player,
-            voxel_system: VoxelSystem::new(log),
+            voxel_system: VoxelSystem::new(log, render_system),
             voxel_material,
         }
     }
 
     pub fn update(
         &mut self, log: &Logger, time: f32,
-        render_world: &mut RenderWorld<T>,
+        render_world: &mut RenderWorld<T, WT>,
         input_state: &InputState, frame_input: &FrameInput
     ) {
         // Update the player based on the input we got so far
@@ -64,13 +65,14 @@ impl<T: BackendTypes> GameWorld<T> {
     }
 }
 
-struct LoaderUnloader<'a, T: BackendTypes> {
-    render_world: &'a mut RenderWorld<T>,
+struct LoaderUnloader<'a, T: BackendTypes, WT: WorldBackendTypes<T>> {
+    render_world: &'a mut RenderWorld<T, WT>,
     voxel_material: &'a Material<T>,
 }
 
-impl<'a, T: BackendTypes> ::voxel_system::LoaderUnloader for LoaderUnloader<'a, T> {
-    fn load(&mut self, entry: &mut ChunkEntry, offset: Vector2<f32>, mesh: Arc<Mesh>) {
+impl<'a, T: BackendTypes, WT: WorldBackendTypes<T>>
+    ::voxel_system::LoaderUnloader<T, WT> for LoaderUnloader<'a, T, WT> {
+    fn load(&mut self, entry: &mut ChunkEntry, offset: Vector2<f32>, mesh: Arc<Mesh<T, WT>>) {
         // Add the mesh to an entity in the world
         let entity = self.render_world.add_entity(Entity {
             position: Vector3::new(offset.x, 0.0, offset.y),

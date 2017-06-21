@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 
-use calcium_rendering::{Texture, BackendTypes};
+use calcium_rendering::texture::{Texture};
+use calcium_rendering::{BackendTypes};
 
 #[derive(Clone)]
 pub struct Material<T: BackendTypes> {

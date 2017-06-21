@@ -20,7 +20,7 @@ pub struct TargetSwapchain {
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
 
     // Submissions from previous frames
-    submissions: Vec<Box<GpuFuture>>,
+    submissions: Vec<Box<GpuFuture + Send + Sync>>,
 }
 
 impl TargetSwapchain {
@@ -128,17 +128,17 @@ impl TargetSwapchain {
         }
     }
 
-    pub fn start_frame(&self) -> (Arc<FramebufferAbstract + Send + Sync>, usize, Box<GpuFuture>) {
+    pub fn start_frame(&self) -> (Arc<FramebufferAbstract + Send + Sync>, usize, Box<GpuFuture + Send + Sync>) {
         let (image_num, future) = ::vulkano::swapchain::acquire_next_image(
             self.swapchain.clone(), Duration::new(1, 0)
         ).unwrap();
-        let future: Box<GpuFuture> = Box::new(future);
+        let future: Box<GpuFuture + Send + Sync> = Box::new(future);
 
         (self.framebuffers[image_num].clone(), image_num, future)
     }
 
     pub fn finish_frame(
-        &mut self, future: Box<GpuFuture>, graphics_queue: Arc<Queue>, image_num: usize
+        &mut self, future: Box<GpuFuture + Send + Sync>, graphics_queue: Arc<Queue>, image_num: usize
     ) {
         let future = future
             // Present the image resulting from all the submitted command buffers on the screen

@@ -7,15 +7,18 @@ use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
-use mesh::{self, Mesh, Vertex};
+use calcium_rendering::{BackendTypes, Factory};
 
-pub struct Model {
-    pub meshes: Vec<Arc<Mesh>>,
+use mesh::{self, Mesh, Vertex};
+use {WorldBackendTypes};
+
+pub struct Model<T: BackendTypes, WT: WorldBackendTypes<T>> {
+    pub meshes: Vec<Arc<Mesh<T, WT>>>,
 }
 
-impl Model {
+impl<T: BackendTypes, WT: WorldBackendTypes<T>> Model<T, WT> {
     pub fn load<P: AsRef<Path>>(
-        log: &Logger, path: P, scale: f32
+        log: &Logger, factory: &Factory<T>, path: P, scale: f32
     ) -> Self {
         // TODO: Change unwraps to proper error handling
         info!(log, "Loading model"; "path" => path.as_ref().display().to_string());
@@ -29,7 +32,7 @@ impl Model {
         let obj_set = obj::parse(obj_file_data).unwrap();
 
         // Convert all the objects to meshes
-        let meshes = Self::obj_set_to_meshes(log, &obj_set, scale);
+        let meshes = Self::obj_set_to_meshes(log, factory, &obj_set, scale);
 
         Model {
             meshes
@@ -37,8 +40,8 @@ impl Model {
     }
 
     fn obj_set_to_meshes(
-        log: &Logger, obj_set: &ObjSet, scale: f32
-    ) -> Vec<Arc<Mesh>> {
+        log: &Logger, factory: &Factory<T>, obj_set: &ObjSet, scale: f32
+    ) -> Vec<Arc<Mesh<T, WT>>> {
         let mut meshes = Vec::new();
 
         // Go over all objects in the file
@@ -70,7 +73,7 @@ impl Model {
 
             // Convert the vertices to a mesh
             let v = mesh::flat_vertices_to_indexed(&vertices);
-            meshes.push(Mesh::new(v.0, v.1));
+            meshes.push(Mesh::new(log, factory, v.0, v.1));
         }
 
         meshes

@@ -4,10 +4,10 @@ use cgmath::{Vector3, InnerSpace};
 use calcium_rendering::{BackendTypes};
 
 use mesh::{Mesh};
-use {Material};
+use {Material, WorldBackendTypes};
 
-pub struct RenderWorld<T: BackendTypes> {
-    entities: Vec<Option<Entity<T>>>,
+pub struct RenderWorld<T: BackendTypes, WT: WorldBackendTypes<T>> {
+    entities: Vec<Option<Entity<T, WT>>>,
     lights: Vec<Light>,
 
     pub ambient_light: Vector3<f32>,
@@ -15,7 +15,7 @@ pub struct RenderWorld<T: BackendTypes> {
     pub directional_direction: Vector3<f32>,
 }
 
-impl<T: BackendTypes> RenderWorld<T> {
+impl<T: BackendTypes, WT: WorldBackendTypes<T>> RenderWorld<T, WT> {
     pub fn new() -> Self {
         RenderWorld {
             entities: Vec::new(),
@@ -27,7 +27,7 @@ impl<T: BackendTypes> RenderWorld<T> {
         }
     }
 
-    pub fn add_entity(&mut self, entity: Entity<T>) -> EntityId {
+    pub fn add_entity(&mut self, entity: Entity<T, WT>) -> EntityId {
         // TODO: Find an empty entity
 
         self.entities.push(Some(entity));
@@ -39,11 +39,11 @@ impl<T: BackendTypes> RenderWorld<T> {
         self.entities[id.0] = None;
     }
 
-    pub fn entities(&self) -> &Vec<Option<Entity<T>>> {
+    pub fn entities(&self) -> &Vec<Option<Entity<T, WT>>> {
         &self.entities
     }
 
-    pub fn entity_mut(&mut self, id: EntityId) -> &mut Entity<T> {
+    pub fn entity_mut(&mut self, id: EntityId) -> &mut Entity<T, WT> {
         self.entities[id.0].as_mut().unwrap()
     }
 
@@ -67,9 +67,9 @@ pub struct EntityId(usize);
 #[derive(Copy, Clone)]
 pub struct LightId(usize);
 
-pub struct Entity<T: BackendTypes> {
+pub struct Entity<T: BackendTypes, WT: WorldBackendTypes<T>> {
     pub position: Vector3<f32>,
-    pub mesh: Arc<Mesh>,
+    pub mesh: Arc<Mesh<T, WT>>,
     pub material: Material<T>,
 }
 

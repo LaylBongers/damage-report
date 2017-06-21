@@ -7,12 +7,14 @@ extern crate vulkano;
 extern crate calcium_rendering;
 
 mod backend_types;
+mod factory;
 mod render_backend;
 mod target_swapchain;
 mod target;
 mod texture_backend;
 
 pub use backend_types::{VulkanoBackendTypes};
+pub use factory::{VulkanoFactoryBackend};
 pub use render_backend::{VulkanoRenderBackend, VulkanoFrame};
 pub use target_swapchain::{TargetSwapchain};
 pub use target::{VulkanoTargetSystem};

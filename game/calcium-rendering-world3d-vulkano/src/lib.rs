@@ -13,9 +13,8 @@ mod backend_types;
 mod geometry_buffer;
 mod geometry_renderer;
 mod lighting_renderer;
-mod mesh;
+pub mod mesh;
 mod world_render_backend;
 
 pub use backend_types::{VulkanoWorldBackendTypes};
-pub use mesh::{VulkanoMeshBackend, VkVertex, BackendMeshes};
 pub use world_render_backend::{VulkanoWorldRenderBackend};

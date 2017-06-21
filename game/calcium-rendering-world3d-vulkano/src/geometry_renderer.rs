@@ -18,7 +18,7 @@ use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity};
 
 use geometry_buffer::{GeometryBuffer};
-use {BackendMeshes};
+use {VulkanoWorldBackendTypes};
 
 pub struct GeometryRenderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
@@ -37,10 +37,10 @@ impl GeometryRenderer {
     }
 
     pub fn build_command_buffer(
-        &self, log: &Logger,
+        &self,
         backend: &mut VulkanoRenderBackend,
-        meshes: &mut BackendMeshes, geometry_buffer: &GeometryBuffer,
-        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes>,
+        geometry_buffer: &GeometryBuffer,
+        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes, VulkanoWorldBackendTypes>,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             backend.device.clone(), backend.graphics_queue.family()
@@ -71,7 +71,8 @@ impl GeometryRenderer {
         for entity in world.entities() {
             if let &Some(ref entity) = entity {
                 command_buffer_builder = self.render_entity(
-                    log, entity, backend, meshes,
+                    entity,
+                    backend,
                     &projection_view, &culling_frustum,
                     command_buffer_builder
                 );
@@ -83,23 +84,14 @@ impl GeometryRenderer {
     }
 
     fn render_entity(
-        &self, log: &Logger,
-        entity: &Entity<VulkanoBackendTypes>,
-        backend: &mut VulkanoRenderBackend, meshes: &mut BackendMeshes,
-        projection_view: &Matrix4<f32>,
-        culling_frustum: &Frustum<f32>,
+        &self,
+        entity: &Entity<VulkanoBackendTypes, VulkanoWorldBackendTypes>,
+        backend: &mut VulkanoRenderBackend,
+        projection_view: &Matrix4<f32>, culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,
     ) -> AutoCommandBufferBuilder {
-        // Retrieve the backend mesh for the frontend mesh
-        // TODO: Migrate this to a backend field on meshes similar to Texture
-        let mesh = if let Some(mesh) = meshes.request_mesh(&log, backend, &entity.mesh) {
-            mesh
-        } else {
-            return command_buffer;
-        };
-
         // Check if this entity's mesh is visible to the current camera
-        let mut culling_sphere = mesh.culling_sphere;
+        let mut culling_sphere = entity.mesh.backend.culling_sphere;
         culling_sphere.center.x += entity.position.x;
         culling_sphere.center.y += entity.position.y;
         culling_sphere.center.z += entity.position.z;
@@ -141,7 +133,8 @@ impl GeometryRenderer {
         command_buffer
             .draw_indexed(
                 self.pipeline.clone(), DynamicState::none(),
-                vec!(mesh.vertex_buffer.clone()), mesh.index_buffer.clone(),
+                vec!(entity.mesh.backend.vertex_buffer.clone()),
+                entity.mesh.backend.index_buffer.clone(),
                 set, ()
             ).unwrap()
     }
@@ -187,7 +180,7 @@ fn load_pipeline(
 
         .render_pass(Subpass::from(gbuffer_render_pass, 0).unwrap())
         .build(backend.device.clone()).unwrap()
-    ) as Arc<GraphicsPipeline<SingleBufferDefinition<::VkVertex>, _, _>>
+    ) as Arc<GraphicsPipeline<SingleBufferDefinition<::mesh::VkVertex>, _, _>>
 }
 
 fn create_projection_view_matrix(

@@ -9,14 +9,12 @@ use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend};
 use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
-use mesh::{BackendMeshes};
 use {VulkanoWorldBackendTypes};
 
 pub struct VulkanoWorldRenderBackend {
     pub geometry_buffer: GeometryBuffer,
     geometry_renderer: GeometryRenderer,
     lighting_renderer: LightingRenderer,
-    meshes: BackendMeshes,
 }
 
 impl VulkanoWorldRenderBackend {
@@ -34,17 +32,16 @@ impl VulkanoWorldRenderBackend {
             geometry_buffer,
             geometry_renderer,
             lighting_renderer,
-            meshes: BackendMeshes::new(),
         }
     }
 }
 
 impl WorldRenderBackend<VulkanoBackendTypes, VulkanoWorldBackendTypes> for VulkanoWorldRenderBackend {
     fn render(
-        &mut self, log: &Logger,
+        &mut self, _log: &Logger,
         render_system: &mut RenderSystem<VulkanoBackendTypes>,
         frame: &mut VulkanoFrame,
-        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes>
+        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes, VulkanoWorldBackendTypes>
     ) {
         // This is a deferred renderer, so what we will do is first build up the "geometry buffer",
         //  which is a framebuffer made up from various images to keep track of the data needed for
@@ -61,7 +58,7 @@ impl WorldRenderBackend<VulkanoBackendTypes, VulkanoWorldBackendTypes> for Vulka
         //  to actually render triangles to buffers. No actual rendering is done here, we just
         //  prepare the render passes and drawcalls.
         let geometry_command_buffer = self.geometry_renderer.build_command_buffer(
-            log, &mut render_system.backend, &mut self.meshes, &self.geometry_buffer, camera, world
+            &mut render_system.backend, &self.geometry_buffer, camera, world
         ).build().unwrap();
         let lighting_command_buffer = self.lighting_renderer.build_command_buffer(
             &mut render_system.backend, frame, &self.geometry_buffer, camera, world

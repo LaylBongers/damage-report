@@ -164,5 +164,5 @@ impl RenderBackend<VulkanoBackendTypes> for VulkanoRenderBackend {
 pub struct VulkanoFrame {
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     pub image_num: usize,
-    pub future: Option<Box<GpuFuture>>,
+    pub future: Option<Box<GpuFuture + Send + Sync>>,
 }

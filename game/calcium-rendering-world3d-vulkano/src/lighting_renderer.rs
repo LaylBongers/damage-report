@@ -16,6 +16,7 @@ use calcium_rendering_vulkano_shaders::{lighting_vs, lighting_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld};
 
 use geometry_buffer::{GeometryBuffer};
+use {VulkanoWorldBackendTypes};
 
 pub struct LightingRenderer {
     lighting_pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
@@ -48,7 +49,7 @@ impl LightingRenderer {
     pub fn build_command_buffer(
         &mut self,
         backend: &mut VulkanoRenderBackend, frame: &VulkanoFrame, geometry_buffer: &GeometryBuffer,
-        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes>,
+        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes, VulkanoWorldBackendTypes>,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             backend.device.clone(), backend.graphics_queue.family()

@@ -9,7 +9,7 @@ use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::{TextureFormat, TextureBackend};
+use calcium_rendering::texture::{TextureFormat, TextureBackend};
 use {VulkanoBackendTypes, VulkanoRenderBackend};
 
 pub struct VulkanoTextureBackend {
@@ -24,7 +24,7 @@ impl VulkanoTextureBackend {
 }
 
 impl TextureBackend<VulkanoBackendTypes> for VulkanoTextureBackend {
-    fn load(
+    fn new(
         log: &Logger, backend: &mut VulkanoRenderBackend, path: PathBuf, format: TextureFormat
     ) -> Self {
         // Load in the image file

@@ -13,7 +13,7 @@ impl<T: BackendTypes> Texture<T> {
     pub fn new<P: Into<PathBuf>>(
         log: &Logger, render_system: &mut RenderSystem<T>, path: P, format: TextureFormat
     ) -> Arc<Self> {
-        let backend = T::TextureBackend::load(log, &mut render_system.backend, path.into(), format);
+        let backend = T::TextureBackend::new(log, &mut render_system.backend, path.into(), format);
 
         Arc::new(Texture {
             backend,
@@ -29,5 +29,5 @@ pub enum TextureFormat {
 }
 
 pub trait TextureBackend<T: BackendTypes> {
-    fn load(log: &Logger, backend: &mut T::RenderBackend, path: PathBuf, format: TextureFormat) -> Self;
+    fn new(log: &Logger, backend: &mut T::RenderBackend, path: PathBuf, format: TextureFormat) -> Self;
 }

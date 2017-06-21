@@ -1,5 +1,7 @@
 use std::marker::{PhantomData};
+
 use slog::{Logger};
+
 use calcium_rendering::{RenderSystem, BackendTypes};
 use {Camera, RenderWorld, WorldBackendTypes};
 
@@ -24,7 +26,7 @@ impl<T: BackendTypes, WT: WorldBackendTypes<T>> WorldRenderSystem<T, WT> {
         &mut self, log: &Logger,
         render_system: &mut RenderSystem<T>,
         frame: &mut T::Frame,
-        camera: &Camera, world: &RenderWorld<T>,
+        camera: &Camera, world: &RenderWorld<T, WT>,
     ) {
         self.backend.render(log, render_system, frame, camera, world);
     }
@@ -35,6 +37,6 @@ pub trait WorldRenderBackend<T: BackendTypes, WT: WorldBackendTypes<T>> {
         &mut self, log: &Logger,
         render_system: &mut RenderSystem<T>,
         frame: &mut T::Frame,
-        camera: &Camera, world: &RenderWorld<T>
+        camera: &Camera, world: &RenderWorld<T, WT>
     );
 }

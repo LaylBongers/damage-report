@@ -7,38 +7,35 @@ use slog::{Logger};
 use noise::{Fbm, Point2, NoiseModule};
 use num::{clamp};
 
+use calcium_rendering::{BackendTypes, RenderSystem, Factory};
 use calcium_rendering_world3d::mesh::{self, Mesh};
-use calcium_rendering_world3d::{EntityId};
+use calcium_rendering_world3d::{EntityId, WorldBackendTypes};
 
 use voxel_grid::{VoxelGrid};
 
-pub struct VoxelSystem {
+pub struct VoxelSystem<T: BackendTypes, WT: WorldBackendTypes<T>> {
     chunks: Vec<ChunkEntry>,
-    _chunk_load_thread: JoinHandle<()>,
-    chunk_load_sender: Sender<ClrCommand>,
-    chunk_load_return_receiver: Receiver<(Vector2<i32>, Arc<Mesh>)>,
+    load_workers: Vec<LoadWorker<T, WT>>,
+    which_worker: usize,
 }
 
-impl VoxelSystem {
-    pub fn new(log: &Logger) -> Self {
-        // Spawn the chunk loading thread
-        let (chunk_load_sender, chunk_load_receiver) = mpsc::channel();
-        let (chunk_load_return_sender, chunk_load_return_receiver) = mpsc::channel();
-        let thread_log = log.clone();
-        let _chunk_load_thread = thread::Builder::new()
-            .spawn(move || {
-                chunk_load_runtime(thread_log, chunk_load_receiver, chunk_load_return_sender);
-            }).unwrap();
+impl<T: BackendTypes, WT: WorldBackendTypes<T>> VoxelSystem<T, WT> {
+    pub fn new(log: &Logger, render_system: &RenderSystem<T>) -> Self {
+        let load_workers = vec!(
+            LoadWorker::new(log, render_system),
+            LoadWorker::new(log, render_system),
+            LoadWorker::new(log, render_system),
+            LoadWorker::new(log, render_system),
+        );
 
         VoxelSystem {
             chunks: Vec::new(),
-            _chunk_load_thread,
-            chunk_load_sender,
-            chunk_load_return_receiver,
+            load_workers,
+            which_worker: 0,
         }
     }
 
-    pub fn update<L: LoaderUnloader>(
+    pub fn update<L: LoaderUnloader<T, WT>>(
         &mut self, _log: &Logger,
         top_player_pos: Vector2<f32>,
         mut loader: L
@@ -81,7 +78,9 @@ impl VoxelSystem {
                 }
 
                 // It's not in the list yet, submit this chunk for loading and add it
-                self.chunk_load_sender.send(ClrCommand::Load(chunk)).unwrap();
+                self.load_workers[self.which_worker].load(chunk);
+                self.which_worker += 1;
+                if self.which_worker >= self.load_workers.len() { self.which_worker = 0; }
                 self.chunks.push(ChunkEntry {
                     chunk,
                     entity: None,
@@ -90,17 +89,23 @@ impl VoxelSystem {
         }
 
         // Check if we got back any meshes from the chunk generation backend
-        while let Ok(value) = self.chunk_load_return_receiver.try_recv() {
-            // Try to find a chunk for this returned mesh
-            if let Some(ref mut chunk) = self.chunks.iter_mut().find(|c| c.chunk == value.0) {
-                assert!(chunk.entity.is_none());
-                let offset = chunk.chunk.cast() * 32.0;
+        {
+            let chunks = &mut self.chunks;
+            for worker in &self.load_workers {
+                worker.for_received(|chunk_pos, mesh| {
+                    // Try to find a chunk for this returned mesh
+                    if let Some(ref mut chunk) = chunks.iter_mut().find(|c| c.chunk == chunk_pos) {
+                        assert!(chunk.entity.is_none());
+                        let offset = chunk.chunk.cast() * 32.0;
 
-                loader.load(chunk, offset, value.1);
+                        loader.load(chunk, offset, mesh);
+                    }
+
+                    // If we couldn't find a stored chunk, it was probably removed before we got a
+                    //  mesh back from the load thread.
+                    // TODO: Avoid loading in already removed chunks
+                });
             }
-
-            // If we couldn't find a stored chunk, it was probably removed before we got a mesh
-            //  back from the load thread. TODO: Avoid loading in already removed chunks
         }
 
         // Eliminate any chunks too far away
@@ -120,9 +125,11 @@ impl VoxelSystem {
     }
 }
 
-impl Drop for VoxelSystem {
+impl<T: BackendTypes, WT: WorldBackendTypes<T>> Drop for VoxelSystem<T, WT> {
     fn drop(&mut self) {
-        self.chunk_load_sender.send(ClrCommand::Stop).unwrap();
+        for worker in &self.load_workers {
+            worker.stop();
+        }
     }
 }
 
@@ -131,13 +138,58 @@ pub struct ChunkEntry {
     pub entity: Option<EntityId>,
 }
 
+struct LoadWorker<T: BackendTypes, WT: WorldBackendTypes<T>> {
+    _thread: JoinHandle<()>,
+    sender: Sender<ClrCommand>,
+    return_receiver: Receiver<(Vector2<i32>, Arc<Mesh<T, WT>>)>,
+}
+
+impl<T: BackendTypes, WT: WorldBackendTypes<T>> LoadWorker<T, WT> {
+    fn new(log: &Logger, render_system: &RenderSystem<T>) -> Self {
+        let factory = Factory::new(render_system);
+
+        // Spawn the chunk loading thread
+        let (sender, receiver) = mpsc::channel();
+        let (return_sender, return_receiver) = mpsc::channel();
+        let thread_log = log.clone();
+        let _thread = thread::Builder::new()
+            .spawn(move || {
+                chunk_load_runtime(
+                    thread_log, factory,
+                    receiver, return_sender
+                );
+            }).unwrap();
+
+        LoadWorker {
+            _thread,
+            sender,
+            return_receiver,
+        }
+    }
+
+    fn load(&self, chunk: Vector2<i32>) {
+        self.sender.send(ClrCommand::Load(chunk)).unwrap();
+    }
+
+    fn for_received<F: FnMut(Vector2<i32>, Arc<Mesh<T, WT>>)>(&self, mut func: F) {
+        while let Ok(value) = self.return_receiver.try_recv() {
+            func(value.0, value.1);
+        }
+    }
+
+    fn stop(&self) {
+        self.sender.send(ClrCommand::Stop).unwrap();
+    }
+}
+
 enum ClrCommand {
     Load(Vector2<i32>),
     Stop
 }
 
-fn chunk_load_runtime(
-    log: Logger, receiver: Receiver<ClrCommand>, sender: Sender<(Vector2<i32>, Arc<Mesh>)>
+fn chunk_load_runtime<T: BackendTypes, WT: WorldBackendTypes<T>>(
+    log: Logger, factory: Factory<T>,
+    receiver: Receiver<ClrCommand>, sender: Sender<(Vector2<i32>, Arc<Mesh<T, WT>>)>
 ) {
     let chunk_size = 32;
     let noise = Fbm::new();
@@ -156,7 +208,7 @@ fn chunk_load_runtime(
                     let (vertices, indices) = mesh::flat_vertices_to_indexed(&triangles);
 
                     // Create a mesh from the triangle data
-                    let mesh = Mesh::new(vertices, indices);
+                    let mesh = Mesh::new(&log, &factory, vertices, indices);
 
                     // Return the mesh so the main thread can add it
                     sender.send((chunk, mesh)).unwrap();
@@ -194,7 +246,7 @@ fn generate_chunk<N: NoiseModule<Point2<f32>, Output=f32>>(
     voxels
 }
 
-pub trait LoaderUnloader {
-    fn load(&mut self, entry: &mut ChunkEntry, offset: Vector2<f32>, mesh: Arc<Mesh>);
+pub trait LoaderUnloader<T: BackendTypes, WT: WorldBackendTypes<T>> {
+    fn load(&mut self, entry: &mut ChunkEntry, offset: Vector2<f32>, mesh: Arc<Mesh<T, WT>>);
     fn unload(&mut self, entity_id: EntityId);
 }
