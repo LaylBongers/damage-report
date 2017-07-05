@@ -7,6 +7,7 @@ use calcium_rendering::texture::{Texture, TextureFormat};
 use calcium_rendering::{BackendTypes, RenderSystem};
 use calcium_rendering_world3d::mesh::{Mesh};
 use calcium_rendering_world3d::{RenderWorld, Entity, Material, EntityId, WorldBackendTypes};
+use calcium_voxel::{PagedVoxels, PagedVoxelsView};
 
 use input::{InputState, FrameInput};
 use player::{Player};
@@ -14,8 +15,10 @@ use voxel_system::{VoxelSystem, ChunkEntry};
 
 pub struct GameWorld<T: BackendTypes, WT: WorldBackendTypes<T>> {
     pub player: Player,
-    voxel_system: VoxelSystem<T, WT>,
-    voxel_material: Material<T>,
+    voxels: PagedVoxels,
+    voxels_view: PagedVoxelsView,
+    voxels_material: Material<T>,
+    _wt: ::std::marker::PhantomData<WT>,
 }
 
 impl<T: BackendTypes, WT: WorldBackendTypes<T>> GameWorld<T, WT> {
@@ -27,7 +30,13 @@ impl<T: BackendTypes, WT: WorldBackendTypes<T>> GameWorld<T, WT> {
         world.ambient_light = Vector3::new(0.015, 0.015, 0.02);
         world.directional_light = Vector3::new(1.0, 0.9, 0.8);
 
-        let voxel_material = Material {
+        // Initialize the voxel map, setting it up for this game's terrain generation
+        let voxels = PagedVoxels::new();
+
+        // Initialize the voxel map view, which creates visible meshes around the player
+        let voxels_view = PagedVoxelsView::new();
+
+        let voxels_material = Material {
             base_color: Texture::new(
                 log, render_system, "./assets/texture_base_color.png", TextureFormat::Srgb
             ),
@@ -44,8 +53,10 @@ impl<T: BackendTypes, WT: WorldBackendTypes<T>> GameWorld<T, WT> {
 
         GameWorld {
             player,
-            voxel_system: VoxelSystem::new(log, render_system),
-            voxel_material,
+            voxels,
+            voxels_view,
+            voxels_material,
+            _wt: Default::default(),
         }
     }
 
@@ -59,13 +70,15 @@ impl<T: BackendTypes, WT: WorldBackendTypes<T>> GameWorld<T, WT> {
 
         // Update which voxel chunks are active around the player
         let top_player_pos = Vector2::new(self.player.position.x, self.player.position.z);
-        self.voxel_system.update(log, top_player_pos, LoaderUnloader {
-            render_world, voxel_material: &self.voxel_material
-        });
+        self.voxels_view.update(&mut self.voxels);
+        //self.voxel_system.update(log, top_player_pos, LoaderUnloader {
+        //    log: log.clone(), render_world, voxel_material: &self.voxel_material
+        //});
     }
 }
 
-struct LoaderUnloader<'a, T: BackendTypes, WT: WorldBackendTypes<T>> {
+/*struct LoaderUnloader<'a, T: BackendTypes, WT: WorldBackendTypes<T>> {
+    log: Logger,
     render_world: &'a mut RenderWorld<T, WT>,
     voxel_material: &'a Material<T>,
 }
@@ -73,6 +86,12 @@ struct LoaderUnloader<'a, T: BackendTypes, WT: WorldBackendTypes<T>> {
 impl<'a, T: BackendTypes, WT: WorldBackendTypes<T>>
     ::voxel_system::LoaderUnloader<T, WT> for LoaderUnloader<'a, T, WT> {
     fn load(&mut self, entry: &mut ChunkEntry, offset: Vector2<f32>, mesh: Arc<Mesh<T, WT>>) {
+        // If there already is an entity here, remove it
+        if let Some(entity) = entry.entity {
+            debug!(self.log, "Replacing existing terrain chunk");
+            self.render_world.remove_entity(entity);
+        }
+
         // Add the mesh to an entity in the world
         let entity = self.render_world.add_entity(Entity {
             position: Vector3::new(offset.x, 0.0, offset.y),
@@ -86,4 +105,4 @@ impl<'a, T: BackendTypes, WT: WorldBackendTypes<T>>
         // TODO: The mesh is not cleaned up yet, implement this in calcium
         self.render_world.remove_entity(entity_id);
     }
-}
+}*/

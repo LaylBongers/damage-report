@@ -1,5 +1,5 @@
 [package]
-name = "calcium"
+name = "calcium-rendering-static"
 version = "0.0.1"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 description = "The future home of the calcium rendering library"

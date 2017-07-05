@@ -11,7 +11,7 @@ use calcium_rendering::{BackendTypes, RenderSystem, Factory};
 use calcium_rendering_world3d::mesh::{self, Mesh};
 use calcium_rendering_world3d::{EntityId, WorldBackendTypes};
 
-use voxel_grid::{VoxelGrid};
+use calcium_voxel::{VoxelGrid};
 
 pub struct VoxelSystem<T: BackendTypes, WT: WorldBackendTypes<T>> {
     chunks: Vec<ChunkEntry>,
@@ -40,7 +40,8 @@ impl<T: BackendTypes, WT: WorldBackendTypes<T>> VoxelSystem<T, WT> {
         top_player_pos: Vector2<f32>,
         mut loader: L
     ) {
-        let view_radius = 150.0;
+        // TODO: The goal is to get this to 1000.0 at 60 FPS on a decent PC
+        let view_radius = 250.0;
         // This is larger to give a bit of slack between loading and unloading, so when a player
         //  moves around a bit in a small area it won't constantly keep loading/unloading the same
         //  chunks.
@@ -95,7 +96,6 @@ impl<T: BackendTypes, WT: WorldBackendTypes<T>> VoxelSystem<T, WT> {
                 worker.for_received(|chunk_pos, mesh| {
                     // Try to find a chunk for this returned mesh
                     if let Some(ref mut chunk) = chunks.iter_mut().find(|c| c.chunk == chunk_pos) {
-                        assert!(chunk.entity.is_none());
                         let offset = chunk.chunk.cast() * 32.0;
 
                         loader.load(chunk, offset, mesh);

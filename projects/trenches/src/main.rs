@@ -1,9 +1,10 @@
 extern crate cgmath;
 extern crate calcium;
+extern crate calcium_game;
 extern crate calcium_rendering;
 extern crate calcium_rendering_vulkano;
 extern crate calcium_rendering_world3d;
-extern crate calcium_game;
+extern crate calcium_voxel;
 extern crate noise;
 extern crate num;
 #[macro_use]
@@ -18,7 +19,6 @@ mod game_world;
 mod input;
 mod player;
 mod target;
-mod voxel_grid;
 mod voxel_system;
 
 use slog::{Logger, Drain};

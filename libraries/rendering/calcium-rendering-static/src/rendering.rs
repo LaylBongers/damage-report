@@ -4,6 +4,8 @@ use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoRenderBackend, Vulka
 use calcium_rendering_world3d::{WorldBackendTypes, WorldRenderSystem};
 use calcium_rendering_world3d_vulkano::{VulkanoWorldBackendTypes, VulkanoWorldRenderBackend};
 
+use {Backend};
+
 // TODO: Replace vulkano target with generic target system
 pub fn run_with_backend<T: VulkanoTargetSystem, R: StaticRuntime<T>>(
     log: &Logger, backend: Backend, mut target: T, runtime: R
@@ -21,13 +23,6 @@ pub fn run_with_backend<T: VulkanoTargetSystem, R: StaticRuntime<T>>(
         Backend::GfxOpenGl => unimplemented!(),
         Backend::GfxDirectX => unimplemented!(),
     }
-}
-
-#[allow(dead_code)]
-pub enum Backend {
-    Vulkano,
-    GfxOpenGl,
-    GfxDirectX,
 }
 
 // TODO: Replace vulkano target with generic target system

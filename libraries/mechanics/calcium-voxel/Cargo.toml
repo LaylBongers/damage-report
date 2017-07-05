@@ -1,0 +1,8 @@
+[package]
+name = "calcium-voxel"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+cgmath = "0.14.1"
+calcium-rendering-world3d = {path = "../calcium-rendering-world3d"}
