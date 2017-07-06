@@ -55,13 +55,20 @@ struct GameRuntime {
 impl StaticGameRuntime for GameRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
         // TODO: Replace vulkano target with generic target system
+        // TODO: This overall should be redesigned, its naming conflicts with other things that can
+        //  be called a target more appropriately, and windows should only be created when
+        //  requested from the render_system.
         let mut target = WinitTargetSystem::new();
 
-        // Initialize the various systems
-        let _render_system = init.render_system(&self.log, &mut target);
+        // Initialize everything we need to render
+        let mut render_system = init.render_system(&self.log, &mut target)?;
+        // TODO: let window = init.window(&render_system);
 
-        // Hang on the event loop for now
-        while target.handle_events() {}
+        // Run the actual game loop
+        while target.handle_events() {
+            let frame = render_system.start_frame();
+            render_system.finish_frame(frame);
+        }
 
         Ok(())
     }
