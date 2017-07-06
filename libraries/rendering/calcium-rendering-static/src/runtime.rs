@@ -1,9 +1,11 @@
+use cgmath::{Vector2};
 use slog::{Logger};
 
-use calcium_rendering::{Error, RenderSystem, BackendTypes};
-use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoRenderBackend, VulkanoTargetSystem};
+use calcium_rendering::{Error};
+use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoSystemContext, VulkanoWindowRenderer, VulkanoRenderer};
+use calcium_window_winit::{self, WinitWindow};
 
-use {Backend};
+use {Backend, Initializer};
 
 pub fn run_runtime<R: StaticGameRuntime>(backend: Backend, runtime: R) -> Result<(), Error> {
     match backend {
@@ -19,26 +21,32 @@ pub trait StaticGameRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error>;
 }
 
-pub trait Initializer {
-    type BackendTypes: BackendTypes;
-
-    fn render_system<T: VulkanoTargetSystem>(
-        &self, log: &Logger, target: &mut T
-    ) -> Result<RenderSystem<Self::BackendTypes>, Error>;
-}
-
 struct VulkanoInitializer;
 
 impl Initializer for VulkanoInitializer {
     type BackendTypes = VulkanoBackendTypes;
+    type Window = WinitWindow;
 
-    fn render_system<T: VulkanoTargetSystem>(
-        &self, log: &Logger, target: &mut T
-    ) -> Result<RenderSystem<VulkanoBackendTypes>, Error> {
-        let render = VulkanoRenderBackend::new(log, target)?;
-        let render_system: RenderSystem<VulkanoBackendTypes> =
-            RenderSystem::new(log, render);
+    fn system_context(
+        &self, log: &Logger,
+    ) -> Result<VulkanoSystemContext, Error> {
+        VulkanoSystemContext::new(log, calcium_window_winit::required_extensions())
+    }
 
-        Ok(render_system)
+    fn window(
+        &self, system_context: &VulkanoSystemContext, title: &str, size: Vector2<u32>,
+    ) -> (WinitWindow, VulkanoWindowRenderer) {
+        let window = WinitWindow::new_vulkano(system_context.instance.clone(), title, size);
+        let window_renderer = VulkanoWindowRenderer::new(window.surface.clone(), size);
+
+        (window, window_renderer)
+    }
+
+    fn renderer(
+        &self,
+        log: &Logger, system_context: &VulkanoSystemContext,
+        windows: &mut [&mut VulkanoWindowRenderer]
+    ) -> Result<VulkanoRenderer, Error> {
+        VulkanoRenderer::new(log, system_context, windows)
     }
 }

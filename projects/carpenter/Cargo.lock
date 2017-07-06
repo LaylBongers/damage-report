@@ -4,14 +4,11 @@ version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-static 0.0.1",
- "calcium-rendering-vulkano 0.1.0",
+ "calcium-window 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog-async 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog-term 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "vulkano 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "vulkano-win 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "winit 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -65,6 +62,9 @@ dependencies = [
  "calcium-rendering-vulkano 0.1.0",
  "calcium-rendering-world3d 0.1.0",
  "calcium-rendering-world3d-vulkano 0.1.0",
+ "calcium-window 0.1.0",
+ "calcium-window-winit 0.1.0",
+ "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -109,6 +109,21 @@ dependencies = [
  "collision 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "calcium-window"
+version = "0.1.0"
+
+[[package]]
+name = "calcium-window-winit"
+version = "0.1.0"
+dependencies = [
+ "calcium-window 0.1.0",
+ "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vulkano 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vulkano-win 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winit 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

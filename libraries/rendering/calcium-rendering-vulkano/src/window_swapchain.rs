@@ -11,7 +11,7 @@ use vulkano::sync::{GpuFuture};
 use vulkano::image::attachment::{AttachmentImage};
 
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
-pub struct TargetSwapchain {
+pub struct WindowSwapchain {
     pub swapchain: Arc<Swapchain>,
     pub depth_attachment: Arc<AttachmentImage<format::D32Sfloat_S8Uint>>,
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
@@ -21,7 +21,7 @@ pub struct TargetSwapchain {
     submissions: Vec<Box<GpuFuture + Send + Sync>>,
 }
 
-impl TargetSwapchain {
+impl WindowSwapchain {
     pub fn new(
         log: &Logger, target_surface: &Arc<Surface>, size: Vector2<u32>,
         physical: PhysicalDevice, device: Arc<Device>, graphics_queue: &Arc<Queue>,
@@ -109,7 +109,7 @@ impl TargetSwapchain {
             ) as Arc<FramebufferAbstract + Send + Sync>
         }).collect::<Vec<_>>();
 
-        TargetSwapchain {
+        WindowSwapchain {
             swapchain,
             depth_attachment,
             render_pass,

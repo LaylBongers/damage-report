@@ -10,11 +10,9 @@ mod material;
 pub mod mesh;
 mod model;
 mod render_world;
-mod world_render_system;
 
 pub use backend_types::{WorldBackendTypes};
 pub use camera::{Camera};
 pub use material::{Material};
 pub use model::{Model};
 pub use render_world::{RenderWorld, Entity, Light, EntityId, LightId};
-pub use world_render_system::{WorldRenderSystem, WorldRenderBackend};

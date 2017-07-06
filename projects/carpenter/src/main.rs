@@ -1,25 +1,20 @@
 extern crate cgmath;
 extern crate calcium_rendering;
 extern crate calcium_rendering_static;
-extern crate calcium_rendering_vulkano;
+extern crate calcium_window;
 #[macro_use]
 extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
-extern crate vulkano;
-extern crate vulkano_win;
-extern crate winit;
 
-mod target;
-
+use cgmath::{Vector2};
 use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
 use calcium_rendering::{Error};
 use calcium_rendering_static::{Backend, StaticGameRuntime, Initializer};
-
-use target::{WinitTargetSystem};
+use calcium_window::{Window};
 
 fn main() {
     // Set up the logger
@@ -54,20 +49,18 @@ struct GameRuntime {
 
 impl StaticGameRuntime for GameRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
-        // TODO: Replace vulkano target with generic target system
-        // TODO: This overall should be redesigned, its naming conflicts with other things that can
-        //  be called a target more appropriately, and windows should only be created when
-        //  requested from the render_system.
-        let mut target = WinitTargetSystem::new();
-
         // Initialize everything we need to render
-        let mut render_system = init.render_system(&self.log, &mut target)?;
-        // TODO: let window = init.window(&render_system);
+        let system_context = init.system_context(&self.log)?;
+        let (mut window, mut window_renderer) = init.window(
+            &system_context, "Carpenter", Vector2::new(1280, 720)
+        );
+        let _renderer = init.renderer(&self.log, &system_context, &mut [&mut window_renderer])?;
 
         // Run the actual game loop
-        while target.handle_events() {
-            let frame = render_system.start_frame();
-            render_system.finish_frame(frame);
+        info!(self.log, "Starting game loop");
+        while window.handle_events() {
+            //let frame = window_renderer.start_frame();
+            //window_renderer.finish_frame(frame);
         }
 
         Ok(())

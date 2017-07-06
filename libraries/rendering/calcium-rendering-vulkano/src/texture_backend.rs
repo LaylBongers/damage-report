@@ -10,7 +10,7 @@ use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use calcium_rendering::texture::{TextureFormat, TextureBackend};
-use {VulkanoBackendTypes, VulkanoRenderBackend};
+use {VulkanoBackendTypes, VulkanoRenderer};
 
 pub struct VulkanoTextureBackend {
     image: Arc<ImmutableImage<Format>>,
@@ -25,7 +25,7 @@ impl VulkanoTextureBackend {
 
 impl TextureBackend<VulkanoBackendTypes> for VulkanoTextureBackend {
     fn new(
-        log: &Logger, backend: &mut VulkanoRenderBackend, path: PathBuf, format: TextureFormat
+        log: &Logger, backend: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
     ) -> Self {
         // Load in the image file
         info!(log, "Loading texture"; "path" => path.display().to_string());

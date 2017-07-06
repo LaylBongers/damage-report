@@ -3,7 +3,7 @@ use std::sync::{Arc};
 use vulkano::device::{Device, Queue};
 
 use calcium_rendering::{FactoryBackend};
-use {VulkanoBackendTypes, VulkanoRenderBackend};
+use {VulkanoBackendTypes, VulkanoRenderer};
 
 pub struct VulkanoFactoryBackend {
     pub device: Arc<Device>,
@@ -11,10 +11,10 @@ pub struct VulkanoFactoryBackend {
 }
 
 impl FactoryBackend<VulkanoBackendTypes> for VulkanoFactoryBackend {
-    fn new(backend: &VulkanoRenderBackend) -> Self {
+    fn new(renderer: &VulkanoRenderer) -> Self {
         VulkanoFactoryBackend {
-            device: backend.device.clone(),
-            graphics_queue: backend.graphics_queue.clone(),
+            device: renderer.device.clone(),
+            graphics_queue: renderer.graphics_queue.clone(),
         }
     }
 }

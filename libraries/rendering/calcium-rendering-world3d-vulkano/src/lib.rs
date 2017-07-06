@@ -10,11 +10,11 @@ extern crate calcium_rendering_vulkano_shaders;
 extern crate calcium_rendering_world3d;
 
 mod backend_types;
-mod geometry_buffer;
-mod geometry_renderer;
-mod lighting_renderer;
+//mod geometry_buffer;
+//mod geometry_renderer;
+//mod lighting_renderer;
 pub mod mesh;
-mod world_render_backend;
+mod world_renderer;
 
 pub use backend_types::{VulkanoWorldBackendTypes};
-pub use world_render_backend::{VulkanoWorldRenderBackend};
+pub use world_renderer::{VulkanoWorldRenderer};

@@ -1,4 +1,4 @@
-use {BackendTypes, RenderSystem};
+use {BackendTypes};
 
 /// Contains all the data needed to create resources.
 pub struct Factory<T: BackendTypes> {
@@ -6,8 +6,8 @@ pub struct Factory<T: BackendTypes> {
 }
 
 impl<T: BackendTypes> Factory<T> {
-    pub fn new(render_system: &RenderSystem<T>) -> Self {
-        let backend = T::FactoryBackend::new(&render_system.backend);
+    pub fn new(renderer: &T::Renderer) -> Self {
+        let backend = T::FactoryBackend::new(&renderer);
 
         Factory {
             backend,
@@ -16,5 +16,5 @@ impl<T: BackendTypes> Factory<T> {
 }
 
 pub trait FactoryBackend<T: BackendTypes> {
-    fn new(backend: &T::RenderBackend) -> Self;
+    fn new(renderer: &T::Renderer) -> Self;
 }

@@ -1,41 +1,40 @@
 use slog::{Logger};
-use vulkano::sync::{GpuFuture};
+//use vulkano::sync::{GpuFuture};
 
-use calcium_rendering::{RenderSystem};
-use calcium_rendering_vulkano::{VulkanoFrame, VulkanoRenderBackend, VulkanoBackendTypes};
-use calcium_rendering_world3d::{Camera, RenderWorld, WorldRenderBackend};
+use calcium_rendering_vulkano::{VulkanoRenderer};
+//use calcium_rendering_world3d::{Camera, RenderWorld};
 
-use geometry_buffer::{GeometryBuffer};
-use geometry_renderer::{GeometryRenderer};
-use lighting_renderer::{LightingRenderer};
-use {VulkanoWorldBackendTypes};
+//use geometry_buffer::{GeometryBuffer};
+//use geometry_renderer::{GeometryRenderer};
+//use lighting_renderer::{LightingRenderer};
+//use {VulkanoWorldBackendTypes};
 
-pub struct VulkanoWorldRenderBackend {
-    pub geometry_buffer: GeometryBuffer,
-    geometry_renderer: GeometryRenderer,
-    lighting_renderer: LightingRenderer,
+pub struct VulkanoWorldRenderer {
+    //pub geometry_buffer: GeometryBuffer,
+    //geometry_renderer: GeometryRenderer,
+    //lighting_renderer: LightingRenderer,
 }
 
-impl VulkanoWorldRenderBackend {
-    pub fn new(log: &Logger, backend: &VulkanoRenderBackend) -> VulkanoWorldRenderBackend {
+impl VulkanoWorldRenderer {
+    pub fn new(log: &Logger, _renderer: &VulkanoRenderer) -> Self {
         info!(log, "Initializing world renderer");
 
-        let geometry_buffer = GeometryBuffer::new(
-            log, backend, backend.target_swapchain.depth_attachment.clone()
+        /*let geometry_buffer = GeometryBuffer::new(
+            log, renderer, renderer.target_swapchain.depth_attachment.clone()
         );
         let geometry_renderer = GeometryRenderer::new(log, backend, &geometry_buffer);
 
-        let lighting_renderer = LightingRenderer::new(log, backend);
+        let lighting_renderer = LightingRenderer::new(log, backend);*/
 
-        VulkanoWorldRenderBackend {
-            geometry_buffer,
+        VulkanoWorldRenderer {
+            /*geometry_buffer,
             geometry_renderer,
-            lighting_renderer,
+            lighting_renderer,*/
         }
     }
 }
 
-impl WorldRenderBackend<VulkanoBackendTypes, VulkanoWorldBackendTypes> for VulkanoWorldRenderBackend {
+/*impl WorldRenderBackend<VulkanoBackendTypes, VulkanoWorldBackendTypes> for VulkanoWorldRenderBackend {
     fn render(
         &mut self, _log: &Logger,
         render_system: &mut RenderSystem<VulkanoBackendTypes>,
@@ -73,4 +72,4 @@ impl WorldRenderBackend<VulkanoBackendTypes, VulkanoWorldBackendTypes> for Vulka
             .unwrap();
         frame.future = Some(Box::new(future));
     }
-}
+}*/
