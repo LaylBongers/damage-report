@@ -2,8 +2,6 @@ use std::sync::{Arc};
 
 use slog::{Logger};
 use vulkano::instance::{Instance, InstanceExtensions};
-use vulkano::sync::{GpuFuture};
-use vulkano::framebuffer::{FramebufferAbstract};
 
 use calcium_rendering::{Error, CalciumErrorMap};
 
@@ -83,9 +81,3 @@ impl VulkanoSystemContext {
         );
     }
 }*/
-
-pub struct VulkanoFrame {
-    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
-    pub image_num: usize,
-    pub future: Option<Box<GpuFuture + Send + Sync>>,
-}

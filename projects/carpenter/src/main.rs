@@ -12,7 +12,7 @@ use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
-use calcium_rendering::{Error};
+use calcium_rendering::{Error, WindowRenderer};
 use calcium_rendering_static::{Backend, StaticGameRuntime, Initializer};
 use calcium_window::{Window};
 
@@ -54,13 +54,13 @@ impl StaticGameRuntime for GameRuntime {
         let (mut window, mut window_renderer) = init.window(
             &system_context, "Carpenter", Vector2::new(1280, 720)
         );
-        let _renderer = init.renderer(&self.log, &system_context, &mut [&mut window_renderer])?;
+        let renderer = init.renderer(&self.log, &system_context, &mut [&mut window_renderer])?;
 
         // Run the actual game loop
         info!(self.log, "Starting game loop");
         while window.handle_events() {
-            //let frame = window_renderer.start_frame();
-            //window_renderer.finish_frame(frame);
+            let frame = window_renderer.start_frame();
+            window_renderer.finish_frame(&renderer, frame);
         }
 
         Ok(())

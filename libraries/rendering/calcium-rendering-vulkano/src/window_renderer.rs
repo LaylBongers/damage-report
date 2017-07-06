@@ -4,9 +4,12 @@ use cgmath::{Vector2};
 use vulkano::swapchain::{Surface};
 use vulkano::instance::{PhysicalDevice};
 use vulkano::device::{Device, Queue};
+use vulkano::sync::{GpuFuture};
+use vulkano::framebuffer::{FramebufferAbstract};
 use slog::{Logger};
 
-use {WindowSwapchain};
+use calcium_rendering::{WindowRenderer};
+use {WindowSwapchain, VulkanoBackendTypes, VulkanoRenderer};
 
 pub struct VulkanoWindowRenderer {
     pub size: Vector2<u32>,
@@ -36,4 +39,32 @@ impl VulkanoWindowRenderer {
 
         self.swapchain = Some(swapchain);
     }
+}
+
+impl WindowRenderer<VulkanoBackendTypes> for VulkanoWindowRenderer {
+    fn start_frame(&mut self) -> VulkanoFrame {
+        self.swapchain.as_mut().unwrap().clean_old_submissions();
+
+        // Get the image for this frame, along with a future that will let us queue up the order of
+        //  command buffer submissions.
+        let (framebuffer, image_num, future) = self.swapchain.as_ref().unwrap().start_frame();
+
+        VulkanoFrame {
+            framebuffer,
+            image_num,
+            future: Some(future),
+        }
+    }
+
+    fn finish_frame(&mut self, renderer: &VulkanoRenderer, mut frame: VulkanoFrame) {
+        self.swapchain.as_mut().unwrap().finish_frame(
+            frame.future.take().unwrap(), renderer.graphics_queue.clone(), frame.image_num
+        );
+    }
+}
+
+pub struct VulkanoFrame {
+    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
+    pub image_num: usize,
+    pub future: Option<Box<GpuFuture + Send + Sync>>,
 }
