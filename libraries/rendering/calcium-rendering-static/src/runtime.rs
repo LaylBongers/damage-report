@@ -33,20 +33,24 @@ impl Initializer for VulkanoInitializer {
         VulkanoSystemContext::new(log, calcium_window_winit::required_extensions())
     }
 
-    fn window(
-        &self, system_context: &VulkanoSystemContext, title: &str, size: Vector2<u32>,
-    ) -> (WinitWindow, VulkanoWindowRenderer) {
-        let window = WinitWindow::new_vulkano(system_context.instance.clone(), title, size);
-        let window_renderer = VulkanoWindowRenderer::new(window.surface.clone(), size);
-
-        (window, window_renderer)
+    fn renderer(
+        &self, log: &Logger,
+        system_context: &VulkanoSystemContext,
+    ) -> Result<VulkanoRenderer, Error> {
+        VulkanoRenderer::new(log, system_context)
     }
 
-    fn renderer(
-        &self,
-        log: &Logger, system_context: &VulkanoSystemContext,
-        windows: &mut [&mut VulkanoWindowRenderer]
-    ) -> Result<VulkanoRenderer, Error> {
-        VulkanoRenderer::new(log, system_context, windows)
+    fn window(
+        &self, log: &Logger,
+        system_context: &VulkanoSystemContext,
+        renderer: &VulkanoRenderer,
+        title: &str, size: Vector2<u32>,
+    ) -> (WinitWindow, VulkanoWindowRenderer) {
+        let window = WinitWindow::new_vulkano(system_context.instance.clone(), title, size);
+        let window_renderer = VulkanoWindowRenderer::new(
+            log, renderer, window.surface.clone(), size
+        );
+
+        (window, window_renderer)
     }
 }

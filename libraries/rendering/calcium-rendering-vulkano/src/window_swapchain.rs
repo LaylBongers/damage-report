@@ -2,13 +2,14 @@ use std::sync::{Arc};
 
 use cgmath::{Vector2};
 use slog::{Logger};
-use vulkano::device::{Device, Queue};
+use vulkano::device::{Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
 use vulkano::format::{self};
-use vulkano::instance::{PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform, Surface};
 use vulkano::sync::{GpuFuture};
 use vulkano::image::attachment::{AttachmentImage};
+
+use {VulkanoRenderer};
 
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
 pub struct WindowSwapchain {
@@ -23,8 +24,7 @@ pub struct WindowSwapchain {
 
 impl WindowSwapchain {
     pub fn new(
-        log: &Logger, target_surface: &Arc<Surface>, size: Vector2<u32>,
-        physical: PhysicalDevice, device: Arc<Device>, graphics_queue: &Arc<Queue>,
+        log: &Logger, renderer: &VulkanoRenderer, surface: &Arc<Surface>, size: Vector2<u32>,
     ) -> Self {
         // Now create the swapchain, we need this to actually swap between our back buffer and the
         //  window's front buffer, without it we can't show anything
@@ -32,7 +32,7 @@ impl WindowSwapchain {
         let (swapchain, images) = {
             // Get what the swap chain we want to create would be capable of, we can't request
             //  anything it can't do
-            let caps = target_surface.capabilities(physical).unwrap();
+            let caps = surface.capabilities(renderer.device.physical_device()).unwrap();
 
             // The swap chain's dimensions need to match the window size
             let dimensions = caps.current_extent.unwrap_or([size.x, size.y]);
@@ -52,9 +52,10 @@ impl WindowSwapchain {
 
             // Finally, actually create the swapchain, with all its color images
             Swapchain::new(
-                device.clone(), target_surface.clone(), caps.min_image_count, format,
+                renderer.device.clone(), surface.clone(), caps.min_image_count, format,
                 dimensions, 1,
-                caps.supported_usage_flags, graphics_queue, SurfaceTransform::Identity, alpha,
+                caps.supported_usage_flags, &renderer.graphics_queue,
+                SurfaceTransform::Identity, alpha,
                 present, true, None
             ).unwrap()
         };
@@ -69,14 +70,14 @@ impl WindowSwapchain {
         //  used to take advantage of the increased precision given by the reversed-z technique.
         debug!(log, "Creating depth buffer");
         let depth_attachment = AttachmentImage::new(
-            device.clone(), images[0].dimensions(), format::D32Sfloat_S8Uint
+            renderer.device.clone(), images[0].dimensions(), format::D32Sfloat_S8Uint
         ).unwrap();
 
         // Set up a render pass TODO: Comment better
         let color_buffer_format = swapchain.format();
         let depth_buffer_format = ::vulkano::format::Format::D32Sfloat_S8Uint;
         #[allow(dead_code)]
-        let render_pass = Arc::new(single_pass_renderpass!(device.clone(),
+        let render_pass = Arc::new(single_pass_renderpass!(renderer.device.clone(),
             attachments: {
                 color: {
                     load: Clear,

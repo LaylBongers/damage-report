@@ -8,20 +8,20 @@ use vulkano::instance::{PhysicalDevice};
 use vulkano::image::immutable::{ImmutableImage};
 
 use calcium_rendering::{Error};
-use {VulkanoWindowRenderer, VulkanoSystemContext};
+use {VulkanoSystemContext};
 
 pub struct VulkanoRenderer {
     pub device: Arc<Device>,
     pub graphics_queue: Arc<Queue>,
 
     // Queued up things we need to submit as part of command buffers
+    // TODO: This stopped being handled because of a refactor, make sure they're submitted again
     queued_image_copies: Vec<(Arc<CpuAccessibleBuffer<[u8]>>, Arc<ImmutableImage<Format>>)>,
 }
 
 impl VulkanoRenderer {
     pub fn new(
         log: &Logger, system_context: &VulkanoSystemContext,
-        windows: &mut [&mut VulkanoWindowRenderer]
     ) -> Result<Self, Error> {
         info!(log, "Initializing vulkano renderer");
 
@@ -34,20 +34,15 @@ impl VulkanoRenderer {
             "device" => physical.name(), "type" => format!("{:?}", physical.ty())
         );
 
-        // Find a GPU graphics queue family, we later create a queue from this family to talk to
-        //  the GPU
+        // Find a GPU graphics queue family that we want a queue of.
+        // TODO: No checks are being made if the queue can render to the window surfaces, so far on
+        //  my test machines this hasn't been a problem yet, but if this becomes a problem perahps
+        //  create at least one queue of every graphics supported queue family and select the one
+        //  appropriate for the window. (surface.is_supported(*q).unwrap_or(false))
         debug!(log, "Finding graphics queue family with required features");
         let graphics_queue_family = physical.queue_families().find(|q| {
-            // The queue needs to support graphics (of course) and needs to support drawing to
-            //  the previously created windows' surfaces
-            q.supports_graphics() && {
-                let mut supported = true;
-                for win in windows.iter() {
-                    supported = supported && win.surface.is_supported(*q).unwrap_or(false)
-                }
-                supported
-            }
-        }).expect("Unable to find fitting graphics queue");
+            q.supports_graphics()
+        }).expect("Unable to find graphics queue family");
 
         // Finally, we create our actual connection with the GPU. We need a "device", which
         //  represents the connection between our program and the device, and queues, which we use
@@ -71,11 +66,6 @@ impl VulkanoRenderer {
 
         // Get the graphics queue we requested
         let graphics_queue = queues.next().unwrap();
-
-        // Tell the windows to finish initializing so we can use them after this is done
-        for win in windows.iter_mut() {
-            win.finish_initialization(log, physical.clone(), device.clone(), &graphics_queue);
-        }
 
         Ok(VulkanoRenderer {
             device,
