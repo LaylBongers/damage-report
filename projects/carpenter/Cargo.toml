@@ -4,16 +4,16 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-cgmath = "0.14.1"
+cgmath = "0.14"
 calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
 calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static"}
 calcium-rendering-vulkano = {path = "../../libraries/rendering/calcium-rendering-vulkano"}
-slog = "2.0.5"
-slog-async = "2.0.1"
-slog-term = "2.0.1"
-vulkano = "0.4.0"
-vulkano-win = "0.4.0"
-winit = "0.6.4"
+slog = "2"
+slog-async = "2"
+slog-term = "2"
+vulkano = "0.5"
+vulkano-win = "0.5"
+winit = "0.7"
 
 # If you want optimizations in dev while keeping debug symbols, enable this
 #[profile.dev]

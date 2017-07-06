@@ -5,7 +5,7 @@ use cgmath::{Rad, Angle, Matrix4};
 use collision::{Frustum, Relation};
 use slog::{Logger};
 use vulkano::format::{ClearValue};
-use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
+use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::framebuffer::{Subpass, RenderPassAbstract};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::depth_stencil::{DepthStencil, Compare};
@@ -146,8 +146,8 @@ fn load_pipeline(
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
     debug!(log, "Loading gbuffer shaders");
-    let vs = gbuffer_vs::Shader::load(&backend.device).unwrap();
-    let fs = gbuffer_fs::Shader::load(&backend.device).unwrap();
+    let vs = gbuffer_vs::Shader::load(backend.device.clone()).unwrap();
+    let fs = gbuffer_fs::Shader::load(backend.device.clone()).unwrap();
 
     // Set up the pipeline itself
     debug!(log, "Creating gbuffer pipeline");

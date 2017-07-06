@@ -6,7 +6,7 @@ description = "The future home of the calcium rendering library"
 license = "MIT/Apache-2.0"
 
 [dependencies]
-slog = "2.0.5"
+slog = "2"
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
 calcium-rendering-world3d = {path = "../calcium-rendering-world3d"}

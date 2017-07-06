@@ -1,5 +1,4 @@
 use std::sync::{Arc};
-use std::time::{Duration};
 
 use cgmath::{Vector2};
 use slog::{Logger};
@@ -9,7 +8,6 @@ use vulkano::format::{self};
 use vulkano::instance::{PhysicalDevice};
 use vulkano::swapchain::{Swapchain, SurfaceTransform, Surface};
 use vulkano::sync::{GpuFuture};
-use vulkano::image::{Image};
 use vulkano::image::attachment::{AttachmentImage};
 
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
@@ -71,7 +69,7 @@ impl TargetSwapchain {
         //  used to take advantage of the increased precision given by the reversed-z technique.
         debug!(log, "Creating depth buffer");
         let depth_attachment = AttachmentImage::new(
-            device.clone(), images[0].dimensions().width_height(), format::D32Sfloat_S8Uint
+            device.clone(), images[0].dimensions(), format::D32Sfloat_S8Uint
         ).unwrap();
 
         // Set up a render pass TODO: Comment better
@@ -130,7 +128,7 @@ impl TargetSwapchain {
 
     pub fn start_frame(&self) -> (Arc<FramebufferAbstract + Send + Sync>, usize, Box<GpuFuture + Send + Sync>) {
         let (image_num, future) = ::vulkano::swapchain::acquire_next_image(
-            self.swapchain.clone(), Duration::new(1, 0)
+            self.swapchain.clone(), None
         ).unwrap();
         let future: Box<GpuFuture + Send + Sync> = Box::new(future);
 

@@ -1,5 +1,4 @@
 use slog::{Logger};
-use vulkano::command_buffer::{CommandBufferBuilder};
 use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{RenderSystem};

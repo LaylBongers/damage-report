@@ -28,9 +28,10 @@ impl WinitTargetSystem {
                 Event::WindowEvent { event: ev, .. } => {
                     match ev {
                         WindowEvent::Closed => should_continue = false,
-                        _ => (),
+                        _ => {},
                     }
-                }
+                },
+                _ => {},
             }
         });
 

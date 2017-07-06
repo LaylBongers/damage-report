@@ -4,7 +4,7 @@ use cgmath::{Vector2};
 use slog::{Logger};
 use vulkano::format::{Format};
 use vulkano::buffer::{CpuAccessibleBuffer};
-use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder};
+use vulkano::command_buffer::{AutoCommandBufferBuilder};
 use vulkano::device::{DeviceExtensions, Device, Queue};
 use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::image::immutable::{ImmutableImage};
@@ -82,7 +82,7 @@ impl VulkanoRenderBackend {
 
             // Create the actual device
             Device::new(
-                &physical, physical.supported_features(), &device_ext,
+                physical, physical.supported_features(), &device_ext,
                 // Pass which queues we want, we want one single graphics queue, the priority
                 //  doesn't really matter to us since there's only one
                 [(graphics_queue_family, 0.5)].iter().cloned()

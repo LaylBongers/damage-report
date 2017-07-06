@@ -3,7 +3,7 @@ use std::iter;
 
 use slog::{Logger};
 use vulkano::format::{ClearValue};
-use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBufferBuilder, DynamicState};
+use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{Viewport};
@@ -163,8 +163,8 @@ fn load_lighting_pipeline(
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
     debug!(log, "Loading deferred shaders");
-    let vs = lighting_vs::Shader::load(&backend.device).unwrap();
-    let fs = lighting_fs::Shader::load(&backend.device).unwrap();
+    let vs = lighting_vs::Shader::load(backend.device.clone()).unwrap();
+    let fs = lighting_fs::Shader::load(backend.device.clone()).unwrap();
 
     // Set up the pipeline itself
     debug!(log, "Creating lighting pipeline");
