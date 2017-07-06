@@ -4,13 +4,13 @@ use slog::{Logger};
 use vulkano::format::{Format};
 use vulkano::buffer::{CpuAccessibleBuffer};
 use vulkano::device::{DeviceExtensions, Device, Queue};
-use vulkano::instance::{PhysicalDevice};
+use vulkano::instance::{Instance, PhysicalDevice, InstanceExtensions};
 use vulkano::image::immutable::{ImmutableImage};
 
-use calcium_rendering::{Error};
-use {VulkanoSystemContext};
+use calcium_rendering::{Error, CalciumErrorMap};
 
 pub struct VulkanoRenderer {
+    pub instance: Arc<Instance>,
     pub device: Arc<Device>,
     pub graphics_queue: Arc<Queue>,
 
@@ -21,14 +21,23 @@ pub struct VulkanoRenderer {
 
 impl VulkanoRenderer {
     pub fn new(
-        log: &Logger, system_context: &VulkanoSystemContext,
+        log: &Logger, required_extensions: InstanceExtensions,
     ) -> Result<Self, Error> {
-        info!(log, "Initializing vulkano renderer");
+        info!(log, "Creating vulkano renderer");
+
+        // Start by setting up the vulkano instance, this is a silo of vulkan that all our vulkan
+        //  types will belong to
+        debug!(log, "Creating vulkan instance");
+        let instance = {
+            // Tell it we need at least the extensions vulkano-win needs
+            Instance::new(None, &required_extensions, None)
+                .map_platform_err()?
+        };
 
         // Pick a GPU to use for rendering. We assume first device as the one to render with
         // TODO: Allow user to select in some way, perhaps through config
         debug!(log, "Finding target physical device");
-        let physical = PhysicalDevice::enumerate(&system_context.instance).next()
+        let physical = PhysicalDevice::enumerate(&instance).next()
             .ok_or_else(|| Error::Platform("No physical devices found".into()))?;
         debug!(log, "Found physical device";
             "device" => physical.name(), "type" => format!("{:?}", physical.ty())
@@ -68,6 +77,7 @@ impl VulkanoRenderer {
         let graphics_queue = queues.next().unwrap();
 
         Ok(VulkanoRenderer {
+            instance: instance.clone(),
             device,
             graphics_queue,
 

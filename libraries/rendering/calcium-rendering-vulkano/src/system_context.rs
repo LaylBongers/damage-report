@@ -1,42 +1,6 @@
-use std::sync::{Arc};
 
-use slog::{Logger};
-use vulkano::instance::{Instance, InstanceExtensions};
+// TODO: Completely remove this file once everything's moved to different places
 
-use calcium_rendering::{Error, CalciumErrorMap};
-
-#[derive(PartialEq, Eq, Hash, Copy, Clone)]
-struct TextureId(usize);
-
-pub struct VulkanoSystemContext {
-    pub instance: Arc<Instance>,
-}
-
-impl VulkanoSystemContext {
-    pub fn new(
-        log: &Logger, required_extensions: InstanceExtensions
-    ) -> Result<Self, Error> {
-        info!(log, "Initializing vulkano system context");
-
-        // Start by setting up the vulkano instance, this is a silo of vulkan that all our vulkan
-        //  types will belong to
-        debug!(log, "Creating vulkan instance");
-        let instance = {
-            // Tell it we need at least the extensions vulkano-win needs
-            Instance::new(None, &required_extensions, None)
-                .map_platform_err()?
-        };
-
-        // Set up the window we want to render to, along with an EventsLoop we can use to listen
-        //  for input and other events happening to the window coming from the OS
-        //debug!(log, "Creating window");
-        //let target_surface = target.create_surface(instance.clone(), size);
-
-        Ok(VulkanoSystemContext {
-            instance: instance.clone(),
-        })
-    }
-}
 
 /*impl RenderBackend<VulkanoBackendTypes> for VulkanoRenderSystem {
     fn start_frame(&mut self) -> VulkanoFrame {

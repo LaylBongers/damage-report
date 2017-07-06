@@ -19,6 +19,8 @@ impl VulkanoWindowRenderer {
     pub fn new(
         log: &Logger, renderer: &VulkanoRenderer, surface: Arc<Surface>, size: Vector2<u32>,
     ) -> Self {
+        info!(log, "Creating window renderer");
+
         // Create the swapchain we'll have to render to to make things actually show up on screen
         let swapchain = WindowSwapchain::new(log, renderer, &surface, size);
 
