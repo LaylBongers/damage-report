@@ -13,7 +13,7 @@ use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
 use calcium_rendering::{Error, WindowRenderer};
-use calcium_rendering_static::{Backend, StaticGameRuntime, Initializer};
+use calcium_rendering_static::{Backend, Runtime, Initializer};
 use calcium_window::{Window};
 
 fn main() {
@@ -40,17 +40,18 @@ fn run_game(log: &Logger) -> Result<(), Error> {
     let backend = Backend::Vulkano;
 
     // Run the game's runtime with the appropriate backends
-    calcium_rendering_static::run_runtime(backend, GameRuntime { log: log.clone() })
+    calcium_rendering_static::run_runtime(backend, StaticRuntime { log: log.clone() })
 }
 
-struct GameRuntime {
+struct StaticRuntime {
     log: Logger,
 }
 
-impl StaticGameRuntime for GameRuntime {
+impl Runtime for StaticRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
         // Initialize everything we need to render
         let renderer = init.renderer(&self.log)?;
+        //let simple2d_renderer = init.simple2d_renderer(&self.log, &renderer)?;
         let (mut window, mut window_renderer) = init.window(
             &self.log, &renderer, "Carpenter", Vector2::new(1280, 720)
         );

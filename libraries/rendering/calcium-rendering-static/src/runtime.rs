@@ -5,9 +5,12 @@ use calcium_rendering::{Error};
 use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoWindowRenderer, VulkanoRenderer};
 use calcium_window_winit::{self, WinitWindow};
 
+#[cfg(feature = "world3d")]
+use calcium_rendering_world3d_vulkano::{VulkanoWorldRenderer, VulkanoWorldBackendTypes};
+
 use {Backend, Initializer};
 
-pub fn run_runtime<R: StaticGameRuntime>(backend: Backend, runtime: R) -> Result<(), Error> {
+pub fn run_runtime<R: Runtime>(backend: Backend, runtime: R) -> Result<(), Error> {
     match backend {
         Backend::Vulkano => {
             runtime.run(VulkanoInitializer)
@@ -17,7 +20,7 @@ pub fn run_runtime<R: StaticGameRuntime>(backend: Backend, runtime: R) -> Result
     }
 }
 
-pub trait StaticGameRuntime {
+pub trait Runtime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error>;
 }
 
@@ -26,6 +29,9 @@ struct VulkanoInitializer;
 impl Initializer for VulkanoInitializer {
     type BackendTypes = VulkanoBackendTypes;
     type Window = WinitWindow;
+
+    #[cfg(feature = "world3d")]
+    type WorldBackendTypes = VulkanoWorldBackendTypes;
 
     fn renderer(
         &self, log: &Logger,
@@ -44,5 +50,13 @@ impl Initializer for VulkanoInitializer {
         );
 
         (window, window_renderer)
+    }
+
+    #[cfg(feature = "world3d")]
+    fn world3d_renderer(
+        &self, log: &Logger, renderer: &VulkanoRenderer,
+    ) -> VulkanoWorldRenderer {
+        let world_renderer = VulkanoWorldRenderer::new(log, renderer);
+        world_renderer
     }
 }
