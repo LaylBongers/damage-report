@@ -1,20 +1,8 @@
 extern crate calcium_rendering_simple2d;
+extern crate calcium_rendering_vulkano;
 
-use calcium_rendering_simple2d::{Simple2DBackendTypes};
+mod backend_types;
+mod renderer;
 
-pub struct VulkanoSimple2DRenderer {
-}
-
-impl VulkanoSimple2DRenderer {
-    pub fn new() -> Self {
-        VulkanoSimple2DRenderer {
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct VulkanoSimple2DBackendTypes;
-
-impl Simple2DBackendTypes for VulkanoSimple2DBackendTypes {
-    type Renderer = VulkanoSimple2DRenderer;
-}
+pub use backend_types::{VulkanoSimple2DBackendTypes};
+pub use renderer::{VulkanoSimple2DRenderer};

@@ -18,7 +18,7 @@ pub trait Initializer {
     type World3DBackendTypes: World3DBackendTypes<Self::BackendTypes>;
 
     #[cfg(feature = "simple2d")]
-    type Simple2DBackendTypes: Simple2DBackendTypes;
+    type Simple2DBackendTypes: Simple2DBackendTypes<Self::BackendTypes>;
 
     fn renderer(
         &self, log: &Logger,
@@ -42,7 +42,7 @@ pub trait Initializer {
     fn simple2d_renderer(
         &self, log: &Logger, renderer: &<Self::BackendTypes as BackendTypes>::Renderer,
     ) -> Result<
-        <Self::Simple2DBackendTypes as Simple2DBackendTypes>::Renderer,
+        <Self::Simple2DBackendTypes as Simple2DBackendTypes<Self::BackendTypes>>::Renderer,
         Error
     >;
 }

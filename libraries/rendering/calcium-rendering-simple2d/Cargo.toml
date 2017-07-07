@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
+cgmath = "0.14"
+calcium-rendering = {path = "../calcium-rendering"}

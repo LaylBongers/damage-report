@@ -1,5 +1,10 @@
-use std::any::{Any};
+extern crate cgmath;
+extern crate calcium_rendering;
 
-pub trait Simple2DBackendTypes: Any + Clone {
-    type Renderer: Any;
-}
+mod backend_types;
+mod render_commands;
+mod renderer;
+
+pub use backend_types::{Simple2DBackendTypes};
+pub use render_commands::{RenderCommands};
+pub use renderer::{Simple2DRenderer};

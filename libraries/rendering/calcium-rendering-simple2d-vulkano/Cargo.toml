@@ -5,3 +5,4 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
 calcium-rendering-simple2d = {path = "../calcium-rendering-simple2d"}
+calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}

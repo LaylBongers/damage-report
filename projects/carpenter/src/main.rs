@@ -1,5 +1,6 @@
 extern crate cgmath;
 extern crate calcium_rendering;
+extern crate calcium_rendering_simple2d;
 extern crate calcium_rendering_static;
 extern crate calcium_window;
 #[macro_use]
@@ -13,6 +14,7 @@ use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
 use calcium_rendering::{Error, WindowRenderer};
+use calcium_rendering_simple2d::{RenderCommands, Simple2DRenderer};
 use calcium_rendering_static::{Backend, Runtime, Initializer};
 use calcium_window::{Window};
 
@@ -51,7 +53,7 @@ impl Runtime for StaticRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
         // Initialize everything we need to render
         let renderer = init.renderer(&self.log)?;
-        let _simple2d_renderer = init.simple2d_renderer(&self.log, &renderer)?;
+        let mut simple2d_renderer = init.simple2d_renderer(&self.log, &renderer)?;
         let (mut window, mut window_renderer) = init.window(
             &self.log, &renderer, "Carpenter", Vector2::new(1280, 720)
         )?;
@@ -59,7 +61,12 @@ impl Runtime for StaticRuntime {
         // Run the actual game loop
         info!(self.log, "Starting game loop");
         while window.handle_events() {
-            let frame = window_renderer.start_frame();
+            let mut frame = window_renderer.start_frame();
+
+            let mut cmds = RenderCommands::default();
+            cmds.rectangle(Vector2::new(10, 10), Vector2::new(100, 100));
+            simple2d_renderer.render(&mut frame, cmds);
+
             window_renderer.finish_frame(&renderer, frame);
         }
 

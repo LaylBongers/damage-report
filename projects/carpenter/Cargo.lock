@@ -3,6 +3,7 @@ name = "carpenter"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
+ "calcium-rendering-simple2d 0.1.0",
  "calcium-rendering-static 0.0.1",
  "calcium-window 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -57,12 +58,17 @@ dependencies = [
 [[package]]
 name = "calcium-rendering-simple2d"
 version = "0.1.0"
+dependencies = [
+ "calcium-rendering 0.1.0",
+ "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "calcium-rendering-simple2d-vulkano"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering-simple2d 0.1.0",
+ "calcium-rendering-vulkano 0.1.0",
 ]
 
 [[package]]
