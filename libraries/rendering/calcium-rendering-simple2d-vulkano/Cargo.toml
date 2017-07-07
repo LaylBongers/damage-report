@@ -1,0 +1,7 @@
+[package]
+name = "calcium-rendering-simple2d-vulkano"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+calcium-rendering-simple2d = {path = "../calcium-rendering-simple2d"}

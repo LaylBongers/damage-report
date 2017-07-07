@@ -17,4 +17,4 @@ pub mod mesh;
 mod world_renderer;
 
 pub use backend_types::{VulkanoWorldBackendTypes};
-pub use world_renderer::{VulkanoWorldRenderer};
+pub use world_renderer::{VulkanoWorld3DRenderer};

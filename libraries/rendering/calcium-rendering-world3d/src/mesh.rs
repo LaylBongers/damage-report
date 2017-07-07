@@ -7,7 +7,7 @@ use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 
 use calcium_rendering::{BackendTypes, Factory};
-use {WorldBackendTypes};
+use {World3DBackendTypes};
 
 #[derive(Clone, PartialEq)]
 pub struct Vertex {
@@ -33,11 +33,11 @@ impl Vertex {
 
 /// An uploaded mesh. Internally ref-counted, cheap to clone.
 #[derive(Clone)]
-pub struct Mesh<T: BackendTypes, WT: WorldBackendTypes<T>> {
+pub struct Mesh<T: BackendTypes, WT: World3DBackendTypes<T>> {
     pub backend: WT::MeshBackend,
 }
 
-impl<T: BackendTypes, WT: WorldBackendTypes<T>> Mesh<T, WT> {
+impl<T: BackendTypes, WT: World3DBackendTypes<T>> Mesh<T, WT> {
     /// Creates a mesh from vertices and indices. Performs no duplicate checking.
     pub fn new(
         log: &Logger, factory: &Factory<T>, vertices: Vec<Vertex>, indices: Vec<u32>

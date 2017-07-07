@@ -51,10 +51,10 @@ impl Runtime for StaticRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
         // Initialize everything we need to render
         let renderer = init.renderer(&self.log)?;
-        //let simple2d_renderer = init.simple2d_renderer(&self.log, &renderer)?;
+        let _simple2d_renderer = init.simple2d_renderer(&self.log, &renderer)?;
         let (mut window, mut window_renderer) = init.window(
             &self.log, &renderer, "Carpenter", Vector2::new(1280, 720)
-        );
+        )?;
 
         // Run the actual game loop
         info!(self.log, "Starting game loop");

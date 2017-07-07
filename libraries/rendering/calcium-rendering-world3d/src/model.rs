@@ -10,13 +10,13 @@ use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 use calcium_rendering::{BackendTypes, Factory};
 
 use mesh::{self, Mesh, Vertex};
-use {WorldBackendTypes};
+use {World3DBackendTypes};
 
-pub struct Model<T: BackendTypes, WT: WorldBackendTypes<T>> {
+pub struct Model<T: BackendTypes, WT: World3DBackendTypes<T>> {
     pub meshes: Vec<Arc<Mesh<T, WT>>>,
 }
 
-impl<T: BackendTypes, WT: WorldBackendTypes<T>> Model<T, WT> {
+impl<T: BackendTypes, WT: World3DBackendTypes<T>> Model<T, WT> {
     pub fn load<P: AsRef<Path>>(
         log: &Logger, factory: &Factory<T>, path: P, scale: f32
     ) -> Self {

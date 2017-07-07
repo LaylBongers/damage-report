@@ -1,13 +1,13 @@
 use calcium_rendering_vulkano::{VulkanoBackendTypes};
-use calcium_rendering_world3d::{WorldBackendTypes};
+use calcium_rendering_world3d::{World3DBackendTypes};
 use mesh::{VulkanoMeshBackend};
-use {VulkanoWorldRenderer};
+use {VulkanoWorld3DRenderer};
 
 #[derive(Clone)]
 pub struct VulkanoWorldBackendTypes;
 
-impl WorldBackendTypes<VulkanoBackendTypes> for VulkanoWorldBackendTypes {
+impl World3DBackendTypes<VulkanoBackendTypes> for VulkanoWorldBackendTypes {
     type MeshBackend = VulkanoMeshBackend;
 
-    type WorldRenderer = VulkanoWorldRenderer;
+    type Renderer = VulkanoWorld3DRenderer;
 }

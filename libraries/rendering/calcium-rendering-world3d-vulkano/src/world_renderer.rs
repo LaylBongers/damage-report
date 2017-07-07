@@ -9,13 +9,13 @@ use calcium_rendering_vulkano::{VulkanoRenderer};
 //use lighting_renderer::{LightingRenderer};
 //use {VulkanoWorldBackendTypes};
 
-pub struct VulkanoWorldRenderer {
+pub struct VulkanoWorld3DRenderer {
     //pub geometry_buffer: GeometryBuffer,
     //geometry_renderer: GeometryRenderer,
     //lighting_renderer: LightingRenderer,
 }
 
-impl VulkanoWorldRenderer {
+impl VulkanoWorld3DRenderer {
     pub fn new(log: &Logger, _renderer: &VulkanoRenderer) -> Self {
         info!(log, "Initializing world renderer");
 
@@ -26,7 +26,7 @@ impl VulkanoWorldRenderer {
 
         let lighting_renderer = LightingRenderer::new(log, backend);*/
 
-        VulkanoWorldRenderer {
+        VulkanoWorld3DRenderer {
             /*geometry_buffer,
             geometry_renderer,
             lighting_renderer,*/

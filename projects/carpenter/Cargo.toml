@@ -6,7 +6,7 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.14"
 calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
-calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static"}
+calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d"]}
 calcium-window = {path = "../../libraries/window/calcium-window"}
 slog = "2"
 slog-async = "2"

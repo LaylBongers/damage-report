@@ -4,9 +4,9 @@ use cgmath::{Vector3, InnerSpace};
 use calcium_rendering::{BackendTypes};
 
 use mesh::{Mesh};
-use {Material, WorldBackendTypes};
+use {Material, World3DBackendTypes};
 
-pub struct RenderWorld<T: BackendTypes, WT: WorldBackendTypes<T>> {
+pub struct RenderWorld<T: BackendTypes, WT: World3DBackendTypes<T>> {
     entities: Vec<Option<Entity<T, WT>>>,
     lights: Vec<Light>,
 
@@ -15,7 +15,7 @@ pub struct RenderWorld<T: BackendTypes, WT: WorldBackendTypes<T>> {
     pub directional_direction: Vector3<f32>,
 }
 
-impl<T: BackendTypes, WT: WorldBackendTypes<T>> RenderWorld<T, WT> {
+impl<T: BackendTypes, WT: World3DBackendTypes<T>> RenderWorld<T, WT> {
     pub fn new() -> Self {
         RenderWorld {
             entities: Vec::new(),
@@ -67,7 +67,7 @@ pub struct EntityId(usize);
 #[derive(Copy, Clone)]
 pub struct LightId(usize);
 
-pub struct Entity<T: BackendTypes, WT: WorldBackendTypes<T>> {
+pub struct Entity<T: BackendTypes, WT: World3DBackendTypes<T>> {
     pub position: Vector3<f32>,
     pub mesh: Arc<Mesh<T, WT>>,
     pub material: Material<T>,

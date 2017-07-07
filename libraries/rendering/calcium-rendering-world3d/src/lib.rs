@@ -11,7 +11,7 @@ pub mod mesh;
 mod model;
 mod render_world;
 
-pub use backend_types::{WorldBackendTypes};
+pub use backend_types::{World3DBackendTypes};
 pub use camera::{Camera};
 pub use material::{Material};
 pub use model::{Model};

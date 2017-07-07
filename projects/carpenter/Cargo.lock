@@ -55,10 +55,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "calcium-rendering-simple2d"
+version = "0.1.0"
+
+[[package]]
+name = "calcium-rendering-simple2d-vulkano"
+version = "0.1.0"
+dependencies = [
+ "calcium-rendering-simple2d 0.1.0",
+]
+
+[[package]]
 name = "calcium-rendering-static"
 version = "0.0.1"
 dependencies = [
  "calcium-rendering 0.1.0",
+ "calcium-rendering-simple2d 0.1.0",
+ "calcium-rendering-simple2d-vulkano 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
  "calcium-window 0.1.0",
  "calcium-window-winit 0.1.0",

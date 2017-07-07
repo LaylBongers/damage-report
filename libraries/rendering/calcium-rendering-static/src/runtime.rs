@@ -6,7 +6,10 @@ use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoWindowRenderer, Vulk
 use calcium_window_winit::{self, WinitWindow};
 
 #[cfg(feature = "world3d")]
-use calcium_rendering_world3d_vulkano::{VulkanoWorldRenderer, VulkanoWorldBackendTypes};
+use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer, VulkanoWorldBackendTypes};
+
+#[cfg(feature = "simple2d")]
+use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DBackendTypes, VulkanoSimple2DRenderer};
 
 use {Backend, Initializer};
 
@@ -31,7 +34,10 @@ impl Initializer for VulkanoInitializer {
     type Window = WinitWindow;
 
     #[cfg(feature = "world3d")]
-    type WorldBackendTypes = VulkanoWorldBackendTypes;
+    type World3DBackendTypes = VulkanoWorldBackendTypes;
+
+    #[cfg(feature = "simple2d")]
+    type Simple2DBackendTypes = VulkanoSimple2DBackendTypes;
 
     fn renderer(
         &self, log: &Logger,
@@ -43,20 +49,27 @@ impl Initializer for VulkanoInitializer {
         &self, log: &Logger,
         renderer: &VulkanoRenderer,
         title: &str, size: Vector2<u32>,
-    ) -> (WinitWindow, VulkanoWindowRenderer) {
+    ) -> Result<(WinitWindow, VulkanoWindowRenderer), Error> {
         let window = WinitWindow::new_vulkano(renderer.instance.clone(), title, size);
         let window_renderer = VulkanoWindowRenderer::new(
             log, renderer, window.surface.clone(), size
         );
 
-        (window, window_renderer)
+        Ok((window, window_renderer))
     }
 
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
         &self, log: &Logger, renderer: &VulkanoRenderer,
-    ) -> VulkanoWorldRenderer {
-        let world_renderer = VulkanoWorldRenderer::new(log, renderer);
-        world_renderer
+    ) -> Result<VulkanoWorld3DRenderer, Error> {
+        let world_renderer = VulkanoWorld3DRenderer::new(log, renderer);
+        Ok(world_renderer)
+    }
+
+    #[cfg(feature = "simple2d")]
+    fn simple2d_renderer(
+        &self, _log: &Logger, _renderer: &VulkanoRenderer,
+    ) -> Result<VulkanoSimple2DRenderer, Error> {
+        Ok(VulkanoSimple2DRenderer::new())
     }
 }
