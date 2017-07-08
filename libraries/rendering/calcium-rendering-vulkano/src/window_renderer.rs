@@ -41,6 +41,7 @@ impl WindowRenderer<VulkanoBackendTypes> for VulkanoWindowRenderer {
         let (framebuffer, image_num, future) = self.swapchain.start_frame();
 
         VulkanoFrame {
+            size: self.size,
             framebuffer,
             image_num,
             future: Some(future),
@@ -55,6 +56,7 @@ impl WindowRenderer<VulkanoBackendTypes> for VulkanoWindowRenderer {
 }
 
 pub struct VulkanoFrame {
+    pub size: Vector2<u32>,
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     pub image_num: usize,
     pub future: Option<Box<GpuFuture + Send + Sync>>,

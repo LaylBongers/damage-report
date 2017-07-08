@@ -68,8 +68,8 @@ impl Initializer for VulkanoInitializer {
 
     #[cfg(feature = "simple2d")]
     fn simple2d_renderer(
-        &self, _log: &Logger, _renderer: &VulkanoRenderer,
+        &self, log: &Logger, renderer: &VulkanoRenderer, window: &VulkanoWindowRenderer,
     ) -> Result<VulkanoSimple2DRenderer, Error> {
-        Ok(VulkanoSimple2DRenderer::new())
+        Ok(VulkanoSimple2DRenderer::new(log, renderer, window))
     }
 }

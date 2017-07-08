@@ -6,5 +6,7 @@ fn main() {
         ("src/gbuffer_frag.glsl", vulkano_shaders::ShaderType::Fragment),
         ("src/lighting_vert.glsl", vulkano_shaders::ShaderType::Vertex),
         ("src/lighting_frag.glsl", vulkano_shaders::ShaderType::Fragment),
+        ("src/simple2d_vert.glsl", vulkano_shaders::ShaderType::Vertex),
+        ("src/simple2d_frag.glsl", vulkano_shaders::ShaderType::Fragment),
     ].iter().cloned());
 }

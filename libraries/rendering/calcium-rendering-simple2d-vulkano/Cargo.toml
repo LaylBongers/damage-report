@@ -4,5 +4,9 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
+cgmath = "0.14"
+vulkano = "0.5"
+slog = "2"
 calcium-rendering-simple2d = {path = "../calcium-rendering-simple2d"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
+calcium-rendering-vulkano-shaders = {path = "../calcium-rendering-vulkano-shaders"}

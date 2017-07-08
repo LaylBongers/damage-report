@@ -9,3 +9,8 @@ pub mod gbuffer_fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/gbuffer_fra
 pub mod lighting_vs { include!{concat!(env!("OUT_DIR"), "/shaders/src/lighting_vert.glsl")} }
 #[allow(dead_code)]
 pub mod lighting_fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/lighting_frag.glsl")} }
+
+#[allow(dead_code)]
+pub mod simple2d_vs { include!{concat!(env!("OUT_DIR"), "/shaders/src/simple2d_vert.glsl")} }
+#[allow(dead_code)]
+pub mod simple2d_fs { include!{concat!(env!("OUT_DIR"), "/shaders/src/simple2d_frag.glsl")} }

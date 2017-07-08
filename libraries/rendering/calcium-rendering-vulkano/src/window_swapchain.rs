@@ -122,6 +122,8 @@ impl WindowSwapchain {
     pub fn clean_old_submissions(&mut self) {
         // Clearing the old submissions by keeping alive only the ones which probably aren't
         //  finished
+        // TODO: The best way to do this has been updated, refer to the vulkano examples and update
+        //  our usage of this
         while self.submissions.len() >= 4 {
             self.submissions.remove(0);
         }
