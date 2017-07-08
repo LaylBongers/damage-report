@@ -19,7 +19,7 @@ pub struct WindowSwapchain {
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
 
     // Submissions from previous frames
-    submissions: Vec<Box<GpuFuture + Send + Sync>>,
+    previous_frame: Option<Box<GpuFuture + Send + Sync>>,
 }
 
 impl WindowSwapchain {
@@ -115,24 +115,20 @@ impl WindowSwapchain {
             depth_attachment,
             render_pass,
             framebuffers,
-            submissions: Vec::new(),
+            previous_frame: Some(Box::new(::vulkano::sync::now(renderer.device.clone()))),
         }
     }
 
-    pub fn clean_old_submissions(&mut self) {
-        // Clearing the old submissions by keeping alive only the ones which probably aren't
-        //  finished
-        // TODO: The best way to do this has been updated, refer to the vulkano examples and update
-        //  our usage of this
-        while self.submissions.len() >= 4 {
-            self.submissions.remove(0);
-        }
+    pub fn cleanup_finished_frames(&mut self) {
+        self.previous_frame.as_mut().unwrap().cleanup_finished();
     }
 
-    pub fn start_frame(&self) -> (Arc<FramebufferAbstract + Send + Sync>, usize, Box<GpuFuture + Send + Sync>) {
-        let (image_num, future) = ::vulkano::swapchain::acquire_next_image(
+    pub fn start_frame(&mut self) -> (Arc<FramebufferAbstract + Send + Sync>, usize, Box<GpuFuture + Send + Sync>) {
+        let (image_num, aquire_future) = ::vulkano::swapchain::acquire_next_image(
             self.swapchain.clone(), None
         ).unwrap();
+
+        let future = self.previous_frame.take().unwrap().join(aquire_future);
         let future: Box<GpuFuture + Send + Sync> = Box::new(future);
 
         (self.framebuffers[image_num].clone(), image_num, future)
@@ -150,6 +146,6 @@ impl WindowSwapchain {
             .then_signal_fence_and_flush().unwrap();
 
         // Keep track of these submissions so we can later wait on them
-        self.submissions.push(Box::new(future));
+        self.previous_frame = Some(Box::new(future));
     }
 }

@@ -2,11 +2,14 @@ use std::sync::{Arc};
 use std::iter;
 
 use cgmath::{self, Vector2};
+use vulkano::sync::{GpuFuture};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
-use vulkano::pipeline::depth_stencil::{DepthStencil, Compare};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{Viewport};
 use vulkano::framebuffer::{Subpass, RenderPassAbstract};
+use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
+use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use slog::{Logger};
 
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderCommands};
@@ -31,12 +34,25 @@ impl VulkanoSimple2DRenderer {
 }
 
 impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
-    fn render(&mut self, frame: &mut VulkanoFrame, commands: RenderCommands) {
+    fn render(
+        &mut self, renderer: &VulkanoRenderer, frame: &mut VulkanoFrame, commands: RenderCommands
+    ) {
+        // Create a projection matrix that just matches coordinates to pixels
         let proj = cgmath::ortho(
             0.0, frame.size.x as f32,
-            frame.size.y as f32, 0.0,
+            0.0, frame.size.y as f32, // Top/Bottom flipped, cgmath expects a different clip space
             1.0, -1.0
         );
+
+        // Create a buffer for the matrix data to be sent over in
+        let total_matrix_raw = proj.into();
+        let matrix_data_buffer = CpuAccessibleBuffer::<simple2d_vs::ty::MatrixData>::from_data(
+            renderer.device.clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue.family()),
+            simple2d_vs::ty::MatrixData {
+                total: total_matrix_raw,
+            }
+        ).unwrap();
 
         // Create a big mesh of all the rectangles we got told to draw
         let mut vertices = Vec::new();
@@ -53,6 +69,40 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
                 v_position: [start.x + size.x, start.y],
             });
         }
+
+        // Create the final vertex buffer that we'll send over to the GPU for rendering
+        let vertex_buffer = CpuAccessibleBuffer::from_iter(
+            renderer.device.clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue.family()),
+            vertices.into_iter()
+        ).unwrap();
+
+        // Create the uniform data set to send over
+        // TODO: It's really expensive to constantly create persistent sets, figure out some way to
+        //  solve this
+        let set = Arc::new(PersistentDescriptorSet::start(self.pipeline.clone(), 0)
+            .add_buffer(matrix_data_buffer.clone()).unwrap()
+            .build().unwrap()
+        );
+
+        // Build up the command buffer with draw commands
+        let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
+        let command_buffer = AutoCommandBufferBuilder::new(
+                renderer.device.clone(), renderer.graphics_queue.family()
+            ).unwrap()
+            .begin_render_pass(frame.framebuffer.clone(), false, clear_values).unwrap()
+            // The actual draw itself
+            .draw(
+                self.pipeline.clone(), DynamicState::none(), vec!(vertex_buffer.clone()), set, ()
+            ).unwrap()
+            .end_render_pass().unwrap()
+            .build().unwrap();
+
+        // Submit the command buffer
+        let future = frame.future.take().unwrap()
+            .then_execute(renderer.graphics_queue.clone(), command_buffer)
+            .unwrap();
+        frame.future = Some(Box::new(future));
     }
 }
 

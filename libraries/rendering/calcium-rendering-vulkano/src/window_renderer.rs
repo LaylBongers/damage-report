@@ -34,7 +34,7 @@ impl VulkanoWindowRenderer {
 
 impl WindowRenderer<VulkanoBackendTypes> for VulkanoWindowRenderer {
     fn start_frame(&mut self) -> VulkanoFrame {
-        self.swapchain.clean_old_submissions();
+        self.swapchain.cleanup_finished_frames();
 
         // Get the image for this frame, along with a future that will let us queue up the order of
         //  command buffer submissions.

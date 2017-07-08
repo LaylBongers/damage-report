@@ -65,7 +65,7 @@ impl Runtime for StaticRuntime {
 
             let mut cmds = RenderCommands::default();
             cmds.rectangle(Vector2::new(10, 10), Vector2::new(100, 100));
-            simple2d_renderer.render(&mut frame, cmds);
+            simple2d_renderer.render(&renderer, &mut frame, cmds);
 
             window_renderer.finish_frame(&renderer, frame);
         }
