@@ -61,14 +61,15 @@ impl Runtime for StaticRuntime {
         let size = Vector2::new(1280, 720);
 
         // Set up everything we need to render
-        let renderer = init.renderer(&self.log)?;
+        let mut renderer = init.renderer(&self.log)?;
         let (mut window, mut window_renderer) = init.window(
             &self.log, &renderer, "Carpenter", Vector2::new(size.x, size.y)
         )?;
         let mut simple2d_renderer = init.simple2d_renderer(&self.log, &renderer, &window_renderer)?;
 
         // Set up conrod and UI data
-        let mut conrod_renderer = ConrodRenderer::new(&self.log);
+        let mut conrod_renderer: ConrodRenderer<I::BackendTypes> =
+            ConrodRenderer::new(&self.log, &mut renderer);
         let mut ui = UiBuilder::new(size.cast().into()).theme(theme()).build();
         ui.fonts.insert(FontCollection::from_bytes(ttf_noto_sans::REGULAR).into_font().unwrap());
         let ids = Ids::new(ui.widget_id_generator());
@@ -94,7 +95,9 @@ impl Runtime for StaticRuntime {
             // Perform rendering
             let mut frame = window_renderer.start_frame();
 
-            let batches = conrod_renderer.draw_ui::<I::BackendTypes>(&window_renderer, &mut ui);
+            let batches = conrod_renderer.draw_ui(
+                &self.log, &mut renderer, &window_renderer, &mut ui
+            );
             simple2d_renderer.render(&renderer, &mut frame, batches);
 
             window_renderer.finish_frame(&renderer, frame);

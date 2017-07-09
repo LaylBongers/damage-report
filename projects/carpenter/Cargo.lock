@@ -77,6 +77,7 @@ dependencies = [
  "calcium-rendering-simple2d 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "conrod 0.53.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "image 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "palette 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
