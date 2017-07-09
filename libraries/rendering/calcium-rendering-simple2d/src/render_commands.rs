@@ -1,7 +1,7 @@
 use cgmath::{Vector2, Vector4};
 
-#[derive(Default, Debug)]
-pub struct RenderCommands {
+#[derive(Debug, Default)]
+pub struct RenderBatch {
     pub rectangles: Vec<Rectangle>
 }
 

@@ -91,8 +91,8 @@ impl Runtime for StaticRuntime {
             // Perform rendering
             let mut frame = window_renderer.start_frame();
 
-            let cmds = conrod_renderer.draw_ui::<I::BackendTypes>(&window_renderer, &mut ui);
-            simple2d_renderer.render(&renderer, &mut frame, cmds);
+            let batches = conrod_renderer.draw_ui::<I::BackendTypes>(&window_renderer, &mut ui);
+            simple2d_renderer.render(&renderer, &mut frame, batches);
 
             window_renderer.finish_frame(&renderer, frame);
         }

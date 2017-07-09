@@ -12,7 +12,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use slog::{Logger};
 
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderCommands};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer, VulkanoBackendTypes, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
@@ -36,7 +36,7 @@ impl VulkanoSimple2DRenderer {
 
 impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
     fn render(
-        &mut self, renderer: &VulkanoRenderer, frame: &mut VulkanoFrame, commands: RenderCommands
+        &mut self, renderer: &VulkanoRenderer, frame: &mut VulkanoFrame, batches: Vec<RenderBatch>
     ) {
         // Create a projection matrix that just matches coordinates to pixels
         let proj = cgmath::ortho(
@@ -55,64 +55,76 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
             }
         ).unwrap();
 
-        // Create a big mesh of all the rectangles we got told to draw
-        let mut vertices = Vec::new();
-        for rect in commands.rectangles {
-            let start: Vector2<f32> = rect.start.cast();
-            let size: Vector2<f32> = rect.size.cast();
-            let color = rect.color.into(); // TODO: Convert gamma
-            vertices.push(VkVertex {
-                v_position: [start.x, start.y],
-                v_color: color,
-            });
-            vertices.push(VkVertex {
-                v_position: [start.x, start.y + size.y],
-                v_color: color,
-            });
-            vertices.push(VkVertex {
-                v_position: [start.x + size.x, start.y],
-                v_color: color,
-            });
-
-            vertices.push(VkVertex {
-                v_position: [start.x + size.x, start.y + size.y],
-                v_color: color,
-            });
-            vertices.push(VkVertex {
-                v_position: [start.x + size.x, start.y],
-                v_color: color,
-            });
-            vertices.push(VkVertex {
-                v_position: [start.x, start.y + size.y],
-                v_color: color,
-            });
-        }
-
-        // Create the final vertex buffer that we'll send over to the GPU for rendering
-        let vertex_buffer = CpuAccessibleBuffer::from_iter(
-            renderer.device.clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue.family()),
-            vertices.into_iter()
-        ).unwrap();
-
-        // Create the uniform data set to send over
-        // TODO: It's really expensive to constantly create persistent sets, figure out some way to
-        //  solve this
-        let set = Arc::new(PersistentDescriptorSet::start(self.pipeline.clone(), 0)
-            .add_buffer(matrix_data_buffer.clone()).unwrap()
-            .build().unwrap()
-        );
-
-        // Build up the command buffer with draw commands
+        // Start the command buffer, this will contain the draw commands
         let clear_values = vec![[0.0, 0.0, 0.0, 1.0].into()];
-        let command_buffer = AutoCommandBufferBuilder::new(
+        let mut command_buffer_builder = AutoCommandBufferBuilder::new(
                 renderer.device.clone(), renderer.graphics_queue.family()
             ).unwrap()
-            .begin_render_pass(frame.framebuffer.clone(), false, clear_values).unwrap()
-            // The actual draw itself
-            .draw(
-                self.pipeline.clone(), DynamicState::none(), vec!(vertex_buffer.clone()), set, ()
-            ).unwrap()
+            .begin_render_pass(frame.framebuffer.clone(), false, clear_values).unwrap();
+
+        // Go over all batches
+        for batch in batches {
+            // Create a big mesh of all the rectangles we got told to draw this batch
+            let mut vertices = Vec::new();
+            for rect in batch.rectangles {
+                let start: Vector2<f32> = rect.start.cast();
+                let size: Vector2<f32> = rect.size.cast();
+                let color = rect.color.into(); // TODO: Convert gamma
+                vertices.push(VkVertex {
+                    v_position: [start.x, start.y],
+                    v_color: color,
+                });
+                vertices.push(VkVertex {
+                    v_position: [start.x, start.y + size.y],
+                    v_color: color,
+                });
+                vertices.push(VkVertex {
+                    v_position: [start.x + size.x, start.y],
+                    v_color: color,
+                });
+
+                vertices.push(VkVertex {
+                    v_position: [start.x + size.x, start.y + size.y],
+                    v_color: color,
+                });
+                vertices.push(VkVertex {
+                    v_position: [start.x + size.x, start.y],
+                    v_color: color,
+                });
+                vertices.push(VkVertex {
+                    v_position: [start.x, start.y + size.y],
+                    v_color: color,
+                });
+            }
+
+            // Create the final vertex buffer that we'll send over to the GPU for rendering
+            let vertex_buffer = CpuAccessibleBuffer::from_iter(
+                renderer.device.clone(), BufferUsage::all(),
+                Some(renderer.graphics_queue.family()),
+                vertices.into_iter()
+            ).unwrap();
+
+            // Create the uniform data set to send over
+            // TODO: It's really expensive to constantly create persistent sets, figure out some way to
+            //  solve this
+            let set = Arc::new(PersistentDescriptorSet::start(self.pipeline.clone(), 0)
+                .add_buffer(matrix_data_buffer.clone()).unwrap()
+                .build().unwrap()
+            );
+
+            // Add the draw command to the command buffer
+            command_buffer_builder = command_buffer_builder
+                .draw(
+                    self.pipeline.clone(),
+                    DynamicState::none(),
+                    vec!(vertex_buffer.clone()),
+                    set, ()
+                ).unwrap()
+
+        }
+
+        // Finish the command buffer
+        let command_buffer = command_buffer_builder
             .end_render_pass().unwrap()
             .build().unwrap();
 
