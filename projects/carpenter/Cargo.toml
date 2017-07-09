@@ -4,11 +4,12 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-cgmath = "0.14"
 calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
 calcium-rendering-simple2d = {path = "../../libraries/rendering/calcium-rendering-simple2d"}
 calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d"]}
 calcium-window = {path = "../../libraries/window/calcium-window"}
+cgmath = "0.14"
+conrod = "0.53"
 slog = "2"
 slog-async = "2"
 slog-term = "2"

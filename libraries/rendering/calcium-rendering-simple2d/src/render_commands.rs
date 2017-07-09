@@ -1,12 +1,13 @@
-use cgmath::{Vector2};
+use cgmath::{Vector2, Vector4};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RenderCommands {
-    pub rectangles: Vec<(Vector2<i32>, Vector2<i32>)>
+    pub rectangles: Vec<Rectangle>
 }
 
-impl RenderCommands {
-    pub fn rectangle(&mut self, start: Vector2<i32>, size: Vector2<i32>) {
-        self.rectangles.push((start, size));
-    }
+#[derive(Debug)]
+pub struct Rectangle {
+    pub start: Vector2<i32>,
+    pub size: Vector2<i32>,
+    pub color: Vector4<f32>,
 }

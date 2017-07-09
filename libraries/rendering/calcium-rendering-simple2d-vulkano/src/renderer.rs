@@ -24,6 +24,7 @@ pub struct VulkanoSimple2DRenderer {
 
 impl VulkanoSimple2DRenderer {
     pub fn new(log: &Logger, renderer: &VulkanoRenderer, window: &VulkanoWindowRenderer) -> Self {
+        info!(log, "Creating simple2d renderer");
         let render_pass = create_render_pass(log, renderer, window);
         let pipeline = create_pipeline(log, renderer, window, render_pass);
 
@@ -57,16 +58,33 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
         // Create a big mesh of all the rectangles we got told to draw
         let mut vertices = Vec::new();
         for rect in commands.rectangles {
-            let start: Vector2<f32> = rect.0.cast();
-            let size: Vector2<f32> = rect.1.cast();
+            let start: Vector2<f32> = rect.start.cast();
+            let size: Vector2<f32> = rect.size.cast();
+            let color = rect.color.into(); // TODO: Convert gamma
             vertices.push(VkVertex {
                 v_position: [start.x, start.y],
+                v_color: color,
             });
             vertices.push(VkVertex {
                 v_position: [start.x, start.y + size.y],
+                v_color: color,
             });
             vertices.push(VkVertex {
                 v_position: [start.x + size.x, start.y],
+                v_color: color,
+            });
+
+            vertices.push(VkVertex {
+                v_position: [start.x + size.x, start.y + size.y],
+                v_color: color,
+            });
+            vertices.push(VkVertex {
+                v_position: [start.x + size.x, start.y],
+                v_color: color,
+            });
+            vertices.push(VkVertex {
+                v_position: [start.x, start.y + size.y],
+                v_color: color,
             });
         }
 
@@ -86,7 +104,7 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
         );
 
         // Build up the command buffer with draw commands
-        let clear_values = vec![[0.0, 0.0, 1.0, 1.0].into()];
+        let clear_values = vec![[0.0, 0.0, 0.0, 1.0].into()];
         let command_buffer = AutoCommandBufferBuilder::new(
                 renderer.device.clone(), renderer.graphics_queue.family()
             ).unwrap()
