@@ -9,24 +9,24 @@ use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::texture::{TextureFormat, TextureBackend};
+use calcium_rendering::{TextureFormat, Texture};
 use {VulkanoBackendTypes, VulkanoRenderer};
 
-pub struct VulkanoTextureBackend {
+pub struct VulkanoTexture {
     image: Arc<ImmutableImage<Format>>,
     sampler: Arc<Sampler>,
 }
 
-impl VulkanoTextureBackend {
+impl VulkanoTexture {
     pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
         (self.image.clone(), self.sampler.clone())
     }
 }
 
-impl TextureBackend<VulkanoBackendTypes> for VulkanoTextureBackend {
-    fn new(
+impl Texture<VulkanoBackendTypes> for VulkanoTexture {
+    fn load_file(
         log: &Logger, backend: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
-    ) -> Self {
+    ) -> Arc<Self> {
         // Load in the image file
         info!(log, "Loading texture"; "path" => path.display().to_string());
         let img = image::open(path).unwrap();
@@ -75,9 +75,9 @@ impl TextureBackend<VulkanoBackendTypes> for VulkanoTextureBackend {
         // Queue copying the data to the image so it will be available when rendering
         backend.queue_image_copy(buffer, image.clone());
 
-        VulkanoTextureBackend {
+        Arc::new(VulkanoTexture {
             image,
             sampler,
-        }
+        })
     }
 }

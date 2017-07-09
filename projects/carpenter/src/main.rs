@@ -68,7 +68,7 @@ impl Runtime for StaticRuntime {
         let mut simple2d_renderer = init.simple2d_renderer(&self.log, &renderer, &window_renderer)?;
 
         // Set up conrod and UI data
-        let conrod_renderer = ConrodRenderer::new(&self.log);
+        let mut conrod_renderer = ConrodRenderer::new(&self.log);
         let mut ui = UiBuilder::new(size.cast().into()).theme(theme()).build();
         ui.fonts.insert(FontCollection::from_bytes(ttf_noto_sans::REGULAR).into_font().unwrap());
         let ids = Ids::new(ui.widget_id_generator());
