@@ -53,6 +53,10 @@ impl WindowRenderer<VulkanoBackendTypes> for VulkanoWindowRenderer {
             frame.future.take().unwrap(), renderer.graphics_queue.clone(), frame.image_num
         );
     }
+
+    fn size(&self) -> Vector2<u32> {
+        self.size
+    }
 }
 
 pub struct VulkanoFrame {
