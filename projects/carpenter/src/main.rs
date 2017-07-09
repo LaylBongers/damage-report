@@ -10,9 +10,11 @@ extern crate conrod;
 extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
+extern crate ttf_noto_sans;
 
 use cgmath::{Vector2};
 use conrod::{widget, Widget, Positionable, Sizeable, Labelable, UiBuilder};
+use conrod::text::{FontCollection};
 use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
@@ -68,6 +70,7 @@ impl Runtime for StaticRuntime {
         // Set up conrod and UI data
         let conrod_renderer = ConrodRenderer::new(&self.log);
         let mut ui = UiBuilder::new(size.cast().into()).theme(theme()).build();
+        ui.fonts.insert(FontCollection::from_bytes(ttf_noto_sans::REGULAR).into_font().unwrap());
         let ids = Ids::new(ui.widget_id_generator());
         let mut count = 0;
 
