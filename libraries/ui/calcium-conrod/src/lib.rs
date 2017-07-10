@@ -22,7 +22,7 @@ use conrod::text::font::{Id as FontId};
 use conrod::position::rect::{Rect};
 
 use calcium_rendering::{BackendTypes, WindowRenderer, Texture};
-use calcium_rendering_simple2d::{RenderBatch, Rectangle};
+use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle};
 
 pub struct ConrodRenderer<T: BackendTypes> {
     glyph_cache: GlyphCache,
@@ -50,10 +50,12 @@ impl<T: BackendTypes> ConrodRenderer<T> {
     pub fn draw_ui(
         &mut self, log: &Logger,
         renderer: &mut T::Renderer, window: &T::WindowRenderer, ui: &mut Ui
-    ) -> Vec<RenderBatch> {
+    ) -> Vec<RenderBatch<T>> {
         // TODO: Support dpi factor
         let half_size: Vector2<i32> = window.size().cast() / 2;
-        let mut batch = RenderBatch::default();
+
+        let mut batches = Vec::new();
+        let mut batch = Default::default();
 
         let mut prims = ui.draw();
         while let Some(prim) = prims.next_primitive() {
@@ -62,29 +64,42 @@ impl<T: BackendTypes> ConrodRenderer<T> {
                     self.push_rect(&mut batch, half_size, &prim.rect, color);
                 },
                 PrimitiveKind::Text { color, text, font_id } => {
+                    // TODO: Re-use the same batch for multiple sequential text draws
+                    if !batch.empty() {
+                        batches.push(batch);
+                        batch = Default::default();
+                    }
                     self.push_text(log, renderer, &mut batch, color, text, font_id);
+                    batches.push(batch);
+                    batch = Default::default();
                 },
                 _ => {}
             }
         }
 
-        vec!(batch)
+        if !batch.empty() {
+            batches.push(batch);
+        }
+
+        batches
     }
 
     fn push_rect(
-        &self, batch: &mut RenderBatch, half_size: Vector2<i32>,
+        &self, batch: &mut RenderBatch<T>, half_size: Vector2<i32>,
         rect: &Rect, color: Color
     ) {
-        batch.rectangles.push(Rectangle {
-            start: Vector2::new(rect.x.start, rect.y.start).cast() + half_size,
-            size: Vector2::new(rect.x.end - rect.x.start, rect.y.end - rect.y.start).cast(),
+        batch.rectangles.push(DrawRectangle {
+            destination: Rectangle {
+                start: Vector2::new(rect.x.start, rect.y.start).cast() + half_size,
+                end: Vector2::new(rect.x.end, rect.y.end).cast() + half_size,
+            },
             color: color_conrod_to_calcium(color),
         });
     }
 
     fn push_text(
         &mut self, log: &Logger,
-        renderer: &mut T::Renderer, batch: &mut RenderBatch,
+        renderer: &mut T::Renderer, batch: &mut RenderBatch<T>,
         color: Color, text: Text, font_id: FontId,
     ) {
         // TODO: Move text rendering into simple2d
@@ -122,14 +137,19 @@ impl<T: BackendTypes> ConrodRenderer<T> {
             );
         }).unwrap();
 
+        // Actually set the texture in the render batch
+        batch.texture = Some(glyph_texture.clone());
+
         // Actually render the text
         // TODO: Make use of a glyphs texture
         for glyph in positioned_glyphs.iter() {
             if let Ok(Some((_uv_rect, screen_rect))) = self.glyph_cache.rect_for(font_id_u, glyph) {
                 // Push this glyph into this draw batch
-                batch.rectangles.push(Rectangle {
-                    start: Vector2::new(screen_rect.min.x, screen_rect.min.y),
-                    size: Vector2::new(screen_rect.width(), screen_rect.height()),
+                batch.rectangles.push(DrawRectangle {
+                    destination: Rectangle {
+                        start: Vector2::new(screen_rect.min.x, screen_rect.min.y),
+                        end: Vector2::new(screen_rect.max.x, screen_rect.max.y),
+                    },
                     color: color_conrod_to_calcium(color),
                 });
             }

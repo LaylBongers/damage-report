@@ -36,8 +36,13 @@ impl VulkanoSimple2DRenderer {
 
 impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
     fn render(
-        &mut self, renderer: &VulkanoRenderer, frame: &mut VulkanoFrame, batches: Vec<RenderBatch>
+        &mut self, renderer: &mut VulkanoRenderer, frame: &mut VulkanoFrame,
+        batches: Vec<RenderBatch<VulkanoBackendTypes>>
     ) {
+        // Give the renderer an opportunity to insert any commands it had queued up, this is used
+        //  to copy textures for example. This always has to be done right before a render pass.
+        let mut future = renderer.submit_queued_commands(frame.future.take().unwrap());
+
         // Create a projection matrix that just matches coordinates to pixels
         let proj = cgmath::ortho(
             0.0, frame.size.x as f32,
@@ -67,32 +72,32 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
             // Create a big mesh of all the rectangles we got told to draw this batch
             let mut vertices = Vec::new();
             for rect in batch.rectangles {
-                let start: Vector2<f32> = rect.start.cast();
-                let size: Vector2<f32> = rect.size.cast();
+                let start: Vector2<f32> = rect.destination.start.cast();
+                let end: Vector2<f32> = rect.destination.end.cast();
                 let color = rect.color.into(); // TODO: Convert gamma
                 vertices.push(VkVertex {
                     v_position: [start.x, start.y],
                     v_color: color,
                 });
                 vertices.push(VkVertex {
-                    v_position: [start.x, start.y + size.y],
+                    v_position: [start.x, end.y],
                     v_color: color,
                 });
                 vertices.push(VkVertex {
-                    v_position: [start.x + size.x, start.y],
+                    v_position: [end.x, start.y],
                     v_color: color,
                 });
 
                 vertices.push(VkVertex {
-                    v_position: [start.x + size.x, start.y + size.y],
+                    v_position: [end.x, end.y],
                     v_color: color,
                 });
                 vertices.push(VkVertex {
-                    v_position: [start.x + size.x, start.y],
+                    v_position: [end.x, start.y],
                     v_color: color,
                 });
                 vertices.push(VkVertex {
-                    v_position: [start.x, start.y + size.y],
+                    v_position: [start.x, end.y],
                     v_color: color,
                 });
             }
@@ -129,10 +134,11 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
             .build().unwrap();
 
         // Submit the command buffer
-        let future = frame.future.take().unwrap()
+        future = Box::new(future
             .then_execute(renderer.graphics_queue.clone(), command_buffer)
-            .unwrap();
-        frame.future = Some(Box::new(future));
+            .unwrap()
+        );
+        frame.future = Some(future);
     }
 }
 

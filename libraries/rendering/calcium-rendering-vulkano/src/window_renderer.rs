@@ -33,7 +33,7 @@ impl VulkanoWindowRenderer {
 }
 
 impl WindowRenderer<VulkanoBackendTypes> for VulkanoWindowRenderer {
-    fn start_frame(&mut self) -> VulkanoFrame {
+    fn start_frame(&mut self, _renderer: &VulkanoRenderer) -> VulkanoFrame {
         self.swapchain.cleanup_finished_frames();
 
         // Get the image for this frame, along with a future that will let us queue up the order of
