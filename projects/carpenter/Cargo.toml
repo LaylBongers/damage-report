@@ -9,9 +9,9 @@ calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
 calcium-rendering-simple2d = {path = "../../libraries/rendering/calcium-rendering-simple2d"}
 calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d"]}
 calcium-conrod = {path = "../../libraries/ui/calcium-conrod"}
-calcium-window = {path = "../../libraries/window/calcium-window"}
 cgmath = "0.14"
 conrod = "0.53"
+pistoncore-window = "0.27.0"
 slog = "2"
 slog-async = "2"
 slog-term = "2"

@@ -2,6 +2,7 @@ use cgmath::{Vector2};
 use conrod::{self, Widget, Positionable, Sizeable, Labelable, UiBuilder};
 use conrod::text::{FontCollection};
 use conrod::widget::{Text, Canvas, Button};
+use window::{Window};
 use slog::{Logger};
 
 use calcium_game::{LoopTimer, delta_to_fps};
@@ -9,7 +10,6 @@ use calcium_rendering::{Error, WindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderer};
 use calcium_rendering_static::{Runtime, Initializer};
 use calcium_conrod::{ConrodRenderer};
-use calcium_window::{Window};
 
 pub struct StaticRuntime {
     pub log: Logger,
@@ -26,6 +26,7 @@ impl Runtime for StaticRuntime {
         let (mut window, mut window_renderer) = init.window(
             &self.log, &renderer, "Carpenter", Vector2::new(size.x, size.y)
         )?;
+        // TODO: Make the simple2d renderer work for multiple windows
         let mut simple2d_renderer = init.simple2d_renderer(
             &self.log, &mut renderer, &window_renderer
         )?;
@@ -41,8 +42,12 @@ impl Runtime for StaticRuntime {
         // Run the actual game loop
         info!(self.log, "Finished loading, starting main loop");
         let mut timer = LoopTimer::start();
-        while window.handle_events() {
+        loop {
             let delta = timer.tick();
+
+            // Poll for events, this should make the window know when it should be closed
+            while let Some(_) = window.poll_event() {}
+            if window.should_close() { break; }
 
             // Update the UI
             {

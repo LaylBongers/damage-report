@@ -2,7 +2,7 @@ use cgmath::{Vector2};
 use slog::{Logger};
 
 use calcium_rendering::{Error, BackendTypes};
-use calcium_window::{Window};
+use window::{Window};
 
 #[cfg(feature = "world3d")]
 use calcium_rendering_world3d::{World3DBackendTypes};

@@ -3,7 +3,7 @@ use slog::{Logger};
 
 use calcium_rendering::{Error};
 use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoWindowRenderer, VulkanoRenderer};
-use calcium_window_winit::{self, WinitWindow};
+use winit_window::{self, WinitWindow};
 
 #[cfg(feature = "world3d")]
 use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer, VulkanoWorldBackendTypes};
@@ -42,7 +42,7 @@ impl Initializer for VulkanoInitializer {
     fn renderer(
         &self, log: &Logger,
     ) -> Result<VulkanoRenderer, Error> {
-        VulkanoRenderer::new(log, calcium_window_winit::required_extensions())
+        VulkanoRenderer::new(log, winit_window::required_extensions())
     }
 
     fn window(
@@ -50,7 +50,9 @@ impl Initializer for VulkanoInitializer {
         renderer: &VulkanoRenderer,
         title: &str, size: Vector2<u32>,
     ) -> Result<(WinitWindow, VulkanoWindowRenderer), Error> {
-        let window = WinitWindow::new_vulkano(renderer.instance.clone(), title, size);
+        let window = WinitWindow::new_vulkano(
+            renderer.instance.clone(), title, [size.x, size.y].into()
+        );
         let window_renderer = VulkanoWindowRenderer::new(
             log, renderer, window.surface.clone(), size
         );

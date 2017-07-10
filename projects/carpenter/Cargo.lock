@@ -7,9 +7,9 @@ dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-simple2d 0.1.0",
  "calcium-rendering-static 0.0.1",
- "calcium-window 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "conrod 0.53.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog-async 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog-term 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -124,9 +124,9 @@ dependencies = [
  "calcium-rendering-simple2d 0.1.0",
  "calcium-rendering-simple2d-vulkano 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
- "calcium-window 0.1.0",
- "calcium-window-winit 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pistoncore-winit_window 0.1.0",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -147,21 +147,6 @@ version = "0.1.0"
 dependencies = [
  "vulkano 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano-shaders 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "calcium-window"
-version = "0.1.0"
-
-[[package]]
-name = "calcium-window-winit"
-version = "0.1.0"
-dependencies = [
- "calcium-window 0.1.0",
- "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "vulkano 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "vulkano-win 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "winit 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -763,6 +748,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pistoncore-window"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "shader_version 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "pistoncore-winit_window"
+version = "0.1.0"
+dependencies = [
+ "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vulkano 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vulkano-win 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winit 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "pkg-config"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -870,6 +875,11 @@ dependencies = [
  "num-traits 0.1.39 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.9.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "shader_version"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "shared_library"
@@ -1249,6 +1259,7 @@ dependencies = [
 "checksum piston-float 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b058c3a640efd4bcf63266512e4bb03187192c1b29edd38b16d5a014613e3199"
 "checksum piston-viewport 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9c5548a838fd9dc604c96d886c03c303f043a2d85f88719cca59dc7991d86343"
 "checksum pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ab36532c344e412c5ed79a259ae01b26259cbdc96b0ab219ba3eb3dfcdf59df5"
+"checksum pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2596d106c2fc1281dcbf87fa641dfe6ba744f75a7b87f30611efddac3ada52cc"
 "checksum pkg-config 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)" = "3a8b4c6b8165cd1a1cd4b9b120978131389f64bdaf456435caa41e630edba903"
 "checksum png 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6535266009941ceac9a17e6d681cd2adc75611cd4833db853282e8d4c470239c"
 "checksum rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "022e0636ec2519ddae48154b028864bdce4eaf7d35226ab8e65c611be97b189d"
@@ -1264,6 +1275,7 @@ dependencies = [
 "checksum serde 0.8.23 (registry+https://github.com/rust-lang/crates.io-index)" = "9dad3f759919b92c3068c696c15c3d17238234498bbdcc80f2c469606f948ac8"
 "checksum serde 0.9.15 (registry+https://github.com/rust-lang/crates.io-index)" = "34b623917345a631dc9608d5194cc206b3fe6c3554cd1c75b937e55e285254af"
 "checksum serde_json 0.9.10 (registry+https://github.com/rust-lang/crates.io-index)" = "ad8bcf487be7d2e15d3d543f04312de991d631cfe1b43ea0ade69e6a8a5b16a1"
+"checksum shader_version 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "476a6f59085a3b8ba2d1127d3f3d9d3b100bbc60301a6a557a405313ea99096f"
 "checksum shared_library 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "1227d0b17e613be9a0126ea1eb5c34ac7f378465fbdb00d8dfd7ebe433af3f8c"
 "checksum shell32-sys 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "72f20b8f3c060374edb8046591ba28f62448c369ccbdc7b02075103fb3a9e38d"
 "checksum siphasher 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "0df90a788073e8d0235a67e50441d47db7c8ad9debd91cbf43736a2a92d36537"

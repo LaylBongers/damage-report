@@ -13,10 +13,10 @@ simple2d = ["calcium-rendering-simple2d", "calcium-rendering-simple2d-vulkano"]
 [dependencies]
 cgmath = "0.14"
 slog = "2"
+pistoncore-window = "0.27.0"
+pistoncore-winit_window = {path = "../../window/winit_window"}
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
-calcium-window = {path = "../../window/calcium-window"}
-calcium-window-winit = {path = "../../window/calcium-window-winit"}
 
 # Enabled with the world3d feature
 calcium-rendering-world3d = {path = "../calcium-rendering-world3d", optional = true}

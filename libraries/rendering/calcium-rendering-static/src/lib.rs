@@ -1,9 +1,9 @@
 extern crate cgmath;
 extern crate slog;
+extern crate window;
+extern crate winit_window;
 extern crate calcium_rendering;
 extern crate calcium_rendering_vulkano;
-extern crate calcium_window;
-extern crate calcium_window_winit;
 
 #[cfg(feature = "world3d")]
 extern crate calcium_rendering_world3d;
