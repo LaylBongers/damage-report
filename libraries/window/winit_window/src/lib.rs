@@ -11,8 +11,8 @@ use std::collections::{VecDeque};
 use vulkano::swapchain::{Surface};
 use vulkano::instance::{Instance, InstanceExtensions};
 use vulkano_win::{VkSurfaceBuild, Window as VulkanoWinWindow};
-use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent};
-use input::{Input, EventId, CloseArgs};
+use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, MouseButton as WinitMouseButton};
+use input::{Input, EventId, CloseArgs, Motion, Button, MouseButton};
 use window::{Window, Size};
 
 pub fn required_extensions() -> InstanceExtensions {
@@ -114,9 +114,33 @@ fn map_event(event: WinitEvent) -> Input {
         WinitEvent::WindowEvent { event: ev, .. } => {
             match ev {
                 WindowEvent::Closed => Input::Close(CloseArgs),
+                WindowEvent::MouseMoved { device_id: _, position } =>
+                    Input::Move(Motion::MouseCursor(position.0, position.1)),
+                WindowEvent::MouseInput { device_id: _, state, button } => {
+                    let button = map_mouse_button(button);
+                    if state == ElementState::Pressed {
+                        Input::Press(Button::Mouse(button))
+                    } else {
+                        Input::Release(Button::Mouse(button))
+                    }
+                },
                 _ => unsupported_input,
             }
         },
         _ => unsupported_input,
+    }
+}
+
+fn map_mouse_button(button: WinitMouseButton) -> MouseButton {
+    match button {
+        WinitMouseButton::Left => MouseButton::Left,
+        WinitMouseButton::Right => MouseButton::Right,
+        WinitMouseButton::Middle => MouseButton::Middle,
+        WinitMouseButton::Other(4) => MouseButton::X1,
+        WinitMouseButton::Other(5) => MouseButton::X2,
+        WinitMouseButton::Other(6) => MouseButton::Button6,
+        WinitMouseButton::Other(7) => MouseButton::Button7,
+        WinitMouseButton::Other(8) => MouseButton::Button8,
+        _ => MouseButton::Unknown,
     }
 }

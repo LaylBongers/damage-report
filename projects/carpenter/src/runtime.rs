@@ -42,12 +42,18 @@ impl Runtime for StaticRuntime {
         // Run the actual game loop
         info!(self.log, "Finished loading, starting main loop");
         let mut timer = LoopTimer::start();
-        loop {
+        while !window.should_close() {
             let delta = timer.tick();
 
-            // Poll for events, this should make the window know when it should be closed
-            while let Some(_) = window.poll_event() {}
-            if window.should_close() { break; }
+            // Poll for window events
+            while let Some(event) = window.poll_event() {
+                // Pass the event itself over to conrod
+                if let Some(event) = ::conrod::backend::piston::event::convert(
+                    event.clone(), size.x as f64, size.y as f64
+                ) {
+                    ui.handle_event(event);
+                }
+            }
 
             // Update the UI
             {
@@ -74,7 +80,7 @@ impl Runtime for StaticRuntime {
                 }
             }
 
-            // Create the batches we want to render
+            // Create render batches for the UI
             let batches = conrod_renderer.draw_ui(
                 &self.log, &mut renderer, &window_renderer, &mut ui
             );
