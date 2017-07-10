@@ -117,7 +117,7 @@ impl<T: BackendTypes> ConrodRenderer<T> {
 
         // Now see if we need to create a new glyph cache
         let glyph_image = &mut self.glyph_image;
-        let glyph_texture = &mut self.glyph_texture;
+        let mut changed = false;
         self.glyph_cache.cache_queued(|rect, data| {
             // Create an image from the data we got
             // TODO: See if we can avoid copying all pixel data to create the image
@@ -127,19 +127,24 @@ impl<T: BackendTypes> ConrodRenderer<T> {
 
             // Copy the data into the full glyphs image
             glyph_image.copy_from(&new_glyphs_subimage, rect.min.x, rect.min.y);
+            changed = true;
+        }).unwrap();
 
+        // If the image has actually changed, update the texture. This is done afterwards because
+        //  the cache_queued callback may be called multiple times
+        if changed {
             // Upload the glyphs into a texture
             // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
             // TODO: Remove this weird split_at and find a way to get a slice of all the pixels
             //  without copying
             let (_, data) = glyph_image.split_at(0);
-            *glyph_texture = T::Texture::from_raw_greyscale(
+            self.glyph_texture = T::Texture::from_raw_greyscale(
                 log, renderer, data, Vector2::new(1024, 1024)
             );
-        }).unwrap();
+        }
 
         // Actually set the texture in the render batch
-        batch.mode = BatchMode::Mask(glyph_texture.clone());
+        batch.mode = BatchMode::Mask(self.glyph_texture.clone());
 
         // Actually render the text
         // TODO: Make use of a glyphs texture
