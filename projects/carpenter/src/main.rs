@@ -65,7 +65,9 @@ impl Runtime for StaticRuntime {
         let (mut window, mut window_renderer) = init.window(
             &self.log, &renderer, "Carpenter", Vector2::new(size.x, size.y)
         )?;
-        let mut simple2d_renderer = init.simple2d_renderer(&self.log, &renderer, &window_renderer)?;
+        let mut simple2d_renderer = init.simple2d_renderer(
+            &self.log, &mut renderer, &window_renderer
+        )?;
 
         // Set up conrod and UI data
         let mut conrod_renderer: ConrodRenderer<I::BackendTypes> =
@@ -85,7 +87,8 @@ impl Runtime for StaticRuntime {
                 for _click in widget::Button::new()
                     .middle_of(ids.canvas)
                     .w_h(80.0, 80.0)
-                    .label(&count.to_string())
+                    //.label(&count.to_string())
+                    .label(&format!("The Quick Fox Jumps Over The Lazy Dog #{}", count))
                     .set(ids.counter, ui)
                 {
                     count += 1;

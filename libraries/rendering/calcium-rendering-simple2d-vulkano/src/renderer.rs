@@ -12,24 +12,32 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use slog::{Logger};
 
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer, VulkanoBackendTypes, VulkanoFrame};
+use calcium_rendering::{Texture};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, Rectangle, BatchMode};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer, VulkanoBackendTypes, VulkanoFrame, VulkanoTexture};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex};
 
 pub struct VulkanoSimple2DRenderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    dummy_texture: Arc<VulkanoTexture>,
 }
 
 impl VulkanoSimple2DRenderer {
-    pub fn new(log: &Logger, renderer: &VulkanoRenderer, window: &VulkanoWindowRenderer) -> Self {
+    pub fn new(
+        log: &Logger, renderer: &mut VulkanoRenderer, window: &VulkanoWindowRenderer
+    ) -> Self {
         info!(log, "Creating simple2d renderer");
         let render_pass = create_render_pass(log, renderer, window);
         let pipeline = create_pipeline(log, renderer, window, render_pass);
+        let dummy_texture = VulkanoTexture::from_raw_greyscale(
+            log, renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
+        );
 
         VulkanoSimple2DRenderer {
             pipeline,
+            dummy_texture,
         }
     }
 }
@@ -74,30 +82,44 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
             for rect in batch.rectangles {
                 let start: Vector2<f32> = rect.destination.start.cast();
                 let end: Vector2<f32> = rect.destination.end.cast();
+
+                let texture_source = rect.texture_source.unwrap_or(
+                    Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0))
+                );
+                let uv_start: Vector2<f32> = texture_source.start;
+                let uv_end: Vector2<f32> = texture_source.end;
+
                 let color = rect.color.into(); // TODO: Convert gamma
+
                 vertices.push(VkVertex {
                     v_position: [start.x, start.y],
+                    v_uv: [uv_start.x, uv_start.y],
                     v_color: color,
                 });
                 vertices.push(VkVertex {
                     v_position: [start.x, end.y],
+                    v_uv: [uv_start.x, uv_end.y],
                     v_color: color,
                 });
                 vertices.push(VkVertex {
                     v_position: [end.x, start.y],
+                    v_uv: [uv_end.x, uv_start.y],
                     v_color: color,
                 });
 
                 vertices.push(VkVertex {
                     v_position: [end.x, end.y],
+                    v_uv: [uv_end.x, uv_end.y],
                     v_color: color,
                 });
                 vertices.push(VkVertex {
                     v_position: [end.x, start.y],
+                    v_uv: [uv_end.x, uv_start.y],
                     v_color: color,
                 });
                 vertices.push(VkVertex {
                     v_position: [start.x, end.y],
+                    v_uv: [uv_start.x, uv_end.y],
                     v_color: color,
                 });
             }
@@ -109,11 +131,30 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
                 vertices.into_iter()
             ).unwrap();
 
+            // Get the mode ID this batch has and a texture to render
+            // TODO: Figure out a way to avoid having to have a dummy texture
+            let (mode_id, tex_uniform) = match &batch.mode {
+                &BatchMode::Color => (0, self.dummy_texture.uniform()),
+                &BatchMode::Texture(ref texture) => (1, texture.uniform()),
+                &BatchMode::Mask(ref texture) => (2, texture.uniform()),
+            };
+
+            // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
+            let mode_buffer = CpuAccessibleBuffer::<simple2d_fs::ty::ModeData>::from_data(
+                renderer.device.clone(), BufferUsage::all(),
+                Some(renderer.graphics_queue.family()),
+                simple2d_fs::ty::ModeData {
+                    mode: mode_id,
+                }
+            ).unwrap();
+
             // Create the uniform data set to send over
-            // TODO: It's really expensive to constantly create persistent sets, figure out some way to
-            //  solve this
+            // TODO: It's really expensive to constantly create persistent sets, figure out some
+            //  way to solve this
             let set = Arc::new(PersistentDescriptorSet::start(self.pipeline.clone(), 0)
                 .add_buffer(matrix_data_buffer.clone()).unwrap()
+                .add_sampled_image(tex_uniform.0, tex_uniform.1).unwrap()
+                .add_buffer(mode_buffer.clone()).unwrap()
                 .build().unwrap()
             );
 
@@ -192,6 +233,8 @@ fn create_pipeline(
         // Which shaders to use
         .vertex_shader(vs.main_entry_point(), ())
         .fragment_shader(fs.main_entry_point(), ())
+
+        .blend_alpha_blending()
 
         .render_pass(Subpass::from(render_pass, 0).unwrap())
         .build(renderer.device.clone()).unwrap()

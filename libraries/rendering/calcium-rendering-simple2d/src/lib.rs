@@ -6,5 +6,5 @@ mod render_batch;
 mod renderer;
 
 pub use backend_types::{Simple2DBackendTypes};
-pub use render_batch::{RenderBatch, DrawRectangle, Rectangle};
+pub use render_batch::{RenderBatch, DrawRectangle, Rectangle, BatchMode};
 pub use renderer::{Simple2DRenderer};

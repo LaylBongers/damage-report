@@ -102,6 +102,7 @@ dependencies = [
 name = "calcium-rendering-simple2d-vulkano"
 version = "0.1.0"
 dependencies = [
+ "calcium-rendering 0.1.0",
  "calcium-rendering-simple2d 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
  "calcium-rendering-vulkano-shaders 0.1.0",

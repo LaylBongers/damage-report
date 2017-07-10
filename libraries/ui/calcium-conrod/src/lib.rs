@@ -22,7 +22,7 @@ use conrod::text::font::{Id as FontId};
 use conrod::position::rect::{Rect};
 
 use calcium_rendering::{BackendTypes, WindowRenderer, Texture};
-use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle};
+use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle, BatchMode};
 
 pub struct ConrodRenderer<T: BackendTypes> {
     glyph_cache: GlyphCache,
@@ -93,6 +93,7 @@ impl<T: BackendTypes> ConrodRenderer<T> {
                 start: Vector2::new(rect.x.start, rect.y.start).cast() + half_size,
                 end: Vector2::new(rect.x.end, rect.y.end).cast() + half_size,
             },
+            texture_source: None,
             color: color_conrod_to_calcium(color),
         });
     }
@@ -138,18 +139,22 @@ impl<T: BackendTypes> ConrodRenderer<T> {
         }).unwrap();
 
         // Actually set the texture in the render batch
-        batch.texture = Some(glyph_texture.clone());
+        batch.mode = BatchMode::Mask(glyph_texture.clone());
 
         // Actually render the text
         // TODO: Make use of a glyphs texture
         for glyph in positioned_glyphs.iter() {
-            if let Ok(Some((_uv_rect, screen_rect))) = self.glyph_cache.rect_for(font_id_u, glyph) {
+            if let Ok(Some((uv_rect, screen_rect))) = self.glyph_cache.rect_for(font_id_u, glyph) {
                 // Push this glyph into this draw batch
                 batch.rectangles.push(DrawRectangle {
                     destination: Rectangle {
                         start: Vector2::new(screen_rect.min.x, screen_rect.min.y),
                         end: Vector2::new(screen_rect.max.x, screen_rect.max.y),
                     },
+                    texture_source: Some(Rectangle {
+                        start: Vector2::new(uv_rect.min.x, uv_rect.min.y),
+                        end: Vector2::new(uv_rect.max.x, uv_rect.max.y),
+                    }),
                     color: color_conrod_to_calcium(color),
                 });
             }
