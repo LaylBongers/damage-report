@@ -1,3 +1,4 @@
+extern crate calcium_game;
 extern crate calcium_rendering;
 extern crate calcium_rendering_simple2d;
 extern crate calcium_rendering_static;
@@ -12,18 +13,14 @@ extern crate slog_async;
 extern crate slog_term;
 extern crate ttf_noto_sans;
 
-use cgmath::{Vector2};
-use conrod::{widget, Widget, Positionable, Sizeable, Labelable, UiBuilder};
-use conrod::text::{FontCollection};
+mod runtime;
+
 use slog::{Logger, Drain};
 use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
-use calcium_rendering::{Error, WindowRenderer};
-use calcium_rendering_simple2d::{Simple2DRenderer};
-use calcium_rendering_static::{Backend, Runtime, Initializer};
-use calcium_conrod::{ConrodRenderer};
-use calcium_window::{Window};
+use calcium_rendering::{Error};
+use calcium_rendering_static::{Backend};
 
 fn main() {
     // Set up the logger
@@ -47,91 +44,5 @@ fn run_game(log: &Logger) -> Result<(), Error> {
     let backend = Backend::Vulkano;
 
     // Run the game's runtime with the appropriate backends
-    calcium_rendering_static::run_runtime(backend, StaticRuntime { log: log.clone() })
-}
-
-struct StaticRuntime {
-    log: Logger,
-}
-
-impl Runtime for StaticRuntime {
-    fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
-        info!(self.log, "Loading program");
-
-        let size = Vector2::new(1280, 720);
-
-        // Set up everything we need to render
-        let mut renderer = init.renderer(&self.log)?;
-        let (mut window, mut window_renderer) = init.window(
-            &self.log, &renderer, "Carpenter", Vector2::new(size.x, size.y)
-        )?;
-        let mut simple2d_renderer = init.simple2d_renderer(
-            &self.log, &mut renderer, &window_renderer
-        )?;
-
-        // Set up conrod and UI data
-        let mut conrod_renderer: ConrodRenderer<I::BackendTypes> =
-            ConrodRenderer::new(&self.log, &mut renderer);
-        let mut ui = UiBuilder::new(size.cast().into()).theme(theme()).build();
-        ui.fonts.insert(FontCollection::from_bytes(ttf_noto_sans::REGULAR).into_font().unwrap());
-        let ids = Ids::new(ui.widget_id_generator());
-        let mut count = 0;
-
-        // Run the actual game loop
-        info!(self.log, "Finished loading, starting main loop");
-        while window.handle_events() {
-            // Update the UI
-            {
-                let ui = &mut ui.set_widgets();
-                widget::Canvas::new().pad(40.0).set(ids.canvas, ui);
-                for _click in widget::Button::new()
-                    .middle_of(ids.canvas)
-                    .w_h(80.0, 80.0)
-                    //.label(&count.to_string())
-                    .label(&format!("The Quick Fox Jumps Over The Lazy Dog #{}", count))
-                    .set(ids.counter, ui)
-                {
-                    count += 1;
-                }
-            }
-
-            // Create the batches we want to render
-            let batches = conrod_renderer.draw_ui(
-                &self.log, &mut renderer, &window_renderer, &mut ui
-            );
-
-            // Perform the rendering itself
-            let mut frame = window_renderer.start_frame(&renderer);
-            simple2d_renderer.render(&mut renderer, &mut frame, batches);
-            window_renderer.finish_frame(&renderer, frame);
-        }
-
-        Ok(())
-    }
-}
-
-pub fn theme() -> conrod::Theme {
-    use conrod::position::{Align, Direction, Padding, Position, Relative};
-    conrod::Theme {
-        name: "Demo Theme".to_string(),
-        padding: Padding::none(),
-        x_position: Position::Relative(Relative::Align(Align::Start), None),
-        y_position: Position::Relative(Relative::Direction(Direction::Backwards, 20.0), None),
-        background_color: conrod::color::DARK_CHARCOAL,
-        shape_color: conrod::color::LIGHT_CHARCOAL,
-        border_color: conrod::color::BLACK,
-        border_width: 0.0,
-        label_color: conrod::color::WHITE,
-        font_id: None,
-        font_size_large: 26,
-        font_size_medium: 18,
-        font_size_small: 12,
-        widget_styling: conrod::theme::StyleMap::default(),
-        mouse_drag_threshold: 0.0,
-        double_click_threshold: std::time::Duration::from_millis(500),
-    }
-}
-
-widget_ids! {
-    struct Ids { canvas, counter }
+    calcium_rendering_static::run_runtime(backend, runtime::StaticRuntime { log: log.clone() })
 }

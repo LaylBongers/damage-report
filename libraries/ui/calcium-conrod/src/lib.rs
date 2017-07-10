@@ -103,7 +103,9 @@ impl<T: BackendTypes> ConrodRenderer<T> {
         renderer: &mut T::Renderer, batch: &mut RenderBatch<T>,
         color: Color, text: Text, font_id: FontId,
     ) {
-        // TODO: Move text rendering into simple2d
+        // Unfortunately this specific text rendering can't be moved into the core simple2d library
+        //  because half of it is managed by conrod. Instead we just use the masked solid-color
+        //  feature.
         let font_id_u = font_id.index();
 
         // Get the glyphs we need to render

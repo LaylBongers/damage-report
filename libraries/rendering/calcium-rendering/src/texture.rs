@@ -16,9 +16,12 @@ pub trait Texture<T: BackendTypes> {
     ) -> Arc<Self>;
 }
 
+/// The format of raw texture data.
 #[derive(PartialEq, Clone, Copy)]
 pub enum TextureFormat {
     Srgb,
     Linear,
+    // TODO: This is used as a special case to convert LinearRGB to single channel, there instead
+    //  should be a separate enum for the target format the data should be changed to.
     LinearRed,
 }

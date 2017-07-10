@@ -1,4 +1,4 @@
 # calcium-game
-Quick generic tools for making games. Not dependent on other calcium libraries.
+Quick generic tools for making games.
 
 - Game loop timer

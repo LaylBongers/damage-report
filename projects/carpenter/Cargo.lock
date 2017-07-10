@@ -3,6 +3,7 @@ name = "carpenter"
 version = "0.1.0"
 dependencies = [
  "calcium-conrod 0.1.0",
+ "calcium-game 0.1.0",
  "calcium-rendering 0.1.0",
  "calcium-rendering-simple2d 0.1.0",
  "calcium-rendering-static 0.0.1",
@@ -81,6 +82,10 @@ dependencies = [
  "palette 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "calcium-game"
+version = "0.1.0"
 
 [[package]]
 name = "calcium-rendering"

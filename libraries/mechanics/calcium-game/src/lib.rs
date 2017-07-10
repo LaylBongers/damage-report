@@ -24,6 +24,13 @@ impl LoopTimer {
 
         // Get the nanoseconds and convert it to a seconds float
         let nanos = duration.subsec_nanos();
-        nanos as f32 / 1_000_000_000.0
+        let delta = nanos as f32 / 1_000_000_000.0;
+
+        // Make sure the final delta isn't negative or absolute zero
+        f32::max(delta, 0.000_000_1)
     }
+}
+
+pub fn delta_to_fps(delta: f32) -> f32 {
+    1.0 / delta
 }
