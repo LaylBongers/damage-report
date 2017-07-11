@@ -42,7 +42,6 @@ pub trait Initializer {
     fn simple2d_renderer(
         &self, log: &Logger,
         renderer: &mut <Self::BackendTypes as BackendTypes>::Renderer,
-        window: &<Self::BackendTypes as BackendTypes>::WindowRenderer,
     ) -> Result<
         <Self::Simple2DBackendTypes as Simple2DBackendTypes<Self::BackendTypes>>::Renderer,
         Error

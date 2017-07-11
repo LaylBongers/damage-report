@@ -26,10 +26,7 @@ impl Runtime for StaticRuntime {
         let (mut window, mut window_renderer) = init.window(
             &self.log, &renderer, "Carpenter", Vector2::new(size.x, size.y)
         )?;
-        // TODO: Make the simple2d renderer work for multiple windows
-        let mut simple2d_renderer = init.simple2d_renderer(
-            &self.log, &mut renderer, &window_renderer
-        )?;
+        let mut simple2d_renderer = init.simple2d_renderer(&self.log, &mut renderer)?;
 
         // Set up conrod and UI data
         let mut conrod_renderer: ConrodRenderer<I::BackendTypes> =
@@ -65,9 +62,15 @@ impl Runtime for StaticRuntime {
 
                 // FPS label
                 Text::new(&format!("FPS: {}", delta_to_fps(delta)))
+                    .top_right_of(ids.canvas)
+                    .w(100.0)
                     .font_size(12)
-                    .top_left_of(ids.canvas)
                     .set(ids.fps_label, ui);
+                Text::new(&format!("MS: {}", delta))
+                    .left_from(ids.fps_label, 12.0)
+                    .w(100.0)
+                    .font_size(12)
+                    .set(ids.ms_label, ui);
 
                 // Counter button
                 for _click in Button::new()
@@ -119,6 +122,6 @@ pub fn theme() -> conrod::Theme {
 
 widget_ids! { struct Ids {
     canvas,
-    fps_label,
+    fps_label, ms_label,
     counter,
 } }

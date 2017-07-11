@@ -1,5 +1,4 @@
 use std::sync::{Arc};
-use std::iter;
 
 use cgmath::{self, Vector2};
 use vulkano::sync::{GpuFuture};
@@ -14,7 +13,7 @@ use slog::{Logger};
 
 use calcium_rendering::{Texture};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, Rectangle, BatchMode};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer, VulkanoBackendTypes, VulkanoFrame, VulkanoTexture};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoBackendTypes, VulkanoFrame, VulkanoTexture};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex};
@@ -26,11 +25,11 @@ pub struct VulkanoSimple2DRenderer {
 
 impl VulkanoSimple2DRenderer {
     pub fn new(
-        log: &Logger, renderer: &mut VulkanoRenderer, window: &VulkanoWindowRenderer
+        log: &Logger, renderer: &mut VulkanoRenderer,
     ) -> Self {
         info!(log, "Creating simple2d renderer");
-        let render_pass = create_render_pass(log, renderer, window);
-        let pipeline = create_pipeline(log, renderer, window, render_pass);
+        let render_pass = create_render_pass(log, renderer);
+        let pipeline = create_pipeline(log, renderer, render_pass);
         let dummy_texture = VulkanoTexture::from_raw_greyscale(
             log, renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
         );
@@ -162,7 +161,17 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
             command_buffer_builder = command_buffer_builder
                 .draw(
                     self.pipeline.clone(),
-                    DynamicState::none(),
+                    DynamicState {
+                        viewports: Some(vec!(Viewport {
+                            origin: [0.0, 0.0],
+                            depth_range: 0.0 .. 1.0,
+                            dimensions: [
+                                frame.size.x as f32,
+                                frame.size.y as f32
+                            ],
+                        })),
+                        .. DynamicState::none()
+                    },
                     vec!(vertex_buffer.clone()),
                     set, ()
                 ).unwrap()
@@ -184,16 +193,17 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
 }
 
 fn create_render_pass(
-    log: &Logger, renderer: &VulkanoRenderer, window: &VulkanoWindowRenderer,
+    log: &Logger, renderer: &VulkanoRenderer,
 ) -> Arc<RenderPassAbstract + Send + Sync> {
-    debug!(log, "Creating g-buffer render pass");
+    debug!(log, "Creating simple2d render pass");
     #[allow(dead_code)]
     let render_pass = Arc::new(single_pass_renderpass!(renderer.device.clone(),
         attachments: {
             color: {
                 load: Clear,
                 store: Store,
-                format: window.swapchain.swapchain.format(),
+                // TODO: Get this format from a central place that isn't the window
+                format: ::vulkano::format::Format::B8G8R8A8Srgb,
                 samples: 1,
             }
         },
@@ -207,7 +217,7 @@ fn create_render_pass(
 }
 
 fn create_pipeline(
-    log: &Logger, renderer: &VulkanoRenderer, window: &VulkanoWindowRenderer,
+    log: &Logger, renderer: &VulkanoRenderer,
     render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
@@ -216,19 +226,11 @@ fn create_pipeline(
     let fs = simple2d_fs::Shader::load(renderer.device.clone()).unwrap();
 
     // Set up the pipeline itself
-    debug!(log, "Creating gbuffer pipeline");
-    let dimensions = window.size;
+    debug!(log, "Creating simple2d pipeline");
     Arc::new(GraphicsPipeline::start()
         .vertex_input_single_buffer()
         .triangle_list()
-        .viewports(iter::once(Viewport {
-            origin: [0.0, 0.0],
-            depth_range: 0.0 .. 1.0,
-            dimensions: [
-                dimensions[0] as f32,
-                dimensions[1] as f32
-            ],
-        }))
+        .viewports_dynamic_scissors_irrelevant(1)
 
         // Which shaders to use
         .vertex_shader(vs.main_entry_point(), ())
