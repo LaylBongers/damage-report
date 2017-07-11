@@ -3,14 +3,21 @@ extern crate calcium_rendering_simple2d;
 extern crate cgmath;
 extern crate conrod;
 extern crate image;
+extern crate lyon;
 extern crate palette;
 #[macro_use]
 extern crate slog;
 
 use std::sync::{Arc};
 
-use cgmath::{Vector2, Vector4};
+use cgmath::{Vector2, Vector4, Zero};
 use image::{ImageBuffer, GrayImage, Luma, GenericImage};
+use lyon::path::{Path};
+use lyon::path_builder::{BaseBuilder};
+use lyon::path_builder::math::{point, TypedPoint2D};
+use lyon::path_iterator::{PathIterator};
+use lyon::tessellation::{StrokeTessellator, VertexBuffers, StrokeOptions, StrokeVertex};
+use lyon::tessellation::geometry_builder::{simple_builder};
 use palette::{Rgba};
 use palette::pixel::{Srgb};
 use slog::{Logger};
@@ -22,7 +29,9 @@ use conrod::text::font::{Id as FontId};
 use conrod::position::rect::{Rect};
 
 use calcium_rendering::{BackendTypes, WindowRenderer, Texture};
-use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle, BatchMode};
+use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle, BatchMode, DrawVertex};
+
+// TODO: This file is huge, split it up into separate files for different primitives
 
 pub struct ConrodRenderer<T: BackendTypes> {
     glyph_cache: GlyphCache,
@@ -53,6 +62,7 @@ impl<T: BackendTypes> ConrodRenderer<T> {
     ) -> Vec<RenderBatch<T>> {
         // TODO: Support dpi factor
         let half_size: Vector2<i32> = window.size().cast() / 2;
+        let half_size_f: Vector2<f32> = half_size.cast();
 
         let mut batches = Vec::new();
         let mut batch = Default::default();
@@ -62,6 +72,66 @@ impl<T: BackendTypes> ConrodRenderer<T> {
             match prim.kind {
                 PrimitiveKind::Rectangle { color } => {
                     self.push_rect(&mut batch, half_size, &prim.rect, color);
+                },
+                PrimitiveKind::Polygon { color: _, points: _ } => {
+                    unimplemented!()
+                },
+                PrimitiveKind::Lines { color, cap: _, thickness, points } => {
+                    // Can't build lines from a point
+                    if points.len() < 2 { continue; }
+
+                    // Build up the line path
+                    let mut path_builder = Path::builder();
+                    path_builder.move_to(point(
+                        points[0][0] as f32 + half_size_f.x,
+                        -points[0][1] as f32 + half_size_f.y,
+                    ));
+                    for p in points.iter().skip(1) {
+                        path_builder.line_to(point(
+                            p[0] as f32 + half_size_f.x,
+                            -p[1] as f32 + half_size_f.y,
+                        ));
+                    }
+                    let path = path_builder.build();
+
+                    // Turn the lines into triangles
+                    // TODO: Avoid the intermediate geometry data by creating our own geometry
+                    //  builder that directly outputs the vertices we need
+                    let mut tessellator = StrokeTessellator::new();
+                    let mut geometry: VertexBuffers<StrokeVertex> = VertexBuffers::new();
+                    {
+                        let mut vertex_builder = simple_builder(&mut geometry);
+                        tessellator.tessellate(
+                            path.path_iter().flattened(0.05),
+                            &StrokeOptions::default()
+                                // Not sure if this is correct behavior but without it the
+                                //  triangles were too small to show up
+                                .with_line_width(thickness as f32 * 2.0),
+                            &mut vertex_builder
+                        );
+                    }
+
+                    // Finally, add the geometry to the batch
+                    for i in geometry.indices.chunks(3) {
+                        let v = [
+                            geometry.vertices[i[0] as usize],
+                            geometry.vertices[i[1] as usize],
+                            geometry.vertices[i[2] as usize],
+                        ];
+
+                        batch.triangles.push(DrawVertex::new_triangle(
+                            [
+                                vec_lyon_to_cgmath(v[0].position),
+                                vec_lyon_to_cgmath(v[1].position),
+                                vec_lyon_to_cgmath(v[2].position)
+                            ],
+                            [Vector2::zero(), Vector2::zero(), Vector2::zero()],
+                            color_conrod_to_calcium(color)
+                        ));
+                    }
+                },
+                PrimitiveKind::Image { image_id: _, color: _, source_rect: _ } => {
+                    unimplemented!()
                 },
                 PrimitiveKind::Text { color, text, font_id } => {
                     // TODO: Re-use the same batch for multiple sequential text draws
@@ -88,7 +158,7 @@ impl<T: BackendTypes> ConrodRenderer<T> {
         &self, batch: &mut RenderBatch<T>, half_size: Vector2<i32>,
         rect: &Rect, color: Color
     ) {
-        batch.rectangles.push(DrawRectangle {
+        batch.rectangle(DrawRectangle {
             destination: Rectangle {
                 start: Vector2::new(rect.x.start, -rect.y.start).cast() + half_size,
                 end: Vector2::new(rect.x.end, -rect.y.end).cast() + half_size,
@@ -153,7 +223,7 @@ impl<T: BackendTypes> ConrodRenderer<T> {
         for glyph in positioned_glyphs.iter() {
             if let Ok(Some((uv_rect, screen_rect))) = self.glyph_cache.rect_for(font_id_u, glyph) {
                 // Push this glyph into this draw batch
-                batch.rectangles.push(DrawRectangle {
+                batch.rectangle(DrawRectangle {
                     destination: Rectangle {
                         start: Vector2::new(screen_rect.min.x, screen_rect.min.y),
                         end: Vector2::new(screen_rect.max.x, screen_rect.max.y),
@@ -174,4 +244,8 @@ fn color_conrod_to_calcium(color: ::conrod::Color) -> Vector4<f32> {
     let c = Srgb::with_alpha(c.0, c.1, c.2, c.3);
     let c: Rgba = c.into();
     Vector4::new(c.red, c.green, c.blue, c.alpha)
+}
+
+fn vec_lyon_to_cgmath<U>(value: TypedPoint2D<f32, U>) -> Vector2<f32> {
+    Vector2::new(value.x, value.y)
 }

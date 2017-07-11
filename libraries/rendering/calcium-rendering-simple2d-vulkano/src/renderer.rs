@@ -12,7 +12,7 @@ use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use slog::{Logger};
 
 use calcium_rendering::{Texture};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, Rectangle, BatchMode};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, BatchMode};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoBackendTypes, VulkanoFrame, VulkanoTexture};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
@@ -78,48 +78,21 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
         for batch in batches {
             // Create a big mesh of all the rectangles we got told to draw this batch
             let mut vertices = Vec::new();
-            for rect in batch.rectangles {
-                let start: Vector2<f32> = rect.destination.start.cast();
-                let end: Vector2<f32> = rect.destination.end.cast();
-
-                let texture_source = rect.texture_source.unwrap_or(
-                    Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0))
-                );
-                let uv_start: Vector2<f32> = texture_source.start;
-                let uv_end: Vector2<f32> = texture_source.end;
-
-                let color = rect.color.into(); // TODO: Convert gamma
-
+            for tri in batch.triangles {
                 vertices.push(VkVertex {
-                    v_position: [start.x, start.y],
-                    v_uv: [uv_start.x, uv_start.y],
-                    v_color: color,
+                    v_position: tri[0].position.into(),
+                    v_uv: tri[0].uv.into(),
+                    v_color: tri[0].color.into(),
                 });
                 vertices.push(VkVertex {
-                    v_position: [start.x, end.y],
-                    v_uv: [uv_start.x, uv_end.y],
-                    v_color: color,
+                    v_position: tri[1].position.into(),
+                    v_uv: tri[1].uv.into(),
+                    v_color: tri[1].color.into(),
                 });
                 vertices.push(VkVertex {
-                    v_position: [end.x, start.y],
-                    v_uv: [uv_end.x, uv_start.y],
-                    v_color: color,
-                });
-
-                vertices.push(VkVertex {
-                    v_position: [end.x, end.y],
-                    v_uv: [uv_end.x, uv_end.y],
-                    v_color: color,
-                });
-                vertices.push(VkVertex {
-                    v_position: [end.x, start.y],
-                    v_uv: [uv_end.x, uv_start.y],
-                    v_color: color,
-                });
-                vertices.push(VkVertex {
-                    v_position: [start.x, end.y],
-                    v_uv: [uv_start.x, uv_end.y],
-                    v_color: color,
+                    v_position: tri[2].position.into(),
+                    v_uv: tri[2].uv.into(),
+                    v_color: tri[2].color.into(),
                 });
             }
 
@@ -237,6 +210,7 @@ fn create_pipeline(
         .fragment_shader(fs.main_entry_point(), ())
 
         .blend_alpha_blending()
+        .cull_mode_disabled()
 
         .render_pass(Subpass::from(render_pass, 0).unwrap())
         .build(renderer.device.clone()).unwrap()
