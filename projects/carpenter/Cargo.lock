@@ -127,7 +127,7 @@ dependencies = [
  "calcium-rendering-vulkano 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pistoncore-winit_window 0.1.0",
+ "pistoncore-winit_window 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -901,6 +901,7 @@ dependencies = [
 [[package]]
 name = "pistoncore-winit_window"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1443,6 +1444,7 @@ dependencies = [
 "checksum piston2d-graphics 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2d72cce9e129be5f50f5f26b69a064481664b6eccbdf643139563ea20485419f"
 "checksum pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ab36532c344e412c5ed79a259ae01b26259cbdc96b0ab219ba3eb3dfcdf59df5"
 "checksum pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2596d106c2fc1281dcbf87fa641dfe6ba744f75a7b87f30611efddac3ada52cc"
+"checksum pistoncore-winit_window 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "96796c61d13c57de3c9172fa9440e5009a5badceebcd79cd9e55cb1f33e73c99"
 "checksum pkg-config 0.3.9 (registry+https://github.com/rust-lang/crates.io-index)" = "3a8b4c6b8165cd1a1cd4b9b120978131389f64bdaf456435caa41e630edba903"
 "checksum png 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6535266009941ceac9a17e6d681cd2adc75611cd4833db853282e8d4c470239c"
 "checksum rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "022e0636ec2519ddae48154b028864bdce4eaf7d35226ab8e65c611be97b189d"
