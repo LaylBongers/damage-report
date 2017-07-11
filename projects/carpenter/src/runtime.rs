@@ -1,7 +1,7 @@
 use cgmath::{Vector2};
 use conrod::{self, Widget, Positionable, Sizeable, Labelable, UiBuilder};
 use conrod::text::{FontCollection};
-use conrod::widget::{Text, Canvas, Button};
+use conrod::widget::{self, Text, Canvas, Button};
 use window::{Window};
 use slog::{Logger};
 
@@ -35,6 +35,7 @@ impl Runtime for StaticRuntime {
         ui.fonts.insert(FontCollection::from_bytes(::ttf_noto_sans::REGULAR).into_font().unwrap());
         let ids = Ids::new(ui.widget_id_generator());
         let mut count = 0;
+        let mut text = String::from("Data");
 
         // Run the actual game loop
         info!(self.log, "Finished loading, starting main loop");
@@ -75,11 +76,23 @@ impl Runtime for StaticRuntime {
                 // Counter button
                 for _click in Button::new()
                     .middle_of(ids.canvas)
-                    .w_h(80.0, 80.0)
+                    .w_h(240.0, 80.0)
                     .label(&count.to_string())
                     .set(ids.counter, ui)
                 {
                     count += 1;
+                }
+
+                for event in widget::TextBox::new(&text)
+                    .down_from(ids.counter, 12.0)
+                    .font_size(18)
+                    .w_h(240.0, 36.0)
+                    .set(ids.text_field, ui)
+                {
+                    match event {
+                        widget::text_box::Event::Enter => info!(self.log, "TextBox {}", text),
+                        widget::text_box::Event::Update(string) => text = string,
+                    }
                 }
             }
 
@@ -123,5 +136,5 @@ pub fn theme() -> conrod::Theme {
 widget_ids! { struct Ids {
     canvas,
     fps_label, ms_label,
-    counter,
+    counter, text_field,
 } }

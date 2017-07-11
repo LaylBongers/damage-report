@@ -90,8 +90,8 @@ impl<T: BackendTypes> ConrodRenderer<T> {
     ) {
         batch.rectangles.push(DrawRectangle {
             destination: Rectangle {
-                start: Vector2::new(rect.x.start, rect.y.start).cast() + half_size,
-                end: Vector2::new(rect.x.end, rect.y.end).cast() + half_size,
+                start: Vector2::new(rect.x.start, -rect.y.start).cast() + half_size,
+                end: Vector2::new(rect.x.end, -rect.y.end).cast() + half_size,
             },
             texture_source: None,
             color: color_conrod_to_calcium(color),
