@@ -5,7 +5,7 @@ use conrod::widget::{self, Text, Canvas, Button};
 use window::{Window};
 use slog::{Logger};
 
-use calcium_game::{LoopTimer, delta_to_fps};
+use calcium_game::{LoopTimer, AverageDelta, delta_to_fps};
 use calcium_rendering::{Error, WindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderer};
 use calcium_rendering_static::{Runtime, Initializer};
@@ -31,6 +31,7 @@ impl Runtime for StaticRuntime {
         // Set up conrod and UI data
         let mut conrod_renderer: ConrodRenderer<I::BackendTypes> =
             ConrodRenderer::new(&self.log, &mut renderer);
+        let mut ui_batches = vec!();
         let mut ui = UiBuilder::new(size.cast().into()).theme(theme()).build();
         ui.fonts.insert(FontCollection::from_bytes(::ttf_noto_sans::REGULAR).into_font().unwrap());
         let ids = Ids::new(ui.widget_id_generator());
@@ -38,10 +39,12 @@ impl Runtime for StaticRuntime {
         let mut text = String::from("Data");
 
         // Run the actual game loop
-        info!(self.log, "Finished loading, starting main loop");
         let mut timer = LoopTimer::start();
+        let mut average_delta = AverageDelta::new();
+        info!(self.log, "Finished loading, starting main loop");
         while !window.should_close() {
             let delta = timer.tick();
+            average_delta.accumulate(delta);
 
             // Poll for window events
             while let Some(event) = window.poll_event() {
@@ -62,12 +65,12 @@ impl Runtime for StaticRuntime {
                     .set(ids.canvas, ui);
 
                 // FPS label
-                Text::new(&format!("FPS: {}", delta_to_fps(delta)))
+                Text::new(&format!("FPS: {}", delta_to_fps(average_delta.get())))
                     .top_right_of(ids.canvas)
                     .w(100.0)
                     .font_size(12)
                     .set(ids.fps_label, ui);
-                Text::new(&format!("MS: {}", delta))
+                Text::new(&format!("MS: {}", average_delta.get()))
                     .left_from(ids.fps_label, 12.0)
                     .w(100.0)
                     .font_size(12)
@@ -97,13 +100,13 @@ impl Runtime for StaticRuntime {
             }
 
             // Create render batches for the UI
-            let batches = conrod_renderer.draw_ui(
-                &self.log, &mut renderer, &window_renderer, &mut ui
+            conrod_renderer.draw_if_changed(
+                &self.log, &mut renderer, &window_renderer, &mut ui, &mut ui_batches
             );
 
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&renderer);
-            simple2d_renderer.render(&mut renderer, &mut frame, batches);
+            simple2d_renderer.render(&mut renderer, &mut frame, &ui_batches);
             window_renderer.finish_frame(&renderer, frame);
         }
 

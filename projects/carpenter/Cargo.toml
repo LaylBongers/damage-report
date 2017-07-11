@@ -19,4 +19,6 @@ ttf-noto-sans = "0.1.1"
 
 # If you want optimizations in dev while keeping debug symbols, enable this
 #[profile.dev]
+#opt-level = 1
+#opt-level = 2
 #opt-level = 3

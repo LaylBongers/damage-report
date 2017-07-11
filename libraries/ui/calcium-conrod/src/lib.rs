@@ -23,7 +23,7 @@ use palette::pixel::{Srgb};
 use slog::{Logger};
 
 use conrod::{Ui, Color};
-use conrod::render::{PrimitiveWalker, PrimitiveKind, Text};
+use conrod::render::{PrimitiveWalker, PrimitiveKind, Text, Primitives};
 use conrod::text::{GlyphCache};
 use conrod::text::font::{Id as FontId};
 use conrod::position::rect::{Rect};
@@ -56,9 +56,19 @@ impl<T: BackendTypes> ConrodRenderer<T> {
         }
     }
 
-    pub fn draw_ui(
+    pub fn draw_if_changed(
         &mut self, log: &Logger,
-        renderer: &mut T::Renderer, window: &T::WindowRenderer, ui: &mut Ui
+        renderer: &mut T::Renderer, window: &T::WindowRenderer, ui: &mut Ui,
+        batches: &mut Vec<RenderBatch<T>>
+    ) {
+        if let Some(primitives) = ui.draw_if_changed() {
+            *batches = self.draw_primitives(log, renderer, window, primitives);
+        }
+    }
+
+    fn draw_primitives(
+        &mut self, log: &Logger,
+        renderer: &mut T::Renderer, window: &T::WindowRenderer, mut primitives: Primitives
     ) -> Vec<RenderBatch<T>> {
         // TODO: Support dpi factor
         let half_size: Vector2<i32> = window.size().cast() / 2;
@@ -67,8 +77,7 @@ impl<T: BackendTypes> ConrodRenderer<T> {
         let mut batches = Vec::new();
         let mut batch = Default::default();
 
-        let mut prims = ui.draw();
-        while let Some(prim) = prims.next_primitive() {
+        while let Some(prim) = primitives.next_primitive() {
             match prim.kind {
                 PrimitiveKind::Rectangle { color } => {
                     self.push_rect(&mut batch, half_size, &prim.rect, color);

@@ -44,7 +44,7 @@ impl VulkanoSimple2DRenderer {
 impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
     fn render(
         &mut self, renderer: &mut VulkanoRenderer, frame: &mut VulkanoFrame,
-        batches: Vec<RenderBatch<VulkanoBackendTypes>>
+        batches: &Vec<RenderBatch<VulkanoBackendTypes>>
     ) {
         // Give the renderer an opportunity to insert any commands it had queued up, this is used
         //  to copy textures for example. This always has to be done right before a render pass.
@@ -78,7 +78,7 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
         for batch in batches {
             // Create a big mesh of all the rectangles we got told to draw this batch
             let mut vertices = Vec::new();
-            for tri in batch.triangles {
+            for tri in &batch.triangles {
                 vertices.push(VkVertex {
                     v_position: tri[0].position.into(),
                     v_uv: tri[0].uv.into(),
