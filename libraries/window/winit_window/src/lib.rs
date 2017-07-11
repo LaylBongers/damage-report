@@ -11,7 +11,7 @@ use std::collections::{VecDeque};
 use vulkano::swapchain::{Surface};
 use vulkano::instance::{Instance, InstanceExtensions};
 use vulkano_win::{VkSurfaceBuild, Window as VulkanoWinWindow};
-use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, MouseButton as WinitMouseButton, KeyboardInput};
+use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, MouseButton as WinitMouseButton, KeyboardInput, VirtualKeyCode};
 use input::{Input, EventId, CloseArgs, Motion, Button, MouseButton, Key};
 use window::{Window, Size};
 
@@ -26,7 +26,7 @@ pub struct WinitWindow {
 
     size: Size,
     should_close: bool,
-    queued_events: VecDeque<WinitEvent>,
+    queued_events: VecDeque<Input>,
 }
 
 impl WinitWindow {
@@ -87,12 +87,12 @@ impl Window for WinitWindow {
         {
             let queued_events = &mut self.queued_events;
             self.events_loop.poll_events(|event| {
-                queued_events.push_back(event);
+                push_events_for(event, queued_events)
             });
         }
 
-        // Get the first event in the queue, and then map it to a pistoncore-input event
-        let event = self.queued_events.pop_front().map(map_event);
+        // Get the first event in the queue
+        let event = self.queued_events.pop_front();
 
         // Check if we got a close event, if we did we need to mark ourselves as should-close
         if let &Some(Input::Close(_)) = &event {
@@ -107,15 +107,18 @@ impl Window for WinitWindow {
     }
 }
 
-fn map_event(event: WinitEvent) -> Input {
+fn push_events_for(event: WinitEvent, queue: &mut VecDeque<Input>) {
     let unsupported_input = Input::Custom(EventId("Unsupported Winit Event"), Arc::new(0));
 
-    match event {
+    let event = match event {
         WinitEvent::WindowEvent { event: ev, .. } => {
             match ev {
                 WindowEvent::Closed => Input::Close(CloseArgs),
-                WindowEvent::KeyboardInput { device_id: _, input } =>
-                    map_keyboard_input(input),
+                WindowEvent::KeyboardInput { device_id: _, input } => {
+                    // We also need to add text events in this special case
+                    push_text_for(&input, queue);
+                    map_keyboard_input(&input)
+                },
                 WindowEvent::MouseMoved { device_id: _, position } =>
                     Input::Move(Motion::MouseCursor(position.0, position.1)),
                 WindowEvent::MouseInput { device_id: _, state, button } => {
@@ -130,10 +133,79 @@ fn map_event(event: WinitEvent) -> Input {
             }
         },
         _ => unsupported_input,
+    };
+
+    queue.push_back(event);
+}
+
+fn push_text_for(input: &KeyboardInput, queue: &mut VecDeque<Input>) {
+    // If we're releasing we don't need to do anything
+    if input.state == ElementState::Released { return }
+
+    // If we don't have a virtual keycode, we can't push any text
+    let vk = if let Some(vk) = input.virtual_keycode { vk } else { return };
+
+    // Now that we have a keycode, figure out what the actual character for it is
+    let c = map_char_for_vk(vk, input.modifiers.shift);
+
+    // If we got a character, add an event for it
+    if let Some(c) = c {
+        queue.push_back(Input::Text(c.to_string()));
     }
 }
 
-fn map_keyboard_input(input: KeyboardInput) -> Input {
+fn map_char_for_vk(vk: VirtualKeyCode, shift: bool) -> Option<char> {
+    // TODO: Complete the lookup match
+    use winit::VirtualKeyCode::*;
+    let c = match vk {
+        Key1 => '1',
+        Key2 => '2',
+        Key3 => '3',
+        Key4 => '4',
+        Key5 => '5',
+        Key6 => '6',
+        Key7 => '7',
+        Key8 => '8',
+        Key9 => '9',
+        Key0 => '0',
+        A => 'a',
+        B => 'b',
+        C => 'c',
+        D => 'd',
+        E => 'e',
+        F => 'f',
+        G => 'g',
+        H => 'h',
+        I => 'i',
+        J => 'j',
+        K => 'k',
+        L => 'l',
+        M => 'm',
+        N => 'n',
+        O => 'o',
+        P => 'p',
+        Q => 'q',
+        R => 'r',
+        S => 's',
+        T => 't',
+        U => 'u',
+        V => 'v',
+        W => 'w',
+        X => 'x',
+        Y => 'y',
+        Z => 'z',
+        Space => ' ',
+        _ => '😞', // shush it's a valid strategy
+    };
+
+    if c == '😞' {
+        None
+    } else {
+        Some(if shift { c.to_uppercase().next().unwrap() } else { c })
+    }
+}
+
+fn map_keyboard_input(input: &KeyboardInput) -> Input {
     use winit::VirtualKeyCode::*;
     // TODO: Complete the lookup match
     let key = if let Some(vk) = input.virtual_keycode {
