@@ -11,8 +11,8 @@ use std::collections::{VecDeque};
 use vulkano::swapchain::{Surface};
 use vulkano::instance::{Instance, InstanceExtensions};
 use vulkano_win::{VkSurfaceBuild, Window as VulkanoWinWindow};
-use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, MouseButton as WinitMouseButton};
-use input::{Input, EventId, CloseArgs, Motion, Button, MouseButton};
+use winit::{EventsLoop, WindowBuilder, Event as WinitEvent, WindowEvent, ElementState, MouseButton as WinitMouseButton, KeyboardInput};
+use input::{Input, EventId, CloseArgs, Motion, Button, MouseButton, Key};
 use window::{Window, Size};
 
 pub fn required_extensions() -> InstanceExtensions {
@@ -114,6 +114,8 @@ fn map_event(event: WinitEvent) -> Input {
         WinitEvent::WindowEvent { event: ev, .. } => {
             match ev {
                 WindowEvent::Closed => Input::Close(CloseArgs),
+                WindowEvent::KeyboardInput { device_id: _, input } =>
+                    map_keyboard_input(input),
                 WindowEvent::MouseMoved { device_id: _, position } =>
                     Input::Move(Motion::MouseCursor(position.0, position.1)),
                 WindowEvent::MouseInput { device_id: _, state, button } => {
@@ -128,6 +130,88 @@ fn map_event(event: WinitEvent) -> Input {
             }
         },
         _ => unsupported_input,
+    }
+}
+
+fn map_keyboard_input(input: KeyboardInput) -> Input {
+    use winit::VirtualKeyCode::*;
+    // TODO: Complete the lookup match
+    let key = if let Some(vk) = input.virtual_keycode {
+        match vk {
+            Key1 => Key::D1,
+            Key2 => Key::D2,
+            Key3 => Key::D3,
+            Key4 => Key::D4,
+            Key5 => Key::D5,
+            Key6 => Key::D6,
+            Key7 => Key::D7,
+            Key8 => Key::D8,
+            Key9 => Key::D9,
+            Key0 => Key::D0,
+            A => Key::A,
+            B => Key::B,
+            C => Key::C,
+            D => Key::D,
+            E => Key::E,
+            F => Key::F,
+            G => Key::G,
+            H => Key::H,
+            I => Key::I,
+            J => Key::J,
+            K => Key::K,
+            L => Key::L,
+            M => Key::M,
+            N => Key::N,
+            O => Key::O,
+            P => Key::P,
+            Q => Key::Q,
+            R => Key::R,
+            S => Key::S,
+            T => Key::T,
+            U => Key::U,
+            V => Key::V,
+            W => Key::W,
+            X => Key::X,
+            Y => Key::Y,
+            Z => Key::Z,
+            Escape => Key::Escape,
+            F1 => Key::F1,
+            F2 => Key::F2,
+            F3 => Key::F3,
+            F4 => Key::F4,
+            F5 => Key::F5,
+            F6 => Key::F6,
+            F7 => Key::F7,
+            F8 => Key::F8,
+            F9 => Key::F9,
+            F10 => Key::F10,
+            F11 => Key::F11,
+            F12 => Key::F12,
+            F13 => Key::F13,
+            F14 => Key::F14,
+            F15 => Key::F15,
+
+            Delete => Key::Delete,
+
+            Left => Key::Left,
+            Up => Key::Up,
+            Right => Key::Right,
+            Down => Key::Down,
+
+            Back => Key::Backspace,
+            Return => Key::Return,
+            Space => Key::Space,
+            Tab => Key::Tab,
+            _ => Key::Unknown,
+        }
+    } else {
+        Key::Unknown
+    };
+
+    if input.state == ElementState::Pressed {
+        Input::Press(Button::Keyboard(key))
+    } else {
+        Input::Release(Button::Keyboard(key))
     }
 }
 

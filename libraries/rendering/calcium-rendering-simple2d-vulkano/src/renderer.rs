@@ -134,6 +134,8 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
             command_buffer_builder = command_buffer_builder
                 .draw(
                     self.pipeline.clone(),
+                    // TODO: When a lot is being rendered, check the performance impact of doing
+                    //  this here instead of in the pipeline.
                     DynamicState {
                         viewports: Some(vec!(Viewport {
                             origin: [0.0, 0.0],
