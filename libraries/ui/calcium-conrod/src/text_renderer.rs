@@ -9,7 +9,7 @@ use conrod::text::{GlyphCache};
 use conrod::text::font::{Id as FontId};
 
 use calcium_rendering::{BackendTypes, Texture, Error};
-use calcium_rendering_simple2d::{RenderBatch, BatchMode, DrawRectangle, Rectangle};
+use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 
 use util;
 
@@ -79,7 +79,7 @@ impl<T: BackendTypes> TextRenderer<T> {
         }
 
         // Actually set the texture in the render batch
-        batch.mode = BatchMode::Mask(self.glyph_texture.clone());
+        batch.mode = ShaderMode::Mask(self.glyph_texture.clone());
 
         // Actually render the text
         // TODO: Make use of a glyphs texture

@@ -4,17 +4,22 @@ use cgmath::{Vector2, Vector4, BaseNum};
 
 use calcium_rendering::{BackendTypes};
 
+/// A render batch that can be drawn by a renderer. Represents the equivalent of a single drawcall.
 // TODO: #[derive(Debug)]
 pub struct RenderBatch<T: BackendTypes> {
-    pub mode: BatchMode<T>,
-    pub triangles: Vec<[DrawVertex; 3]>,
+    /// The shader mode in which a render batch will be drawn.
+    pub mode: ShaderMode<T>,
+    /// The vertices that will be drawn.
+    pub vertices: Vec<DrawVertex>,
 }
 
 impl<T: BackendTypes> RenderBatch<T> {
+    /// Returns true if this render batch has nothing to be drawn.
     pub fn empty(&self) -> bool {
-        self.triangles.len() == 0
+        self.vertices.len() == 0
     }
 
+    /// Adds vertices for a rectangle to this render batch.
     pub fn rectangle(&mut self, rect: DrawRectangle) {
         let destination_start_end = rect.destination.start_end().cast();
         let destination_end_start = rect.destination.end_start().cast();
@@ -24,12 +29,12 @@ impl<T: BackendTypes> RenderBatch<T> {
         let uvs_start_end = uvs.start_end();
         let uvs_end_start = uvs.end_start();
 
-        self.triangles.push(DrawVertex::new_triangle(
+        self.vertices.extend_from_slice(&DrawVertex::new_triangle(
             [rect.destination.start.cast(), destination_start_end, destination_end_start],
             [uvs.start, uvs_start_end, uvs_end_start],
             rect.color,
         ));
-        self.triangles.push(DrawVertex::new_triangle(
+        self.vertices.extend_from_slice(&DrawVertex::new_triangle(
             [rect.destination.end.cast(), destination_end_start, destination_start_end],
             [uvs.end, uvs_end_start, uvs_start_end],
             rect.color,
@@ -40,49 +45,66 @@ impl<T: BackendTypes> RenderBatch<T> {
 impl<T: BackendTypes> Default for RenderBatch<T> {
     fn default() -> Self {
         RenderBatch {
-            mode: BatchMode::Color,
-            triangles: Vec::new(),
+            mode: ShaderMode::Color,
+            vertices: Vec::new(),
         }
     }
 }
 
-pub enum BatchMode<T: BackendTypes> {
+/// Defines how the renderer should draw vertices.
+pub enum ShaderMode<T: BackendTypes> {
+    /// Uses only the vertices' colors.
     Color,
+    /// Multiplies a texture sampled using the vertices' uvs by the vertices' color.
     Texture(Arc<T::Texture>),
+    /// Uses the vertices' color's RGB and the texture's Alpha.
     Mask(Arc<T::Texture>),
 }
 
+/// A vertex that can be used to draw on screen.
+#[derive(Debug, Clone)]
 pub struct DrawVertex {
+    /// The 2D position of the vertex in screen pixel coordinates, starting at the top left.
     pub position: Vector2<f32>,
+    /// The UV values of the vertex, in Texture and Mask batch mode to sample the texture.
     pub uv: Vector2<f32>,
+    /// The color of this vertex, used differently in different batch modes. This color is in
+    /// linear color space, rather than sRGB.
     pub color: Vector4<f32>,
 }
 
 impl DrawVertex {
+    /// Creates a new vertex.
+    pub fn new(position: Vector2<f32>, uv: Vector2<f32>, color: Vector4<f32>) -> Self {
+        DrawVertex {
+            position: position,
+            uv: uv,
+            color: color,
+        }
+    }
+
+    /// Creates a triangle of new vertices, with one flat color.
     pub fn new_triangle(
         positions: [Vector2<f32>; 3], uvs: [Vector2<f32>; 3], color: Vector4<f32>
-    ) -> [DrawVertex; 3] {
-        [DrawVertex {
-            position: positions[0],
-            uv: uvs[0],
-            color: color,
-        }, DrawVertex {
-            position: positions[1],
-            uv: uvs[1],
-            color: color,
-        }, DrawVertex {
-            position: positions[2],
-            uv: uvs[2],
-            color: color,
-        }]
+    ) -> [Self; 3] {
+        [
+            DrawVertex::new(positions[0], uvs[0], color),
+            DrawVertex::new(positions[1], uvs[1], color),
+            DrawVertex::new(positions[2], uvs[2], color),
+        ]
     }
 }
 
+/// A rectangle that can be drawn on screen.
 #[derive(Debug)]
 pub struct DrawRectangle {
+    /// Where on screen this rectangle will be drawn.
     pub destination: Rectangle<i32>,
-    // TODO: Support other representations than normalized UVs, such as pixels
+    /// Where in a texture this rectangle should sample from.
+    // TODO: Support other representations than normalized UVs in some way, such as pixels. This
+    //  perhaps should not be implemented on the DrawRectangle.
     pub texture_source: Option<Rectangle<f32>>,
+    /// What solid color this rectangle will be drawn with.
     pub color: Vector4<f32>,
 }
 
@@ -96,6 +118,7 @@ impl Default for DrawRectangle {
     }
 }
 
+/// A rectangle defined by start and end coordinates.
 #[derive(Debug)]
 pub struct Rectangle<S: BaseNum> {
     pub start: Vector2<S>,
@@ -103,6 +126,7 @@ pub struct Rectangle<S: BaseNum> {
 }
 
 impl<S: BaseNum> Rectangle<S> {
+    /// Creates a new rectangle.
     pub fn new(start: Vector2<S>, end: Vector2<S>) -> Self {
         Rectangle {
             start,
@@ -110,14 +134,17 @@ impl<S: BaseNum> Rectangle<S> {
         }
     }
 
+    /// Creates a new rectangle from a start coordinate and a size.
     pub fn start_size(start: Vector2<S>, size: Vector2<S>) -> Self {
         Self::new(start, start + size)
     }
 
+    /// Returns a new vector with the start's X and the end's Y.
     pub fn start_end(&self) -> Vector2<S> {
         Vector2::new(self.start.x, self.end.y)
     }
 
+    /// Returns a new vector with the end's X and the start's Y.
     pub fn end_start(&self) -> Vector2<S> {
         Vector2::new(self.end.x, self.start.y)
     }

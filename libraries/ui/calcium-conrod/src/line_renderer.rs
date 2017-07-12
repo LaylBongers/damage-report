@@ -52,21 +52,13 @@ pub fn push_lines<T: BackendTypes>(
     }
 
     // Finally, add the geometry to the batch
-    for i in geometry.indices.chunks(3) {
-        let v = [
-            geometry.vertices[i[0] as usize],
-            geometry.vertices[i[1] as usize],
-            geometry.vertices[i[2] as usize],
-        ];
+    for i in geometry.indices {
+        let v = geometry.vertices[i as usize];
 
-        batch.triangles.push(DrawVertex::new_triangle(
-            [
-                vec_lyon_to_cgmath(v[0].position),
-                vec_lyon_to_cgmath(v[1].position),
-                vec_lyon_to_cgmath(v[2].position)
-            ],
-            [Vector2::zero(), Vector2::zero(), Vector2::zero()],
-            util::color_conrod_to_calcium(color)
+        batch.vertices.push(DrawVertex::new(
+            vec_lyon_to_cgmath(v.position),
+            Vector2::zero(),
+            util::color_conrod_to_calcium(color),
         ));
     }
 }

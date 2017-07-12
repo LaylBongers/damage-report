@@ -11,7 +11,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 
 use calcium_rendering::{Texture, Error};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, BatchMode};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoBackendTypes, VulkanoFrame, VulkanoTexture};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
@@ -41,7 +41,7 @@ impl VulkanoSimple2DRenderer {
 impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
     fn render(
         &mut self, renderer: &mut VulkanoRenderer, frame: &mut VulkanoFrame,
-        batches: &Vec<RenderBatch<VulkanoBackendTypes>>
+        batches: &[RenderBatch<VulkanoBackendTypes>]
     ) {
         // Give the renderer an opportunity to insert any commands it had queued up, this is used
         //  to copy textures for example. This always has to be done right before a render pass.
@@ -75,21 +75,11 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
         for batch in batches {
             // Create a big mesh of all the rectangles we got told to draw this batch
             let mut vertices = Vec::new();
-            for tri in &batch.triangles {
+            for vertex in &batch.vertices {
                 vertices.push(VkVertex {
-                    v_position: tri[0].position.into(),
-                    v_uv: tri[0].uv.into(),
-                    v_color: tri[0].color.into(),
-                });
-                vertices.push(VkVertex {
-                    v_position: tri[1].position.into(),
-                    v_uv: tri[1].uv.into(),
-                    v_color: tri[1].color.into(),
-                });
-                vertices.push(VkVertex {
-                    v_position: tri[2].position.into(),
-                    v_uv: tri[2].uv.into(),
-                    v_color: tri[2].color.into(),
+                    v_position: vertex.position.into(),
+                    v_uv: vertex.uv.into(),
+                    v_color: vertex.color.into(),
                 });
             }
 
@@ -103,9 +93,9 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
             // Get the mode ID this batch has and a texture to render
             // TODO: Figure out a way to avoid having to have a dummy texture
             let (mode_id, tex_uniform) = match &batch.mode {
-                &BatchMode::Color => (0, self.dummy_texture.uniform()),
-                &BatchMode::Texture(ref texture) => (1, texture.uniform()),
-                &BatchMode::Mask(ref texture) => (2, texture.uniform()),
+                &ShaderMode::Color => (0, self.dummy_texture.uniform()),
+                &ShaderMode::Texture(ref texture) => (1, texture.uniform()),
+                &ShaderMode::Mask(ref texture) => (2, texture.uniform()),
             };
 
             // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
