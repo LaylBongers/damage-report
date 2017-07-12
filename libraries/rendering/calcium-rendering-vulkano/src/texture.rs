@@ -2,7 +2,6 @@ use std::sync::{Arc};
 use std::path::{PathBuf};
 
 use cgmath::{Vector2};
-use slog::{Logger};
 use image::{self, GenericImage};
 use vulkano::format::{Format};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
@@ -65,9 +64,11 @@ impl VulkanoTexture {
 
 impl Texture<VulkanoBackendTypes> for VulkanoTexture {
     fn from_file(
-        log: &Logger, renderer: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
+        renderer: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
     ) -> Arc<Self> {
-        info!(log, "Loading texture from file"; "path" => path.display().to_string());
+        info!(renderer.log,
+            "Loading texture from file"; "path" => path.display().to_string()
+        );
 
         // Load in the image file
         let img = image::open(path).unwrap();
@@ -94,9 +95,11 @@ impl Texture<VulkanoBackendTypes> for VulkanoTexture {
     }
 
     fn from_raw_greyscale(
-        log: &Logger, renderer: &mut VulkanoRenderer, data: &[u8], size: Vector2<u32>,
+        renderer: &mut VulkanoRenderer, data: &[u8], size: Vector2<u32>,
     ) -> Arc<Self> {
-        info!(log, "Loading texture from greyscale data"; "width" => size.x, "height" => size.y);
+        info!(renderer.log,
+            "Loading texture from greyscale data"; "width" => size.x, "height" => size.y
+        );
 
         // Load the image data into a buffer
         let buffer = {

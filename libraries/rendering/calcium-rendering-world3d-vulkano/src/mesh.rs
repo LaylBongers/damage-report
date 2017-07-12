@@ -10,12 +10,12 @@ use calcium_rendering_world3d::mesh::{Vertex, Mesh};
 
 impl Mesh<VulkanoBackendTypes> for VulkanoMeshBackend {
     fn new(
-        log: &Logger, renderer: &VulkanoRenderer, vertices: Vec<Vertex>, indices: Vec<u32>,
+        renderer: &VulkanoRenderer, vertices: Vec<Vertex>, indices: Vec<u32>,
     ) -> Arc<VulkanoMeshBackend> {
         let indices_len = indices.len();
 
         // We need tangents for proper normal mapping
-        let tri_tangents = calculate_tangents(log, &vertices, &indices);
+        let tri_tangents = calculate_tangents(&renderer.log, &vertices, &indices);
 
         // We also need a culling sphere so we can avoid rendering unneeded meshes
         let culling_sphere = calculate_culling_sphere(&vertices);
@@ -42,7 +42,7 @@ impl Mesh<VulkanoBackendTypes> for VulkanoMeshBackend {
             indices.iter().map(|v| *v)
         ).unwrap();
 
-        debug!(log, "Created new mesh";
+        debug!(renderer.log, "Created new mesh";
             "vertices" => vertices.len(), "indices" => indices_len
         );
         Arc::new(VulkanoMeshBackend {

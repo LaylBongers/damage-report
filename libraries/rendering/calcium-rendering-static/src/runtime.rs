@@ -40,13 +40,13 @@ impl Initializer for VulkanoInitializer {
     type Simple2DBackendTypes = VulkanoSimple2DBackendTypes;
 
     fn renderer(
-        &self, log: &Logger,
+        &self, log: Option<Logger>,
     ) -> Result<VulkanoRenderer, Error> {
         VulkanoRenderer::new(log, winit_window::required_extensions())
     }
 
     fn window(
-        &self, log: &Logger,
+        &self,
         renderer: &VulkanoRenderer,
         title: &str, size: Vector2<u32>,
     ) -> Result<(WinitWindow, VulkanoWindowRenderer), Error> {
@@ -54,7 +54,7 @@ impl Initializer for VulkanoInitializer {
             renderer.instance.clone(), title, [size.x, size.y].into()
         );
         let window_renderer = VulkanoWindowRenderer::new(
-            log, renderer, window.surface.clone(), size
+            renderer, window.surface.clone(), size
         );
 
         Ok((window, window_renderer))
@@ -62,16 +62,18 @@ impl Initializer for VulkanoInitializer {
 
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
-        &self, log: &Logger, renderer: &VulkanoRenderer,
+        &self,
+        renderer: &VulkanoRenderer,
     ) -> Result<VulkanoWorld3DRenderer, Error> {
-        let world_renderer = VulkanoWorld3DRenderer::new(log, renderer);
+        let world_renderer = VulkanoWorld3DRenderer::new(renderer);
         Ok(world_renderer)
     }
 
     #[cfg(feature = "simple2d")]
     fn simple2d_renderer(
-        &self, log: &Logger, renderer: &mut VulkanoRenderer,
+        &self,
+        renderer: &mut VulkanoRenderer,
     ) -> Result<VulkanoSimple2DRenderer, Error> {
-        Ok(VulkanoSimple2DRenderer::new(log, renderer))
+        Ok(VulkanoSimple2DRenderer::new(renderer))
     }
 }

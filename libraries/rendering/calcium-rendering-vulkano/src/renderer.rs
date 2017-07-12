@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 
-use slog::{Logger};
+use slog::{Logger, Drain};
+use slog_stdlog::{StdLog};
 use vulkano::format::{Format};
 use vulkano::buffer::{CpuAccessibleBuffer};
 use vulkano::device::{DeviceExtensions, Device, Queue};
@@ -9,9 +10,11 @@ use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sync::{GpuFuture};
 use vulkano::command_buffer::{AutoCommandBufferBuilder};
 
-use calcium_rendering::{Error, CalciumErrorMap};
+use calcium_rendering::{Error, CalciumErrorMap, Renderer};
 
 pub struct VulkanoRenderer {
+    pub log: Logger,
+
     pub instance: Arc<Instance>,
     pub device: Arc<Device>,
     pub graphics_queue: Arc<Queue>,
@@ -23,8 +26,10 @@ pub struct VulkanoRenderer {
 
 impl VulkanoRenderer {
     pub fn new(
-        log: &Logger, required_extensions: InstanceExtensions,
+        log: Option<Logger>, required_extensions: InstanceExtensions,
     ) -> Result<Self, Error> {
+        // Start by setting up the logger to either use the passed slog logger, or an std-logger
+        let log = log.unwrap_or(Logger::root(StdLog.fuse(), o!()));
         info!(log, "Creating vulkano renderer");
 
         // Start by setting up the vulkano instance, this is a silo of vulkan that all our vulkan
@@ -79,6 +84,8 @@ impl VulkanoRenderer {
         let graphics_queue = queues.next().unwrap();
 
         Ok(VulkanoRenderer {
+            log,
+
             instance: instance.clone(),
             device,
             graphics_queue,
@@ -123,5 +130,11 @@ impl VulkanoRenderer {
         );
 
         future
+    }
+}
+
+impl Renderer for VulkanoRenderer {
+    fn log(&self) -> &Logger {
+        &self.log
     }
 }

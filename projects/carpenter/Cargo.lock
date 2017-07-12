@@ -141,6 +141,7 @@ dependencies = [
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog-stdlog 3.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1109,6 +1110,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "slog-scope"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "crossbeam 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lazy_static 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "slog-stdlog"
+version = "3.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "crossbeam 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog-scope 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "slog-term"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1510,6 +1532,8 @@ dependencies = [
 "checksum siphasher 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "0df90a788073e8d0235a67e50441d47db7c8ad9debd91cbf43736a2a92d36537"
 "checksum slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "057f354e538bfb65380f06810d2ab85933872563b20f53daa8144e5beae3aa3b"
 "checksum slog-async 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "afbebab3918ccc36e83dca6879dbe554fc2874d1c26e3dd5debf646a5ee60936"
+"checksum slog-scope 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dd3236e1818c147ed3003930289dc6457425aaca3a7dbb6b7f3032f075d865c5"
+"checksum slog-stdlog 3.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ac42f8254ae996cc7d640f9410d3b048dcdf8887a10df4d5d4c44966de24c4a8"
 "checksum slog-term 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "0d8734c9ff9a45be6026599e15aad5c29c2beb35113488b6945391853a011690"
 "checksum smallvec 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "4f8266519bc1d17d0b5b16f6c21295625d562841c708f6376f49028a43e9c11e"
 "checksum stb_truetype 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "21b5c3b588a493a477e0d99769ee091b3627625f9ba4bdd882e6b4b0b0958805"

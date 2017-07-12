@@ -1,7 +1,6 @@
 use std::sync::{Arc};
 
 use cgmath::{Vector2};
-use slog::{Logger};
 use vulkano::device::{Queue};
 use vulkano::framebuffer::{Framebuffer, RenderPassAbstract, FramebufferAbstract};
 use vulkano::format::{self};
@@ -24,11 +23,11 @@ pub struct WindowSwapchain {
 
 impl WindowSwapchain {
     pub fn new(
-        log: &Logger, renderer: &VulkanoRenderer, surface: &Arc<Surface>, size: Vector2<u32>,
+        renderer: &VulkanoRenderer, surface: &Arc<Surface>, size: Vector2<u32>,
     ) -> Self {
         // Now create the swapchain, we need this to actually swap between our back buffer and the
         //  window's front buffer, without it we can't show anything
-        debug!(log, "Creating swapchain");
+        debug!(renderer.log, "Creating swapchain");
         let (swapchain, images) = {
             // Get what the swap chain we want to create would be capable of, we can't request
             //  anything it can't do
@@ -59,7 +58,7 @@ impl WindowSwapchain {
                 present, true, None
             ).unwrap()
         };
-        debug!(log, "Created swapchain"; "images" => images.len());
+        debug!(renderer.log, "Created swapchain"; "images" => images.len());
 
         // To render in 3D, we need an extra buffer to keep track of the depth. Since this won't be
         //  displayed, we don't need multiple of it like we do with the color swapchain. This isn't
@@ -68,7 +67,7 @@ impl WindowSwapchain {
         // A format more precise than D16Unorm had to be used. That precision ended up giving
         //  noticeable rendering artifacts at relatively nearby depths. A floating point format is
         //  used to take advantage of the increased precision given by the reversed-z technique.
-        debug!(log, "Creating depth buffer");
+        debug!(renderer.log, "Creating depth buffer");
         let depth_attachment = AttachmentImage::new(
             renderer.device.clone(), images[0].dimensions(), format::D32Sfloat_S8Uint
         ).unwrap();
@@ -101,7 +100,7 @@ impl WindowSwapchain {
         // Set up the frame buffers matching the render pass
         // For each image in the swap chain, we create a frame buffer that renders to that image
         //  and to the depth buffer attachment. These attachments are defined by the render pass.
-        debug!(log, "Creating framebuffers for swapchain");
+        debug!(renderer.log, "Creating framebuffers for swapchain");
         let framebuffers = images.iter().map(|image| {
             Arc::new(Framebuffer::start(render_pass.clone())
                 .add(image.clone()).unwrap()

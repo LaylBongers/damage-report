@@ -9,7 +9,6 @@ use vulkano::framebuffer::{Subpass, RenderPassAbstract};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
-use slog::{Logger};
 
 use calcium_rendering::{Texture};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, BatchMode};
@@ -24,14 +23,12 @@ pub struct VulkanoSimple2DRenderer {
 }
 
 impl VulkanoSimple2DRenderer {
-    pub fn new(
-        log: &Logger, renderer: &mut VulkanoRenderer,
-    ) -> Self {
-        info!(log, "Creating simple2d renderer");
-        let render_pass = create_render_pass(log, renderer);
-        let pipeline = create_pipeline(log, renderer, render_pass);
+    pub fn new(renderer: &mut VulkanoRenderer) -> Self {
+        info!(renderer.log, "Creating simple2d renderer");
+        let render_pass = create_render_pass(renderer);
+        let pipeline = create_pipeline(renderer, render_pass);
         let dummy_texture = VulkanoTexture::from_raw_greyscale(
-            log, renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
+            renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
         );
 
         VulkanoSimple2DRenderer {
@@ -167,10 +164,8 @@ impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
     }
 }
 
-fn create_render_pass(
-    log: &Logger, renderer: &VulkanoRenderer,
-) -> Arc<RenderPassAbstract + Send + Sync> {
-    debug!(log, "Creating simple2d render pass");
+fn create_render_pass(renderer: &VulkanoRenderer) -> Arc<RenderPassAbstract + Send + Sync> {
+    debug!(renderer.log, "Creating simple2d render pass");
     #[allow(dead_code)]
     let render_pass = Arc::new(single_pass_renderpass!(renderer.device.clone(),
         attachments: {
@@ -192,16 +187,16 @@ fn create_render_pass(
 }
 
 fn create_pipeline(
-    log: &Logger, renderer: &VulkanoRenderer,
+    renderer: &VulkanoRenderer,
     render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
-    debug!(log, "Creating simple2d shaders");
+    debug!(renderer.log, "Creating simple2d shaders");
     let vs = simple2d_vs::Shader::load(renderer.device.clone()).unwrap();
     let fs = simple2d_fs::Shader::load(renderer.device.clone()).unwrap();
 
     // Set up the pipeline itself
-    debug!(log, "Creating simple2d pipeline");
+    debug!(renderer.log, "Creating simple2d pipeline");
     Arc::new(GraphicsPipeline::start()
         .vertex_input_single_buffer()
         .triangle_list()

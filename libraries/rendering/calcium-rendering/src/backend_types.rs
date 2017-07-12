@@ -1,10 +1,10 @@
 use std::any::{Any};
 use texture::{Texture};
-use {WindowRenderer};
+use {WindowRenderer, Renderer};
 
 pub trait BackendTypes: Any + Clone {
-    type WindowRenderer: Any + WindowRenderer<Self>;
-    type Renderer: Any;
+    type WindowRenderer: WindowRenderer<Self> + Any;
+    type Renderer: Renderer + Any;
     type Frame: Any;
 
     type Texture: Texture<Self> + Any + Send + Sync;

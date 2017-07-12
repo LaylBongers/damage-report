@@ -1,11 +1,10 @@
 use cgmath::{Vector2};
-use slog::{Logger};
 
 use conrod::{Ui, Color};
 use conrod::render::{PrimitiveWalker, PrimitiveKind, Primitives};
 use conrod::position::rect::{Rect};
 
-use calcium_rendering::{BackendTypes, WindowRenderer};
+use calcium_rendering::{BackendTypes, WindowRenderer, Renderer};
 use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle};
 
 use line_renderer::{push_lines};
@@ -17,26 +16,26 @@ pub struct ConrodRenderer<T: BackendTypes> {
 }
 
 impl<T: BackendTypes> ConrodRenderer<T> {
-    pub fn new(log: &Logger, renderer: &mut T::Renderer) -> Self {
-        info!(log, "Creating conrod renderer");
+    pub fn new(renderer: &mut T::Renderer) -> Self {
+        info!(renderer.log(), "Creating conrod renderer");
 
         ConrodRenderer {
-            text_renderer: TextRenderer::new(log, renderer),
+            text_renderer: TextRenderer::new(renderer),
         }
     }
 
     pub fn draw_if_changed(
-        &mut self, log: &Logger,
+        &mut self,
         renderer: &mut T::Renderer, window: &T::WindowRenderer, ui: &mut Ui,
         batches: &mut Vec<RenderBatch<T>>
     ) {
         if let Some(primitives) = ui.draw_if_changed() {
-            *batches = self.draw_primitives(log, renderer, window, primitives);
+            *batches = self.draw_primitives(renderer, window, primitives);
         }
     }
 
     fn draw_primitives(
-        &mut self, log: &Logger,
+        &mut self,
         renderer: &mut T::Renderer, window: &T::WindowRenderer, mut primitives: Primitives
     ) -> Vec<RenderBatch<T>> {
         // TODO: Support dpi factor
@@ -66,7 +65,7 @@ impl<T: BackendTypes> ConrodRenderer<T> {
                         batches.push(batch);
                         batch = Default::default();
                     }
-                    self.text_renderer.push_text(log, renderer, &mut batch, color, text, font_id);
+                    self.text_renderer.push_text(renderer, &mut batch, color, text, font_id);
                     batches.push(batch);
                     batch = Default::default();
                 },

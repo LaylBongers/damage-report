@@ -21,18 +21,19 @@ pub trait Initializer {
     type Simple2DBackendTypes: Simple2DBackendTypes<Self::BackendTypes>;
 
     fn renderer(
-        &self, log: &Logger,
+        &self, log: Option<Logger>,
     ) -> Result<<Self::BackendTypes as BackendTypes>::Renderer, Error>;
 
     fn window(
-        &self, log: &Logger,
+        &self,
         renderer: &<Self::BackendTypes as BackendTypes>::Renderer,
         title: &str, size: Vector2<u32>,
     ) -> Result<(Self::Window, <Self::BackendTypes as BackendTypes>::WindowRenderer), Error>;
 
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
-        &self, log: &Logger, renderer: &<Self::BackendTypes as BackendTypes>::Renderer,
+        &self,
+        renderer: &<Self::BackendTypes as BackendTypes>::Renderer,
     ) -> Result<
         <Self::World3DBackendTypes as World3DBackendTypes<Self::BackendTypes>>::Renderer,
         Error
@@ -40,7 +41,7 @@ pub trait Initializer {
 
     #[cfg(feature = "simple2d")]
     fn simple2d_renderer(
-        &self, log: &Logger,
+        &self,
         renderer: &mut <Self::BackendTypes as BackendTypes>::Renderer,
     ) -> Result<
         <Self::Simple2DBackendTypes as Simple2DBackendTypes<Self::BackendTypes>>::Renderer,

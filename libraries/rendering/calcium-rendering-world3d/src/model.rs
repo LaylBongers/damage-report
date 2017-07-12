@@ -4,10 +4,9 @@ use std::fs::{File};
 use std::sync::{Arc};
 
 use cgmath::{Vector2, Vector3};
-use slog::{Logger};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
-use calcium_rendering::{BackendTypes};
+use calcium_rendering::{BackendTypes, Renderer};
 
 use mesh::{self, Mesh, Vertex};
 use {World3DBackendTypes};
@@ -18,21 +17,21 @@ pub struct Model<T: BackendTypes, WT: World3DBackendTypes<T>> {
 
 impl<T: BackendTypes, WT: World3DBackendTypes<T>> Model<T, WT> {
     pub fn load<P: AsRef<Path>>(
-        log: &Logger, renderer: &T::Renderer, path: P, scale: f32
+        renderer: &T::Renderer, path: P, scale: f32
     ) -> Self {
         // TODO: Change unwraps to proper error handling
-        info!(log, "Loading model"; "path" => path.as_ref().display().to_string());
+        info!(renderer.log(), "Loading model"; "path" => path.as_ref().display().to_string());
 
         // Load in the wavefront obj data
-        debug!(log, "Loading obj file to string");
+        debug!(renderer.log(), "Loading obj file to string");
         let mut obj_file = File::open(path.as_ref()).unwrap();
         let mut obj_file_data = String::new();
         obj_file.read_to_string(&mut obj_file_data).unwrap();
-        debug!(log, "Parsing obj file data");
+        debug!(renderer.log(), "Parsing obj file data");
         let obj_set = obj::parse(obj_file_data).unwrap();
 
         // Convert all the objects to meshes
-        let meshes = Self::obj_set_to_meshes(log, renderer, &obj_set, scale);
+        let meshes = Self::obj_set_to_meshes(renderer, &obj_set, scale);
 
         Model {
             meshes
@@ -40,12 +39,12 @@ impl<T: BackendTypes, WT: World3DBackendTypes<T>> Model<T, WT> {
     }
 
     fn obj_set_to_meshes(
-        log: &Logger, renderer: &T::Renderer, obj_set: &ObjSet, scale: f32
+        renderer: &T::Renderer, obj_set: &ObjSet, scale: f32
     ) -> Vec<Arc<WT::Mesh>> {
         let mut meshes = Vec::new();
 
         // Go over all objects in the file
-        debug!(log, "Converting {} objects to Meshes", obj_set.objects.len());
+        debug!(renderer.log(), "Converting {} objects to Meshes", obj_set.objects.len());
         for object in &obj_set.objects {
             // Skip empty objects
             if object.vertices.len() == 0 { continue; }
@@ -73,7 +72,7 @@ impl<T: BackendTypes, WT: World3DBackendTypes<T>> Model<T, WT> {
 
             // Convert the vertices to a mesh
             let v = mesh::flat_vertices_to_indexed(&vertices);
-            meshes.push(WT::Mesh::new(log, renderer, v.0, v.1));
+            meshes.push(WT::Mesh::new(renderer, v.0, v.1));
         }
 
         meshes

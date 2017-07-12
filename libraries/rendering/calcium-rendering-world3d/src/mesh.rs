@@ -4,13 +4,12 @@ use std::collections::{HashMap};
 use std::hash::{Hash, Hasher};
 
 use cgmath::{Vector2, Vector3};
-use slog::{Logger};
 
 use calcium_rendering::{BackendTypes};
 
 pub trait Mesh<T: BackendTypes> {
     fn new(
-        log: &Logger, renderer: &T::Renderer, vertices: Vec<Vertex>, indices: Vec<u32>,
+        renderer: &T::Renderer, vertices: Vec<Vertex>, indices: Vec<u32>,
     ) -> Arc<Self>;
 }
 
