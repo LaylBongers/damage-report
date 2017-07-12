@@ -29,7 +29,7 @@ impl Runtime for StaticRuntime {
 
         // Set up conrod and UI data
         let mut conrod_renderer: ConrodRenderer<I::BackendTypes> =
-            ConrodRenderer::new(&mut renderer);
+            ConrodRenderer::new(&mut renderer)?;
         let mut ui_batches = vec!();
         let mut editor_ui = EditorUi::new(size);
 
@@ -55,7 +55,7 @@ impl Runtime for StaticRuntime {
             // Create render batches for the UI
             conrod_renderer.draw_if_changed(
                 &mut renderer, &window_renderer, &mut editor_ui.ui, &mut ui_batches
-            );
+            )?;
 
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&renderer);

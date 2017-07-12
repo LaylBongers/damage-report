@@ -10,7 +10,7 @@ use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sync::{GpuFuture};
 use vulkano::command_buffer::{AutoCommandBufferBuilder};
 
-use calcium_rendering::{Error, CalciumErrorMap, Renderer};
+use calcium_rendering::{Error, CalciumErrorMappable, Renderer};
 
 pub struct VulkanoRenderer {
     pub log: Logger,

@@ -9,7 +9,7 @@ mod texture;
 mod window_renderer;
 
 pub use backend_types::{BackendTypes};
-pub use error::{Error, CalciumErrorMap};
+pub use error::{Error, CalciumErrorMappable};
 pub use renderer::{Renderer};
 pub use texture::{Texture, TextureFormat};
 pub use window_renderer::{WindowRenderer};

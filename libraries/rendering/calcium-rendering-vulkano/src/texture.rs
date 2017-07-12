@@ -9,7 +9,7 @@ use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::{TextureFormat, Texture};
+use calcium_rendering::{TextureFormat, Texture, CalciumErrorMappable, Error};
 use {VulkanoBackendTypes, VulkanoRenderer};
 
 pub struct VulkanoTexture {
@@ -22,7 +22,7 @@ impl VulkanoTexture {
         renderer: &mut VulkanoRenderer,
         buffer: Arc<CpuAccessibleBuffer<[u8]>>, size: Vector2<u32>,
         format: TextureFormat
-    ) -> Arc<Self> {
+    ) -> Result<Arc<Self>, Error> {
         // Get the correct format for the srgb parameter we got passed
         let format = match format {
             TextureFormat::Srgb => Format::R8G8B8A8Srgb,
@@ -36,7 +36,7 @@ impl VulkanoTexture {
             renderer.device.clone(),
             Dimensions::Dim2d { width: size.x, height: size.y },
             format, Some(renderer.graphics_queue.family())
-        ).unwrap();
+        ).map_platform_err()?;
         let sampler = Sampler::new(
             renderer.device.clone(),
             Filter::Linear,
@@ -46,15 +46,15 @@ impl VulkanoTexture {
             SamplerAddressMode::Repeat,
             SamplerAddressMode::Repeat,
             0.0, 1.0, 0.0, 0.0
-        ).unwrap();
+        ).map_platform_err()?;
 
         // Queue copying the data to the image so it will be available when rendering
         renderer.queue_image_copy(buffer, image.clone());
 
-        Arc::new(VulkanoTexture {
+        Ok(Arc::new(VulkanoTexture {
             image,
             sampler,
-        })
+        }))
     }
 
     pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
@@ -65,7 +65,7 @@ impl VulkanoTexture {
 impl Texture<VulkanoBackendTypes> for VulkanoTexture {
     fn from_file(
         renderer: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
-    ) -> Arc<Self> {
+    ) -> Result<Arc<Self>, Error> {
         info!(renderer.log,
             "Loading texture from file"; "path" => path.display().to_string()
         );
@@ -96,7 +96,7 @@ impl Texture<VulkanoBackendTypes> for VulkanoTexture {
 
     fn from_raw_greyscale(
         renderer: &mut VulkanoRenderer, data: &[u8], size: Vector2<u32>,
-    ) -> Arc<Self> {
+    ) -> Result<Arc<Self>, Error> {
         info!(renderer.log,
             "Loading texture from greyscale data"; "width" => size.x, "height" => size.y
         );

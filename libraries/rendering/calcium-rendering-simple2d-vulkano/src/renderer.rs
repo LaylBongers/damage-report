@@ -10,7 +10,7 @@ use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 
-use calcium_rendering::{Texture};
+use calcium_rendering::{Texture, Error};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, BatchMode};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoBackendTypes, VulkanoFrame, VulkanoTexture};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
@@ -23,18 +23,18 @@ pub struct VulkanoSimple2DRenderer {
 }
 
 impl VulkanoSimple2DRenderer {
-    pub fn new(renderer: &mut VulkanoRenderer) -> Self {
+    pub fn new(renderer: &mut VulkanoRenderer) -> Result<Self, Error> {
         info!(renderer.log, "Creating simple2d renderer");
         let render_pass = create_render_pass(renderer);
         let pipeline = create_pipeline(renderer, render_pass);
         let dummy_texture = VulkanoTexture::from_raw_greyscale(
             renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
-        );
+        )?;
 
-        VulkanoSimple2DRenderer {
+        Ok(VulkanoSimple2DRenderer {
             pipeline,
             dummy_texture,
-        }
+        })
     }
 }
 

@@ -25,9 +25,7 @@ use calcium_rendering_static::{Backend};
 
 fn main() {
     // Set up the logger
-    let decorator = TermDecorator::new().build();
-    let drain = Async::new(CompactFormat::new(decorator).build().fuse()).build().fuse();
-    let log = Logger::root(drain, o!());
+    let log = init_logger();
     info!(log, "Carpenter Version {}", env!("CARGO_PKG_VERSION"));
 
     // Run the actual game
@@ -39,6 +37,12 @@ fn main() {
     }
 }
 
+fn init_logger() -> Logger {
+    let decorator = TermDecorator::new().build();
+    let drain = Async::new(CompactFormat::new(decorator).build().fuse()).build().fuse();
+    let log = Logger::root(drain, o!());
+    log
+}
 
 fn run_game(log: &Logger) -> Result<(), Error> {
     // TODO: Read in from configuration and UI

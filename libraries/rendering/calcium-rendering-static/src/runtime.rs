@@ -74,6 +74,6 @@ impl Initializer for VulkanoInitializer {
         &self,
         renderer: &mut VulkanoRenderer,
     ) -> Result<VulkanoSimple2DRenderer, Error> {
-        Ok(VulkanoSimple2DRenderer::new(renderer))
+        VulkanoSimple2DRenderer::new(renderer)
     }
 }

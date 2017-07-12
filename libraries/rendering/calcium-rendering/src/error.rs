@@ -20,11 +20,11 @@ impl error::Error for Error {
     }
 }
 
-pub trait CalciumErrorMap<T> {
+pub trait CalciumErrorMappable<T> {
     fn map_platform_err(self) -> Result<T, Error>;
 }
 
-impl<T, E: Display> CalciumErrorMap<T> for Result<T, E> {
+impl<T, E: Display> CalciumErrorMappable<T> for Result<T, E> {
     fn map_platform_err(self) -> Result<T, Error> {
         self.map_err(|e| Error::Platform(e.to_string()))
     }

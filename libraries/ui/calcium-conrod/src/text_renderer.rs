@@ -8,7 +8,7 @@ use conrod::render::{Text};
 use conrod::text::{GlyphCache};
 use conrod::text::font::{Id as FontId};
 
-use calcium_rendering::{BackendTypes, Texture};
+use calcium_rendering::{BackendTypes, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, BatchMode, DrawRectangle, Rectangle};
 
 use util;
@@ -20,25 +20,25 @@ pub struct TextRenderer<T: BackendTypes> {
 }
 
 impl<T: BackendTypes> TextRenderer<T> {
-    pub fn new(renderer: &mut T::Renderer) -> Self {
+    pub fn new(renderer: &mut T::Renderer) -> Result<Self, Error> {
         let glyph_cache = GlyphCache::new(1024, 1024, 0.1, 0.1);
         let glyph_image = GrayImage::from_raw(1024, 1024, vec![0u8; 1024*1024]).unwrap();
         let glyph_texture = T::Texture::from_raw_greyscale(
             renderer, &vec![0u8; 8*8], Vector2::new(8, 8)
-        ); // We will never use this initial texture, so just use something cheap
+        )?; // We will never use this initial texture, so just use something cheap
 
-        TextRenderer {
+        Ok(TextRenderer {
             glyph_cache,
             glyph_image,
             glyph_texture,
-        }
+        })
     }
 
     pub fn push_text(
         &mut self,
         renderer: &mut T::Renderer, batch: &mut RenderBatch<T>,
         color: Color, text: Text, font_id: FontId,
-    ) {
+    ) -> Result<(), Error> {
         // Unfortunately this specific text rendering can't be moved into the core simple2d library
         //  because half of it is managed by conrod. Instead we just use the masked solid-color
         //  feature.
@@ -75,7 +75,7 @@ impl<T: BackendTypes> TextRenderer<T> {
             // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
             self.glyph_texture = T::Texture::from_raw_greyscale(
                 renderer, &glyph_image, Vector2::new(1024, 1024)
-            );
+            )?;
         }
 
         // Actually set the texture in the render batch
@@ -99,5 +99,7 @@ impl<T: BackendTypes> TextRenderer<T> {
                 });
             }
         }
+
+        Ok(())
     }
 }
