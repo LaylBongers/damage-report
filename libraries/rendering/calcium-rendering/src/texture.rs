@@ -3,9 +3,9 @@ use std::sync::{Arc};
 
 use cgmath::{Vector2};
 
-use {BackendTypes, Error};
+use {Types, Error};
 
-pub trait Texture<T: BackendTypes> {
+pub trait Texture<T: Types> {
     // TODO: This is better suited to be handled by a separate asset manager crate.
     fn from_file(
         renderer: &mut T::Renderer, path: PathBuf, format: TextureFormat,

@@ -1,7 +1,7 @@
 use cgmath::{Vector2};
-use {BackendTypes};
+use {Types};
 
-pub trait WindowRenderer<T: BackendTypes> {
+pub trait WindowRenderer<T: Types> {
     fn start_frame(&mut self, renderer: &T::Renderer) -> T::Frame;
     fn finish_frame(&mut self, renderer: &T::Renderer, frame: T::Frame);
 

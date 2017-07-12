@@ -1,8 +1,8 @@
-use calcium_rendering::{BackendTypes};
+use calcium_rendering::{Types};
 use {RenderBatch};
 
 /// A 2D renderer capable of rendering render batches.
-pub trait Simple2DRenderer<T: BackendTypes> {
+pub trait Simple2DRenderer<T: Types> {
     /// Renders the given render batches to a frame.
     fn render(
         &mut self, renderer: &mut T::Renderer, frame: &mut T::Frame,

@@ -28,7 +28,7 @@ impl Runtime for StaticRuntime {
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
 
         // Set up conrod and UI data
-        let mut conrod_renderer: ConrodRenderer<I::BackendTypes> =
+        let mut conrod_renderer: ConrodRenderer<I::Types> =
             ConrodRenderer::new(&mut renderer)?;
         let mut ui_batches = vec!();
         let mut editor_ui = EditorUi::new(size);

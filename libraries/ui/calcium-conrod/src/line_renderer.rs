@@ -8,12 +8,12 @@ use lyon::tessellation::geometry_builder::{simple_builder};
 
 use conrod::{Color, Point};
 
-use calcium_rendering::{BackendTypes};
+use calcium_rendering::{Types};
 use calcium_rendering_simple2d::{RenderBatch, DrawVertex};
 
 use util;
 
-pub fn push_lines<T: BackendTypes>(
+pub fn push_lines<T: Types>(
     batch: &mut RenderBatch<T>, color: Color, thickness: f64, points: &[Point],
     half_size: Vector2<f32>,
 ) {

@@ -1,10 +1,10 @@
-use calcium_rendering::{BackendTypes};
+use calcium_rendering::{Types};
 use {VulkanoTexture, VulkanoFrame, VulkanoWindowRenderer, VulkanoRenderer};
 
 #[derive(Clone)]
-pub struct VulkanoBackendTypes;
+pub struct VulkanoTypes;
 
-impl BackendTypes for VulkanoBackendTypes {
+impl Types for VulkanoTypes {
     type WindowRenderer = VulkanoWindowRenderer;
     type Renderer = VulkanoRenderer;
     type Frame = VulkanoFrame;

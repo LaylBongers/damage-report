@@ -1,8 +1,8 @@
 use std::any::{Any};
-use calcium_rendering::{BackendTypes};
+use calcium_rendering::{Types};
 use mesh::{Mesh};
 
-pub trait World3DBackendTypes<T: BackendTypes>: Any + Clone {
+pub trait World3DTypes<T: Types>: Any + Clone {
     type Renderer: Any;
 
     type Mesh: Mesh<T> + Any + Send + Sync;

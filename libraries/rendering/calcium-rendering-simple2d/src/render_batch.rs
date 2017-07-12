@@ -2,18 +2,18 @@ use std::sync::{Arc};
 
 use cgmath::{Vector2, Vector4, BaseNum};
 
-use calcium_rendering::{BackendTypes};
+use calcium_rendering::{Types};
 
 /// A render batch that can be drawn by a renderer. Represents the equivalent of a single drawcall.
 // TODO: #[derive(Debug)]
-pub struct RenderBatch<T: BackendTypes> {
+pub struct RenderBatch<T: Types> {
     /// The shader mode in which a render batch will be drawn.
     pub mode: ShaderMode<T>,
     /// The vertices that will be drawn.
     pub vertices: Vec<DrawVertex>,
 }
 
-impl<T: BackendTypes> RenderBatch<T> {
+impl<T: Types> RenderBatch<T> {
     /// Returns true if this render batch has nothing to be drawn.
     pub fn empty(&self) -> bool {
         self.vertices.len() == 0
@@ -42,7 +42,7 @@ impl<T: BackendTypes> RenderBatch<T> {
     }
 }
 
-impl<T: BackendTypes> Default for RenderBatch<T> {
+impl<T: Types> Default for RenderBatch<T> {
     fn default() -> Self {
         RenderBatch {
             mode: ShaderMode::Color,
@@ -52,7 +52,7 @@ impl<T: BackendTypes> Default for RenderBatch<T> {
 }
 
 /// Defines how the renderer should draw vertices.
-pub enum ShaderMode<T: BackendTypes> {
+pub enum ShaderMode<T: Types> {
     /// Uses only the vertices' colors.
     Color,
     /// Multiplies a texture sampled using the vertices' uvs by the vertices' color.

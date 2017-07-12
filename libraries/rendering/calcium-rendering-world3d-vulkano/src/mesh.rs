@@ -5,13 +5,19 @@ use collision::{Sphere};
 use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer};
 use calcium_rendering_world3d::mesh::{Vertex, Mesh};
 
-impl Mesh<VulkanoBackendTypes> for VulkanoMeshBackend {
+pub struct VulkanoMesh {
+    pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,
+    pub index_buffer: Arc<CpuAccessibleBuffer<[u32]>>,
+    pub culling_sphere: Sphere<f32>,
+}
+
+impl Mesh<VulkanoTypes> for VulkanoMesh {
     fn new(
         renderer: &VulkanoRenderer, vertices: Vec<Vertex>, indices: Vec<u32>,
-    ) -> Arc<VulkanoMeshBackend> {
+    ) -> Arc<VulkanoMesh> {
         let indices_len = indices.len();
 
         // We need tangents for proper normal mapping
@@ -45,7 +51,7 @@ impl Mesh<VulkanoBackendTypes> for VulkanoMeshBackend {
         debug!(renderer.log, "Created new mesh";
             "vertices" => vertices.len(), "indices" => indices_len
         );
-        Arc::new(VulkanoMeshBackend {
+        Arc::new(VulkanoMesh {
             vertex_buffer,
             index_buffer,
             culling_sphere,
@@ -64,12 +70,6 @@ pub struct VkVertex {
 }
 
 impl_vertex!(VkVertex, v_position, v_uv, v_normal, v_tangent);
-
-pub struct VulkanoMeshBackend {
-    pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,
-    pub index_buffer: Arc<CpuAccessibleBuffer<[u32]>>,
-    pub culling_sphere: Sphere<f32>,
-}
 
 fn calculate_tangents(
     log: &Logger, vertices: &Vec<Vertex>, indices: &Vec<u32>

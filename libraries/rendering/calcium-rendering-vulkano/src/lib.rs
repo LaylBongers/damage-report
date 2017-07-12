@@ -7,14 +7,14 @@ extern crate slog_stdlog;
 extern crate vulkano;
 extern crate calcium_rendering;
 
-mod backend_types;
 mod renderer;
 mod texture;
+mod types;
 mod window_renderer;
 mod window_swapchain;
 
-pub use backend_types::{VulkanoBackendTypes};
 pub use renderer::{VulkanoRenderer};
 pub use texture::{VulkanoTexture};
+pub use types::{VulkanoTypes};
 pub use window_renderer::{VulkanoWindowRenderer, VulkanoFrame};
 pub use window_swapchain::{WindowSwapchain};

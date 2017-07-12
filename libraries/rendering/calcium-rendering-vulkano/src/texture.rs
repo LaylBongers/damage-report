@@ -10,7 +10,7 @@ use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use calcium_rendering::{TextureFormat, Texture, CalciumErrorMappable, Error};
-use {VulkanoBackendTypes, VulkanoRenderer};
+use {VulkanoTypes, VulkanoRenderer};
 
 pub struct VulkanoTexture {
     image: Arc<ImmutableImage<Format>>,
@@ -62,7 +62,7 @@ impl VulkanoTexture {
     }
 }
 
-impl Texture<VulkanoBackendTypes> for VulkanoTexture {
+impl Texture<VulkanoTypes> for VulkanoTexture {
     fn from_file(
         renderer: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
     ) -> Result<Arc<Self>, Error> {

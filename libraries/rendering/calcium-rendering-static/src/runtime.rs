@@ -2,14 +2,14 @@ use cgmath::{Vector2};
 use slog::{Logger};
 
 use calcium_rendering::{Error};
-use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoWindowRenderer, VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoTypes, VulkanoWindowRenderer, VulkanoRenderer};
 use winit_window::{self, WinitWindow};
 
 #[cfg(feature = "world3d")]
-use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer, VulkanoWorldBackendTypes};
+use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer, VulkanoWorld3DTypes};
 
 #[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DBackendTypes, VulkanoSimple2DRenderer};
+use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DTypes, VulkanoSimple2DRenderer};
 
 use {Backend, Initializer};
 
@@ -30,14 +30,14 @@ pub trait Runtime {
 struct VulkanoInitializer;
 
 impl Initializer for VulkanoInitializer {
-    type BackendTypes = VulkanoBackendTypes;
+    type Types = VulkanoTypes;
     type Window = WinitWindow;
 
     #[cfg(feature = "world3d")]
-    type World3DBackendTypes = VulkanoWorldBackendTypes;
+    type World3DTypes = VulkanoWorld3DTypes;
 
     #[cfg(feature = "simple2d")]
-    type Simple2DBackendTypes = VulkanoSimple2DBackendTypes;
+    type Simple2DTypes = VulkanoSimple2DTypes;
 
     fn renderer(
         &self, log: Option<Logger>,

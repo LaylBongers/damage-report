@@ -4,18 +4,18 @@ use conrod::{Ui, Color};
 use conrod::render::{PrimitiveWalker, PrimitiveKind, Primitives};
 use conrod::position::rect::{Rect};
 
-use calcium_rendering::{BackendTypes, WindowRenderer, Renderer, Error};
+use calcium_rendering::{Types, WindowRenderer, Renderer, Error};
 use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle};
 
 use line_renderer::{push_lines};
 use text_renderer::{TextRenderer};
 use util;
 
-pub struct ConrodRenderer<T: BackendTypes> {
+pub struct ConrodRenderer<T: Types> {
     text_renderer: TextRenderer<T>,
 }
 
-impl<T: BackendTypes> ConrodRenderer<T> {
+impl<T: Types> ConrodRenderer<T> {
     pub fn new(renderer: &mut T::Renderer) -> Result<Self, Error> {
         info!(renderer.log(), "Creating conrod renderer");
 

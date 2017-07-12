@@ -6,16 +6,16 @@ use std::sync::{Arc};
 use cgmath::{Vector2, Vector3};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
-use calcium_rendering::{BackendTypes, Renderer};
+use calcium_rendering::{Types, Renderer};
 
 use mesh::{self, Mesh, Vertex};
-use {World3DBackendTypes};
+use {World3DTypes};
 
-pub struct Model<T: BackendTypes, WT: World3DBackendTypes<T>> {
+pub struct Model<T: Types, WT: World3DTypes<T>> {
     pub meshes: Vec<Arc<WT::Mesh>>,
 }
 
-impl<T: BackendTypes, WT: World3DBackendTypes<T>> Model<T, WT> {
+impl<T: Types, WT: World3DTypes<T>> Model<T, WT> {
     pub fn load<P: AsRef<Path>>(
         renderer: &T::Renderer, path: P, scale: f32
     ) -> Self {

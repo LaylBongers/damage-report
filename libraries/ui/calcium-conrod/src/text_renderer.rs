@@ -8,18 +8,18 @@ use conrod::render::{Text};
 use conrod::text::{GlyphCache};
 use conrod::text::font::{Id as FontId};
 
-use calcium_rendering::{BackendTypes, Texture, Error};
+use calcium_rendering::{Types, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 
 use util;
 
-pub struct TextRenderer<T: BackendTypes> {
+pub struct TextRenderer<T: Types> {
     glyph_cache: GlyphCache,
     glyph_image: GrayImage,
     glyph_texture: Arc<T::Texture>,
 }
 
-impl<T: BackendTypes> TextRenderer<T> {
+impl<T: Types> TextRenderer<T> {
     pub fn new(renderer: &mut T::Renderer) -> Result<Self, Error> {
         let glyph_cache = GlyphCache::new(1024, 1024, 0.1, 0.1);
         let glyph_image = GrayImage::from_raw(1024, 1024, vec![0u8; 1024*1024]).unwrap();

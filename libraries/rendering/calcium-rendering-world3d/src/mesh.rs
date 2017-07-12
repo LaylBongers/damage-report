@@ -5,9 +5,9 @@ use std::hash::{Hash, Hasher};
 
 use cgmath::{Vector2, Vector3};
 
-use calcium_rendering::{BackendTypes};
+use calcium_rendering::{Types};
 
-pub trait Mesh<T: BackendTypes> {
+pub trait Mesh<T: Types> {
     fn new(
         renderer: &T::Renderer, vertices: Vec<Vertex>, indices: Vec<u32>,
     ) -> Arc<Self>;

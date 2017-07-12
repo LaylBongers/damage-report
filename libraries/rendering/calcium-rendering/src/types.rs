@@ -2,7 +2,8 @@ use std::any::{Any};
 use texture::{Texture};
 use {WindowRenderer, Renderer};
 
-pub trait BackendTypes: Any + Clone {
+/// An associated types container with all types for a backend.
+pub trait Types: Any + Clone {
     type WindowRenderer: WindowRenderer<Self> + Any;
     type Renderer: Renderer + Any;
     type Frame: Any;

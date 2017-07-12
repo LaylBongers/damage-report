@@ -6,7 +6,7 @@ use vulkano::sync::{GpuFuture};
 use vulkano::framebuffer::{FramebufferAbstract};
 
 use calcium_rendering::{WindowRenderer};
-use {WindowSwapchain, VulkanoBackendTypes, VulkanoRenderer};
+use {WindowSwapchain, VulkanoTypes, VulkanoRenderer};
 
 pub struct VulkanoWindowRenderer {
     pub size: Vector2<u32>,
@@ -31,7 +31,7 @@ impl VulkanoWindowRenderer {
     }
 }
 
-impl WindowRenderer<VulkanoBackendTypes> for VulkanoWindowRenderer {
+impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
     fn start_frame(&mut self, _renderer: &VulkanoRenderer) -> VulkanoFrame {
         self.swapchain.cleanup_finished_frames();
 

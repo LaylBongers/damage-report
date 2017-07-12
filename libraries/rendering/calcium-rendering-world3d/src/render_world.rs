@@ -1,11 +1,11 @@
 use std::sync::{Arc};
 use cgmath::{Vector3, InnerSpace};
 
-use calcium_rendering::{BackendTypes};
+use calcium_rendering::{Types};
 
-use {Material, World3DBackendTypes};
+use {Material, World3DTypes};
 
-pub struct RenderWorld<T: BackendTypes, WT: World3DBackendTypes<T>> {
+pub struct RenderWorld<T: Types, WT: World3DTypes<T>> {
     entities: Vec<Option<Entity<T, WT>>>,
     lights: Vec<Light>,
 
@@ -14,7 +14,7 @@ pub struct RenderWorld<T: BackendTypes, WT: World3DBackendTypes<T>> {
     pub directional_direction: Vector3<f32>,
 }
 
-impl<T: BackendTypes, WT: World3DBackendTypes<T>> RenderWorld<T, WT> {
+impl<T: Types, WT: World3DTypes<T>> RenderWorld<T, WT> {
     pub fn new() -> Self {
         RenderWorld {
             entities: Vec::new(),
@@ -66,7 +66,7 @@ pub struct EntityId(usize);
 #[derive(Copy, Clone)]
 pub struct LightId(usize);
 
-pub struct Entity<T: BackendTypes, WT: World3DBackendTypes<T>> {
+pub struct Entity<T: Types, WT: World3DTypes<T>> {
     pub position: Vector3<f32>,
     pub mesh: Arc<WT::Mesh>,
     pub material: Material<T>,

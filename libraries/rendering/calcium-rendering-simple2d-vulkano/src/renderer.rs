@@ -12,7 +12,7 @@ use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 
 use calcium_rendering::{Texture, Error};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoBackendTypes, VulkanoFrame, VulkanoTexture};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame, VulkanoTexture};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex};
@@ -38,10 +38,10 @@ impl VulkanoSimple2DRenderer {
     }
 }
 
-impl Simple2DRenderer<VulkanoBackendTypes> for VulkanoSimple2DRenderer {
+impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
     fn render(
         &mut self, renderer: &mut VulkanoRenderer, frame: &mut VulkanoFrame,
-        batches: &[RenderBatch<VulkanoBackendTypes>]
+        batches: &[RenderBatch<VulkanoTypes>]
     ) {
         // Give the renderer an opportunity to insert any commands it had queued up, this is used
         //  to copy textures for example. This always has to be done right before a render pass.
