@@ -3,7 +3,6 @@ use cgmath::{Vector3, InnerSpace};
 
 use calcium_rendering::{BackendTypes};
 
-use mesh::{Mesh};
 use {Material, World3DBackendTypes};
 
 pub struct RenderWorld<T: BackendTypes, WT: World3DBackendTypes<T>> {
@@ -69,7 +68,7 @@ pub struct LightId(usize);
 
 pub struct Entity<T: BackendTypes, WT: World3DBackendTypes<T>> {
     pub position: Vector3<f32>,
-    pub mesh: Arc<Mesh<T, WT>>,
+    pub mesh: Arc<WT::Mesh>,
     pub material: Material<T>,
 }
 

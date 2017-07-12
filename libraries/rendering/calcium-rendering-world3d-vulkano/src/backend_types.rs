@@ -7,7 +7,7 @@ use {VulkanoWorld3DRenderer};
 pub struct VulkanoWorldBackendTypes;
 
 impl World3DBackendTypes<VulkanoBackendTypes> for VulkanoWorldBackendTypes {
-    type MeshBackend = VulkanoMeshBackend;
-
     type Renderer = VulkanoWorld3DRenderer;
+
+    type Mesh = VulkanoMeshBackend;
 }

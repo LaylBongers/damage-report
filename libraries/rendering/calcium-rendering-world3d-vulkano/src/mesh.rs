@@ -5,31 +5,13 @@ use collision::{Sphere};
 use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
-use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoFactoryBackend};
-use calcium_rendering_world3d::mesh::{Vertex, MeshBackend};
+use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoRenderer};
+use calcium_rendering_world3d::mesh::{Vertex, Mesh};
 
-#[derive(PartialEq, Eq, Hash, Copy, Clone)]
-struct MeshId(usize);
-
-pub struct VkVertex {
-    pub v_position: [f32; 3],
-    pub v_uv: [f32; 2],
-    pub v_normal: [f32; 3],
-    pub v_tangent: [f32; 3],
-}
-
-impl_vertex!(VkVertex, v_position, v_uv, v_normal, v_tangent);
-
-pub struct VulkanoMeshBackend {
-    pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,
-    pub index_buffer: Arc<CpuAccessibleBuffer<[u32]>>,
-    pub culling_sphere: Sphere<f32>,
-}
-
-impl MeshBackend<VulkanoBackendTypes> for VulkanoMeshBackend {
+impl Mesh<VulkanoBackendTypes> for VulkanoMeshBackend {
     fn new(
-        log: &Logger, backend: &VulkanoFactoryBackend, vertices: Vec<Vertex>, indices: Vec<u32>,
-    ) -> VulkanoMeshBackend {
+        log: &Logger, renderer: &VulkanoRenderer, vertices: Vec<Vertex>, indices: Vec<u32>,
+    ) -> Arc<VulkanoMeshBackend> {
         let indices_len = indices.len();
 
         // We need tangents for proper normal mapping
@@ -50,25 +32,43 @@ impl MeshBackend<VulkanoBackendTypes> for VulkanoMeshBackend {
 
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
-            backend.device.clone(), BufferUsage::all(),
-            Some(backend.graphics_queue.family()),
+            renderer.device.clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue.family()),
             vk_vertices
         ).unwrap();
         let index_buffer = CpuAccessibleBuffer::from_iter(
-            backend.device.clone(), BufferUsage::all(),
-            Some(backend.graphics_queue.family()),
+            renderer.device.clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue.family()),
             indices.iter().map(|v| *v)
         ).unwrap();
 
         debug!(log, "Created new mesh";
             "vertices" => vertices.len(), "indices" => indices_len
         );
-        VulkanoMeshBackend {
+        Arc::new(VulkanoMeshBackend {
             vertex_buffer,
             index_buffer,
             culling_sphere,
-        }
+        })
     }
+}
+
+#[derive(PartialEq, Eq, Hash, Copy, Clone)]
+struct MeshId(usize);
+
+pub struct VkVertex {
+    pub v_position: [f32; 3],
+    pub v_uv: [f32; 2],
+    pub v_normal: [f32; 3],
+    pub v_tangent: [f32; 3],
+}
+
+impl_vertex!(VkVertex, v_position, v_uv, v_normal, v_tangent);
+
+pub struct VulkanoMeshBackend {
+    pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,
+    pub index_buffer: Arc<CpuAccessibleBuffer<[u32]>>,
+    pub culling_sphere: Sphere<f32>,
 }
 
 fn calculate_tangents(

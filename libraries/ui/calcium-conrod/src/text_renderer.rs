@@ -74,11 +74,8 @@ impl<T: BackendTypes> TextRenderer<T> {
         if changed {
             // Upload the glyphs into a texture
             // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
-            // TODO: Remove this weird split_at and find a way to get a slice of all the pixels
-            //  without copying
-            let (_, data) = glyph_image.split_at(0);
             self.glyph_texture = T::Texture::from_raw_greyscale(
-                log, renderer, data, Vector2::new(1024, 1024)
+                log, renderer, &glyph_image, Vector2::new(1024, 1024)
             );
         }
 

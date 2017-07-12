@@ -6,8 +6,13 @@ use std::hash::{Hash, Hasher};
 use cgmath::{Vector2, Vector3};
 use slog::{Logger};
 
-use calcium_rendering::{BackendTypes, Factory};
-use {World3DBackendTypes};
+use calcium_rendering::{BackendTypes};
+
+pub trait Mesh<T: BackendTypes> {
+    fn new(
+        log: &Logger, renderer: &T::Renderer, vertices: Vec<Vertex>, indices: Vec<u32>,
+    ) -> Arc<Self>;
+}
 
 #[derive(Clone, PartialEq)]
 pub struct Vertex {
@@ -28,25 +33,6 @@ impl Vertex {
         (self.normal * scale).cast::<i64>().hash(&mut state);
 
         state.finish()
-    }
-}
-
-/// An uploaded mesh. Internally ref-counted, cheap to clone.
-#[derive(Clone)]
-pub struct Mesh<T: BackendTypes, WT: World3DBackendTypes<T>> {
-    pub backend: WT::MeshBackend,
-}
-
-impl<T: BackendTypes, WT: World3DBackendTypes<T>> Mesh<T, WT> {
-    /// Creates a mesh from vertices and indices. Performs no duplicate checking.
-    pub fn new(
-        log: &Logger, factory: &Factory<T>, vertices: Vec<Vertex>, indices: Vec<u32>
-    ) -> Arc<Mesh<T, WT>> {
-        let backend = WT::MeshBackend::new(log, &factory.backend, vertices, indices);
-
-        Arc::new(Mesh {
-            backend,
-        })
     }
 }
 
@@ -89,10 +75,4 @@ fn find_or_add_vertex(
     indices.push(*i);
     lookup.insert(hash, *i);
     *i += 1;
-}
-
-pub trait MeshBackend<T: BackendTypes> {
-    fn new(
-        log: &Logger, backend: &T::FactoryBackend, vertices: Vec<Vertex>, indices: Vec<u32>,
-    ) -> Self;
 }
