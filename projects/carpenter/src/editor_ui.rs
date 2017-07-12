@@ -36,20 +36,41 @@ impl EditorUi {
         let ui = &mut self.ui.set_widgets();
         self.average_delta.accumulate(delta);
 
-        // The root canvas
+        // Root canvas
         Canvas::new()
             .color(color::TRANSPARENT)
             .set(self.ids.canvas, ui);
 
-        // FPS label
+        // Top ribbon
+        Canvas::new()
+            .top_left_of(self.ids.canvas)
+            .h(36.0) // Eventual full size: .h(96.0)
+            .pad(3.0)
+            .set(self.ids.top_ribbon_canvas, ui);
+
+        // Save button
+        Button::new()
+            .top_left_of(self.ids.top_ribbon_canvas)
+            .w_h(30.0, 30.0)
+            .label("S")
+            .set(self.ids.top_ribbon_save, ui);
+
+        // Load button
+        Button::new()
+            .right_from(self.ids.top_ribbon_save, 3.0)
+            .w_h(30.0, 30.0)
+            .label("L")
+            .set(self.ids.top_ribbon_load, ui);
+
+        // Render performance debug information
         Text::new(&format!("FPS: {}", delta_to_fps(self.average_delta.get())))
-            .top_right_of(self.ids.canvas)
-            .w(100.0)
+            .top_right_of(self.ids.top_ribbon_canvas)
+            .w(96.0)
             .font_size(12)
             .set(self.ids.fps_label, ui);
         Text::new(&format!("MS: {}", self.average_delta.get()))
             .left_from(self.ids.fps_label, 12.0)
-            .w(100.0)
+            .w(96.0)
             .font_size(12)
             .set(self.ids.ms_label, ui);
 
@@ -77,18 +98,18 @@ impl EditorUi {
     }
 }
 
-pub fn theme() -> conrod::Theme {
+fn theme() -> conrod::Theme {
     use conrod::position::{Align, Direction, Padding, Position, Relative};
     conrod::Theme {
         name: "Demo Theme".to_string(),
         padding: Padding::none(),
         x_position: Position::Relative(Relative::Align(Align::Start), None),
         y_position: Position::Relative(Relative::Direction(Direction::Backwards, 20.0), None),
-        background_color: conrod::color::DARK_CHARCOAL,
-        shape_color: conrod::color::LIGHT_CHARCOAL,
-        border_color: conrod::color::BLACK,
+        background_color: color::DARK_CHARCOAL,
+        shape_color: color::LIGHT_CHARCOAL,
+        border_color: color::BLACK,
         border_width: 0.0,
-        label_color: conrod::color::WHITE,
+        label_color: color::WHITE,
         font_id: None,
         font_size_large: 26,
         font_size_medium: 18,
@@ -101,6 +122,10 @@ pub fn theme() -> conrod::Theme {
 
 widget_ids! { struct Ids {
     canvas,
+
+    top_ribbon_canvas,
+    top_ribbon_save, top_ribbon_load,
+
     fps_label, ms_label,
     counter, text_field,
 } }
