@@ -7,6 +7,7 @@ use vulkano::format::{self};
 use vulkano::swapchain::{Swapchain, SurfaceTransform, Surface};
 use vulkano::sync::{GpuFuture};
 use vulkano::image::attachment::{AttachmentImage};
+use vulkano::image::swapchain::{SwapchainImage};
 
 use {VulkanoRenderer};
 
@@ -68,9 +69,7 @@ impl WindowSwapchain {
         //  noticeable rendering artifacts at relatively nearby depths. A floating point format is
         //  used to take advantage of the increased precision given by the reversed-z technique.
         debug!(renderer.log, "Creating depth buffer");
-        let depth_attachment = AttachmentImage::new(
-            renderer.device.clone(), images[0].dimensions(), format::D32Sfloat_S8Uint
-        ).unwrap();
+        let depth_attachment = create_depth_attachment(renderer, &images);
 
         // Set up a render pass TODO: Comment better
         let color_buffer_format = swapchain.format();
@@ -95,19 +94,13 @@ impl WindowSwapchain {
                 color: [color],
                 depth_stencil: {depth}
             }
-        ).unwrap());
+        ).unwrap()) as Arc<RenderPassAbstract + Send + Sync>;
 
         // Set up the frame buffers matching the render pass
         // For each image in the swap chain, we create a frame buffer that renders to that image
         //  and to the depth buffer attachment. These attachments are defined by the render pass.
         debug!(renderer.log, "Creating framebuffers for swapchain");
-        let framebuffers = images.iter().map(|image| {
-            Arc::new(Framebuffer::start(render_pass.clone())
-                .add(image.clone()).unwrap()
-                .add(depth_attachment.clone()).unwrap()
-                .build().unwrap()
-            ) as Arc<FramebufferAbstract + Send + Sync>
-        }).collect::<Vec<_>>();
+        let framebuffers = create_framebuffers(&images, &render_pass, &depth_attachment);
 
         WindowSwapchain {
             swapchain,
@@ -116,6 +109,15 @@ impl WindowSwapchain {
             framebuffers,
             previous_frame: Some(Box::new(::vulkano::sync::now(renderer.device.clone()))),
         }
+    }
+
+    pub fn resize(&mut self, renderer: &VulkanoRenderer, size: Vector2<u32>) {
+        let (swapchain, images) = self.swapchain.recreate_with_dimension(size.into()).unwrap();
+        self.swapchain = swapchain;
+        self.depth_attachment = create_depth_attachment(renderer, &images);
+        self.framebuffers = create_framebuffers(
+            &images, &self.render_pass, &self.depth_attachment
+        );
     }
 
     pub fn cleanup_finished_frames(&mut self) {
@@ -147,4 +149,26 @@ impl WindowSwapchain {
         // Keep track of these submissions so we can later wait on them
         self.previous_frame = Some(Box::new(future));
     }
+}
+
+fn create_depth_attachment(
+    renderer: &VulkanoRenderer, images: &Vec<Arc<SwapchainImage>>,
+) -> Arc<AttachmentImage<format::D32Sfloat_S8Uint>> {
+    AttachmentImage::new(
+        renderer.device.clone(), images[0].dimensions(), format::D32Sfloat_S8Uint
+    ).unwrap()
+}
+
+fn create_framebuffers(
+    images: &Vec<Arc<SwapchainImage>>,
+    render_pass: &Arc<RenderPassAbstract + Send + Sync>,
+    depth_attachment: &Arc<AttachmentImage<format::D32Sfloat_S8Uint>>,
+) -> Vec<Arc<FramebufferAbstract + Send + Sync>> {
+    images.iter().map(|image| {
+        Arc::new(Framebuffer::start(render_pass.clone())
+            .add(image.clone()).unwrap()
+            .add(depth_attachment.clone()).unwrap()
+            .build().unwrap()
+        ) as Arc<FramebufferAbstract + Send + Sync>
+    }).collect()
 }

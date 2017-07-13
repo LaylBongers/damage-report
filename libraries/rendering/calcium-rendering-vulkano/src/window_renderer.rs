@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 
 use cgmath::{Vector2};
+use input::{Input};
 use vulkano::swapchain::{Surface};
 use vulkano::sync::{GpuFuture};
 use vulkano::framebuffer::{FramebufferAbstract};
@@ -12,6 +13,7 @@ pub struct VulkanoWindowRenderer {
     pub size: Vector2<u32>,
     pub surface: Arc<Surface>,
     pub swapchain: WindowSwapchain,
+    queued_resize: Option<Vector2<u32>>,
 }
 
 impl VulkanoWindowRenderer {
@@ -27,13 +29,29 @@ impl VulkanoWindowRenderer {
             size,
             surface,
             swapchain,
+            queued_resize: None,
         }
     }
 }
 
 impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
-    fn start_frame(&mut self, _renderer: &VulkanoRenderer) -> VulkanoFrame {
+    fn handle_event(&mut self, input: &Input) {
+        match input {
+            &Input::Resize(w, h) =>
+                // We can be spammed with resize events many times in the same frame, so defer it
+                self.queued_resize = Some(Vector2::new(w, h)),
+            _ => {}
+        }
+    }
+
+    fn start_frame(&mut self, renderer: &VulkanoRenderer) -> VulkanoFrame {
         self.swapchain.cleanup_finished_frames();
+
+        // Before we render, see if we need to execute a queued resize
+        if let Some(size) = self.queued_resize.take() {
+            self.size = size;
+            self.swapchain.resize(renderer, self.size);
+        }
 
         // Get the image for this frame, along with a future that will let us queue up the order of
         //  command buffer submissions.

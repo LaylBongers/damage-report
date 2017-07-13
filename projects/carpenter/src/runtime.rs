@@ -41,7 +41,11 @@ impl Runtime for StaticRuntime {
 
             // Poll for window events
             while let Some(event) = window.poll_event() {
-                // Pass the event itself over to conrod
+                // Pass the event to the window renderer
+                window_renderer.handle_event(&event);
+
+                // Pass the event to conrod
+                let size = window_renderer.size();
                 if let Some(event) = ::conrod::backend::piston::event::convert(
                     event.clone(), size.x as f64, size.y as f64
                 ) {
@@ -53,6 +57,7 @@ impl Runtime for StaticRuntime {
             editor_ui.update(delta);
 
             // Create render batches for the UI
+            // TODO: ui_batches to an Option return value
             conrod_renderer.draw_if_changed(
                 &mut renderer, &window_renderer, &mut editor_ui.ui, &mut ui_batches
             )?;
