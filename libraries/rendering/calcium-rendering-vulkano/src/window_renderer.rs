@@ -39,7 +39,10 @@ impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
         match input {
             &Input::Resize(w, h) =>
                 // We can be spammed with resize events many times in the same frame, so defer it
-                self.queued_resize = Some(Vector2::new(w, h)),
+                self.queued_resize = Some(Vector2::new(
+                    if w > 0 {w} else {1},
+                    if h > 0 {h} else {1},
+                )),
             _ => {}
         }
     }
