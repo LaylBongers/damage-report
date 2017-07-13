@@ -3,7 +3,6 @@ extern crate image;
 extern crate input;
 #[macro_use]
 extern crate slog;
-extern crate slog_stdlog;
 #[macro_use]
 extern crate vulkano;
 extern crate calcium_rendering;

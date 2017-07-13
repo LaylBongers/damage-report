@@ -6,16 +6,19 @@ description = "The future home of the calcium rendering library"
 license = "MIT/Apache-2.0"
 
 [features]
-default = ["simple2d", "world3d"]
+default = []
 world3d = ["calcium-rendering-world3d", "calcium-rendering-world3d-vulkano"]
 simple2d = ["calcium-rendering-simple2d", "calcium-rendering-simple2d-vulkano"]
 
 [dependencies]
 cgmath = "0.14"
 slog = "2"
+slog-stdlog = "3"
 pistoncore-window = "0.27"
 pistoncore-winit_window = "0.1"
+pistoncore-glutin_window = "0.38"
 calcium-rendering = {path = "../calcium-rendering"}
+calcium-rendering-gfx = {path = "../calcium-rendering-gfx"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
 
 # Enabled with the world3d feature
