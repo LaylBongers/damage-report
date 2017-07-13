@@ -46,7 +46,7 @@ pub fn push_lines<T: Types>(
             &StrokeOptions::default()
                 // Not sure if this is correct behavior but without it the
                 //  triangles were too small to show up
-                .with_line_width(thickness as f32 * 2.0),
+                .with_line_width(thickness as f32 + 1.0),
             &mut vertex_builder
         );
     }
