@@ -14,12 +14,12 @@ impl Texture<GfxTypes> for GfxTexture {
     fn from_file(
         _renderer: &mut GfxRenderer, _path: PathBuf, _format: TextureFormat,
     ) -> Result<Arc<Self>, Error> {
-        unimplemented!()
+        Ok(Arc::new(GfxTexture))
     }
 
     fn from_raw_greyscale(
         _renderer: &mut GfxRenderer, _data: &[u8], _size: Vector2<u32>,
     ) -> Result<Arc<Self>, Error> {
-        unimplemented!()
+        Ok(Arc::new(GfxTexture))
     }
 }

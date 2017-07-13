@@ -17,6 +17,8 @@ extern crate calcium_rendering_world3d_vulkano;
 #[cfg(feature = "simple2d")]
 extern crate calcium_rendering_simple2d;
 #[cfg(feature = "simple2d")]
+extern crate calcium_rendering_simple2d_gfx;
+#[cfg(feature = "simple2d")]
 extern crate calcium_rendering_simple2d_vulkano;
 
 mod initializer;

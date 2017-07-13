@@ -117,6 +117,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "calcium-rendering-simple2d-gfx"
+version = "0.1.0"
+dependencies = [
+ "calcium-rendering 0.1.0",
+ "calcium-rendering-gfx 0.1.0",
+ "calcium-rendering-simple2d 0.1.0",
+ "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "calcium-rendering-simple2d-vulkano"
 version = "0.1.0"
 dependencies = [
@@ -136,6 +146,7 @@ dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-gfx 0.1.0",
  "calcium-rendering-simple2d 0.1.0",
+ "calcium-rendering-simple2d-gfx 0.1.0",
  "calcium-rendering-simple2d-vulkano 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -520,7 +531,7 @@ dependencies = [
  "user32-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "wayland-client 0.9.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "winit 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winit 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "x11-dl 2.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1011,7 +1022,7 @@ dependencies = [
  "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano-win 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "winit 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winit 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1364,7 +1375,7 @@ dependencies = [
  "metal-rs 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "objc 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "winit 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winit 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1429,13 +1440,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "winit"
-version = "0.7.3"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "android_glue 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "cocoa 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "core-foundation 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "core-graphics 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cgl 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cocoa 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "core-foundation 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "core-graphics 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "dwmapi-sys 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gdi32-sys 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1638,7 +1650,7 @@ dependencies = [
 "checksum wayland-window 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)" = "4355498f67d61401169926daca72bf04db53c95bad863aa3e6c6e5e5ec20973c"
 "checksum winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "167dc9d6949a9b857f3451275e911c3f44255842c1f7a76f33c55103a909087a"
 "checksum winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"
-"checksum winit 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ad32b0483b27df6cf2cc5678295e4aec6dbb5e02814d5386b092e5bf8d935c69"
+"checksum winit 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f86a6bbf15cb6e8be3b6375e807c23aab9ddfc0934855eb92089eab512d6d94d"
 "checksum x11-dl 2.14.0 (registry+https://github.com/rust-lang/crates.io-index)" = "326c500cdc166fd7c70dd8c8a829cd5c0ce7be5a5d98c25817de2b9bdc67faf8"
 "checksum xml-rs 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "7ec6c39eaa68382c8e31e35239402c0a9489d4141a8ceb0c716099a0b515b562"
 "checksum xml-rs 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "768c90d35b804112a0a9eedb6033c4de2a23942c11e163bc7e63db88738e140e"

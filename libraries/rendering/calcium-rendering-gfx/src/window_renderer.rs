@@ -15,19 +15,17 @@ impl GfxWindowRenderer {
 
 impl WindowRenderer<GfxTypes> for GfxWindowRenderer {
     fn handle_event(&mut self, _input: &Input) {
-        unimplemented!()
     }
 
     fn start_frame(&mut self, _renderer: &GfxRenderer) -> GfxFrame {
-        unimplemented!()
+        GfxFrame
     }
 
     fn finish_frame(&mut self, _renderer: &GfxRenderer, _frame: GfxFrame) {
-        unimplemented!()
     }
 
     fn size(&self) -> Vector2<u32> {
-        unimplemented!()
+        Vector2::new(10, 10)
     }
 }
 

@@ -1,0 +1,10 @@
+[package]
+name = "calcium-rendering-simple2d-gfx"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+cgmath = "0.14"
+calcium-rendering = {path = "../calcium-rendering"}
+calcium-rendering-simple2d = {path = "../calcium-rendering-simple2d"}
+calcium-rendering-gfx = {path = "../calcium-rendering-gfx"}
