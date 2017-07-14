@@ -4,7 +4,7 @@ use std::path::{PathBuf};
 use cgmath::{Vector2};
 use gfx::{Device, Factory};
 use gfx::texture::{Kind, Size, AaMode};
-use gfx::format::{Rgba8};
+use gfx::format::{Rgba8, Srgba8};
 use gfx::handle::{ShaderResourceView};
 
 use calcium_rendering::{Texture, TextureFormat, Error, CalciumErrorMappable};
@@ -29,12 +29,14 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     ) -> Result<Arc<Self>, Error> {
         // Create image data in RGBA format rather than the R format we got
         // TODO: Figure out a way to avoid this step
-        let mut rgba = Vec::new();
-        for r in data {
-            rgba.push(*r);
-            rgba.push(0);
-            rgba.push(0);
-            rgba.push(1);
+        let mut rgba = vec![4; data.len() * 4];
+        for i in 0..data.len() {
+            unsafe {
+                *rgba.get_unchecked_mut(i*4 + 0) = data[i];
+                *rgba.get_unchecked_mut(i*4 + 1) = 0;
+                *rgba.get_unchecked_mut(i*4 + 2) = 0;
+                *rgba.get_unchecked_mut(i*4 + 3) = 1;
+            }
         }
 
         // Actually create the gfx texture
