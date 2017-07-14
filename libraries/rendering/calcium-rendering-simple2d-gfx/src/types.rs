@@ -1,4 +1,4 @@
-use gfx::{Resources, Factory};
+use gfx::{Device, Factory};
 
 use calcium_rendering_simple2d::{Simple2DTypes};
 use calcium_rendering_gfx::{GfxTypes};
@@ -8,6 +8,8 @@ use {GfxSimple2DRenderer};
 #[derive(Clone)]
 pub struct GfxSimple2DTypes;
 
-impl<R: Resources, F: Factory<R> + 'static> Simple2DTypes<GfxTypes<R, F>> for GfxSimple2DTypes {
-    type Renderer = GfxSimple2DRenderer;
+impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
+    Simple2DTypes<GfxTypes<D, F>>
+    for GfxSimple2DTypes {
+    type Renderer = GfxSimple2DRenderer<D, F>;
 }

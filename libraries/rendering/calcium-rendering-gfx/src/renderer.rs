@@ -1,25 +1,36 @@
 use slog::{Logger};
-use gfx::{Resources, Factory};
+use gfx::{Device, Factory, Encoder};
+use gfx::handle::RenderTargetView;
 
 use calcium_rendering::{Renderer};
 
-pub struct GfxRenderer<R: Resources, F: Factory<R>> {
+use {ColorFormat};
+
+pub struct GfxRenderer<D: Device, F: Factory<D::Resources>> {
     log: Logger,
+    pub device: D,
     pub factory: F,
-    _r: ::std::marker::PhantomData<R>,
+    pub encoder: Encoder<D::Resources, D::CommandBuffer>,
+    pub color_view: RenderTargetView<D::Resources, ColorFormat>,
 }
 
-impl<R: Resources, F: Factory<R>> GfxRenderer<R, F> {
-    pub fn new(log: &Logger, factory: F) -> Self {
+impl<D: Device, F: Factory<D::Resources>> GfxRenderer<D, F> {
+    pub fn new(
+        log: &Logger,
+        device: D, factory: F, encoder: Encoder<D::Resources, D::CommandBuffer>,
+        color_view: RenderTargetView<D::Resources, ColorFormat>
+    ) -> Self {
         GfxRenderer {
             log: log.clone(),
+            device,
             factory,
-            _r: Default::default(),
+            encoder,
+            color_view,
         }
     }
 }
 
-impl<R: Resources, F: Factory<R>> Renderer for GfxRenderer<R, F> {
+impl<D: Device, F: Factory<D::Resources>> Renderer for GfxRenderer<D, F> {
     fn log(&self) -> &Logger {
         &self.log
     }

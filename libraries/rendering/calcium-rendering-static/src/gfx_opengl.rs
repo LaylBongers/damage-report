@@ -1,9 +1,11 @@
+use cgmath::{Vector2};
 use slog::{Logger, Drain};
 use slog_stdlog::{StdLog};
 use glutin_window::{GlutinWindow};
 use window::{WindowSettings};
+use gfx::{Encoder};
 use gfx_window_glutin::{init_existing};
-use gfx_device_gl::{Resources, Factory};
+use gfx_device_gl::{Device, Factory};
 
 use calcium_rendering::{Error, CalciumErrorMappable};
 use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxWindowRenderer, ColorFormat, DepthFormat};
@@ -16,7 +18,7 @@ use {Initializer};
 pub struct GfxOpenGlInitializer;
 
 impl Initializer for GfxOpenGlInitializer {
-    type Types = GfxTypes<Resources, Factory>;
+    type Types = GfxTypes<Device, Factory>;
     type Window = GlutinWindow;
 
     #[cfg(feature = "simple2d")]
@@ -24,25 +26,31 @@ impl Initializer for GfxOpenGlInitializer {
 
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,
-    ) -> Result<(GfxRenderer<Resources, Factory>, GlutinWindow, GfxWindowRenderer), Error> {
+    ) -> Result<
+        (GfxRenderer<Device, Factory>, GlutinWindow, GfxWindowRenderer),
+        Error
+    > {
         let log = log.unwrap_or(Logger::root(StdLog.fuse(), o!()));
 
+        let size = window_settings.get_size();
+        let size = Vector2::new(size.width, size.height);
         let window: GlutinWindow = window_settings
             .build()
             .map_platform_err()?;
 
-        let (_device, factory, _main_color, _main_depth) =
+        let (device, mut factory, main_color, _main_depth) =
             init_existing::<ColorFormat, DepthFormat>(&window.window);
+        let encoder: Encoder<_, _> = factory.create_command_buffer().into();
 
-        let renderer = GfxRenderer::new(&log, factory);
-        let window_renderer = GfxWindowRenderer::new();
+        let renderer = GfxRenderer::new(&log, device, factory, encoder, main_color);
+        let window_renderer = GfxWindowRenderer::new(size);
 
         Ok((renderer, window, window_renderer))
     }
 
     fn window(
         &self,
-        _renderer: &GfxRenderer<Resources, Factory>,
+        _renderer: &GfxRenderer<Device, Factory>,
         _window_settings: &WindowSettings,
     ) -> Result<(GlutinWindow, GfxWindowRenderer), Error> {
         Err(Error::Unsupported("window() is not supported on this backend".to_string()))
@@ -51,8 +59,8 @@ impl Initializer for GfxOpenGlInitializer {
     #[cfg(feature = "simple2d")]
     fn simple2d_renderer(
         &self,
-        renderer: &mut GfxRenderer<Resources, Factory>,
-    ) -> Result<GfxSimple2DRenderer, Error> {
+        renderer: &mut GfxRenderer<Device, Factory>,
+    ) -> Result<GfxSimple2DRenderer<Device, Factory>, Error> {
         Ok(GfxSimple2DRenderer::new(renderer))
     }
 }

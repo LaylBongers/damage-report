@@ -8,8 +8,8 @@ pub trait WindowRenderer<T: Types> {
     /// buffers and make other relevant changes.
     fn handle_event(&mut self, input: &Input);
 
-    fn start_frame(&mut self, renderer: &T::Renderer) -> T::Frame;
-    fn finish_frame(&mut self, renderer: &T::Renderer, frame: T::Frame);
+    fn start_frame(&mut self, renderer: &mut T::Renderer) -> T::Frame;
+    fn finish_frame(&mut self, renderer: &mut T::Renderer, frame: T::Frame);
 
     fn size(&self) -> Vector2<u32>;
 }

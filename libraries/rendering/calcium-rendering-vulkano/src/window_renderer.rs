@@ -47,7 +47,7 @@ impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
         }
     }
 
-    fn start_frame(&mut self, renderer: &VulkanoRenderer) -> VulkanoFrame {
+    fn start_frame(&mut self, renderer: &mut VulkanoRenderer) -> VulkanoFrame {
         self.swapchain.cleanup_finished_frames();
 
         // Before we render, see if we need to execute a queued resize
@@ -68,7 +68,7 @@ impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
         }
     }
 
-    fn finish_frame(&mut self, renderer: &VulkanoRenderer, mut frame: VulkanoFrame) {
+    fn finish_frame(&mut self, renderer: &mut VulkanoRenderer, mut frame: VulkanoFrame) {
         self.swapchain.finish_frame(
             frame.future.take().unwrap(), renderer.graphics_queue.clone(), frame.image_num
         );
