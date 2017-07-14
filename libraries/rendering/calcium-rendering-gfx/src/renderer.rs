@@ -7,7 +7,7 @@ use calcium_rendering::{Renderer};
 use {ColorFormat};
 
 pub struct GfxRenderer<D: Device, F: Factory<D::Resources>> {
-    log: Logger,
+    pub log: Logger,
     pub device: D,
     pub factory: F,
     pub encoder: Encoder<D::Resources, D::CommandBuffer>,

@@ -2,6 +2,7 @@ extern crate cgmath;
 extern crate gfx;
 extern crate image;
 extern crate input;
+#[macro_use]
 extern crate slog;
 extern crate calcium_rendering;
 
