@@ -4,19 +4,24 @@ use std::error;
 #[derive(Debug)]
 pub enum Error {
     Platform(String),
+    Unsupported(String),
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             Error::Platform(ref s) => write!(f, "Platform Error: {}", s),
+            Error::Unsupported(ref s) => write!(f, "Unsupported Error: {}", s),
         }
     }
 }
 
 impl error::Error for Error {
     fn description(&self) -> &str {
-        "Platform Error"
+        match self {
+            &Error::Platform(_) => "Platform Error",
+            &Error::Unsupported(_) => "Unsupported Error",
+        }
     }
 }
 

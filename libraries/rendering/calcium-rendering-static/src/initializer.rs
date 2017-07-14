@@ -1,8 +1,7 @@
-use cgmath::{Vector2};
 use slog::{Logger};
 
 use calcium_rendering::{Error, Types};
-use window::{Window};
+use window::{Window, WindowSettings};
 
 #[cfg(feature = "world3d")]
 use calcium_rendering_world3d::{World3DTypes};
@@ -20,14 +19,22 @@ pub trait Initializer {
     #[cfg(feature = "simple2d")]
     type Simple2DTypes: Simple2DTypes<Self::Types>;
 
+    /// Creates a new renderer with an initial window.
     fn renderer(
-        &self, log: Option<Logger>,
-    ) -> Result<<Self::Types as Types>::Renderer, Error>;
+        &self, log: Option<Logger>, window_settings: &WindowSettings,
+    ) ->  Result<(
+        <Self::Types as Types>::Renderer,
+        Self::Window,
+        <Self::Types as Types>::WindowRenderer,
+    ), Error>;
 
+    /// Creates additional windows. Only supported on the following backends:
+    /// - Vulkano
+    /// TODO: Add a system for requesting required features and reject backends that don't have it.
     fn window(
         &self,
         renderer: &<Self::Types as Types>::Renderer,
-        title: &str, size: Vector2<u32>,
+        window_settings: &WindowSettings,
     ) -> Result<(Self::Window, <Self::Types as Types>::WindowRenderer), Error>;
 
     #[cfg(feature = "world3d")]

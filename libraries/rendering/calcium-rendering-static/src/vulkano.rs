@@ -1,6 +1,7 @@
 use cgmath::{Vector2};
 use slog::{Logger, Drain};
 use slog_stdlog::{StdLog};
+use window::{WindowSettings};
 use winit_window::{self, WinitWindow};
 
 use calcium_rendering::{Error};
@@ -27,22 +28,27 @@ impl Initializer for VulkanoInitializer {
     type Simple2DTypes = VulkanoSimple2DTypes;
 
     fn renderer(
-        &self, log: Option<Logger>,
-    ) -> Result<VulkanoRenderer, Error> {
+        &self, log: Option<Logger>, window_settings: &WindowSettings,
+    ) -> Result<(VulkanoRenderer, WinitWindow, VulkanoWindowRenderer), Error> {
         let log = log.unwrap_or(Logger::root(StdLog.fuse(), o!()));
-        VulkanoRenderer::new(&log, winit_window::required_extensions())
+
+        let renderer = VulkanoRenderer::new(&log, winit_window::required_extensions())?;
+        let (window, window_renderer) = self.window(&renderer, window_settings)?;
+
+        Ok((renderer, window, window_renderer))
     }
 
     fn window(
         &self,
         renderer: &VulkanoRenderer,
-        title: &str, size: Vector2<u32>,
+        window_settings: &WindowSettings,
     ) -> Result<(WinitWindow, VulkanoWindowRenderer), Error> {
         let window = WinitWindow::new_vulkano(
-            renderer.instance.clone(), title, [size.x, size.y].into()
+            renderer.instance.clone(), window_settings,
         );
+        let size = window_settings.get_size();
         let window_renderer = VulkanoWindowRenderer::new(
-            renderer, window.surface.clone(), size
+            renderer, window.surface.clone(), Vector2::new(size.width, size.height),
         );
 
         Ok((window, window_renderer))

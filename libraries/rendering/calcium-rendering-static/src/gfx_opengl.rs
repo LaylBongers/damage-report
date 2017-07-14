@@ -1,4 +1,3 @@
-use cgmath::{Vector2};
 use slog::{Logger, Drain};
 use slog_stdlog::{StdLog};
 use glutin_window::{GlutinWindow};
@@ -22,33 +21,26 @@ impl Initializer for GfxOpenGlInitializer {
     type Simple2DTypes = GfxSimple2DTypes;
 
     fn renderer(
-        &self, log: Option<Logger>,
-    ) -> Result<GfxRenderer, Error> {
+        &self, log: Option<Logger>, window_settings: &WindowSettings,
+    ) -> Result<(GfxRenderer, GlutinWindow, GfxWindowRenderer), Error> {
         let log = log.unwrap_or(Logger::root(StdLog.fuse(), o!()));
-        Ok(GfxRenderer::new(&log))
+
+        let window: GlutinWindow = window_settings
+            .build()
+            .map_platform_err()?;
+
+        let renderer = GfxRenderer::new(&log);
+        let window_renderer = GfxWindowRenderer::new();
+
+        Ok((renderer, window, window_renderer))
     }
 
     fn window(
         &self,
         _renderer: &GfxRenderer,
-        title: &str, size: Vector2<u32>,
+        _window_settings: &WindowSettings,
     ) -> Result<(GlutinWindow, GfxWindowRenderer), Error> {
-        let size: [u32; 2] = size.into();
-        let window: GlutinWindow = WindowSettings::new(title, size)
-            .build()
-            .map_platform_err()?;
-
-        let window_renderer = GfxWindowRenderer::new();
-
-        // TODO: Implementation note
-        // OpenGL doesn't allow us to flexible create the context separate from the window like
-        // vulkan does, so we need to create the context at this point. This complicates a lot of
-        // things but as long as we have good single-window performance it's fine.
-
-        // One option is to add window creation to renderer() as well and simply not allow window()
-        // on some backends where it's exceptionally expensive.
-
-        Ok((window, window_renderer))
+        Err(Error::Unsupported("window() is not supported on this backend".to_string()))
     }
 
     #[cfg(feature = "simple2d")]

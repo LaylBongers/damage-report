@@ -1,5 +1,5 @@
 use cgmath::{Vector2};
-use window::{Window};
+use window::{Window, WindowSettings};
 use slog::{Logger};
 
 use calcium_game::{LoopTimer};
@@ -21,10 +21,10 @@ impl Runtime for StaticRuntime {
         let size = Vector2::new(1280, 720);
 
         // Set up everything we need to render
-        let mut renderer = init.renderer(Some(self.log.clone()))?;
-        let (mut window, mut window_renderer) = init.window(
-            &renderer, "Carpenter", Vector2::new(size.x, size.y)
-        )?;
+        let size_a: [u32; 2] = size.into();
+        let window_settings = WindowSettings::new("Carpenter", size_a);
+        let (mut renderer, mut window, mut window_renderer) =
+            init.renderer(Some(self.log.clone()), &window_settings)?;
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
 
         // Set up conrod and UI data
