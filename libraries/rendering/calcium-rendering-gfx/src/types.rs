@@ -16,5 +16,5 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     type WindowRenderer = GfxWindowRenderer;
     type Frame = GfxFrame;
 
-    type Texture = GfxTexture;
+    type Texture = GfxTexture<D>;
 }

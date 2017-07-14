@@ -1,12 +1,12 @@
 #version 150 core
 
-in vec2 v_position;
-in vec2 v_uv;
-in vec4 v_color;
-
 uniform Transform {
     mat4 u_transform;
 };
+
+in vec2 v_position;
+in vec2 v_uv;
+in vec4 v_color;
 
 out vec2 f_uv;
 out vec4 f_color;

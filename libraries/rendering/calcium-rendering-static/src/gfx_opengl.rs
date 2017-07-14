@@ -61,6 +61,6 @@ impl Initializer for GfxOpenGlInitializer {
         &self,
         renderer: &mut GfxRenderer<Device, Factory>,
     ) -> Result<GfxSimple2DRenderer<Device, Factory>, Error> {
-        Ok(GfxSimple2DRenderer::new(renderer))
+        GfxSimple2DRenderer::new(renderer)
     }
 }

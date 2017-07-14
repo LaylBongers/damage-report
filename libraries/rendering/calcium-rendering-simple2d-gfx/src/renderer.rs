@@ -1,10 +1,14 @@
-use cgmath::{self};
-use gfx::{self, Device, Factory, VertexBuffer, ConstantBuffer};
+use std::sync::{Arc};
+
+use cgmath::{self, Vector2};
+use gfx::{self, Device, Factory, VertexBuffer, ConstantBuffer, TextureSampler};
+use gfx::handle::{Sampler, Buffer};
 use gfx::pso::{PipelineState};
 use gfx::traits::{FactoryExt};
 
-use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch};
+use calcium_rendering::{Error, Texture};
+use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat, GfxTexture};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode};
 
 gfx_defines!{
     vertex Vertex {
@@ -17,32 +21,63 @@ gfx_defines!{
         transform: [[f32; 4]; 4] = "u_transform",
     }
 
+    constant Mode {
+        mode: u32 = "u_mode",
+    }
+
     pipeline pipe {
         vbuf: VertexBuffer<Vertex> = (),
         transform: ConstantBuffer<Transform> = "Transform",
-        out: gfx::RenderTarget<ColorFormat> = "Target0",
+        mode: ConstantBuffer<Mode> = "Mode",
+        texture: TextureSampler<[f32; 4]> = "u_texture",
+        out: gfx::BlendTarget<ColorFormat> = (
+            "Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA
+        ),
     }
 }
 
-pub struct GfxSimple2DRenderer<D: Device, F: Factory<D::Resources>> {
+pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources>> {
     pso: PipelineState<D::Resources, pipe::Meta>,
+    sampler: Sampler<D::Resources>,
+    dummy_texture: Arc<GfxTexture<D>>,
+    mode_buffers: Vec<Buffer<D::Resources, Mode>>,
     _f: ::std::marker::PhantomData<F>,
 }
 
-impl<D: Device, F: Factory<D::Resources>> GfxSimple2DRenderer<D, F> {
+impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRenderer<D, F> {
     pub fn new(
         renderer: &mut GfxRenderer<D, F>
-    ) -> Self {
+    ) -> Result<Self, Error> {
         let pso = renderer.factory.create_pipeline_simple(
             include_bytes!("../shaders/simple2d_150_vert.glsl"),
             include_bytes!("../shaders/simple2d_150_frag.glsl"),
             pipe::new()
         ).unwrap();
 
-        GfxSimple2DRenderer {
-            pso,
-            _f: Default::default(),
+        let sampler = renderer.factory.create_sampler_linear();
+
+        let dummy_texture = GfxTexture::from_raw_greyscale(
+            renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
+        )?;
+
+        // Create pre-made buffers for the shader modes
+        let mut mode_buffers = Vec::new();
+        for i in 0..3 {
+            let mode = Mode {
+                mode: i
+            };
+            let mode_buffer = renderer.factory.create_constant_buffer(1);
+            renderer.encoder.update_buffer(&mode_buffer, &[mode], 0).unwrap();
+            mode_buffers.push(mode_buffer);
         }
+
+        Ok(GfxSimple2DRenderer {
+            pso,
+            sampler,
+            dummy_texture,
+            mode_buffers,
+            _f: Default::default(),
+        })
     }
 }
 
@@ -81,10 +116,23 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
                 &vertices, ()
             );
 
+            // Get the mode ID this batch has and a texture to render
+            // TODO: Figure out a way to avoid having to have a dummy texture
+            let (mode_id, texture) = match &batch.mode {
+                &ShaderMode::Color => (0, &self.dummy_texture),
+                &ShaderMode::Texture(ref texture) => (1, texture),
+                &ShaderMode::Mask(ref texture) => (2, texture),
+            };
+
+            // Get the matching buffer for this shader mode
+            let mode_buffer = &self.mode_buffers[mode_id];
+
             // Gather together all the data we need to render
             let data = pipe::Data {
                 vbuf: vertex_buffer,
                 transform: transform_buffer.clone(),
+                mode: mode_buffer.clone(),
+                texture: (texture.view.clone(), self.sampler.clone()),
                 out: renderer.color_view.clone(),
             };
 
