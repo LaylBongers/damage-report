@@ -1,20 +1,25 @@
 use slog::{Logger};
+use gfx::{Resources, Factory};
 
 use calcium_rendering::{Renderer};
 
-pub struct GfxRenderer {
+pub struct GfxRenderer<R: Resources, F: Factory<R>> {
     log: Logger,
+    pub factory: F,
+    _r: ::std::marker::PhantomData<R>,
 }
 
-impl GfxRenderer {
-    pub fn new(log: &Logger) -> Self {
+impl<R: Resources, F: Factory<R>> GfxRenderer<R, F> {
+    pub fn new(log: &Logger, factory: F) -> Self {
         GfxRenderer {
-            log: log.clone()
+            log: log.clone(),
+            factory,
+            _r: Default::default(),
         }
     }
 }
 
-impl Renderer for GfxRenderer {
+impl<R: Resources, F: Factory<R>> Renderer for GfxRenderer<R, F> {
     fn log(&self) -> &Logger {
         &self.log
     }
