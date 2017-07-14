@@ -40,6 +40,14 @@ impl Initializer for GfxOpenGlInitializer {
 
         let window_renderer = GfxWindowRenderer::new();
 
+        // TODO: Implementation note
+        // OpenGL doesn't allow us to flexible create the context separate from the window like
+        // vulkan does, so we need to create the context at this point. This complicates a lot of
+        // things but as long as we have good single-window performance it's fine.
+
+        // One option is to add window creation to renderer() as well and simply not allow window()
+        // on some backends where it's exceptionally expensive.
+
         Ok((window, window_renderer))
     }
 
