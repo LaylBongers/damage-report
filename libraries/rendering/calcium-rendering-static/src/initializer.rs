@@ -1,7 +1,7 @@
 use slog::{Logger};
+use window::{Window, WindowSettings};
 
 use calcium_rendering::{Error, Types};
-use window::{Window, WindowSettings};
 
 #[cfg(feature = "world3d")]
 use calcium_rendering_world3d::{World3DTypes};

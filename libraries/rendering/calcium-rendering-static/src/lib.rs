@@ -5,6 +5,8 @@ extern crate slog_stdlog;
 extern crate window;
 extern crate winit_window;
 extern crate glutin_window;
+extern crate gfx;
+extern crate gfx_window_glutin;
 extern crate calcium_rendering;
 extern crate calcium_rendering_gfx;
 extern crate calcium_rendering_vulkano;

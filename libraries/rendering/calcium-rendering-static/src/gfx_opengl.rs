@@ -2,6 +2,7 @@ use slog::{Logger, Drain};
 use slog_stdlog::{StdLog};
 use glutin_window::{GlutinWindow};
 use window::{WindowSettings};
+use gfx_window_glutin::{init_existing};
 
 use calcium_rendering::{Error, CalciumErrorMappable};
 use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxWindowRenderer};
@@ -28,6 +29,11 @@ impl Initializer for GfxOpenGlInitializer {
         let window: GlutinWindow = window_settings
             .build()
             .map_platform_err()?;
+
+        type ColorFormat = ::gfx::format::Rgba8;
+        type DepthFormat = ::gfx::format::DepthStencil;
+        let (_device, _factory, _main_color, _main_depth) =
+            init_existing::<ColorFormat, DepthFormat>(&window.window);
 
         let renderer = GfxRenderer::new(&log);
         let window_renderer = GfxWindowRenderer::new();
