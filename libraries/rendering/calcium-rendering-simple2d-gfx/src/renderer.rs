@@ -8,8 +8,9 @@ use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch};
 
 gfx_defines!{
     vertex Vertex {
-        pos: [f32; 2] = "v_pos",
-        color: [f32; 3] = "v_color",
+        position: [f32; 2] = "v_position",
+        uv: [f32; 2] = "v_uv",
+        color: [f32; 4] = "v_color",
     }
 
     constant Transform {
@@ -49,14 +50,8 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     Simple2DRenderer<GfxTypes<D, F>> for GfxSimple2DRenderer<D, F> {
     fn render(
         &mut self, renderer: &mut GfxRenderer<D, F>, frame: &mut GfxFrame,
-        _batches: &[RenderBatch<GfxTypes<D, F>>]
+        batches: &[RenderBatch<GfxTypes<D, F>>]
     ) {
-        const TRIANGLE: [Vertex; 3] = [
-            Vertex { pos: [ 0.0, 0.0 ], color: [1.0, 0.0, 0.0] },
-            Vertex { pos: [ 0.0, 100.0 ], color: [0.0, 1.0, 0.0] },
-            Vertex { pos: [ 100.0, 0.0 ], color: [0.0, 0.0, 1.0] }
-        ];
-
         // Create a projection matrix that just matches coordinates to pixels
         let proj = cgmath::ortho(
             0.0, frame.size.x as f32,
@@ -66,15 +61,35 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         let transform = Transform {
             transform: proj.into()
         };
-
-        let (vertex_buffer, slice) = renderer.factory.create_vertex_buffer_with_slice(&TRIANGLE, ());
         let transform_buffer = renderer.factory.create_constant_buffer(1);
-        let data = pipe::Data {
-            vbuf: vertex_buffer,
-            transform: transform_buffer,
-            out: renderer.color_view.clone(),
-        };
-        renderer.encoder.update_buffer(&data.transform, &[transform], 0).unwrap();
-        renderer.encoder.draw(&slice, &self.pso, &data);
+        renderer.encoder.update_buffer(&transform_buffer, &[transform], 0).unwrap();
+
+        // Go over all batches
+        for batch in batches {
+            // Create a big mesh of all the rectangles we got told to draw this batch
+            let mut vertices = Vec::new();
+            for vertex in &batch.vertices {
+                vertices.push(Vertex {
+                    position: vertex.position.into(),
+                    uv: vertex.uv.into(),
+                    color: vertex.color.into(),
+                });
+            }
+
+            // Create an actual VBO from it
+            let (vertex_buffer, slice) = renderer.factory.create_vertex_buffer_with_slice(
+                &vertices, ()
+            );
+
+            // Gather together all the data we need to render
+            let data = pipe::Data {
+                vbuf: vertex_buffer,
+                transform: transform_buffer.clone(),
+                out: renderer.color_view.clone(),
+            };
+
+            // Finally, add the draw to the encoder
+            renderer.encoder.draw(&slice, &self.pso, &data);
+        }
     }
 }
