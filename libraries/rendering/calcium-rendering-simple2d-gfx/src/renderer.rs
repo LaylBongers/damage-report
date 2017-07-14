@@ -13,7 +13,7 @@ gfx_defines!{
     }
 
     constant Transform {
-        transform: [[f32; 4];4] = "u_transform",
+        transform: [[f32; 4]; 4] = "u_transform",
     }
 
     pipeline pipe {
