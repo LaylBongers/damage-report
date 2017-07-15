@@ -1,12 +1,10 @@
-use std::path::{PathBuf};
-
 use cgmath::{Vector2};
 use input::{Input, Button, Key};
 use window::{Window, WindowSettings};
 use slog::{Logger};
 
 use calcium_game::{LoopTimer};
-use calcium_rendering::{Error, WindowRenderer, Types, Texture, TextureFormat};
+use calcium_rendering::{Error, WindowRenderer, Texture, TextureFormat};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 use calcium_rendering_static::{Runtime, Initializer};
 
@@ -40,6 +38,9 @@ impl Runtime for StaticRuntime {
 
             // Handle input
             while let Some(event) = window.poll_event() {
+                // Pass the event to the window renderer
+                window_renderer.handle_event(&event);
+
                 match event {
                     Input::Press(Button::Keyboard(Key::D)) =>
                         right_pressed = true,
