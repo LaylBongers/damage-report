@@ -12,7 +12,7 @@ pub struct VulkanoWindowRenderer {
     pub size: Vector2<u32>,
     pub surface: Arc<Surface>,
     pub swapchain: WindowSwapchain,
-    queued_resize: Option<Vector2<u32>>,
+    queued_resize: bool,
 }
 
 impl VulkanoWindowRenderer {
@@ -28,16 +28,25 @@ impl VulkanoWindowRenderer {
             size,
             surface,
             swapchain,
-            queued_resize: None,
+            queued_resize: false,
         }
     }
 
     pub fn queue_resize(&mut self, size: Vector2<u32>) {
-        // We can be spammed with resize events many times in the same frame, so defer it
-        self.queued_resize = Some(Vector2::new(
+        // Limit to at least 1x1 in size, we crash otherwise.
+        let size = Vector2::new(
             if size.x > 0 {size.x} else {1},
             if size.y > 0 {size.y} else {1},
-        ));
+        );
+
+        // We can be spammed with resize events many times in the same frame, so defer changing the
+        //  swapchain.
+        self.queued_resize = true;
+
+        // We do however want to immediately set the size value as it may be used for 2D geometry
+        // location calculations, which would lag behind at least one frame like this if the
+        // calculations are done before start_frame.
+        self.size = size;
     }
 }
 
@@ -46,8 +55,7 @@ impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
         self.swapchain.cleanup_finished_frames();
 
         // Before we render, see if we need to execute a queued resize
-        if let Some(size) = self.queued_resize.take() {
-            self.size = size;
+        if self.queued_resize {
             self.swapchain.resize(renderer, self.size);
         }
 
