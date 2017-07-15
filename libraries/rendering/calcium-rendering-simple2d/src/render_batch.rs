@@ -2,7 +2,7 @@ use std::sync::{Arc};
 
 use cgmath::{Vector2, Vector4, BaseNum};
 
-use calcium_rendering::{Types};
+use calcium_rendering::{Types, Texture};
 
 /// A render batch that can be drawn by a renderer. Represents the equivalent of a single drawcall.
 // TODO: #[derive(Debug)]
@@ -56,9 +56,9 @@ pub enum ShaderMode<T: Types> {
     /// Uses only the vertices' colors.
     Color,
     /// Multiplies a texture sampled using the vertices' uvs by the vertices' color.
-    Texture(Arc<T::Texture>),
+    Texture(Arc<Texture<T>>),
     /// Uses the vertices' color's RGB and the texture's Alpha.
-    Mask(Arc<T::Texture>),
+    Mask(Arc<Texture<T>>),
 }
 
 /// A vertex that can be used to draw on screen.

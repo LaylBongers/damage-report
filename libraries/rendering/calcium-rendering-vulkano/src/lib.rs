@@ -14,7 +14,7 @@ mod window_renderer;
 mod window_swapchain;
 
 pub use renderer::{VulkanoRenderer};
-pub use texture::{VulkanoTexture};
+pub use texture::{VulkanoTextureRaw};
 pub use types::{VulkanoTypes};
 pub use window_renderer::{VulkanoWindowRenderer, VulkanoFrame};
 pub use window_swapchain::{WindowSwapchain};

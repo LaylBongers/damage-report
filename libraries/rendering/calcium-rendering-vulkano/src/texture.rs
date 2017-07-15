@@ -9,20 +9,20 @@ use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::{TextureFormat, Texture, CalciumErrorMappable, Error};
+use calcium_rendering::{TextureFormat, TextureRaw, CalciumErrorMappable, Error};
 use {VulkanoTypes, VulkanoRenderer};
 
-pub struct VulkanoTexture {
+pub struct VulkanoTextureRaw {
     image: Arc<ImmutableImage<Format>>,
     sampler: Arc<Sampler>,
 }
 
-impl VulkanoTexture {
+impl VulkanoTextureRaw {
     fn from_buffer(
         renderer: &mut VulkanoRenderer,
         buffer: Arc<CpuAccessibleBuffer<[u8]>>, size: Vector2<u32>,
         format: TextureFormat
-    ) -> Result<Arc<Self>, Error> {
+    ) -> Result<Self, Error> {
         // Get the correct format for the srgb parameter we got passed
         let format = match format {
             TextureFormat::Srgb => Format::R8G8B8A8Srgb,
@@ -51,10 +51,10 @@ impl VulkanoTexture {
         // Queue copying the data to the image so it will be available when rendering
         renderer.queue_image_copy(buffer, image.clone());
 
-        Ok(Arc::new(VulkanoTexture {
+        Ok(VulkanoTextureRaw {
             image,
             sampler,
-        }))
+        })
     }
 
     pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
@@ -62,10 +62,10 @@ impl VulkanoTexture {
     }
 }
 
-impl Texture<VulkanoTypes> for VulkanoTexture {
+impl TextureRaw<VulkanoTypes> for VulkanoTextureRaw {
     fn from_file(
         renderer: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
-    ) -> Result<Arc<Self>, Error> {
+    ) -> Result<Self, Error> {
         info!(renderer.log,
             "Loading texture from file"; "path" => path.display().to_string()
         );
@@ -96,7 +96,7 @@ impl Texture<VulkanoTypes> for VulkanoTexture {
 
     fn from_raw_greyscale(
         renderer: &mut VulkanoRenderer, data: &[u8], size: Vector2<u32>,
-    ) -> Result<Arc<Self>, Error> {
+    ) -> Result<Self, Error> {
         info!(renderer.log,
             "Loading texture from greyscale data"; "width" => size.x, "height" => size.y
         );

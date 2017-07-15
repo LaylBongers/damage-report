@@ -7,7 +7,7 @@ use gfx::pso::{PipelineState};
 use gfx::traits::{FactoryExt};
 
 use calcium_rendering::{Error, Texture};
-use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat, GfxTexture};
+use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode};
 
 gfx_defines!{
@@ -36,10 +36,10 @@ gfx_defines!{
     }
 }
 
-pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources>> {
+pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + 'static> {
     pso: PipelineState<D::Resources, pipe::Meta>,
     sampler: Sampler<D::Resources>,
-    dummy_texture: Arc<GfxTexture<D>>,
+    dummy_texture: Arc<Texture<GfxTypes<D, F>>>,
     mode_buffers: Vec<Buffer<D::Resources, Mode>>,
     _f: ::std::marker::PhantomData<F>,
 }
@@ -56,7 +56,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
 
         let sampler = renderer.factory.create_sampler_linear();
 
-        let dummy_texture = GfxTexture::from_raw_greyscale(
+        let dummy_texture = Texture::from_raw_greyscale(
             renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
         )?;
 
@@ -132,7 +132,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
                 vbuf: vertex_buffer,
                 transform: transform_buffer.clone(),
                 mode: mode_buffer.clone(),
-                texture: (texture.view.clone(), self.sampler.clone()),
+                texture: (texture.raw.view.clone(), self.sampler.clone()),
                 out: renderer.color_view.clone(),
             };
 

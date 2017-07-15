@@ -11,6 +11,6 @@ mod window_renderer;
 
 pub use error::{Error, CalciumErrorMappable};
 pub use renderer::{Renderer};
-pub use texture::{Texture, TextureFormat};
+pub use texture::{Texture, TextureRaw, TextureFormat};
 pub use types::{Types};
 pub use window_renderer::{WindowRenderer};

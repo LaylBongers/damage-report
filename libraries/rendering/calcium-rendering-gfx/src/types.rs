@@ -2,7 +2,7 @@ use gfx::{Device, Factory};
 
 use calcium_rendering::{Types};
 
-use {GfxTexture, GfxFrame, GfxWindowRenderer, GfxRenderer};
+use {GfxTextureRaw, GfxFrame, GfxWindowRenderer, GfxRenderer};
 
 #[derive(Clone)]
 pub struct GfxTypes<D, F> {
@@ -16,5 +16,5 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     type WindowRenderer = GfxWindowRenderer;
     type Frame = GfxFrame;
 
-    type Texture = GfxTexture<D>;
+    type TextureRaw = GfxTextureRaw<D>;
 }

@@ -12,7 +12,7 @@ mod types;
 mod window_renderer;
 
 pub use renderer::{GfxRenderer};
-pub use texture::{GfxTexture};
+pub use texture::{GfxTextureRaw};
 pub use types::{GfxTypes};
 pub use window_renderer::{GfxWindowRenderer, GfxFrame};
 

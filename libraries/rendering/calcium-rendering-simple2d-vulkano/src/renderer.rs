@@ -12,14 +12,14 @@ use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 
 use calcium_rendering::{Texture, Error};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame, VulkanoTexture};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex};
 
 pub struct VulkanoSimple2DRenderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
-    dummy_texture: Arc<VulkanoTexture>,
+    dummy_texture: Arc<Texture<VulkanoTypes>>,
 }
 
 impl VulkanoSimple2DRenderer {
@@ -27,7 +27,7 @@ impl VulkanoSimple2DRenderer {
         info!(renderer.log, "Creating simple2d renderer");
         let render_pass = create_render_pass(renderer);
         let pipeline = create_pipeline(renderer, render_pass);
-        let dummy_texture = VulkanoTexture::from_raw_greyscale(
+        let dummy_texture = Texture::from_raw_greyscale(
             renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
         )?;
 
@@ -93,9 +93,9 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
             // Get the mode ID this batch has and a texture to render
             // TODO: Figure out a way to avoid having to have a dummy texture
             let (mode_id, tex_uniform) = match &batch.mode {
-                &ShaderMode::Color => (0, self.dummy_texture.uniform()),
-                &ShaderMode::Texture(ref texture) => (1, texture.uniform()),
-                &ShaderMode::Mask(ref texture) => (2, texture.uniform()),
+                &ShaderMode::Color => (0, self.dummy_texture.raw.uniform()),
+                &ShaderMode::Texture(ref texture) => (1, texture.raw.uniform()),
+                &ShaderMode::Mask(ref texture) => (2, texture.raw.uniform()),
             };
 
             // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame

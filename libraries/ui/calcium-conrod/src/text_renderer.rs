@@ -16,14 +16,14 @@ use util;
 pub struct TextRenderer<T: Types> {
     glyph_cache: GlyphCache,
     glyph_image: GrayImage,
-    glyph_texture: Arc<T::Texture>,
+    glyph_texture: Arc<Texture<T>>,
 }
 
 impl<T: Types> TextRenderer<T> {
     pub fn new(renderer: &mut T::Renderer) -> Result<Self, Error> {
         let glyph_cache = GlyphCache::new(1024, 1024, 0.1, 0.1);
         let glyph_image = GrayImage::from_raw(1024, 1024, vec![0u8; 1024*1024]).unwrap();
-        let glyph_texture = T::Texture::from_raw_greyscale(
+        let glyph_texture = Texture::from_raw_greyscale(
             renderer, &vec![0u8; 8*8], Vector2::new(8, 8)
         )?; // We will never use this initial texture, so just use something cheap
 
@@ -73,7 +73,7 @@ impl<T: Types> TextRenderer<T> {
         if changed {
             // Upload the glyphs into a texture
             // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
-            self.glyph_texture = T::Texture::from_raw_greyscale(
+            self.glyph_texture = Texture::from_raw_greyscale(
                 renderer, &glyph_image, Vector2::new(1024, 1024)
             )?;
         }

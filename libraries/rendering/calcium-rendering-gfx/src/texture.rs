@@ -1,4 +1,3 @@
-use std::sync::{Arc};
 use std::path::{PathBuf};
 
 use cgmath::{Vector2};
@@ -8,19 +7,19 @@ use gfx::texture::{Kind, Size, AaMode};
 use gfx::format::{Rgba8, Srgba8};
 use gfx::handle::{ShaderResourceView};
 
-use calcium_rendering::{Texture, TextureFormat, Error, CalciumErrorMappable};
+use calcium_rendering::{TextureRaw, TextureFormat, Error, CalciumErrorMappable};
 
 use {GfxTypes, GfxRenderer};
 
-pub struct GfxTexture<D: Device + 'static> {
+pub struct GfxTextureRaw<D: Device + 'static> {
     pub view: ShaderResourceView<D::Resources, [f32; 4]>,
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Texture<GfxTypes<D, F>> for GfxTexture<D> {
+    TextureRaw<GfxTypes<D, F>> for GfxTextureRaw<D> {
     fn from_file(
         renderer: &mut GfxRenderer<D, F>, path: PathBuf, _format: TextureFormat,
-    ) -> Result<Arc<Self>, Error> {
+    ) -> Result<Self, Error> {
         info!(renderer.log,
             "Loading texture from file"; "path" => path.display().to_string()
         );
@@ -36,14 +35,14 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         let (_, view) = renderer.factory.create_texture_immutable_u8::<Srgba8>(kind, &[&img])
             .map_platform_err()?;
 
-        Ok(Arc::new(GfxTexture {
+        Ok(GfxTextureRaw {
             view
-        }))
+        })
     }
 
     fn from_raw_greyscale(
         renderer: &mut GfxRenderer<D, F>, data: &[u8], size: Vector2<u32>,
-    ) -> Result<Arc<Self>, Error> {
+    ) -> Result<Self, Error> {
         info!(renderer.log,
             "Loading texture from greyscale data"; "width" => size.x, "height" => size.y
         );
@@ -66,8 +65,8 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         let (_, view) = renderer.factory.create_texture_immutable_u8::<Rgba8>(kind, &[&rgba])
             .map_platform_err()?;
 
-        Ok(Arc::new(GfxTexture {
+        Ok(GfxTextureRaw {
             view
-        }))
+        })
     }
 }

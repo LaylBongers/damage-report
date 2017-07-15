@@ -25,8 +25,8 @@ impl Runtime for StaticRuntime {
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
 
         // Player data
-        let player_texture = <I::Types as Types>::Texture::from_file(
-            &mut renderer, PathBuf::from("./assets/friendly.png"), TextureFormat::Srgb,
+        let player_texture = Texture::from_file(
+            &mut renderer, "./assets/friendly.png", TextureFormat::Srgb,
         )?;
         let mut player: Vector2<f32> = Vector2::new(200.0, 200.0);
         let mut right_pressed = false;
