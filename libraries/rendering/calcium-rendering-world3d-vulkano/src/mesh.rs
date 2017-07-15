@@ -6,7 +6,7 @@ use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer};
-use calcium_rendering_world3d::mesh::{Vertex, Mesh};
+use calcium_rendering_world3d::{Vertex, Mesh};
 
 pub struct VulkanoMesh {
     pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,

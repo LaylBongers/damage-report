@@ -68,7 +68,7 @@ impl EditorUi {
             .w(96.0)
             .font_size(12)
             .set(self.ids.fps_label, ui);
-        Text::new(&format!("MS: {}", /*self.average_delta.get()*/ delta))
+        Text::new(&format!("MS: {}", self.average_delta.get()))
             .left_from(self.ids.fps_label, 12.0)
             .w(96.0)
             .font_size(12)

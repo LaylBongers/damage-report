@@ -26,6 +26,7 @@ extern crate calcium_rendering_simple2d_vulkano;
 
 mod initializer;
 mod runtime;
+mod unsupported;
 
 mod gfx_opengl;
 mod vulkano;

@@ -13,6 +13,9 @@ use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxWindowRenderer, ColorForma
 #[cfg(feature = "simple2d")]
 use calcium_rendering_simple2d_gfx::{GfxSimple2DTypes, GfxSimple2DRenderer};
 
+#[cfg(feature = "world3d")]
+use unsupported::{UnsupportedWorld3DTypes, UnsupportedWorld3DRenderer};
+
 use {Initializer};
 
 pub struct GfxOpenGlInitializer;
@@ -23,6 +26,9 @@ impl Initializer for GfxOpenGlInitializer {
 
     #[cfg(feature = "simple2d")]
     type Simple2DTypes = GfxSimple2DTypes;
+
+    #[cfg(feature = "world3d")]
+    type World3DTypes = UnsupportedWorld3DTypes;
 
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,
@@ -54,6 +60,14 @@ impl Initializer for GfxOpenGlInitializer {
         _window_settings: &WindowSettings,
     ) -> Result<(GlutinWindow, GfxWindowRenderer), Error> {
         Err(Error::Unsupported("window() is not supported on this backend".to_string()))
+    }
+
+    #[cfg(feature = "world3d")]
+    fn world3d_renderer(
+        &self,
+        _renderer: &GfxRenderer<Device, Factory>,
+    ) -> Result<UnsupportedWorld3DRenderer, Error> {
+        Err(Error::Unsupported("world3d is not supported on this backend".to_string()))
     }
 
     #[cfg(feature = "simple2d")]

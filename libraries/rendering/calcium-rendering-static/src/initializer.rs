@@ -28,7 +28,9 @@ pub trait Initializer {
         <Self::Types as Types>::WindowRenderer,
     ), Error>;
 
-    /// Creates additional windows. Only supported on the following backends:
+    /// Creates additional windows.
+    ///
+    /// Only supported on the following backends:
     /// - Vulkano
     /// TODO: Add a system for requesting required features and reject backends that don't have it.
     fn window(
@@ -37,6 +39,11 @@ pub trait Initializer {
         window_settings: &WindowSettings,
     ) -> Result<(Self::Window, <Self::Types as Types>::WindowRenderer), Error>;
 
+    /// Creates a world3d renderer.
+    ///
+    /// Only supported on the following backends:
+    /// - Vulkano
+    /// TODO: Add a system for requesting required features and reject backends that don't have it.
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
         &self,
