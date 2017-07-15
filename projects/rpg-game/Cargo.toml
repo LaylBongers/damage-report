@@ -4,3 +4,19 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
+calcium-game = {path = "../../libraries/mechanics/calcium-game"}
+calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
+calcium-rendering-simple2d = {path = "../../libraries/rendering/calcium-rendering-simple2d"}
+calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d"]}
+cgmath = "0.14"
+pistoncore-input = "0.18"
+pistoncore-window = "0.27"
+slog = "2"
+slog-async = "2"
+slog-term = "2"
+
+# If you want optimizations in dev while keeping debug symbols, use these
+[profile.dev]
+opt-level = 1
+#opt-level = 2
+#opt-level = 3

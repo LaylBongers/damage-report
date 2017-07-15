@@ -99,7 +99,7 @@ impl DrawVertex {
 #[derive(Debug)]
 pub struct DrawRectangle {
     /// Where on screen this rectangle will be drawn.
-    pub destination: Rectangle<i32>,
+    pub destination: Rectangle<f32>,
     /// Where in a texture this rectangle should sample from.
     // TODO: Support other representations than normalized UVs in some way, such as pixels. This
     //  perhaps should not be implemented on the DrawRectangle.
@@ -111,7 +111,7 @@ pub struct DrawRectangle {
 impl Default for DrawRectangle {
     fn default() -> Self {
         DrawRectangle {
-            destination: Rectangle::new(Vector2::new(0, 0), Vector2::new(0, 0)),
+            destination: Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(0.0, 0.0)),
             texture_source: None,
             color: Vector4::new(1.0, 1.0, 1.0, 1.0),
         }

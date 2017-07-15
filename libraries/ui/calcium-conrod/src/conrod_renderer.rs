@@ -43,8 +43,7 @@ impl<T: Types> ConrodRenderer<T> {
         renderer: &mut T::Renderer, window: &T::WindowRenderer, mut primitives: Primitives
     ) -> Result<Vec<RenderBatch<T>>, Error> {
         // TODO: Support dpi factor
-        let half_size: Vector2<i32> = window.size().cast() / 2;
-        let half_size_f: Vector2<f32> = half_size.cast();
+        let half_size: Vector2<f32> = window.size().cast() / 2.0;
 
         let mut batches = Vec::new();
         let mut batch = Default::default();
@@ -58,7 +57,7 @@ impl<T: Types> ConrodRenderer<T> {
                     unimplemented!()
                 },
                 PrimitiveKind::Lines { color, cap: _, thickness, points } => {
-                    push_lines(&mut batch, color, thickness, points, half_size_f);
+                    push_lines(&mut batch, color, thickness, points, half_size);
                 },
                 PrimitiveKind::Image { image_id: _, color: _, source_rect: _ } => {
                     unimplemented!()
@@ -85,7 +84,7 @@ impl<T: Types> ConrodRenderer<T> {
     }
 
     fn push_rect(
-        &self, batch: &mut RenderBatch<T>, half_size: Vector2<i32>,
+        &self, batch: &mut RenderBatch<T>, half_size: Vector2<f32>,
         rect: &Rect, color: Color
     ) {
         batch.rectangle(DrawRectangle {

@@ -1,4 +1,3 @@
-use cgmath::{Vector2};
 use window::{Window, WindowSettings};
 use slog::{Logger};
 
@@ -18,11 +17,8 @@ impl Runtime for StaticRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
         info!(self.log, "Loading program");
 
-        let size = Vector2::new(1280, 720);
-
         // Set up everything we need to render
-        let size_a: [u32; 2] = size.into();
-        let window_settings = WindowSettings::new("Carpenter", size_a);
+        let window_settings = WindowSettings::new("Carpenter", [1280, 720]);
         let (mut renderer, mut window, mut window_renderer) =
             init.renderer(Some(self.log.clone()), &window_settings)?;
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
@@ -31,7 +27,7 @@ impl Runtime for StaticRuntime {
         let mut conrod_renderer: ConrodRenderer<I::Types> =
             ConrodRenderer::new(&mut renderer)?;
         let mut ui_batches = vec!();
-        let mut editor_ui = EditorUi::new(size);
+        let mut editor_ui = EditorUi::new(window_renderer.size());
 
         // Run the actual game loop
         let mut timer = LoopTimer::start();

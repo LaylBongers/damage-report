@@ -88,8 +88,8 @@ impl<T: Types> TextRenderer<T> {
                 // Push this glyph into this draw batch
                 batch.rectangle(DrawRectangle {
                     destination: Rectangle {
-                        start: Vector2::new(screen_rect.min.x, screen_rect.min.y),
-                        end: Vector2::new(screen_rect.max.x, screen_rect.max.y),
+                        start: Vector2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
+                        end: Vector2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
                     },
                     texture_source: Some(Rectangle {
                         start: Vector2::new(uv_rect.min.x, uv_rect.min.y),
