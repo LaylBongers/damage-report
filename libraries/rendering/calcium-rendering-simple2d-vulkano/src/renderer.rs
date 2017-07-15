@@ -92,10 +92,11 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
 
             // Get the mode ID this batch has and a texture to render
             // TODO: Figure out a way to avoid having to have a dummy texture
+            // TODO: Make use of the sample mode
             let (mode_id, tex_uniform) = match &batch.mode {
                 &ShaderMode::Color => (0, self.dummy_texture.raw.uniform()),
-                &ShaderMode::Texture(ref texture) => (1, texture.raw.uniform()),
-                &ShaderMode::Mask(ref texture) => (2, texture.raw.uniform()),
+                &ShaderMode::Texture(ref texture, ref _sample_mode) => (1, texture.raw.uniform()),
+                &ShaderMode::Mask(ref texture, ref _sample_mode) => (2, texture.raw.uniform()),
             };
 
             // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame

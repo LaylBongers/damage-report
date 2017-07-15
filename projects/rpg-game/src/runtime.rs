@@ -5,7 +5,7 @@ use slog::{Logger};
 
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer, Texture, TextureFormat};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, SampleMode};
 use calcium_rendering_static::{Runtime, Initializer};
 
 pub struct StaticRuntime {
@@ -59,7 +59,7 @@ impl Runtime for StaticRuntime {
             // Render a textured square for the player
             let mut batches = Vec::new();
             let mut batch = RenderBatch {
-                mode: ShaderMode::Texture(player_texture.clone()),
+                mode: ShaderMode::Texture(player_texture.clone(), SampleMode::Nearest),
                 .. RenderBatch::default()
             };
             batch.rectangle(DrawRectangle {

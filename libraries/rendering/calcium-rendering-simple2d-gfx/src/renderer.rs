@@ -5,10 +5,11 @@ use gfx::{self, Device, Factory, VertexBuffer, ConstantBuffer, TextureSampler};
 use gfx::handle::{Sampler, Buffer};
 use gfx::pso::{PipelineState};
 use gfx::traits::{FactoryExt};
+use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
 use calcium_rendering::{Error, Texture};
 use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
 
 gfx_defines!{
     vertex Vertex {
@@ -38,9 +39,12 @@ gfx_defines!{
 
 pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + 'static> {
     pso: PipelineState<D::Resources, pipe::Meta>,
-    sampler: Sampler<D::Resources>,
     dummy_texture: Arc<Texture<GfxTypes<D, F>>>,
     mode_buffers: Vec<Buffer<D::Resources, Mode>>,
+
+    linear_sampler: Sampler<D::Resources>,
+    nearest_sampler: Sampler<D::Resources>,
+
     _f: ::std::marker::PhantomData<F>,
 }
 
@@ -53,8 +57,6 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
             include_bytes!("../shaders/simple2d_150_frag.glsl"),
             pipe::new()
         ).unwrap();
-
-        let sampler = renderer.factory.create_sampler_linear();
 
         let dummy_texture = Texture::from_raw_greyscale(
             renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
@@ -71,13 +73,33 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
             mode_buffers.push(mode_buffer);
         }
 
+        // Create the samplers for the two sample modes
+        let linear_sampler = renderer.factory.create_sampler(SamplerInfo::new(
+            FilterMethod::Trilinear,
+            WrapMode::Clamp,
+        ));
+        let nearest_sampler = renderer.factory.create_sampler(SamplerInfo::new(
+            FilterMethod::Scale,
+            WrapMode::Clamp,
+        ));
+
         Ok(GfxSimple2DRenderer {
             pso,
-            sampler,
             dummy_texture,
             mode_buffers,
+
+            linear_sampler,
+            nearest_sampler,
+
             _f: Default::default(),
         })
+    }
+
+    fn sampler_for_mode(&self, sample_mode: &SampleMode) -> &Sampler<D::Resources> {
+        match sample_mode {
+            &SampleMode::Linear => &self.linear_sampler,
+            &SampleMode::Nearest => &self.nearest_sampler,
+        }
     }
 }
 
@@ -118,10 +140,13 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
 
             // Get the mode ID this batch has and a texture to render
             // TODO: Figure out a way to avoid having to have a dummy texture
-            let (mode_id, texture) = match &batch.mode {
-                &ShaderMode::Color => (0, &self.dummy_texture),
-                &ShaderMode::Texture(ref texture) => (1, texture),
-                &ShaderMode::Mask(ref texture) => (2, texture),
+            let (mode_id, texture, sampler) = match &batch.mode {
+                &ShaderMode::Color =>
+                    (0, &self.dummy_texture, &self.linear_sampler),
+                &ShaderMode::Texture(ref texture, ref sample_mode) =>
+                    (1, texture, self.sampler_for_mode(sample_mode)),
+                &ShaderMode::Mask(ref texture, ref sample_mode) =>
+                    (2, texture, self.sampler_for_mode(sample_mode)),
             };
 
             // Get the matching buffer for this shader mode
@@ -132,7 +157,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
                 vbuf: vertex_buffer,
                 transform: transform_buffer.clone(),
                 mode: mode_buffer.clone(),
-                texture: (texture.raw.view.clone(), self.sampler.clone()),
+                texture: (texture.raw.view.clone(), sampler.clone()),
                 out: renderer.color_view.clone(),
             };
 

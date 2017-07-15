@@ -56,9 +56,16 @@ pub enum ShaderMode<T: Types> {
     /// Uses only the vertices' colors.
     Color,
     /// Multiplies a texture sampled using the vertices' uvs by the vertices' color.
-    Texture(Arc<Texture<T>>),
+    Texture(Arc<Texture<T>>, SampleMode),
     /// Uses the vertices' color's RGB and the texture's Alpha.
-    Mask(Arc<Texture<T>>),
+    Mask(Arc<Texture<T>>, SampleMode),
+}
+
+/// TODO: This type should be changed to a Sampler resource that should be exposed and implemented
+///  at the level of calcium-renderer.
+pub enum SampleMode {
+    Linear,
+    Nearest,
 }
 
 /// A vertex that can be used to draw on screen.
