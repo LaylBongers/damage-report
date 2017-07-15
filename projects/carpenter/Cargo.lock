@@ -98,7 +98,6 @@ name = "calcium-rendering"
 version = "0.1.0"
 dependencies = [
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -110,7 +109,6 @@ dependencies = [
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -163,6 +161,7 @@ dependencies = [
  "gfx_device_gl 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_window_glutin 0.16.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-glutin_window 0.37.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-winit_window 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -176,7 +175,6 @@ dependencies = [
  "calcium-rendering 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "vulkano 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

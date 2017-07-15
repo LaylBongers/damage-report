@@ -2,9 +2,10 @@ use cgmath::{Vector2};
 use slog::{Logger, Drain};
 use slog_stdlog::{StdLog};
 use glutin_window::{GlutinWindow};
+use input::{Input};
 use window::{WindowSettings};
 use gfx::{Encoder};
-use gfx_window_glutin::{init_existing};
+use gfx_window_glutin::{self};
 use gfx_device_gl::{Device, Factory};
 
 use calcium_rendering::{Error, CalciumErrorMappable};
@@ -45,7 +46,7 @@ impl Initializer for GfxOpenGlInitializer {
             .map_platform_err()?;
 
         let (device, mut factory, main_color, _main_depth) =
-            init_existing::<ColorFormat, DepthFormat>(&window.window);
+            gfx_window_glutin::init_existing::<ColorFormat, DepthFormat>(&window.window);
         let encoder: Encoder<_, _> = factory.create_command_buffer().into();
 
         let renderer = GfxRenderer::new(&log, device, factory, encoder, main_color);
@@ -60,6 +61,24 @@ impl Initializer for GfxOpenGlInitializer {
         _window_settings: &WindowSettings,
     ) -> Result<(GlutinWindow, GfxWindowRenderer), Error> {
         Err(Error::Unsupported("window() is not supported on this backend".to_string()))
+    }
+
+    fn handle_event(
+        &self,
+        event: &Input,
+        renderer: &mut GfxRenderer<Device, Factory>,
+        window: &mut GlutinWindow,
+        window_renderer: &mut GfxWindowRenderer,
+    ) {
+        match event {
+            &Input::Resize(w, h) => {
+                let (new_color, _new_depth) =
+                    gfx_window_glutin::new_views::<ColorFormat, DepthFormat>(&window.window);
+                renderer.color_view = new_color;
+                window_renderer.size = Vector2::new(w, h);
+            },
+            _ => {},
+        }
     }
 
     #[cfg(feature = "world3d")]

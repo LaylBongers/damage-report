@@ -2,6 +2,7 @@ use cgmath::{Vector2};
 use slog::{Logger, Drain};
 use slog_stdlog::{StdLog};
 use window::{WindowSettings};
+use input::{Input};
 use winit_window::{self, WinitWindow};
 
 use calcium_rendering::{Error};
@@ -52,6 +53,20 @@ impl Initializer for VulkanoInitializer {
         );
 
         Ok((window, window_renderer))
+    }
+
+    fn handle_event(
+        &self,
+        event: &Input,
+        _renderer: &mut VulkanoRenderer,
+        _window: &mut WinitWindow,
+        window_renderer: &mut VulkanoWindowRenderer,
+    ) {
+        match event {
+            &Input::Resize(w, h) =>
+                window_renderer.queue_resize(Vector2::new(w, h)),
+            _ => {}
+        }
     }
 
     #[cfg(feature = "world3d")]

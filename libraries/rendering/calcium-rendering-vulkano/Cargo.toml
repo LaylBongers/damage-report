@@ -6,7 +6,6 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.14"
 image = "0.14"
-pistoncore-input = "0.18"
 slog = "2"
 vulkano = "0.5"
 calcium-rendering = {path = "../calcium-rendering"}

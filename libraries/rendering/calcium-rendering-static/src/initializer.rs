@@ -1,5 +1,6 @@
 use slog::{Logger};
 use window::{Window, WindowSettings};
+use input::{Input};
 
 use calcium_rendering::{Error, Types};
 
@@ -38,6 +39,16 @@ pub trait Initializer {
         renderer: &<Self::Types as Types>::Renderer,
         window_settings: &WindowSettings,
     ) -> Result<(Self::Window, <Self::Types as Types>::WindowRenderer), Error>;
+
+    /// Handles an event for a window, updating the renderers and window as needed. Using this the
+    /// backend can resize its swapchain buffers and make other relevant changes.
+    fn handle_event(
+        &self,
+        event: &Input,
+        renderer: &mut <Self::Types as Types>::Renderer,
+        window: &mut Self::Window,
+        window_renderer: &mut <Self::Types as Types>::WindowRenderer,
+    );
 
     /// Creates a world3d renderer.
     ///

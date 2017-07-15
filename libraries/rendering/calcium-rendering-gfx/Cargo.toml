@@ -7,6 +7,5 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 cgmath = "0.14"
 gfx = "0.16"
 image = "0.14"
-pistoncore-input = "0.18"
 slog = "2"
 calcium-rendering = {path = "../calcium-rendering"}

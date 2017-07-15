@@ -38,8 +38,8 @@ impl Runtime for StaticRuntime {
 
             // Handle input
             while let Some(event) = window.poll_event() {
-                // Pass the event to the window renderer
-                window_renderer.handle_event(&event);
+                // Let the initializer handle anything needed
+                init.handle_event(&event, &mut renderer, &mut window, &mut window_renderer);
 
                 match event {
                     Input::Press(Button::Keyboard(Key::D)) =>

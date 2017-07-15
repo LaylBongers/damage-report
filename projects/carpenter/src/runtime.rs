@@ -37,8 +37,8 @@ impl Runtime for StaticRuntime {
 
             // Poll for window events
             while let Some(event) = window.poll_event() {
-                // Pass the event to the window renderer
-                window_renderer.handle_event(&event);
+                // Let the initializer handle anything needed
+                init.handle_event(&event, &mut renderer, &mut window, &mut window_renderer);
 
                 // Pass the event to conrod
                 let size = window_renderer.size();

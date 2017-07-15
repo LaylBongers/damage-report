@@ -14,6 +14,7 @@ simple2d = ["calcium-rendering-simple2d", "calcium-rendering-simple2d-gfx", "cal
 cgmath = "0.14"
 slog = "2"
 slog-stdlog = "3"
+pistoncore-input = "0.18"
 pistoncore-window = "0.27"
 pistoncore-winit_window = "0.2"
 pistoncore-glutin_window = "0.37"

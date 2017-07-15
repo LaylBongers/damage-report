@@ -2,6 +2,7 @@ extern crate cgmath;
 #[macro_use]
 extern crate slog;
 extern crate slog_stdlog;
+extern crate input;
 extern crate window;
 extern crate winit_window;
 extern crate glutin_window;

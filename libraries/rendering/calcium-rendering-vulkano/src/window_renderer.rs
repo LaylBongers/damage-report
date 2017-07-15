@@ -1,7 +1,6 @@
 use std::sync::{Arc};
 
 use cgmath::{Vector2};
-use input::{Input};
 use vulkano::swapchain::{Surface};
 use vulkano::sync::{GpuFuture};
 use vulkano::framebuffer::{FramebufferAbstract};
@@ -32,21 +31,17 @@ impl VulkanoWindowRenderer {
             queued_resize: None,
         }
     }
+
+    pub fn queue_resize(&mut self, size: Vector2<u32>) {
+        // We can be spammed with resize events many times in the same frame, so defer it
+        self.queued_resize = Some(Vector2::new(
+            if size.x > 0 {size.x} else {1},
+            if size.y > 0 {size.y} else {1},
+        ));
+    }
 }
 
 impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
-    fn handle_event(&mut self, input: &Input) {
-        match input {
-            &Input::Resize(w, h) =>
-                // We can be spammed with resize events many times in the same frame, so defer it
-                self.queued_resize = Some(Vector2::new(
-                    if w > 0 {w} else {1},
-                    if h > 0 {h} else {1},
-                )),
-            _ => {}
-        }
-    }
-
     fn start_frame(&mut self, renderer: &mut VulkanoRenderer) -> VulkanoFrame {
         self.swapchain.cleanup_finished_frames();
 

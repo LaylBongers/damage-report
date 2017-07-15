@@ -1,5 +1,4 @@
 extern crate cgmath;
-extern crate input;
 //#[macro_use]
 extern crate slog;
 

@@ -1,6 +1,6 @@
 use slog::{Logger};
 use gfx::{Device, Factory, Encoder};
-use gfx::handle::RenderTargetView;
+use gfx::handle::{RenderTargetView};
 
 use calcium_rendering::{Renderer};
 

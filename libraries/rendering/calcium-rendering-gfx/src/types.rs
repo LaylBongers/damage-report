@@ -10,8 +10,7 @@ pub struct GfxTypes<D, F> {
     _f: ::std::marker::PhantomData<F>,
 }
 
-impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Types for GfxTypes<D, F> {
+impl<D: Device + 'static, F: Factory<D::Resources> + 'static> Types for GfxTypes<D, F> {
     type Renderer = GfxRenderer<D, F>;
     type WindowRenderer = GfxWindowRenderer;
     type Frame = GfxFrame;
