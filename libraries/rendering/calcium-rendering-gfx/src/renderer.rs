@@ -20,6 +20,8 @@ impl<D: Device, F: Factory<D::Resources>> GfxRenderer<D, F> {
         device: D, factory: F, encoder: Encoder<D::Resources, D::CommandBuffer>,
         color_view: RenderTargetView<D::Resources, ColorFormat>
     ) -> Self {
+        info!(log, "Creating gfx renderer");
+
         GfxRenderer {
             log: log.clone(),
             device,

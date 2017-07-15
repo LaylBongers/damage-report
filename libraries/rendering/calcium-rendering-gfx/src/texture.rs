@@ -44,6 +44,10 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     fn from_raw_greyscale(
         renderer: &mut GfxRenderer<D, F>, data: &[u8], size: Vector2<u32>,
     ) -> Result<Arc<Self>, Error> {
+        info!(renderer.log,
+            "Loading texture from greyscale data"; "width" => size.x, "height" => size.y
+        );
+
         // Create image data in RGBA format rather than the R format we got
         // TODO: Avoid this step using the following advice:
         //  "create an Upload type buffer, map it, fill it up, then issue copy_buffer_to_texture"
