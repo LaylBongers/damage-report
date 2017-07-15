@@ -7,14 +7,12 @@ use vulkano::format::{Format};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
-use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use calcium_rendering::{TextureFormat, TextureRaw, CalciumErrorMappable, Error};
 use {VulkanoTypes, VulkanoRenderer};
 
 pub struct VulkanoTextureRaw {
     image: Arc<ImmutableImage<Format>>,
-    sampler: Arc<Sampler>,
 }
 
 impl VulkanoTextureRaw {
@@ -37,29 +35,22 @@ impl VulkanoTextureRaw {
             Dimensions::Dim2d { width: size.x, height: size.y },
             format, Some(renderer.graphics_queue.family())
         ).map_platform_err()?;
-        let sampler = Sampler::new(
-            renderer.device.clone(),
-            Filter::Linear,
-            Filter::Linear,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
-        ).map_platform_err()?;
 
         // Queue copying the data to the image so it will be available when rendering
         renderer.queue_image_copy(buffer, image.clone());
 
         Ok(VulkanoTextureRaw {
             image,
-            sampler,
         })
     }
 
-    pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
-        (self.image.clone(), self.sampler.clone())
+    pub fn image(&self) -> &Arc<ImmutableImage<Format>> {
+        &self.image
     }
+
+    //pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
+    //    (self.image.clone(), self.sampler.clone())
+    //}
 }
 
 impl TextureRaw<VulkanoTypes> for VulkanoTextureRaw {

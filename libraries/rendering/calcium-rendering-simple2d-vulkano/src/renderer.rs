@@ -9,9 +9,10 @@ use vulkano::framebuffer::{Subpass, RenderPassAbstract};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
+use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::{Texture, Error};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode};
+use calcium_rendering::{Texture, Error, CalciumErrorMappable};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
@@ -20,6 +21,9 @@ use {VkVertex};
 pub struct VulkanoSimple2DRenderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
     dummy_texture: Arc<Texture<VulkanoTypes>>,
+
+    linear_sampler: Arc<Sampler>,
+    nearest_sampler: Arc<Sampler>,
 }
 
 impl VulkanoSimple2DRenderer {
@@ -31,10 +35,42 @@ impl VulkanoSimple2DRenderer {
             renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
         )?;
 
+        // Set up the samplers for the sampling modes
+        let linear_sampler = Sampler::new(
+            renderer.device.clone(),
+            Filter::Linear,
+            Filter::Linear,
+            MipmapMode::Nearest,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            0.0, 1.0, 0.0, 0.0
+        ).map_platform_err()?;
+        let nearest_sampler = Sampler::new(
+            renderer.device.clone(),
+            Filter::Nearest,
+            Filter::Nearest,
+            MipmapMode::Nearest,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            0.0, 1.0, 0.0, 0.0
+        ).map_platform_err()?;
+
         Ok(VulkanoSimple2DRenderer {
             pipeline,
             dummy_texture,
+
+            linear_sampler,
+            nearest_sampler,
         })
+    }
+
+    fn sampler_for_mode(&self, sample_mode: &SampleMode) -> &Arc<Sampler> {
+        match sample_mode {
+            &SampleMode::Linear => &self.linear_sampler,
+            &SampleMode::Nearest => &self.nearest_sampler,
+        }
     }
 }
 
@@ -93,10 +129,13 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
             // Get the mode ID this batch has and a texture to render
             // TODO: Figure out a way to avoid having to have a dummy texture
             // TODO: Make use of the sample mode
-            let (mode_id, tex_uniform) = match &batch.mode {
-                &ShaderMode::Color => (0, self.dummy_texture.raw.uniform()),
-                &ShaderMode::Texture(ref texture, ref _sample_mode) => (1, texture.raw.uniform()),
-                &ShaderMode::Mask(ref texture, ref _sample_mode) => (2, texture.raw.uniform()),
+            let (mode_id, image, sampler) = match &batch.mode {
+                &ShaderMode::Color =>
+                    (0, self.dummy_texture.raw.image(), &self.linear_sampler),
+                &ShaderMode::Texture(ref texture, ref sample_mode) =>
+                    (1, texture.raw.image(), self.sampler_for_mode(sample_mode)),
+                &ShaderMode::Mask(ref texture, ref sample_mode) =>
+                    (2, texture.raw.image(), self.sampler_for_mode(sample_mode)),
             };
 
             // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
@@ -113,7 +152,7 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
             //  way to solve this
             let set = Arc::new(PersistentDescriptorSet::start(self.pipeline.clone(), 0)
                 .add_buffer(matrix_data_buffer.clone()).unwrap()
-                .add_sampled_image(tex_uniform.0, tex_uniform.1).unwrap()
+                .add_sampled_image(image.clone(), sampler.clone()).unwrap()
                 .add_buffer(mode_buffer.clone()).unwrap()
                 .build().unwrap()
             );

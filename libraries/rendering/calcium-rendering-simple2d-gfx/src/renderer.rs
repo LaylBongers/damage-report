@@ -44,8 +44,6 @@ pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + '
 
     linear_sampler: Sampler<D::Resources>,
     nearest_sampler: Sampler<D::Resources>,
-
-    _f: ::std::marker::PhantomData<F>,
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRenderer<D, F> {
@@ -90,8 +88,6 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
 
             linear_sampler,
             nearest_sampler,
-
-            _f: Default::default(),
         })
     }
 
