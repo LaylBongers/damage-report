@@ -24,7 +24,7 @@ impl Runtime for StaticRuntime {
         let window_settings = WindowSettings::new("Carpenter", [1280, 720]);
         let (mut renderer, mut window, mut window_renderer) =
             init.renderer(Some(self.log.clone()), &window_settings)?;
-        let mut world3d_renderer = init.world3d_renderer(&mut renderer)?;
+        let mut world3d_renderer = init.world3d_renderer(&mut renderer, &mut window_renderer)?;
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
 
         // Set up the 3D world render data
@@ -35,8 +35,7 @@ impl Runtime for StaticRuntime {
         let render_world = RenderWorld::new();
 
         // Set up conrod and UI data
-        let mut conrod_renderer: ConrodRenderer<I::Types> =
-            ConrodRenderer::new(&mut renderer)?;
+        let mut conrod_renderer = ConrodRenderer::new(&mut renderer)?;
         let mut ui_batches = vec!();
         let mut editor_ui = EditorUi::new(window_renderer.size());
 
@@ -72,7 +71,10 @@ impl Runtime for StaticRuntime {
 
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&mut renderer);
-            world3d_renderer.render(&render_world, &camera);
+            world3d_renderer.render(
+                &render_world, &camera,
+                &mut renderer, &mut window_renderer, &mut frame
+            );
             simple2d_renderer.render(&mut renderer, &mut frame, &ui_batches);
             window_renderer.finish_frame(&mut renderer, frame);
             window.swap_buffers();

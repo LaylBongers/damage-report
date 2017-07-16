@@ -6,7 +6,8 @@ description = "The future home of the calcium rendering library"
 license = "MIT/Apache-2.0"
 
 [features]
-default = ["world3d"]
+# This is supposed to have nothing, do not publish this crate if it has anything
+default = []
 world3d = ["calcium-rendering-world3d", "calcium-rendering-world3d-vulkano"]
 simple2d = ["calcium-rendering-simple2d", "calcium-rendering-simple2d-gfx", "calcium-rendering-simple2d-vulkano"]
 

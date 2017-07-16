@@ -55,10 +55,13 @@ pub trait Initializer {
     /// Only supported on the following backends:
     /// - Vulkano
     /// TODO: Add a system for requesting required features and reject backends that don't have it.
+    /// TODO: Remove WindowRenderer from this initialization, World3DRenderer should create a new
+    ///  thing specific to a single window.
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
         &self,
         renderer: &<Self::Types as Types>::Renderer,
+        window_renderer: &<Self::Types as Types>::WindowRenderer,
     ) -> Result<
         <Self::World3DTypes as World3DTypes<Self::Types>>::Renderer,
         Error

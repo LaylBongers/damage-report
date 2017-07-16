@@ -14,7 +14,12 @@ mod world3d {
     pub struct UnsupportedWorld3DRenderer;
 
     impl<T: Types> World3DRenderer<T, UnsupportedWorld3DTypes> for UnsupportedWorld3DRenderer {
-        fn render(&mut self, _world: &RenderWorld<T, UnsupportedWorld3DTypes>, _camera: &Camera) {
+        fn render(
+            &mut self, _world: &RenderWorld<T, UnsupportedWorld3DTypes>, _camera: &Camera,
+            _renderer: &mut T::Renderer, _window_renderer: &mut T::WindowRenderer,
+            _frame: &mut T::Frame
+        ) {
+            panic!("Unsupported!")
         }
     }
 

@@ -12,38 +12,59 @@ use vulkano::pipeline::depth_stencil::{DepthStencil, Compare};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::pipeline::viewport::{Viewport};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
+use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 
-use calcium_rendering_vulkano::{VulkanoBackendTypes, VulkanoRenderBackend};
+use calcium_rendering::{Renderer, Error, CalciumErrorMappable, WindowRenderer};
+use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity};
 
 use geometry_buffer::{GeometryBuffer};
-use {VulkanoWorldBackendTypes};
+use {VulkanoWorld3DTypes};
 
 pub struct GeometryRenderer {
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    linear_sampler: Arc<Sampler>,
 }
 
 impl GeometryRenderer {
     pub fn new(
-        log: &Logger, backend: &VulkanoRenderBackend, geometry_buffer: &GeometryBuffer
-    ) -> Self {
+        renderer: &VulkanoRenderer,
+        window_renderer: &VulkanoWindowRenderer,
+        geometry_buffer: &GeometryBuffer,
+    ) -> Result<Self, Error> {
         // Set up the shaders and pipelines
-        let pipeline = load_pipeline(log, backend, geometry_buffer.render_pass.clone());
+        let pipeline = load_pipeline(
+            renderer.log(), renderer, window_renderer, geometry_buffer.render_pass.clone()
+        );
 
-        GeometryRenderer {
+        let linear_sampler = Sampler::new(
+            renderer.device().clone(),
+            Filter::Linear,
+            Filter::Linear,
+            MipmapMode::Nearest,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            0.0, 1.0, 0.0, 0.0
+        ).map_platform_err()?;
+
+        Ok(GeometryRenderer {
             pipeline,
-        }
+            linear_sampler,
+        })
     }
 
     pub fn build_command_buffer(
         &self,
-        backend: &mut VulkanoRenderBackend,
+        renderer: &mut VulkanoRenderer,
+        window_renderer: &VulkanoWindowRenderer,
         geometry_buffer: &GeometryBuffer,
-        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes, VulkanoWorldBackendTypes>,
+        camera: &Camera, world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-            backend.device.clone(), backend.graphics_queue.family()
+            renderer.device().clone(), renderer.graphics_queue().family()
         ).unwrap();
 
         let clear_values = vec!(
@@ -62,7 +83,7 @@ impl GeometryRenderer {
             .begin_render_pass(geometry_buffer.framebuffer.clone(), false, clear_values).unwrap();
 
         // Create the projection-view matrix needed for the perspective rendering
-        let projection_view = create_projection_view_matrix(backend, camera);
+        let projection_view = create_projection_view_matrix(window_renderer, camera);
 
         // Create a culling frustum from that matrix
         let culling_frustum = Frustum::from_matrix4(projection_view).unwrap();
@@ -72,7 +93,7 @@ impl GeometryRenderer {
             if let &Some(ref entity) = entity {
                 command_buffer_builder = self.render_entity(
                     entity,
-                    backend,
+                    renderer,
                     &projection_view, &culling_frustum,
                     command_buffer_builder
                 );
@@ -85,13 +106,13 @@ impl GeometryRenderer {
 
     fn render_entity(
         &self,
-        entity: &Entity<VulkanoBackendTypes, VulkanoWorldBackendTypes>,
-        backend: &mut VulkanoRenderBackend,
+        entity: &Entity<VulkanoTypes, VulkanoWorld3DTypes>,
+        renderer: &mut VulkanoRenderer,
         projection_view: &Matrix4<f32>, culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,
     ) -> AutoCommandBufferBuilder {
         // Check if this entity's mesh is visible to the current camera
-        let mut culling_sphere = entity.mesh.backend.culling_sphere;
+        let mut culling_sphere = entity.mesh.culling_sphere;
         culling_sphere.center.x += entity.position.x;
         culling_sphere.center.y += entity.position.y;
         culling_sphere.center.z += entity.position.z;
@@ -109,8 +130,8 @@ impl GeometryRenderer {
         // TODO: Instead of creating a new buffer, re-use the descriptor set and overwrite the same
         //  buffer's data (update_buffer)
         let matrix_data_buffer = CpuAccessibleBuffer::<gbuffer_vs::ty::MatrixData>::from_data(
-            backend.device.clone(), BufferUsage::all(),
-            Some(backend.graphics_queue.family()),
+            renderer.device().clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue().family()),
             gbuffer_vs::ty::MatrixData {
                 total: total_matrix_raw,
                 model: model_matrix_raw,
@@ -118,14 +139,25 @@ impl GeometryRenderer {
         ).unwrap();
 
         // Create the final uniforms set
-        // TODO: Re-use the descriptor set for this entity across frames
-        let set = Arc::new(simple_descriptor_set!(self.pipeline.clone(), 0, {
-            u_matrix_data: matrix_data_buffer,
-            u_material_base_color: entity.material.base_color.backend.uniform(),
-            u_material_normal_map: entity.material.normal_map.backend.uniform(),
-            u_material_metallic_map: entity.material.metallic_map.backend.uniform(),
-            u_material_roughness_map: entity.material.roughness_map.backend.uniform(),
-        }));
+        // TODO: Figure out if there's any performance problems with creating sets every frame, and
+        //  if so how to solve that problem.
+        let material = &entity.material;
+        let set = Arc::new(PersistentDescriptorSet::start(self.pipeline.clone(), 0)
+            .add_buffer(matrix_data_buffer.clone()).unwrap()
+            .add_sampled_image(
+                material.base_color.raw.image().clone(), self.linear_sampler.clone()
+            ).unwrap()
+            .add_sampled_image(
+                material.normal_map.raw.image().clone(), self.linear_sampler.clone()
+            ).unwrap()
+            .add_sampled_image(
+                material.metallic_map.raw.image().clone(), self.linear_sampler.clone()
+            ).unwrap()
+            .add_sampled_image(
+                material.roughness_map.raw.image().clone(), self.linear_sampler.clone()
+            ).unwrap()
+            .build().unwrap()
+        );
 
         // Perform the actual draw
         // TODO: Investigate the possibility of using draw_indexed_indirect (when it's added to
@@ -133,25 +165,25 @@ impl GeometryRenderer {
         command_buffer
             .draw_indexed(
                 self.pipeline.clone(), DynamicState::none(),
-                vec!(entity.mesh.backend.vertex_buffer.clone()),
-                entity.mesh.backend.index_buffer.clone(),
+                vec!(entity.mesh.vertex_buffer.clone()),
+                entity.mesh.index_buffer.clone(),
                 set, ()
             ).unwrap()
     }
 }
 
 fn load_pipeline(
-    log: &Logger, backend: &VulkanoRenderBackend,
+    log: &Logger, renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
     gbuffer_render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
     debug!(log, "Loading gbuffer shaders");
-    let vs = gbuffer_vs::Shader::load(backend.device.clone()).unwrap();
-    let fs = gbuffer_fs::Shader::load(backend.device.clone()).unwrap();
+    let vs = gbuffer_vs::Shader::load(renderer.device().clone()).unwrap();
+    let fs = gbuffer_fs::Shader::load(renderer.device().clone()).unwrap();
 
     // Set up the pipeline itself
     debug!(log, "Creating gbuffer pipeline");
-    let dimensions = backend.size;
+    let dimensions = window_renderer.size();
     Arc::new(GraphicsPipeline::start()
         .vertex_input_single_buffer()
         .triangle_list()
@@ -179,16 +211,17 @@ fn load_pipeline(
         })
 
         .render_pass(Subpass::from(gbuffer_render_pass, 0).unwrap())
-        .build(backend.device.clone()).unwrap()
+        .build(renderer.device().clone()).unwrap()
     ) as Arc<GraphicsPipeline<SingleBufferDefinition<::mesh::VkVertex>, _, _>>
 }
 
 fn create_projection_view_matrix(
-    backend: &VulkanoRenderBackend, camera: &Camera
+    window_renderer: &VulkanoWindowRenderer, camera: &Camera
 ) -> Matrix4<f32> {
     // Create the projection matrix, which is what makes this a 3D perspective renderer
     let y_fov = Rad::full_turn() * 0.1638; // 90 deg x-fov for this aspect ratio
-    let aspect = backend.size.x as f32 / backend.size.y as f32;
+    let size = window_renderer.size();
+    let aspect = size.x as f32 / size.y as f32;
     let projection = create_infinity_projection(y_fov, aspect, 0.1);
 
     // Combine the projection and the view, we don't need them separately

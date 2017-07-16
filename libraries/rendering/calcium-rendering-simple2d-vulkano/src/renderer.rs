@@ -148,8 +148,7 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
             ).unwrap();
 
             // Create the uniform data set to send over
-            // TODO: It's really expensive to constantly create persistent sets, figure out some
-            //  way to solve this
+            // TODO: Make sure this isn't a performance problem with many draw calls
             let set = Arc::new(PersistentDescriptorSet::start(self.pipeline.clone(), 0)
                 .add_buffer(matrix_data_buffer.clone()).unwrap()
                 .add_sampled_image(image.clone(), sampler.clone()).unwrap()

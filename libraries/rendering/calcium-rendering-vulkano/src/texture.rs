@@ -47,10 +47,6 @@ impl VulkanoTextureRaw {
     pub fn image(&self) -> &Arc<ImmutableImage<Format>> {
         &self.image
     }
-
-    //pub fn uniform(&self) -> (Arc<ImmutableImage<Format>>, Arc<Sampler>) {
-    //    (self.image.clone(), self.sampler.clone())
-    //}
 }
 
 impl TextureRaw<VulkanoTypes> for VulkanoTextureRaw {

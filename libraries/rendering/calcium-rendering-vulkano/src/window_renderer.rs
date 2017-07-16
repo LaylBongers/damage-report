@@ -84,6 +84,7 @@ impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
 }
 
 pub struct VulkanoFrame {
+    // TODO: Remove size from this
     pub size: Vector2<u32>,
     pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     pub image_num: usize,

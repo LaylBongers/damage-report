@@ -1,50 +1,47 @@
-//use vulkano::sync::{GpuFuture};
+use vulkano::sync::{GpuFuture};
 
-use calcium_rendering::{Renderer};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes};
+use calcium_rendering::{Error, Renderer};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoWindowRenderer, VulkanoFrame};
 use calcium_rendering_world3d::{World3DRenderer, RenderWorld, Camera};
 
-//use geometry_buffer::{GeometryBuffer};
-//use geometry_renderer::{GeometryRenderer};
-//use lighting_renderer::{LightingRenderer};
+use geometry_buffer::{GeometryBuffer};
+use geometry_renderer::{GeometryRenderer};
+use lighting_renderer::{LightingRenderer};
 use {VulkanoWorld3DTypes};
 
 pub struct VulkanoWorld3DRenderer {
-    //pub geometry_buffer: GeometryBuffer,
-    //geometry_renderer: GeometryRenderer,
-    //lighting_renderer: LightingRenderer,
+    geometry_buffer: GeometryBuffer,
+    geometry_renderer: GeometryRenderer,
+    lighting_renderer: LightingRenderer,
 }
 
 impl VulkanoWorld3DRenderer {
-    pub fn new(renderer: &VulkanoRenderer) -> Self {
+    pub fn new(
+        renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer
+    ) -> Result<Self, Error> {
         info!(renderer.log(), "Initializing world renderer");
 
-        /*let geometry_buffer = GeometryBuffer::new(
-            log, renderer, renderer.target_swapchain.depth_attachment.clone()
+        let geometry_buffer = GeometryBuffer::new(
+            renderer, window_renderer, window_renderer.swapchain.depth_attachment.clone()
         );
-        let geometry_renderer = GeometryRenderer::new(log, backend, &geometry_buffer);
+        let geometry_renderer = GeometryRenderer::new(renderer, window_renderer, &geometry_buffer)?;
 
-        let lighting_renderer = LightingRenderer::new(log, backend);*/
+        let lighting_renderer = LightingRenderer::new(renderer, window_renderer);
 
-        VulkanoWorld3DRenderer {
-            /*geometry_buffer,
+        Ok(VulkanoWorld3DRenderer {
+            geometry_buffer,
             geometry_renderer,
-            lighting_renderer,*/
-        }
+            lighting_renderer,
+        })
     }
 }
 
 impl World3DRenderer<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRenderer {
-    fn render(&mut self, _world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, _camera: &Camera) {
-    }
-}
-
-/*impl WorldRenderBackend<VulkanoBackendTypes, VulkanoWorldBackendTypes> for VulkanoWorldRenderBackend {
     fn render(
-        &mut self, _log: &Logger,
-        render_system: &mut RenderSystem<VulkanoBackendTypes>,
+        &mut self,
+        world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, camera: &Camera,
+        renderer: &mut VulkanoRenderer, window_renderer: &mut VulkanoWindowRenderer,
         frame: &mut VulkanoFrame,
-        camera: &Camera, world: &RenderWorld<VulkanoBackendTypes, VulkanoWorldBackendTypes>
     ) {
         // This is a deferred renderer, so what we will do is first build up the "geometry buffer",
         //  which is a framebuffer made up from various images to keep track of the data needed for
@@ -61,20 +58,20 @@ impl World3DRenderer<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRender
         //  to actually render triangles to buffers. No actual rendering is done here, we just
         //  prepare the render passes and drawcalls.
         let geometry_command_buffer = self.geometry_renderer.build_command_buffer(
-            &mut render_system.backend, &self.geometry_buffer, camera, world
+            renderer, window_renderer, &self.geometry_buffer, camera, world
         ).build().unwrap();
         let lighting_command_buffer = self.lighting_renderer.build_command_buffer(
-            &mut render_system.backend, frame, &self.geometry_buffer, camera, world
+            renderer, frame, &self.geometry_buffer, camera, world
         ).build().unwrap();
 
         // Add the command buffers to the future we're building up, making sure they're in the
         //  right sequence. geometry buffer first, then the lighting pass that depends on the
         //  geometry buffer.
         let future = frame.future.take().unwrap()
-            .then_execute(render_system.backend.graphics_queue.clone(), geometry_command_buffer)
+            .then_execute(renderer.graphics_queue().clone(), geometry_command_buffer)
             .unwrap()
-            .then_execute(render_system.backend.graphics_queue.clone(), lighting_command_buffer)
+            .then_execute(renderer.graphics_queue().clone(), lighting_command_buffer)
             .unwrap();
         frame.future = Some(Box::new(future));
     }
-}*/
+}
