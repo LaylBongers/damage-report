@@ -57,6 +57,7 @@ impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
         // Before we render, see if we need to execute a queued resize
         if self.queued_resize {
             self.swapchain.resize(renderer, self.size);
+            self.queued_resize = false;
         }
 
         // Get the image for this frame, along with a future that will let us queue up the order of
