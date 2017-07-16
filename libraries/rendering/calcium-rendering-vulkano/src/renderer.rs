@@ -12,14 +12,13 @@ use vulkano::command_buffer::{AutoCommandBufferBuilder};
 use calcium_rendering::{Error, CalciumErrorMappable, Renderer};
 
 pub struct VulkanoRenderer {
-    pub log: Logger,
+    log: Logger,
 
-    pub instance: Arc<Instance>,
+    instance: Arc<Instance>,
     pub device: Arc<Device>,
     pub graphics_queue: Arc<Queue>,
 
     // Queued up things we need to submit as part of command buffers
-    // TODO: This stopped being handled because of a refactor, make sure they're submitted again
     queued_image_copies: Vec<(Arc<CpuAccessibleBuffer<[u8]>>, Arc<ImmutableImage<Format>>)>,
 }
 
@@ -89,6 +88,10 @@ impl VulkanoRenderer {
 
             queued_image_copies: Vec::new(),
         })
+    }
+
+    pub fn instance(&self) -> &Arc<Instance> {
+        &self.instance
     }
 
     pub fn queue_image_copy(

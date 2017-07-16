@@ -9,6 +9,7 @@ use vulkano::sync::{GpuFuture};
 use vulkano::image::attachment::{AttachmentImage};
 use vulkano::image::swapchain::{SwapchainImage};
 
+use calcium_rendering::{Renderer};
 use {VulkanoRenderer};
 
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
@@ -28,7 +29,7 @@ impl WindowSwapchain {
     ) -> Self {
         // Now create the swapchain, we need this to actually swap between our back buffer and the
         //  window's front buffer, without it we can't show anything
-        debug!(renderer.log, "Creating swapchain");
+        debug!(renderer.log(), "Creating swapchain");
         let (swapchain, images) = {
             // Get what the swap chain we want to create would be capable of, we can't request
             //  anything it can't do
@@ -59,7 +60,7 @@ impl WindowSwapchain {
                 present, true, None
             ).unwrap()
         };
-        debug!(renderer.log, "Created swapchain"; "images" => images.len());
+        debug!(renderer.log(), "Created swapchain"; "images" => images.len());
 
         // To render in 3D, we need an extra buffer to keep track of the depth. Since this won't be
         //  displayed, we don't need multiple of it like we do with the color swapchain. This isn't
@@ -68,7 +69,7 @@ impl WindowSwapchain {
         // A format more precise than D16Unorm had to be used. That precision ended up giving
         //  noticeable rendering artifacts at relatively nearby depths. A floating point format is
         //  used to take advantage of the increased precision given by the reversed-z technique.
-        debug!(renderer.log, "Creating depth buffer");
+        debug!(renderer.log(), "Creating depth buffer");
         let depth_attachment = create_depth_attachment(renderer, &images);
 
         // Set up a render pass TODO: Comment better
@@ -99,7 +100,7 @@ impl WindowSwapchain {
         // Set up the frame buffers matching the render pass
         // For each image in the swap chain, we create a frame buffer that renders to that image
         //  and to the depth buffer attachment. These attachments are defined by the render pass.
-        debug!(renderer.log, "Creating framebuffers for swapchain");
+        debug!(renderer.log(), "Creating framebuffers for swapchain");
         let framebuffers = create_framebuffers(&images, &render_pass, &depth_attachment);
 
         WindowSwapchain {

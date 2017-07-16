@@ -11,7 +11,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::{Texture, Error, CalciumErrorMappable};
+use calcium_rendering::{Renderer, Texture, Error, CalciumErrorMappable};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
@@ -28,7 +28,7 @@ pub struct VulkanoSimple2DRenderer {
 
 impl VulkanoSimple2DRenderer {
     pub fn new(renderer: &mut VulkanoRenderer) -> Result<Self, Error> {
-        info!(renderer.log, "Creating simple2d renderer");
+        info!(renderer.log(), "Creating simple2d renderer");
         let render_pass = create_render_pass(renderer);
         let pipeline = create_pipeline(renderer, render_pass);
         let dummy_texture = Texture::from_raw_greyscale(
@@ -195,7 +195,7 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
 }
 
 fn create_render_pass(renderer: &VulkanoRenderer) -> Arc<RenderPassAbstract + Send + Sync> {
-    debug!(renderer.log, "Creating simple2d render pass");
+    debug!(renderer.log(), "Creating simple2d render pass");
     #[allow(dead_code)]
     let render_pass = Arc::new(single_pass_renderpass!(renderer.device.clone(),
         attachments: {
@@ -221,12 +221,12 @@ fn create_pipeline(
     render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
-    debug!(renderer.log, "Creating simple2d shaders");
+    debug!(renderer.log(), "Creating simple2d shaders");
     let vs = simple2d_vs::Shader::load(renderer.device.clone()).unwrap();
     let fs = simple2d_fs::Shader::load(renderer.device.clone()).unwrap();
 
     // Set up the pipeline itself
-    debug!(renderer.log, "Creating simple2d pipeline");
+    debug!(renderer.log(), "Creating simple2d pipeline");
     Arc::new(GraphicsPipeline::start()
         .vertex_input_single_buffer()
         .triangle_list()

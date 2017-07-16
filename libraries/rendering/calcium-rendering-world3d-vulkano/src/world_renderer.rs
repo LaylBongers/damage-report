@@ -1,5 +1,6 @@
 //use vulkano::sync::{GpuFuture};
 
+use calcium_rendering::{Renderer};
 use calcium_rendering_vulkano::{VulkanoRenderer};
 //use calcium_rendering_world3d::{Camera, RenderWorld};
 
@@ -16,7 +17,7 @@ pub struct VulkanoWorld3DRenderer {
 
 impl VulkanoWorld3DRenderer {
     pub fn new(renderer: &VulkanoRenderer) -> Self {
-        info!(renderer.log, "Initializing world renderer");
+        info!(renderer.log(), "Initializing world renderer");
 
         /*let geometry_buffer = GeometryBuffer::new(
             log, renderer, renderer.target_swapchain.depth_attachment.clone()

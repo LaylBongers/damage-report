@@ -45,7 +45,7 @@ impl Initializer for VulkanoInitializer {
         window_settings: &WindowSettings,
     ) -> Result<(WinitWindow, VulkanoWindowRenderer), Error> {
         let window = WinitWindow::new_vulkano(
-            renderer.instance.clone(), window_settings,
+            renderer.instance().clone(), window_settings,
         );
         let size = window_settings.get_size();
         let window_renderer = VulkanoWindowRenderer::new(

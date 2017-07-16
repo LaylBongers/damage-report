@@ -5,6 +5,7 @@ use collision::{Sphere};
 use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
+use calcium_rendering::{Renderer};
 use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer};
 use calcium_rendering_world3d::{Vertex, Mesh};
 
@@ -21,7 +22,7 @@ impl Mesh<VulkanoTypes> for VulkanoMesh {
         let indices_len = indices.len();
 
         // We need tangents for proper normal mapping
-        let tri_tangents = calculate_tangents(&renderer.log, &vertices, &indices);
+        let tri_tangents = calculate_tangents(&renderer.log(), &vertices, &indices);
 
         // We also need a culling sphere so we can avoid rendering unneeded meshes
         let culling_sphere = calculate_culling_sphere(&vertices);
@@ -48,7 +49,7 @@ impl Mesh<VulkanoTypes> for VulkanoMesh {
             indices.iter().map(|v| *v)
         ).unwrap();
 
-        debug!(renderer.log, "Created new mesh";
+        debug!(renderer.log(), "Created new mesh";
             "vertices" => vertices.len(), "indices" => indices_len
         );
         Arc::new(VulkanoMesh {

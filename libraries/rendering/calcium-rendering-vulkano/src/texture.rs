@@ -8,7 +8,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 
-use calcium_rendering::{TextureFormat, TextureRaw, CalciumErrorMappable, Error};
+use calcium_rendering::{TextureFormat, TextureRaw, CalciumErrorMappable, Error, Renderer};
 use {VulkanoTypes, VulkanoRenderer};
 
 pub struct VulkanoTextureRaw {
@@ -57,7 +57,7 @@ impl TextureRaw<VulkanoTypes> for VulkanoTextureRaw {
     fn from_file(
         renderer: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
     ) -> Result<Self, Error> {
-        info!(renderer.log,
+        info!(renderer.log(),
             "Loading texture from file"; "path" => path.display().to_string()
         );
 
@@ -88,7 +88,7 @@ impl TextureRaw<VulkanoTypes> for VulkanoTextureRaw {
     fn from_raw_greyscale(
         renderer: &mut VulkanoRenderer, data: &[u8], size: Vector2<u32>,
     ) -> Result<Self, Error> {
-        info!(renderer.log,
+        info!(renderer.log(),
             "Loading texture from greyscale data"; "width" => size.x, "height" => size.y
         );
 

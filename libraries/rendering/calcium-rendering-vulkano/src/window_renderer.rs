@@ -5,11 +5,11 @@ use vulkano::swapchain::{Surface};
 use vulkano::sync::{GpuFuture};
 use vulkano::framebuffer::{FramebufferAbstract};
 
-use calcium_rendering::{WindowRenderer};
+use calcium_rendering::{WindowRenderer, Renderer};
 use {WindowSwapchain, VulkanoTypes, VulkanoRenderer};
 
 pub struct VulkanoWindowRenderer {
-    pub size: Vector2<u32>,
+    size: Vector2<u32>,
     pub surface: Arc<Surface>,
     pub swapchain: WindowSwapchain,
     queued_resize: bool,
@@ -19,7 +19,7 @@ impl VulkanoWindowRenderer {
     pub fn new(
         renderer: &VulkanoRenderer, surface: Arc<Surface>, size: Vector2<u32>,
     ) -> Self {
-        info!(renderer.log, "Creating window renderer");
+        info!(renderer.log(), "Creating window renderer");
 
         // Create the swapchain we'll have to render to to make things actually show up on screen
         let swapchain = WindowSwapchain::new(renderer, &surface, size);
