@@ -33,7 +33,7 @@ impl WindowSwapchain {
         let (swapchain, images) = {
             // Get what the swap chain we want to create would be capable of, we can't request
             //  anything it can't do
-            let caps = surface.capabilities(renderer.device.physical_device()).unwrap();
+            let caps = surface.capabilities(renderer.device().physical_device()).unwrap();
 
             // The swap chain's dimensions need to match the window size
             let dimensions = caps.current_extent.unwrap_or([size.x, size.y]);
@@ -53,9 +53,9 @@ impl WindowSwapchain {
 
             // Finally, actually create the swapchain, with all its color images
             Swapchain::new(
-                renderer.device.clone(), surface.clone(), caps.min_image_count, format,
+                renderer.device().clone(), surface.clone(), caps.min_image_count, format,
                 dimensions, 1,
-                caps.supported_usage_flags, &renderer.graphics_queue,
+                caps.supported_usage_flags, renderer.graphics_queue(),
                 SurfaceTransform::Identity, alpha,
                 present, true, None
             ).unwrap()
@@ -76,7 +76,7 @@ impl WindowSwapchain {
         let color_buffer_format = swapchain.format();
         let depth_buffer_format = ::vulkano::format::Format::D32Sfloat_S8Uint;
         #[allow(dead_code)]
-        let render_pass = Arc::new(single_pass_renderpass!(renderer.device.clone(),
+        let render_pass = Arc::new(single_pass_renderpass!(renderer.device().clone(),
             attachments: {
                 color: {
                     load: Clear,
@@ -108,7 +108,7 @@ impl WindowSwapchain {
             depth_attachment,
             render_pass,
             framebuffers,
-            previous_frame: Some(Box::new(::vulkano::sync::now(renderer.device.clone()))),
+            previous_frame: Some(Box::new(::vulkano::sync::now(renderer.device().clone()))),
         }
     }
 
@@ -156,7 +156,7 @@ fn create_depth_attachment(
     renderer: &VulkanoRenderer, images: &Vec<Arc<SwapchainImage>>,
 ) -> Arc<AttachmentImage<format::D32Sfloat_S8Uint>> {
     AttachmentImage::new(
-        renderer.device.clone(), images[0].dimensions(), format::D32Sfloat_S8Uint
+        renderer.device().clone(), images[0].dimensions(), format::D32Sfloat_S8Uint
     ).unwrap()
 }
 

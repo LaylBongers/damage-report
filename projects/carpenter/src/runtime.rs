@@ -53,10 +53,11 @@ impl Runtime for StaticRuntime {
             editor_ui.update(delta);
 
             // Create render batches for the UI
-            // TODO: ui_batches to an Option return value
-            conrod_renderer.draw_if_changed(
-                &mut renderer, &window_renderer, &mut editor_ui.ui, &mut ui_batches
-            )?;
+            if let Some(changed_batches) = conrod_renderer.draw_if_changed(
+                &mut renderer, &window_renderer, &mut editor_ui.ui
+            )? {
+                ui_batches = changed_batches;
+            }
 
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&mut renderer);

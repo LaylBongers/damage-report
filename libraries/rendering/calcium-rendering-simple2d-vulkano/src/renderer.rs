@@ -37,7 +37,7 @@ impl VulkanoSimple2DRenderer {
 
         // Set up the samplers for the sampling modes
         let linear_sampler = Sampler::new(
-            renderer.device.clone(),
+            renderer.device().clone(),
             Filter::Linear,
             Filter::Linear,
             MipmapMode::Nearest,
@@ -47,7 +47,7 @@ impl VulkanoSimple2DRenderer {
             0.0, 1.0, 0.0, 0.0
         ).map_platform_err()?;
         let nearest_sampler = Sampler::new(
-            renderer.device.clone(),
+            renderer.device().clone(),
             Filter::Nearest,
             Filter::Nearest,
             MipmapMode::Nearest,
@@ -93,8 +93,8 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
         // Create a buffer for the matrix data to be sent over in
         let total_matrix_raw = proj.into();
         let matrix_data_buffer = CpuAccessibleBuffer::<simple2d_vs::ty::MatrixData>::from_data(
-            renderer.device.clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue.family()),
+            renderer.device().clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue().family()),
             simple2d_vs::ty::MatrixData {
                 total: total_matrix_raw,
             }
@@ -103,7 +103,7 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
         // Start the command buffer, this will contain the draw commands
         let clear_values = vec![[0.0, 0.0, 0.0, 1.0].into()];
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-                renderer.device.clone(), renderer.graphics_queue.family()
+                renderer.device().clone(), renderer.graphics_queue().family()
             ).unwrap()
             .begin_render_pass(frame.framebuffer.clone(), false, clear_values).unwrap();
 
@@ -121,8 +121,8 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
 
             // Create the final vertex buffer that we'll send over to the GPU for rendering
             let vertex_buffer = CpuAccessibleBuffer::from_iter(
-                renderer.device.clone(), BufferUsage::all(),
-                Some(renderer.graphics_queue.family()),
+                renderer.device().clone(), BufferUsage::all(),
+                Some(renderer.graphics_queue().family()),
                 vertices.into_iter()
             ).unwrap();
 
@@ -140,8 +140,8 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
 
             // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
             let mode_buffer = CpuAccessibleBuffer::<simple2d_fs::ty::ModeData>::from_data(
-                renderer.device.clone(), BufferUsage::all(),
-                Some(renderer.graphics_queue.family()),
+                renderer.device().clone(), BufferUsage::all(),
+                Some(renderer.graphics_queue().family()),
                 simple2d_fs::ty::ModeData {
                     mode: mode_id,
                 }
@@ -187,7 +187,7 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
 
         // Submit the command buffer
         future = Box::new(future
-            .then_execute(renderer.graphics_queue.clone(), command_buffer)
+            .then_execute(renderer.graphics_queue().clone(), command_buffer)
             .unwrap()
         );
         frame.future = Some(future);
@@ -197,7 +197,7 @@ impl Simple2DRenderer<VulkanoTypes> for VulkanoSimple2DRenderer {
 fn create_render_pass(renderer: &VulkanoRenderer) -> Arc<RenderPassAbstract + Send + Sync> {
     debug!(renderer.log(), "Creating simple2d render pass");
     #[allow(dead_code)]
-    let render_pass = Arc::new(single_pass_renderpass!(renderer.device.clone(),
+    let render_pass = Arc::new(single_pass_renderpass!(renderer.device().clone(),
         attachments: {
             color: {
                 load: Clear,
@@ -222,8 +222,8 @@ fn create_pipeline(
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
     debug!(renderer.log(), "Creating simple2d shaders");
-    let vs = simple2d_vs::Shader::load(renderer.device.clone()).unwrap();
-    let fs = simple2d_fs::Shader::load(renderer.device.clone()).unwrap();
+    let vs = simple2d_vs::Shader::load(renderer.device().clone()).unwrap();
+    let fs = simple2d_fs::Shader::load(renderer.device().clone()).unwrap();
 
     // Set up the pipeline itself
     debug!(renderer.log(), "Creating simple2d pipeline");
@@ -240,6 +240,6 @@ fn create_pipeline(
         .cull_mode_disabled()
 
         .render_pass(Subpass::from(render_pass, 0).unwrap())
-        .build(renderer.device.clone()).unwrap()
+        .build(renderer.device().clone()).unwrap()
     ) as Arc<GraphicsPipeline<SingleBufferDefinition<VkVertex>, _, _>>
 }

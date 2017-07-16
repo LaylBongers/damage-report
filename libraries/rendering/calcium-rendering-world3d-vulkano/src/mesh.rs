@@ -39,13 +39,13 @@ impl Mesh<VulkanoTypes> for VulkanoMesh {
 
         // Finally, create the buffers
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
-            renderer.device.clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue.family()),
+            renderer.device().clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue().family()),
             vk_vertices
         ).unwrap();
         let index_buffer = CpuAccessibleBuffer::from_iter(
-            renderer.device.clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue.family()),
+            renderer.device().clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue().family()),
             indices.iter().map(|v| *v)
         ).unwrap();
 

@@ -29,13 +29,14 @@ impl<T: Types> ConrodRenderer<T> {
     pub fn draw_if_changed(
         &mut self,
         renderer: &mut T::Renderer, window: &T::WindowRenderer, ui: &mut Ui,
-        batches: &mut Vec<RenderBatch<T>>
-    ) -> Result<(), Error> {
-        if let Some(primitives) = ui.draw_if_changed() {
-            *batches = self.draw_primitives(renderer, window, primitives)?;
-        }
+    ) -> Result<Option<Vec<RenderBatch<T>>>, Error> {
+        let result = if let Some(primitives) = ui.draw_if_changed() {
+            Some(self.draw_primitives(renderer, window, primitives)?)
+        } else {
+            None
+        };
 
-        Ok(())
+        Ok(result)
     }
 
     fn draw_primitives(

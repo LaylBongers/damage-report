@@ -31,9 +31,9 @@ impl VulkanoTextureRaw {
         // Create the texture and sampler for the image, the texture data will later be copied in
         //  a command buffer
         let image = ImmutableImage::new(
-            renderer.device.clone(),
+            renderer.device().clone(),
             Dimensions::Dim2d { width: size.x, height: size.y },
-            format, Some(renderer.graphics_queue.family())
+            format, Some(renderer.graphics_queue().family())
         ).map_platform_err()?;
 
         // Queue copying the data to the image so it will be available when rendering
@@ -75,8 +75,8 @@ impl TextureRaw<VulkanoTypes> for VulkanoTextureRaw {
 
             // TODO: Use staging buffer instead
             CpuAccessibleBuffer::<[u8]>::from_iter(
-                renderer.device.clone(), BufferUsage::all(),
-                Some(renderer.graphics_queue.family()), image_data_iter
+                renderer.device().clone(), BufferUsage::all(),
+                Some(renderer.graphics_queue().family()), image_data_iter
             ).unwrap()
         };
 
@@ -98,8 +98,8 @@ impl TextureRaw<VulkanoTypes> for VulkanoTextureRaw {
 
             // TODO: Use staging buffer instead
             CpuAccessibleBuffer::<[u8]>::from_iter(
-                renderer.device.clone(), BufferUsage::all(),
-                Some(renderer.graphics_queue.family()), image_data_iter
+                renderer.device().clone(), BufferUsage::all(),
+                Some(renderer.graphics_queue().family()), image_data_iter
             ).unwrap()
         };
 

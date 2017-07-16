@@ -15,8 +15,8 @@ pub struct VulkanoRenderer {
     log: Logger,
 
     instance: Arc<Instance>,
-    pub device: Arc<Device>,
-    pub graphics_queue: Arc<Queue>,
+    device: Arc<Device>,
+    graphics_queue: Arc<Queue>,
 
     // Queued up things we need to submit as part of command buffers
     queued_image_copies: Vec<(Arc<CpuAccessibleBuffer<[u8]>>, Arc<ImmutableImage<Format>>)>,
@@ -92,6 +92,14 @@ impl VulkanoRenderer {
 
     pub fn instance(&self) -> &Arc<Instance> {
         &self.instance
+    }
+
+    pub fn device(&self) -> &Arc<Device> {
+        &self.device
+    }
+
+    pub fn graphics_queue(&self) -> &Arc<Queue> {
+        &self.graphics_queue
     }
 
     pub fn queue_image_copy(

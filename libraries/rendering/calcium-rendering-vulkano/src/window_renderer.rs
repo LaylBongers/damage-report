@@ -74,7 +74,7 @@ impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
 
     fn finish_frame(&mut self, renderer: &mut VulkanoRenderer, mut frame: VulkanoFrame) {
         self.swapchain.finish_frame(
-            frame.future.take().unwrap(), renderer.graphics_queue.clone(), frame.image_num
+            frame.future.take().unwrap(), renderer.graphics_queue().clone(), frame.image_num
         );
     }
 
