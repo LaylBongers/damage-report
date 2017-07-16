@@ -1,13 +1,13 @@
 //use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{Renderer};
-use calcium_rendering_vulkano::{VulkanoRenderer};
-//use calcium_rendering_world3d::{Camera, RenderWorld};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes};
+use calcium_rendering_world3d::{World3DRenderer, RenderWorld, Camera};
 
 //use geometry_buffer::{GeometryBuffer};
 //use geometry_renderer::{GeometryRenderer};
 //use lighting_renderer::{LightingRenderer};
-//use {VulkanoWorldBackendTypes};
+use {VulkanoWorld3DTypes};
 
 pub struct VulkanoWorld3DRenderer {
     //pub geometry_buffer: GeometryBuffer,
@@ -31,6 +31,11 @@ impl VulkanoWorld3DRenderer {
             geometry_renderer,
             lighting_renderer,*/
         }
+    }
+}
+
+impl World3DRenderer<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRenderer {
+    fn render(&mut self, _world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, _camera: &Camera) {
     }
 }
 

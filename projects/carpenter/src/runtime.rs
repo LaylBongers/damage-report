@@ -1,9 +1,12 @@
+use cgmath::{Vector3, Quaternion, One};
+
 use window::{Window, WindowSettings};
 use slog::{Logger};
 
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderer};
+use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer};
 use calcium_rendering_static::{Runtime, Initializer};
 use calcium_conrod::{ConrodRenderer};
 
@@ -21,7 +24,15 @@ impl Runtime for StaticRuntime {
         let window_settings = WindowSettings::new("Carpenter", [1280, 720]);
         let (mut renderer, mut window, mut window_renderer) =
             init.renderer(Some(self.log.clone()), &window_settings)?;
+        let mut world3d_renderer = init.world3d_renderer(&mut renderer)?;
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
+
+        // Set up the 3D world render data
+        let camera = Camera {
+            position: Vector3::new(0.0, 0.0, 0.0),
+            rotation: Quaternion::one(),
+        };
+        let render_world = RenderWorld::new();
 
         // Set up conrod and UI data
         let mut conrod_renderer: ConrodRenderer<I::Types> =
@@ -61,6 +72,7 @@ impl Runtime for StaticRuntime {
 
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&mut renderer);
+            world3d_renderer.render(&render_world, &camera);
             simple2d_renderer.render(&mut renderer, &mut frame, &ui_batches);
             window_renderer.finish_frame(&mut renderer, frame);
             window.swap_buffers();

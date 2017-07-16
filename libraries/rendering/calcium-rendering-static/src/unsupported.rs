@@ -2,7 +2,7 @@
 mod world3d {
     use std::sync::{Arc};
     use calcium_rendering::{Types};
-    use calcium_rendering_world3d::{World3DTypes, Vertex, Mesh};
+    use calcium_rendering_world3d::{World3DTypes, Vertex, Mesh, World3DRenderer, RenderWorld, Camera};
 
     pub struct UnsupportedWorld3DTypes;
 
@@ -12,6 +12,11 @@ mod world3d {
     }
 
     pub struct UnsupportedWorld3DRenderer;
+
+    impl<T: Types> World3DRenderer<T, UnsupportedWorld3DTypes> for UnsupportedWorld3DRenderer {
+        fn render(&mut self, _world: &RenderWorld<T, UnsupportedWorld3DTypes>, _camera: &Camera) {
+        }
+    }
 
     pub struct UnsupportedMesh;
 

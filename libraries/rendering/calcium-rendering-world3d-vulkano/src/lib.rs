@@ -14,7 +14,7 @@ extern crate calcium_rendering_world3d;
 //mod lighting_renderer;
 mod mesh;
 mod types;
-mod world_renderer;
+mod renderer;
 
-pub use world_renderer::{VulkanoWorld3DRenderer};
+pub use renderer::{VulkanoWorld3DRenderer};
 pub use types::{VulkanoWorld3DTypes};

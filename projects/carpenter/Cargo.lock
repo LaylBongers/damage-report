@@ -7,6 +7,7 @@ dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-simple2d 0.1.0",
  "calcium-rendering-static 0.0.1",
+ "calcium-rendering-world3d 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "conrod 0.53.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",

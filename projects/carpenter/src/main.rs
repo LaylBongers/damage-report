@@ -1,6 +1,7 @@
 extern crate calcium_game;
 extern crate calcium_rendering;
 extern crate calcium_rendering_simple2d;
+extern crate calcium_rendering_world3d;
 extern crate calcium_rendering_static;
 extern crate calcium_conrod;
 extern crate cgmath;
