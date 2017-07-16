@@ -42,6 +42,15 @@ impl<T: Types> RenderBatch<T> {
     }
 }
 
+impl<T: Types> RenderBatch<T> {
+    pub fn new(mode: ShaderMode<T>) -> Self {
+        RenderBatch {
+            mode,
+            .. RenderBatch::default()
+        }
+    }
+}
+
 impl<T: Types> Default for RenderBatch<T> {
     fn default() -> Self {
         RenderBatch {
@@ -113,6 +122,16 @@ pub struct DrawRectangle {
     pub texture_source: Option<Rectangle<f32>>,
     /// What solid color this rectangle will be drawn with.
     pub color: Vector4<f32>,
+}
+
+impl DrawRectangle {
+    /// Creates a new rectangle that will draw the entire texture.
+    pub fn new(destination: Rectangle<f32>) -> Self {
+        DrawRectangle {
+            destination,
+            .. DrawRectangle::default()
+        }
+    }
 }
 
 impl Default for DrawRectangle {

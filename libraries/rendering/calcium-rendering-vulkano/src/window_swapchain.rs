@@ -15,6 +15,8 @@ use {VulkanoRenderer};
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
 pub struct WindowSwapchain {
     pub swapchain: Arc<Swapchain>,
+    // TODO: Remove both the depth_attachment and the render_pass as they're not really part of a
+    //  swapchain and should rather be tracked by a 3D renderer
     pub depth_attachment: Arc<AttachmentImage<format::D32Sfloat_S8Uint>>,
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,

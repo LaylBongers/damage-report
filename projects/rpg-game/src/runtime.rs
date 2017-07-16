@@ -58,14 +58,12 @@ impl Runtime for StaticRuntime {
 
             // Render a textured square for the player
             let mut batches = Vec::new();
-            let mut batch = RenderBatch {
-                mode: ShaderMode::Texture(player_texture.clone(), SampleMode::Nearest),
-                .. RenderBatch::default()
-            };
-            batch.rectangle(DrawRectangle {
-                destination: Rectangle::new(player - player_size/2.0, player + player_size/2.0),
-                .. DrawRectangle::default()
-            });
+            let mut batch = RenderBatch::new(
+                ShaderMode::Texture(player_texture.clone(), SampleMode::Nearest)
+            );
+            batch.rectangle(DrawRectangle::new(
+                Rectangle::new(player - player_size/2.0, player + player_size/2.0)
+            ));
             batches.push(batch);
 
             // Perform the rendering itself
