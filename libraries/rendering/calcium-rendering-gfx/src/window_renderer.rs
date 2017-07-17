@@ -24,8 +24,6 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     fn start_frame(&mut self, renderer: &mut GfxRenderer<D, F>) -> GfxFrame {
         renderer.device.cleanup();
 
-        renderer.encoder.clear(&renderer.color_view, [0.0, 0.0, 0.0, 1.0]);
-
         GfxFrame {
             size: self.size
         }

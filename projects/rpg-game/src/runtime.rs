@@ -5,7 +5,7 @@ use slog::{Logger};
 
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer, Texture, TextureFormat};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, SampleMode};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, SampleMode, Simple2DRenderTarget};
 use calcium_rendering_static::{Runtime, Initializer};
 
 pub struct StaticRuntime {
@@ -21,6 +21,9 @@ impl Runtime for StaticRuntime {
         let (mut renderer, mut window, mut window_renderer) =
             init.renderer(Some(self.log.clone()), &window_settings)?;
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
+        let mut simple2d_render_target = Simple2DRenderTarget::new(
+            true, &renderer, &window_renderer, &simple2d_renderer
+        );
 
         // Player data
         let player_texture = Texture::from_file(
@@ -68,7 +71,9 @@ impl Runtime for StaticRuntime {
 
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&mut renderer);
-            simple2d_renderer.render(&mut renderer, &mut frame, &batches);
+            simple2d_renderer.render(
+                &batches, &mut simple2d_render_target, &mut renderer, &mut frame
+            );
             window_renderer.finish_frame(&mut renderer, frame);
             window.swap_buffers();
         }

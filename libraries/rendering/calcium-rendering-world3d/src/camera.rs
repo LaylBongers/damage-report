@@ -6,6 +6,13 @@ pub struct Camera {
 }
 
 impl Camera {
+    pub fn new(position: Vector3<f32>, rotation: Quaternion<f32>) -> Self {
+        Camera {
+            position: position,
+            rotation: rotation,
+        }
+    }
+
     pub fn create_world_to_view_matrix(&self) -> Matrix4<f32> {
         self.create_view_to_world_matrix().invert().unwrap()
     }

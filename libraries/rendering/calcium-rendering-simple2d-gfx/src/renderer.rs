@@ -9,7 +9,9 @@ use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
 use calcium_rendering::{Error, Texture};
 use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode, Simple2DRenderTarget};
+
+use {GfxSimple2DTypes};
 
 gfx_defines!{
     vertex Vertex {
@@ -100,11 +102,19 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Simple2DRenderer<GfxTypes<D, F>> for GfxSimple2DRenderer<D, F> {
+    Simple2DRenderer<GfxTypes<D, F>, GfxSimple2DTypes> for GfxSimple2DRenderer<D, F> {
     fn render(
-        &mut self, renderer: &mut GfxRenderer<D, F>, frame: &mut GfxFrame,
-        batches: &[RenderBatch<GfxTypes<D, F>>]
+        &mut self,
+        batches: &[RenderBatch<GfxTypes<D, F>>],
+        render_target: &mut Simple2DRenderTarget<GfxTypes<D, F>, GfxSimple2DTypes>,
+        renderer: &mut GfxRenderer<D, F>,
+        frame: &mut GfxFrame,
     ) {
+        // Clear if we were told to clear
+        if render_target.raw.should_clear() {
+            renderer.encoder.clear(&renderer.color_view, [0.0, 0.0, 0.0, 1.0]);
+        }
+
         // Create a projection matrix that just matches coordinates to pixels
         let proj = cgmath::ortho(
             0.0, frame.size.x as f32,

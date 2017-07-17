@@ -5,7 +5,7 @@ use slog::{Logger};
 
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer};
-use calcium_rendering_simple2d::{Simple2DRenderer};
+use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer};
 use calcium_rendering_static::{Runtime, Initializer};
 use calcium_conrod::{ConrodRenderer};
@@ -26,13 +26,17 @@ impl Runtime for StaticRuntime {
             init.renderer(Some(self.log.clone()), &window_settings)?;
         let mut world3d_renderer = init.world3d_renderer(&mut renderer, &mut window_renderer)?;
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
+        let mut simple2d_render_target = Simple2DRenderTarget::new(
+            false, &renderer, &window_renderer, &simple2d_renderer
+        );
 
         // Set up the 3D world render data
-        let camera = Camera {
-            position: Vector3::new(0.0, 0.0, 0.0),
-            rotation: Quaternion::one(),
-        };
-        let render_world = RenderWorld::new();
+        let camera = Camera::new(
+            Vector3::new(0.0, 0.0, -5.0),
+            Quaternion::one(),
+        );
+        let mut render_world = RenderWorld::new();
+        render_world.ambient_light = Vector3::new(0.005, 0.005, 0.005);
 
         // Set up conrod and UI data
         let mut conrod_renderer = ConrodRenderer::new(&mut renderer)?;
@@ -75,7 +79,9 @@ impl Runtime for StaticRuntime {
                 &render_world, &camera,
                 &mut renderer, &mut window_renderer, &mut frame
             );
-            simple2d_renderer.render(&mut renderer, &mut frame, &ui_batches);
+            simple2d_renderer.render(
+                &ui_batches, &mut simple2d_render_target, &mut renderer, &mut frame
+            );
             window_renderer.finish_frame(&mut renderer, frame);
             window.swap_buffers();
         }
