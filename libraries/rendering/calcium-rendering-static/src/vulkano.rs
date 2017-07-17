@@ -73,9 +73,8 @@ impl Initializer for VulkanoInitializer {
     fn world3d_renderer(
         &self,
         renderer: &VulkanoRenderer,
-        window_renderer: &VulkanoWindowRenderer,
     ) -> Result<VulkanoWorld3DRenderer, Error> {
-        VulkanoWorld3DRenderer::new(renderer, window_renderer)
+        VulkanoWorld3DRenderer::new(renderer)
     }
 
     #[cfg(feature = "simple2d")]

@@ -16,10 +16,10 @@ impl Runtime for StaticRuntime {
 
         // Set up the renderers and open up a window to render to
         let window_settings = WindowSettings::new("Carpenter", [1280, 720]);
-        let (mut renderer, window, mut window_renderer) =
+        let (mut renderer, window, window_renderer) =
             init.renderer(Some(self.log.clone()), &window_settings)?;
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
-        let mut world3d_renderer = init.world3d_renderer(&mut renderer, &mut window_renderer)?;
+        let mut world3d_renderer = init.world3d_renderer(&mut renderer)?;
 
         // Set up the main editor window
         let mut editor_window = EditorWindow::new(

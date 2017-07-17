@@ -61,7 +61,6 @@ pub trait Initializer {
     fn world3d_renderer(
         &self,
         renderer: &<Self::Types as Types>::Renderer,
-        window_renderer: &<Self::Types as Types>::WindowRenderer,
     ) -> Result<
         <Self::World3DTypes as World3DTypes<Self::Types>>::Renderer,
         Error

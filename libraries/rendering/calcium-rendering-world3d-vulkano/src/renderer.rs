@@ -2,34 +2,27 @@ use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{Error, Renderer};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoWindowRenderer, VulkanoFrame};
-use calcium_rendering_world3d::{World3DRenderer, RenderWorld, Camera};
+use calcium_rendering_world3d::{World3DRenderer, RenderWorld, Camera, World3DRenderTarget};
 
-use geometry_buffer::{GeometryBuffer};
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
 use {VulkanoWorld3DTypes};
 
 pub struct VulkanoWorld3DRenderer {
-    geometry_buffer: GeometryBuffer,
     geometry_renderer: GeometryRenderer,
     lighting_renderer: LightingRenderer,
 }
 
 impl VulkanoWorld3DRenderer {
     pub fn new(
-        renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer
+        renderer: &VulkanoRenderer,
     ) -> Result<Self, Error> {
         info!(renderer.log(), "Initializing world renderer");
 
-        let geometry_buffer = GeometryBuffer::new(
-            renderer, window_renderer, window_renderer.swapchain.depth_attachment.clone()
-        );
-        let geometry_renderer = GeometryRenderer::new(renderer, window_renderer, &geometry_buffer)?;
-
-        let lighting_renderer = LightingRenderer::new(renderer, window_renderer);
+        let geometry_renderer = GeometryRenderer::new(renderer)?;
+        let lighting_renderer = LightingRenderer::new(renderer);
 
         Ok(VulkanoWorld3DRenderer {
-            geometry_buffer,
             geometry_renderer,
             lighting_renderer,
         })
@@ -40,6 +33,7 @@ impl World3DRenderer<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRender
     fn render(
         &mut self,
         world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, camera: &Camera,
+        world3d_rendertarget: &mut World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
         renderer: &mut VulkanoRenderer, window_renderer: &mut VulkanoWindowRenderer,
         frame: &mut VulkanoFrame,
     ) {
@@ -58,10 +52,10 @@ impl World3DRenderer<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRender
         //  to actually render triangles to buffers. No actual rendering is done here, we just
         //  prepare the render passes and drawcalls.
         let geometry_command_buffer = self.geometry_renderer.build_command_buffer(
-            renderer, window_renderer, &self.geometry_buffer, camera, world
+            world, camera, world3d_rendertarget, renderer, window_renderer,
         ).build().unwrap();
         let lighting_command_buffer = self.lighting_renderer.build_command_buffer(
-            renderer, frame, &self.geometry_buffer, camera, world
+            world, camera, world3d_rendertarget, renderer, frame,
         ).build().unwrap();
 
         // Add the command buffers to the future we're building up, making sure they're in the

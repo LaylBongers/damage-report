@@ -5,7 +5,7 @@ use window::{Window};
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer, Types, Texture, TextureFormat};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, Simple2DTypes, RenderBatch};
-use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material};
+use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material, World3DRenderTarget};
 use calcium_rendering_static::{Initializer};
 use calcium_conrod::{ConrodRenderer};
 
@@ -20,7 +20,7 @@ pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTy
     ui: EditorUi,
     ui_batches: Vec<RenderBatch<T>>,
 
-    //world3d_rendertarget: World3DRenderTarget<T, WT>,
+    world3d_rendertarget: World3DRenderTarget<T, WT>,
     render_world: RenderWorld<T, WT>,
     camera: Camera,
 }
@@ -29,7 +29,7 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
     pub fn new(
         renderer: &mut T::Renderer,
         simple2d_renderer: &ST::Renderer,
-        _world3d_renderer: &WT::Renderer,
+        world3d_renderer: &WT::Renderer,
         window: W, window_renderer: T::WindowRenderer,
     ) -> Result<Self, Error> {
         // Set up 2D UI rendering
@@ -41,7 +41,9 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
         let ui = EditorUi::new(window_renderer.size());
 
         // Set up 3D viewport rendering
-        //let world3d_rendertarget = World3DRenderTarget::new(renderer, world3d_renderer);
+        let world3d_rendertarget = World3DRenderTarget::new(
+            true, renderer, &window_renderer, world3d_renderer
+        );
         let camera = Camera::new(
             Vector3::new(0.0, 2.0, 5.0),
             Quaternion::one(),
@@ -58,7 +60,7 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
             ui,
             ui_batches,
 
-            //world3d_rendertarget,
+            world3d_rendertarget,
             render_world,
             camera,
         })
@@ -103,7 +105,7 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
             // Perform the rendering itself
             let mut frame = self.window_renderer.start_frame(renderer);
             world3d_renderer.render(
-                &self.render_world, &self.camera,
+                &self.render_world, &self.camera, &mut self.world3d_rendertarget,
                 renderer, &mut self.window_renderer, &mut frame
             );
             simple2d_renderer.render(
