@@ -80,12 +80,15 @@ impl<T: Types, WT: World3DTypes<T>> Model<T, WT> {
 
     fn convert_vertex(obj_vertex: VTNIndex, object: &Object, scale: f32) -> Vertex {
         let pos = object.vertices[obj_vertex.0];
-        let tex = object.tex_vertices[obj_vertex.1.unwrap()];
+        let uv = obj_vertex.1
+            .map(|t| object.tex_vertices[t])
+            .map(|tex| Vector2::new(tex.u as f32, tex.v as f32))
+            .unwrap_or(Vector2::new(0.0, 0.0));
         let norm = object.normals[obj_vertex.2.unwrap()];
 
         Vertex {
             position: Vector3::new(pos.x as f32, pos.y as f32, pos.z as f32) * scale,
-            uv: Vector2::new(tex.u as f32, tex.v as f32),
+            uv: uv,
             normal: Vector3::new(norm.x as f32, norm.y as f32, norm.z as f32),
         }
     }

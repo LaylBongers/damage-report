@@ -27,14 +27,13 @@ impl<T: Types, WT: World3DTypes<T>> RenderWorld<T, WT> {
     }
 
     pub fn add_entity(&mut self, entity: Entity<T, WT>) -> EntityId {
-        // TODO: Find an empty entity
+        // TODO: Find empty entity slots
 
         self.entities.push(Some(entity));
         EntityId(self.entities.len() - 1)
     }
 
     pub fn remove_entity(&mut self, id: EntityId) {
-        // TODO: IMPORTANT, implement backend mesh unloading
         self.entities[id.0] = None;
     }
 

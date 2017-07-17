@@ -10,8 +10,6 @@ pub struct EditorUi {
     ids: Ids,
 
     average_delta: AverageDelta,
-    count: i32,
-    text: String,
 }
 
 impl EditorUi {
@@ -27,8 +25,6 @@ impl EditorUi {
             ids,
 
             average_delta: AverageDelta::new(),
-            count: 0,
-            text: String::from("Data"),
         }
     }
 
@@ -73,28 +69,6 @@ impl EditorUi {
             .w(96.0)
             .font_size(12)
             .set(self.ids.ms_label, ui);
-
-        // Counter button
-        for _click in Button::new()
-            .middle_of(self.ids.canvas)
-            .w_h(240.0, 80.0)
-            .label(&self.count.to_string())
-            .set(self.ids.counter, ui)
-        {
-            self.count += 1;
-        }
-
-        for event in widget::TextBox::new(&self.text)
-            .down_from(self.ids.counter, 12.0)
-            .font_size(18)
-            .w_h(240.0, 36.0)
-            .set(self.ids.text_field, ui)
-        {
-            match event {
-                widget::text_box::Event::Enter => println!("TextBox {}", self.text),
-                widget::text_box::Event::Update(string) => self.text = string,
-            }
-        }
     }
 }
 
