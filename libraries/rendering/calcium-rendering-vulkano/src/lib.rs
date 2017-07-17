@@ -2,7 +2,7 @@ extern crate cgmath;
 extern crate image;
 #[macro_use]
 extern crate slog;
-#[macro_use]
+//#[macro_use]
 extern crate vulkano;
 extern crate calcium_rendering;
 

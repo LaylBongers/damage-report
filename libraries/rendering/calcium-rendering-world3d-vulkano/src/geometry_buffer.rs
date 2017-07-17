@@ -30,7 +30,6 @@ impl GeometryBuffer {
     pub fn new(
         renderer: &VulkanoRenderer,
         window_renderer: &VulkanoWindowRenderer,
-        depth_attachment: Arc<AttachmentImage<format::D32Sfloat_S8Uint>>
     ) -> Self {
         // The gbuffer attachments we end up using in the final lighting pass need to have sampled
         //  set to true, or we can't sample them, resulting in a black color result.
@@ -60,6 +59,10 @@ impl GeometryBuffer {
         let roughness_attachment = AttachmentImage::with_usage(
             renderer.device().clone(), window_renderer.size().into(),
             format::R8Unorm, attach_usage
+        ).unwrap();
+        let depth_attachment = AttachmentImage::new(
+            renderer.device().clone(), window_renderer.size().into(),
+            format::D32Sfloat_S8Uint
         ).unwrap();
         // Rather than create our own depth attachment, we re-use the one of the framebuffer the
         // lighting will eventually render to. A later forward rendering pass for transparent

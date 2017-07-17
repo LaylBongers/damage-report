@@ -6,7 +6,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 
-use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoFrame};
+use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoFrame, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{lighting_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld, World3DRenderTarget};
 
@@ -41,8 +41,8 @@ impl LightingRenderer {
     pub fn build_command_buffer(
         &mut self,
         world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, camera: &Camera,
-        rendertarget: &World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
-        renderer: &mut VulkanoRenderer, frame: &VulkanoFrame,
+        rendertarget: &mut World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
+        renderer: &mut VulkanoRenderer, window_renderer: &VulkanoWindowRenderer, frame: &VulkanoFrame,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             renderer.device().clone(), renderer.graphics_queue().family()
@@ -59,12 +59,18 @@ impl LightingRenderer {
         // TODO: Actually make sure the depth ends up in the framebuffer, we're already using the
         //  depth buffer during geometry rendering but now we're clearing it, we still need it for
         //  further transparent render passes.
-        let clear_values = vec!(
-            ClearValue::Float([0.005, 0.005, 0.005, 1.0]),
-            ClearValue::Depth(1.0)
-        );
-        command_buffer_builder = command_buffer_builder
-            .begin_render_pass(frame.framebuffer.clone(), false, clear_values).unwrap();
+        command_buffer_builder = {
+            let clear_values = vec!(
+                ClearValue::Float([0.005, 0.005, 0.005, 1.0]),
+                ClearValue::Depth(1.0)
+            );
+            let framebuffer = rendertarget.raw.window_framebuffer_for(
+                frame.image_num, window_renderer
+            );
+
+            command_buffer_builder
+                .begin_render_pass(framebuffer.clone(), false, clear_values).unwrap()
+        };
 
         // Create a buffer for a single screen-sized triangle TODO: Re-use that buffer
         let sst_vertices = vec![

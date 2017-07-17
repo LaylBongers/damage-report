@@ -3,7 +3,6 @@ use std::sync::{Arc};
 use cgmath::{Vector2};
 use vulkano::swapchain::{Surface};
 use vulkano::sync::{GpuFuture};
-use vulkano::framebuffer::{FramebufferAbstract};
 
 use calcium_rendering::{WindowRenderer, Renderer};
 use {WindowSwapchain, VulkanoTypes, VulkanoRenderer};
@@ -51,22 +50,20 @@ impl VulkanoWindowRenderer {
 }
 
 impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
-    fn start_frame(&mut self, renderer: &mut VulkanoRenderer) -> VulkanoFrame {
+    fn start_frame(&mut self, _renderer: &mut VulkanoRenderer) -> VulkanoFrame {
         self.swapchain.cleanup_finished_frames();
 
         // Before we render, see if we need to execute a queued resize
         if self.queued_resize {
-            self.swapchain.resize(renderer, self.size);
+            self.swapchain.resize(self.size);
             self.queued_resize = false;
         }
 
         // Get the image for this frame, along with a future that will let us queue up the order of
         //  command buffer submissions.
-        let (framebuffer, image_num, future) = self.swapchain.start_frame();
+        let (image_num, future) = self.swapchain.start_frame();
 
         VulkanoFrame {
-            size: self.size,
-            framebuffer,
             image_num,
             future: Some(future),
         }
@@ -84,9 +81,6 @@ impl WindowRenderer<VulkanoTypes> for VulkanoWindowRenderer {
 }
 
 pub struct VulkanoFrame {
-    // TODO: Remove size from this
-    pub size: Vector2<u32>,
-    pub framebuffer: Arc<FramebufferAbstract + Send + Sync>,
     pub image_num: usize,
     pub future: Option<Box<GpuFuture + Send + Sync>>,
 }

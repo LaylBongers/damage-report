@@ -55,7 +55,7 @@ impl World3DRenderer<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRender
             world, camera, world3d_rendertarget, renderer, window_renderer,
         ).build().unwrap();
         let lighting_command_buffer = self.lighting_renderer.build_command_buffer(
-            world, camera, world3d_rendertarget, renderer, frame,
+            world, camera, world3d_rendertarget, renderer, window_renderer, frame,
         ).build().unwrap();
 
         // Add the command buffers to the future we're building up, making sure they're in the

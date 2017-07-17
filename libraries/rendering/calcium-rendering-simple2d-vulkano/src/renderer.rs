@@ -8,7 +8,7 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
-use calcium_rendering::{Renderer, Texture, Error, CalciumErrorMappable};
+use calcium_rendering::{Renderer, Texture, Error, CalciumErrorMappable, WindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
@@ -90,9 +90,10 @@ impl Simple2DRenderer<VulkanoTypes, VulkanoSimple2DTypes> for VulkanoSimple2DRen
         let mut future = renderer.submit_queued_commands(frame.future.take().unwrap());
 
         // Create a projection matrix that just matches coordinates to pixels
+        let size = window_renderer.size();
         let proj = cgmath::ortho(
-            0.0, frame.size.x as f32,
-            0.0, frame.size.y as f32, // Top/Bottom flipped, cgmath expects a different clip space
+            0.0, size.x as f32,
+            0.0, size.y as f32, // Top/Bottom flipped, cgmath expects a different clip space
             1.0, -1.0
         );
 
@@ -178,8 +179,8 @@ impl Simple2DRenderer<VulkanoTypes, VulkanoSimple2DTypes> for VulkanoSimple2DRen
                             origin: [0.0, 0.0],
                             depth_range: 0.0 .. 1.0,
                             dimensions: [
-                                frame.size.x as f32,
-                                frame.size.y as f32
+                                size.x as f32,
+                                size.y as f32
                             ],
                         })),
                         .. DynamicState::none()
