@@ -8,7 +8,7 @@ pub trait Simple2DRenderer<T: Types, ST: Simple2DTypes<T>> {
         &mut self,
         batches: &[RenderBatch<T>],
         render_target: &mut Simple2DRenderTarget<T, ST>,
-        renderer: &mut T::Renderer,
+        renderer: &mut T::Renderer, window_renderer: &mut T::WindowRenderer,
         frame: &mut T::Frame,
     );
 }

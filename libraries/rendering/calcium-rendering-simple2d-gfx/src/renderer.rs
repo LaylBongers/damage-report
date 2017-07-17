@@ -8,7 +8,7 @@ use gfx::traits::{FactoryExt};
 use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
 use calcium_rendering::{Error, Texture};
-use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat};
+use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat, GfxWindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode, Simple2DRenderTarget};
 
 use {GfxSimple2DTypes};
@@ -107,7 +107,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         &mut self,
         batches: &[RenderBatch<GfxTypes<D, F>>],
         render_target: &mut Simple2DRenderTarget<GfxTypes<D, F>, GfxSimple2DTypes>,
-        renderer: &mut GfxRenderer<D, F>,
+        renderer: &mut GfxRenderer<D, F>, _window_renderer: &mut GfxWindowRenderer,
         frame: &mut GfxFrame,
     ) {
         // Clear if we were told to clear

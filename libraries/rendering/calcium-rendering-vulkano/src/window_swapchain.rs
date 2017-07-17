@@ -15,14 +15,17 @@ use {VulkanoRenderer};
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
 pub struct WindowSwapchain {
     pub swapchain: Arc<Swapchain>,
-    // TODO: Remove both the depth_attachment and the render_pass as they're not really part of a
-    //  swapchain and should rather be tracked by a 3D renderer
+    images: Vec<Arc<SwapchainImage>>,
+    // TODO: Remove depth_attachment, render_pass, and framebuffers as they're not really part of a
+    //  swapchain and should rather be tracked by specific renderers
     pub depth_attachment: Arc<AttachmentImage<format::D32Sfloat_S8Uint>>,
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
 
     // Submissions from previous frames
     previous_frame: Option<Box<GpuFuture + Send + Sync>>,
+
+    images_id: usize,
 }
 
 impl WindowSwapchain {
@@ -107,27 +110,46 @@ impl WindowSwapchain {
 
         WindowSwapchain {
             swapchain,
+            images,
+
             depth_attachment,
             render_pass,
             framebuffers,
             previous_frame: Some(Box::new(::vulkano::sync::now(renderer.device().clone()))),
+
+            images_id: 0,
         }
+    }
+
+    pub fn images(&self) -> &Vec<Arc<SwapchainImage>> {
+        &self.images
+    }
+
+    /// Increments every time the swapchain images vector gets updated, can be used to check if
+    /// framebuffers should be updated.
+    pub fn images_id(&self) -> usize {
+        self.images_id
     }
 
     pub fn resize(&mut self, renderer: &VulkanoRenderer, size: Vector2<u32>) {
         let (swapchain, images) = self.swapchain.recreate_with_dimension(size.into()).unwrap();
         self.swapchain = swapchain;
-        self.depth_attachment = create_depth_attachment(renderer, &images);
+        self.images = images;
+        self.depth_attachment = create_depth_attachment(renderer, &self.images);
         self.framebuffers = create_framebuffers(
-            &images, &self.render_pass, &self.depth_attachment
+            &self.images, &self.render_pass, &self.depth_attachment
         );
+
+        self.images_id += 1;
     }
 
     pub fn cleanup_finished_frames(&mut self) {
         self.previous_frame.as_mut().unwrap().cleanup_finished();
     }
 
-    pub fn start_frame(&mut self) -> (Arc<FramebufferAbstract + Send + Sync>, usize, Box<GpuFuture + Send + Sync>) {
+    pub fn start_frame(
+        &mut self
+    ) -> (Arc<FramebufferAbstract + Send + Sync>, usize, Box<GpuFuture + Send + Sync>) {
         let (image_num, aquire_future) = ::vulkano::swapchain::acquire_next_image(
             self.swapchain.clone(), None
         ).unwrap();

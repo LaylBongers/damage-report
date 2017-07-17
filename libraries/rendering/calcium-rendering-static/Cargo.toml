@@ -1,6 +1,6 @@
 [package]
 name = "calcium-rendering-static"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 description = "The future home of the calcium rendering library"
 license = "MIT/Apache-2.0"

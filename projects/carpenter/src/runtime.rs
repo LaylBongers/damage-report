@@ -20,17 +20,19 @@ impl Runtime for StaticRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
         info!(self.log, "Loading program");
 
-        // Set up everything we need to render
+        // Set up the renderer and open up a window to render to
         let window_settings = WindowSettings::new("Carpenter", [1280, 720]);
         let (mut renderer, mut window, mut window_renderer) =
             init.renderer(Some(self.log.clone()), &window_settings)?;
-        let mut world3d_renderer = init.world3d_renderer(&mut renderer, &mut window_renderer)?;
+
+        // Set up 2D rendering for the UI
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
         let mut simple2d_render_target = Simple2DRenderTarget::new(
             false, &renderer, &window_renderer, &simple2d_renderer
         );
 
-        // Set up the 3D world render data
+        // Set up 3D viewport rendering
+        let mut world3d_renderer = init.world3d_renderer(&mut renderer, &mut window_renderer)?;
         let camera = Camera::new(
             Vector3::new(0.0, 0.0, -5.0),
             Quaternion::one(),
@@ -80,7 +82,8 @@ impl Runtime for StaticRuntime {
                 &mut renderer, &mut window_renderer, &mut frame
             );
             simple2d_renderer.render(
-                &ui_batches, &mut simple2d_render_target, &mut renderer, &mut frame
+                &ui_batches, &mut simple2d_render_target,
+                &mut renderer, &mut window_renderer, &mut frame
             );
             window_renderer.finish_frame(&mut renderer, frame);
             window.swap_buffers();

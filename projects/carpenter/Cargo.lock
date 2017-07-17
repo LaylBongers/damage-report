@@ -6,7 +6,7 @@ dependencies = [
  "calcium-game 0.1.0",
  "calcium-rendering 0.1.0",
  "calcium-rendering-simple2d 0.1.0",
- "calcium-rendering-static 0.0.1",
+ "calcium-rendering-static 0.1.0",
  "calcium-rendering-world3d 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "conrod 0.53.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -147,7 +147,7 @@ dependencies = [
 
 [[package]]
 name = "calcium-rendering-static"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-gfx 0.1.0",
@@ -447,7 +447,7 @@ dependencies = [
 
 [[package]]
 name = "deflate"
-version = "0.7.13"
+version = "0.7.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "adler32 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1196,7 +1196,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "bitflags 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "deflate 0.7.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "deflate 0.7.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "inflate 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-iter 0.1.34 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1778,7 +1778,7 @@ dependencies = [
 "checksum core-graphics 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)" = "9797d894882bbf37c0c1218a8d90333fae3c6b09d526534fd370aac2bc6efc21"
 "checksum crossbeam 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)" = "0c5ea215664ca264da8a9d9c3be80d2eaf30923c259d03e870388eb927508f97"
 "checksum daggy 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9293a0da7d1bc1f30090ece4d9f9de79a07be7302ddb00e5eb1fefb6ee6409e2"
-"checksum deflate 0.7.13 (registry+https://github.com/rust-lang/crates.io-index)" = "2b8c519bdb6db661b4442cf161eace023f509ca664845fd79951fb62145820dd"
+"checksum deflate 0.7.14 (registry+https://github.com/rust-lang/crates.io-index)" = "e34344f1728e41039d49e87f428bbcb62b6bb82edfc2588253a8aa32a139a3a9"
 "checksum derivative 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "67b3d6d0e84e53a5bdc263cc59340541877bb541706a191d762bfac6a481bdde"
 "checksum dlib 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)" = "148bce4ce1c36c4509f29cb54e62c2bd265551a9b00b38070fad551a851866ec"
 "checksum draw_state 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)" = "337aeb4ca88f60f29e2e01ff252ac4eb40b9a86c65f699bdf4c7e3944390cea9"

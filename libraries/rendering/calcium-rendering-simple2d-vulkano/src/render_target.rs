@@ -2,8 +2,9 @@ use std::sync::{Arc};
 
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
-use vulkano::framebuffer::{Subpass, RenderPassAbstract};
+use vulkano::framebuffer::{Subpass, RenderPassAbstract, Framebuffer, FramebufferAbstract};
 use vulkano::format::{ClearValue};
+use vulkano::image::swapchain::{SwapchainImage};
 
 use calcium_rendering::{Renderer};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoWindowRenderer};
@@ -12,13 +13,34 @@ use calcium_rendering_simple2d::{Simple2DRenderTargetRaw};
 use {VkVertex, VulkanoSimple2DTypes, VulkanoSimple2DRenderer};
 
 pub struct VulkanoSimple2DRenderTargetRaw {
+    render_pass: Arc<RenderPassAbstract + Send + Sync>,
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     should_clear: bool,
+
+    framebuffers_images_id: usize,
 }
 
 impl VulkanoSimple2DRenderTargetRaw {
     pub fn pipeline(&self) -> &Arc<GraphicsPipelineAbstract + Send + Sync> {
         &self.pipeline
+    }
+
+    pub fn framebuffer_for(
+        &mut self, image_num: usize, window_renderer: &VulkanoWindowRenderer,
+    ) -> &Arc<FramebufferAbstract + Send + Sync> {
+        // Check if we should update the framebuffers
+        let current_images_id = window_renderer.swapchain.images_id();
+        if self.framebuffers_images_id != current_images_id {
+            self.framebuffers = create_framebuffers(
+                window_renderer.swapchain.images(),
+                &self.render_pass,
+            );
+            self.framebuffers_images_id = current_images_id;
+        }
+
+        // Return the framebuffer for this image_num
+        &self.framebuffers[image_num]
     }
 
     pub fn clear_values(&self) -> Vec<ClearValue> {
@@ -33,7 +55,7 @@ impl VulkanoSimple2DRenderTargetRaw {
 impl Simple2DRenderTargetRaw<VulkanoTypes, VulkanoSimple2DTypes> for VulkanoSimple2DRenderTargetRaw {
     fn new(
         should_clear: bool,
-        renderer: &VulkanoRenderer, _window_renderer: &VulkanoWindowRenderer,
+        renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
         simple2d_renderer: &VulkanoSimple2DRenderer,
     ) -> Self {
         // Set up the render pass for 2D rendering depending on the settings for this target
@@ -87,13 +109,35 @@ impl Simple2DRenderTargetRaw<VulkanoTypes, VulkanoSimple2DTypes> for VulkanoSimp
             .blend_alpha_blending()
             .cull_mode_disabled()
 
-            .render_pass(Subpass::from(render_pass, 0).unwrap())
+            .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
             .build(renderer.device().clone()).unwrap()
         ) as Arc<GraphicsPipeline<SingleBufferDefinition<VkVertex>, _, _>>;
 
+        // Create the swapchain framebuffers for this render pass
+        let framebuffers = create_framebuffers(
+            window_renderer.swapchain.images(),
+            &render_pass,
+        );
+        let framebuffers_images_id = window_renderer.swapchain.images_id();
+
         VulkanoSimple2DRenderTargetRaw {
+            render_pass,
             pipeline,
+            framebuffers,
             should_clear,
+            framebuffers_images_id,
         }
     }
+}
+
+fn create_framebuffers(
+    images: &Vec<Arc<SwapchainImage>>,
+    render_pass: &Arc<RenderPassAbstract + Send + Sync>,
+) -> Vec<Arc<FramebufferAbstract + Send + Sync>> {
+    images.iter().map(|image| {
+        Arc::new(Framebuffer::start(render_pass.clone())
+            .add(image.clone()).unwrap()
+            .build().unwrap()
+        ) as Arc<FramebufferAbstract + Send + Sync>
+    }).collect()
 }

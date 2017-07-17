@@ -10,7 +10,7 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use calcium_rendering::{Renderer, Texture, Error, CalciumErrorMappable};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex, VulkanoSimple2DTypes};
@@ -82,7 +82,7 @@ impl Simple2DRenderer<VulkanoTypes, VulkanoSimple2DTypes> for VulkanoSimple2DRen
         &mut self,
         batches: &[RenderBatch<VulkanoTypes>],
         render_target: &mut Simple2DRenderTarget<VulkanoTypes, VulkanoSimple2DTypes>,
-        renderer: &mut VulkanoRenderer,
+        renderer: &mut VulkanoRenderer, window_renderer: &mut VulkanoWindowRenderer,
         frame: &mut VulkanoFrame,
     ) {
         // Give the renderer an opportunity to insert any commands it had queued up, this is used
@@ -107,11 +107,15 @@ impl Simple2DRenderer<VulkanoTypes, VulkanoSimple2DTypes> for VulkanoSimple2DRen
         ).unwrap();
 
         // Start the command buffer, this will contain the draw commands
-        let clear_values = render_target.raw.clear_values();
-        let mut command_buffer_builder = AutoCommandBufferBuilder::new(
-                renderer.device().clone(), renderer.graphics_queue().family()
-            ).unwrap()
-            .begin_render_pass(frame.framebuffer.clone(), false, clear_values).unwrap();
+        let mut command_buffer_builder = {
+            let clear_values = render_target.raw.clear_values();
+            let framebuffer = render_target.raw.framebuffer_for(frame.image_num, window_renderer);
+
+            AutoCommandBufferBuilder::new(
+                    renderer.device().clone(), renderer.graphics_queue().family()
+                ).unwrap()
+                .begin_render_pass(framebuffer.clone(), false, clear_values).unwrap()
+        };
 
         // Go over all batches
         for batch in batches {

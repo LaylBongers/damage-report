@@ -72,7 +72,8 @@ impl Runtime for StaticRuntime {
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&mut renderer);
             simple2d_renderer.render(
-                &batches, &mut simple2d_render_target, &mut renderer, &mut frame
+                &batches, &mut simple2d_render_target,
+                &mut renderer, &mut window_renderer, &mut frame
             );
             window_renderer.finish_frame(&mut renderer, frame);
             window.swap_buffers();
