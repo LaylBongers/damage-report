@@ -20,17 +20,17 @@ pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTy
     ui: EditorUi,
     ui_batches: Vec<RenderBatch<T>>,
 
-    world3d_renderer: WT::Renderer,
+    //world3d_rendertarget: World3DRenderTarget<T, WT>,
     render_world: RenderWorld<T, WT>,
     camera: Camera,
 }
 
 impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindow<W, T, WT, ST> {
-    pub fn new<I: Initializer<Window = W, Types=T, World3DTypes=WT, Simple2DTypes=ST>>(
-        init: &I,
+    pub fn new(
         renderer: &mut T::Renderer,
         simple2d_renderer: &ST::Renderer,
-        window: W, mut window_renderer: T::WindowRenderer,
+        _world3d_renderer: &WT::Renderer,
+        window: W, window_renderer: T::WindowRenderer,
     ) -> Result<Self, Error> {
         // Set up 2D UI rendering
         let simple2d_rendertarget = Simple2DRenderTarget::new(
@@ -41,7 +41,7 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
         let ui = EditorUi::new(window_renderer.size());
 
         // Set up 3D viewport rendering
-        let world3d_renderer = init.world3d_renderer(renderer, &mut window_renderer)?;
+        //let world3d_rendertarget = World3DRenderTarget::new(renderer, world3d_renderer);
         let camera = Camera::new(
             Vector3::new(0.0, 2.0, 5.0),
             Quaternion::one(),
@@ -58,17 +58,18 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
             ui,
             ui_batches,
 
-            world3d_renderer,
+            //world3d_rendertarget,
             render_world,
             camera,
         })
     }
 
-    pub fn run_loop<I: Initializer<Window = W, Types=T, World3DTypes=WT, Simple2DTypes=ST>>(
+    pub fn run_loop<I: Initializer<Window=W, Types=T, World3DTypes=WT, Simple2DTypes=ST>>(
         &mut self,
         init: &I,
-        renderer: &mut <I::Types as Types>::Renderer,
-        simple2d_renderer: &mut <I::Simple2DTypes as Simple2DTypes<I::Types>>::Renderer,
+        renderer: &mut T::Renderer,
+        simple2d_renderer: &mut ST::Renderer,
+        world3d_renderer: &mut WT::Renderer,
     ) -> Result<(), Error> {
         let mut timer = LoopTimer::start();
 
@@ -101,7 +102,7 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
 
             // Perform the rendering itself
             let mut frame = self.window_renderer.start_frame(renderer);
-            self.world3d_renderer.render(
+            world3d_renderer.render(
                 &self.render_world, &self.camera,
                 renderer, &mut self.window_renderer, &mut frame
             );
