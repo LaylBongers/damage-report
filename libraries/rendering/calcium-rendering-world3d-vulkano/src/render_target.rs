@@ -1,16 +1,14 @@
 use std::sync::{Arc};
-use std::iter;
 
 use slog::{Logger};
 use vulkano::framebuffer::{Subpass, Framebuffer, RenderPassAbstract, FramebufferAbstract};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::depth_stencil::{DepthStencil, Compare};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
-use vulkano::pipeline::viewport::{Viewport};
 use vulkano::image::attachment::{AttachmentImage};
 use vulkano::image::swapchain::{SwapchainImage};
 
-use calcium_rendering::{Renderer, WindowRenderer};
+use calcium_rendering::{Renderer};
 use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs, lighting_vs, lighting_fs};
 use calcium_rendering_world3d::{World3DRenderTargetRaw};
@@ -30,21 +28,33 @@ pub struct VulkanoWorld3DRenderTargetRaw {
 
 impl VulkanoWorld3DRenderTargetRaw {
     pub fn window_framebuffer_for(
-        &mut self, image_num: usize, window_renderer: &VulkanoWindowRenderer,
+        &self, image_num: usize,
     ) -> &Arc<FramebufferAbstract + Send + Sync> {
-        // Check if we should update the framebuffers
-        let current_images_id = window_renderer.swapchain.images_id();
-        if self.window_framebuffers_images_id != current_images_id {
-            self.window_framebuffers = create_framebuffers(
-                window_renderer.swapchain.images(),
-                &self.window_render_pass,
-                &self.geometry_buffer.depth_attachment,
-            );
-            self.window_framebuffers_images_id = current_images_id;
-        }
-
         // Return the framebuffer for this image_num
         &self.window_framebuffers[image_num]
+    }
+
+    pub fn resize_framebuffers(
+        &mut self, renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer
+    ) {
+        // If we don't have anything to update, just return
+        let current_images_id = window_renderer.swapchain.images_id();
+        if self.window_framebuffers_images_id == current_images_id {
+            return;
+        }
+
+        // Update the geometry buffer so it matches the window's size
+        self.geometry_buffer = GeometryBuffer::new(
+            renderer, window_renderer,
+        );
+
+        // Update the window framebuffers
+        self.window_framebuffers = create_window_framebuffers(
+            window_renderer.swapchain.images(),
+            &self.window_render_pass,
+            &self.geometry_buffer.depth_attachment,
+        );
+        self.window_framebuffers_images_id = current_images_id;
     }
 }
 
@@ -54,13 +64,15 @@ impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3
         renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
         _world3d_renderer: &VulkanoWorld3DRenderer,
     ) -> Self {
+        // TODO: Implement should_clear
+
         let geometry_buffer = GeometryBuffer::new(
             renderer, window_renderer,
         );
 
         // TODO: Prevent shader re-loading
         let geometry_pipeline = load_geometry_pipeline(
-            renderer.log(), renderer, window_renderer, geometry_buffer.render_pass.clone()
+            renderer.log(), renderer, geometry_buffer.render_pass.clone()
         );
 
         let color_buffer_format = window_renderer.swapchain.swapchain.format();
@@ -89,10 +101,10 @@ impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3
 
         // TODO: Prevent shader re-loading
         let lighting_pipeline = load_lighting_pipeline(
-            renderer, window_renderer, &window_render_pass
+            renderer, &window_render_pass
         );
 
-        let window_framebuffers = create_framebuffers(
+        let window_framebuffers = create_window_framebuffers(
             window_renderer.swapchain.images(), &window_render_pass,
             &geometry_buffer.depth_attachment
         );
@@ -111,7 +123,7 @@ impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3
 }
 
 fn load_geometry_pipeline(
-    log: &Logger, renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
+    log: &Logger, renderer: &VulkanoRenderer,
     gbuffer_render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
@@ -121,18 +133,10 @@ fn load_geometry_pipeline(
 
     // Set up the pipeline itself
     debug!(log, "Creating gbuffer pipeline");
-    let dimensions = window_renderer.size();
     Arc::new(GraphicsPipeline::start()
         .vertex_input_single_buffer()
         .triangle_list()
-        .viewports(iter::once(Viewport {
-            origin: [0.0, 0.0],
-            depth_range: 0.0 .. 1.0,
-            dimensions: [
-                dimensions[0] as f32,
-                dimensions[1] as f32
-            ],
-        }))
+        .viewports_dynamic_scissors_irrelevant(1)
 
         // Which shaders to use
         .vertex_shader(vs.main_entry_point(), ())
@@ -154,7 +158,7 @@ fn load_geometry_pipeline(
 }
 
 fn load_lighting_pipeline(
-    renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
+    renderer: &VulkanoRenderer,
     window_render_pass: &Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
@@ -164,18 +168,10 @@ fn load_lighting_pipeline(
 
     // Set up the pipeline itself
     debug!(renderer.log(), "Creating lighting pipeline");
-    let dimensions = window_renderer.size();
     Arc::new(GraphicsPipeline::start()
         .vertex_input_single_buffer()
         .triangle_list()
-        .viewports(iter::once(Viewport {
-            origin: [0.0, 0.0],
-            depth_range: 0.0 .. 1.0,
-            dimensions: [
-                dimensions[0] as f32,
-                dimensions[1] as f32
-            ],
-        }))
+        .viewports_dynamic_scissors_irrelevant(1)
 
         // Which shaders to use
         .vertex_shader(vs.main_entry_point(), ())
@@ -188,7 +184,7 @@ fn load_lighting_pipeline(
     ) as Arc<GraphicsPipeline<SingleBufferDefinition<::lighting_renderer::ScreenSizeTriVertex>, _, _>>
 }
 
-fn create_framebuffers(
+fn create_window_framebuffers(
     images: &Vec<Arc<SwapchainImage>>,
     render_pass: &Arc<RenderPassAbstract + Send + Sync>,
     depth_attachment: &Arc<AttachmentImage<::vulkano::format::D32Sfloat_S8Uint>>,

@@ -31,6 +31,8 @@ impl GeometryBuffer {
         renderer: &VulkanoRenderer,
         window_renderer: &VulkanoWindowRenderer,
     ) -> Self {
+        info!(renderer.log(), "Creating g-buffer");
+
         // The gbuffer attachments we end up using in the final lighting pass need to have sampled
         //  set to true, or we can't sample them, resulting in a black color result.
         let attach_usage = ImageUsage {
@@ -39,7 +41,6 @@ impl GeometryBuffer {
         };
 
         // Create the attachment images that make up the G-buffer
-        debug!(renderer.log(), "Creating g-buffer attachment images");
         let position_attachment = AttachmentImage::with_usage(
             renderer.device().clone(), window_renderer.size().into(),
             format::R32G32B32A32Sfloat, attach_usage
@@ -70,7 +71,6 @@ impl GeometryBuffer {
 
         // Create the deferred render pass
         // TODO: Document better what a render pass does that a framebuffer doesn't
-        debug!(renderer.log(), "Creating g-buffer render pass");
         #[allow(dead_code)]
         let render_pass = Arc::new(single_pass_renderpass!(renderer.device().clone(),
             attachments: {
@@ -119,7 +119,6 @@ impl GeometryBuffer {
 
         // Create the off-screen g-buffer framebuffer that we will use to actually tell vulkano
         //  what images we want to render to
-        debug!(renderer.log(), "Creating g-buffer framebuffer");
         let framebuffer = Arc::new(Framebuffer::start(render_pass.clone())
             .add(position_attachment.clone()).unwrap()
             .add(base_color_attachment.clone()).unwrap()

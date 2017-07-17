@@ -48,6 +48,8 @@ impl World3DRenderer<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRender
         //  implemented it with separate submitted command buffers because I understand it better
         //  than subpasses at the moment.
 
+        world3d_rendertarget.raw.resize_framebuffers(renderer, window_renderer);
+
         // Build up the command buffers that contain all the rendering commands, telling the driver
         //  to actually render triangles to buffers. No actual rendering is done here, we just
         //  prepare the render passes and drawcalls.

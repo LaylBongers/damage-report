@@ -7,6 +7,7 @@ use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
+use vulkano::pipeline::viewport::{Viewport};
 
 use calcium_rendering::{Error, CalciumErrorMappable, WindowRenderer};
 use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoWindowRenderer};
@@ -78,7 +79,7 @@ impl GeometryRenderer {
                 command_buffer_builder = self.render_entity(
                     entity,
                     rendertarget,
-                    renderer,
+                    renderer, window_renderer,
                     &projection_view, &culling_frustum,
                     command_buffer_builder
                 );
@@ -93,7 +94,7 @@ impl GeometryRenderer {
         &self,
         entity: &Entity<VulkanoTypes, VulkanoWorld3DTypes>,
         rendertarget: &World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
-        renderer: &mut VulkanoRenderer,
+        renderer: &mut VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
         projection_view: &Matrix4<f32>, culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,
     ) -> AutoCommandBufferBuilder {
@@ -150,9 +151,23 @@ impl GeometryRenderer {
         // Perform the actual draw
         // TODO: Investigate the possibility of using draw_indexed_indirect (when it's added to
         //  vulkano)
+        let size = window_renderer.size();
         command_buffer
             .draw_indexed(
-                rendertarget.raw.geometry_pipeline.clone(), DynamicState::none(),
+                rendertarget.raw.geometry_pipeline.clone(),
+                // TODO: When a lot is being rendered, check the performance impact of doing
+                //  this here instead of in the pipeline.
+                DynamicState {
+                    viewports: Some(vec!(Viewport {
+                        origin: [0.0, 0.0],
+                        depth_range: 0.0 .. 1.0,
+                        dimensions: [
+                            size.x as f32,
+                            size.y as f32
+                        ],
+                    })),
+                    .. DynamicState::none()
+                },
                 vec!(entity.mesh.vertex_buffer.clone()),
                 entity.mesh.index_buffer.clone(),
                 set, ()
