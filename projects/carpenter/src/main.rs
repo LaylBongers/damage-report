@@ -14,7 +14,7 @@ extern crate slog_async;
 extern crate slog_term;
 extern crate ttf_noto_sans;
 
-mod editor_ui;
+mod editor;
 mod runtime;
 
 use slog::{Logger, Drain};

@@ -1,7 +1,7 @@
 use cgmath::{Vector2};
 use conrod::{self, color, Widget, Positionable, Sizeable, Labelable, Ui, UiBuilder, Colorable};
 use conrod::text::{FontCollection};
-use conrod::widget::{self, Text, Canvas, Button};
+use conrod::widget::{Text, Canvas, Button};
 
 use calcium_game::{AverageDelta, delta_to_fps};
 
