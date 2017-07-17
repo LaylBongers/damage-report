@@ -1,14 +1,8 @@
-use cgmath::{Vector3, Quaternion, One};
-
-use window::{Window, WindowSettings};
 use slog::{Logger};
+use window::{WindowSettings};
 
-use calcium_game::{LoopTimer};
-use calcium_rendering::{Error, WindowRenderer, Types, Texture, TextureFormat};
-use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
-use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material};
+use calcium_rendering::{Error};
 use calcium_rendering_static::{Runtime, Initializer};
-use calcium_conrod::{ConrodRenderer};
 
 use editor::{EditorWindow};
 
