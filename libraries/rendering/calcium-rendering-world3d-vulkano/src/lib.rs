@@ -13,8 +13,10 @@ mod geometry_buffer;
 mod geometry_renderer;
 mod lighting_renderer;
 mod mesh;
-mod types;
+mod render_target;
 mod renderer;
+mod types;
 
+pub use render_target::{VulkanoWorld3DRenderTargetRaw};
 pub use renderer::{VulkanoWorld3DRenderer};
 pub use types::{VulkanoWorld3DTypes};

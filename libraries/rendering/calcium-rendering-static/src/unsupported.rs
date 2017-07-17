@@ -2,12 +2,13 @@
 mod world3d {
     use std::sync::{Arc};
     use calcium_rendering::{Types};
-    use calcium_rendering_world3d::{World3DTypes, Vertex, Mesh, World3DRenderer, RenderWorld, Camera};
+    use calcium_rendering_world3d::{World3DTypes, Vertex, Mesh, World3DRenderer, RenderWorld, Camera, World3DRenderTargetRaw};
 
     pub struct UnsupportedWorld3DTypes;
 
     impl<T: Types> World3DTypes<T> for UnsupportedWorld3DTypes {
         type Renderer = UnsupportedWorld3DRenderer;
+        type RenderTargetRaw = UnsupportedWorld3DRenderTargetRaw;
         type Mesh = UnsupportedMesh;
     }
 
@@ -22,6 +23,21 @@ mod world3d {
             panic!("Unsupported!")
         }
     }
+
+    pub struct UnsupportedWorld3DRenderTargetRaw;
+
+    impl<T: Types> World3DRenderTargetRaw<T, UnsupportedWorld3DTypes>
+        for UnsupportedWorld3DRenderTargetRaw {
+        fn new(
+            _should_clear: bool,
+            _renderer: &T::Renderer, _window_renderer: &T::WindowRenderer,
+            _world3d_renderer: &UnsupportedWorld3DRenderer,
+        ) -> Self {
+            UnsupportedWorld3DRenderTargetRaw {
+            }
+        }
+    }
+
 
     pub struct UnsupportedMesh;
 
