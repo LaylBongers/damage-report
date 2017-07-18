@@ -1,15 +1,14 @@
-use cgmath::{Vector3, Quaternion, One};
-
 use window::{Window};
 
 use calcium_game::{LoopTimer};
-use calcium_rendering::{Error, WindowRenderer, Types, Texture, TextureFormat};
+use calcium_rendering::{Error, WindowRenderer, Types};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, Simple2DTypes, RenderBatch};
-use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material, World3DRenderTarget};
+use calcium_rendering_world3d::{World3DTypes, World3DRenderTarget};
 use calcium_rendering_static::{Initializer};
 use calcium_conrod::{ConrodRenderer};
 
 use editor::ui::{EditorUi};
+use editor::viewport::{EditorViewport};
 
 pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> {
     window: W,
@@ -21,8 +20,7 @@ pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTy
     ui_batches: Vec<RenderBatch<T>>,
 
     world3d_rendertarget: World3DRenderTarget<T, WT>,
-    render_world: RenderWorld<T, WT>,
-    camera: Camera,
+    viewport: EditorViewport<T, WT>,
 }
 
 impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindow<W, T, WT, ST> {
@@ -44,12 +42,8 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
         let world3d_rendertarget = World3DRenderTarget::new(
             true, renderer, &window_renderer, world3d_renderer
         );
-        let camera = Camera::new(
-            Vector3::new(0.0, 2.0, 5.0),
-            Quaternion::one(),
-        );
-        let mut render_world = RenderWorld::new();
-        seed_world(&mut render_world, renderer)?;
+
+        let viewport = EditorViewport::new(renderer)?;
 
         Ok(EditorWindow {
             window,
@@ -61,8 +55,7 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
             ui_batches,
 
             world3d_rendertarget,
-            render_world,
-            camera,
+            viewport,
         })
     }
 
@@ -104,9 +97,10 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
 
             // Perform the rendering itself
             let mut frame = self.window_renderer.start_frame(renderer);
-            world3d_renderer.render(
-                &self.render_world, &self.camera, &mut self.world3d_rendertarget,
-                renderer, &mut self.window_renderer, &mut frame
+            self.viewport.render(
+                &mut frame,
+                renderer, &mut self.window_renderer,
+                world3d_renderer, &mut self.world3d_rendertarget,
             );
             simple2d_renderer.render(
                 &self.ui_batches, &mut self.simple2d_rendertarget,
@@ -118,35 +112,4 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
 
         Ok(())
     }
-}
-
-fn seed_world<T: Types, WT: World3DTypes<T>>(
-    world: &mut RenderWorld<T, WT>, renderer: &mut T::Renderer
-) -> Result<(), Error> {
-    world.ambient_light = Vector3::new(0.05, 0.05, 0.05);
-    world.directional_light = Vector3::new(1.0, 1.0, 1.0);
-
-    let model = Model::<T, WT>::load(renderer, "./assets/cube.obj", 1.0);
-    let material = Material {
-        base_color: Texture::from_file(
-            renderer, "./assets/texture.png", TextureFormat::Srgb
-        )?,
-        normal_map: Texture::from_file(
-            renderer, "./assets/texture_normal.png", TextureFormat::Linear
-        )?,
-        metallic_map: Texture::from_file(
-            renderer, "./assets/texture_metallic.png", TextureFormat::LinearRed
-        )?,
-        roughness_map: Texture::from_file(
-            renderer, "./assets/texture_roughness.png", TextureFormat::LinearRed
-        )?,
-    };
-
-    world.add_entity(Entity {
-        position: Vector3::new(0.0, 0.0, 0.0),
-        mesh: model.meshes[0].clone(),
-        material: material,
-    });
-
-    Ok(())
 }
