@@ -1,4 +1,5 @@
 use cgmath::{Vector3, Quaternion, One};
+use window::{AdvancedWindow};
 
 use calcium_rendering::{Error, Types, Texture, TextureFormat};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material, World3DRenderTarget};
@@ -11,7 +12,6 @@ pub struct EditorViewport<T: Types, WT: World3DTypes<T>> {
 
     camera_pitch: f32,
     camera_yaw: f32,
-    mouse_hidden: bool,
 }
 
 impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
@@ -29,13 +29,13 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
 
             camera_pitch: 0.0,
             camera_yaw: 0.0,
-            mouse_hidden: false,
         })
     }
 
-    pub fn update(&mut self, delta: f32, input: &InputManager)
-    {
-        self.update_camera(delta, input);
+    pub fn update<W: AdvancedWindow>(
+        &mut self, delta: f32, input: &InputManager, window: &mut W
+    ) {
+        self.update_camera(delta, input, window);
     }
 
     pub fn render(
@@ -52,18 +52,17 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
         );
     }
 
-    fn update_camera(&mut self, _delta: f32, input: &InputManager)
-    {
+    fn update_camera<W: AdvancedWindow>(
+        &mut self, _delta: f32, input: &InputManager, window: &mut W
+    ) {
         if !input.navigate_button() {
-            if self.mouse_hidden {
-            }
+            window.set_capture_cursor(false);
 
             // We don't need to do anything more
             return;
         }
 
-        if !self.mouse_hidden {
-        }
+        window.set_capture_cursor(true);
 
         // Rotate the player's yaw depending on input
         /*self.pitch += frame_input.pitch;

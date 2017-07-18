@@ -1,5 +1,5 @@
 use slog::{Logger};
-use window::{Window, WindowSettings};
+use window::{Window, WindowSettings, AdvancedWindow};
 use input::{Input};
 
 use calcium_rendering::{Error, Types};
@@ -12,7 +12,7 @@ use calcium_rendering_simple2d::{Simple2DTypes};
 
 pub trait Initializer {
     type Types: Types;
-    type Window: Window;
+    type Window: Window + AdvancedWindow;
 
     #[cfg(feature = "world3d")]
     type World3DTypes: World3DTypes<Self::Types>;

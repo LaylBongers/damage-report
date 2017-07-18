@@ -1,4 +1,4 @@
-use window::{Window};
+use window::{Window, AdvancedWindow};
 
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer, Types};
@@ -24,7 +24,8 @@ pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTy
     viewport: EditorViewport<T, WT>,
 }
 
-impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindow<W, T, WT, ST> {
+impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>>
+    EditorWindow<W, T, WT, ST> {
     pub fn new(
         renderer: &mut T::Renderer,
         simple2d_renderer: &ST::Renderer,
@@ -92,7 +93,7 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
 
             // Update the UI and viewport
             self.ui.update(delta);
-            self.viewport.update(delta, &input);
+            self.viewport.update(delta, &input, &mut self.window);
 
             // Create render batches for the UI
             if let Some(changed_batches) = self.conrod_renderer.draw_if_changed(
