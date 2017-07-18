@@ -5,7 +5,6 @@ use calcium_rendering::{Error};
 use calcium_rendering_static::{Runtime, Initializer};
 
 use editor::{EditorWindow};
-
 pub struct StaticRuntime {
     pub log: Logger,
 }

@@ -8,6 +8,7 @@ extern crate cgmath;
 #[macro_use]
 extern crate conrod;
 extern crate window;
+extern crate input;
 #[macro_use]
 extern crate slog;
 extern crate slog_async;
@@ -15,6 +16,7 @@ extern crate slog_term;
 extern crate ttf_noto_sans;
 
 mod editor;
+mod input_manager;
 mod runtime;
 
 use slog::{Logger, Drain};

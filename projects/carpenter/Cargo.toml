@@ -13,6 +13,7 @@ calcium-conrod = {path = "../../libraries/ui/calcium-conrod"}
 cgmath = "0.14"
 conrod = {version = "0.53", features = ["piston"]}
 pistoncore-window = "0.27"
+pistoncore-input = "0.18"
 slog = "2"
 slog-async = "2"
 slog-term = "2"

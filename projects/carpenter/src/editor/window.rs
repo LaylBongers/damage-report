@@ -9,6 +9,7 @@ use calcium_conrod::{ConrodRenderer};
 
 use editor::ui::{EditorUi};
 use editor::viewport::{EditorViewport};
+use input_manager::{InputManager};
 
 pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> {
     window: W,
@@ -66,6 +67,7 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
         simple2d_renderer: &mut ST::Renderer,
         world3d_renderer: &mut WT::Renderer,
     ) -> Result<(), Error> {
+        let mut input = InputManager::new();
         let mut timer = LoopTimer::start();
 
         while !self.window.should_close() {
@@ -76,6 +78,9 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
                 // Let the initializer handle anything needed
                 init.handle_event(&event, renderer, &mut self.window, &mut self.window_renderer);
 
+                // Update the input manager with this event
+                input.handle_event(&event);
+
                 // Pass the event to conrod
                 let size = self.window_renderer.size();
                 if let Some(event) = ::conrod::backend::piston::event::convert(
@@ -85,8 +90,9 @@ impl<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> EditorWindo
                 }
             }
 
-            // Update the UI
+            // Update the UI and viewport
             self.ui.update(delta);
+            self.viewport.update(delta, &input);
 
             // Create render batches for the UI
             if let Some(changed_batches) = self.conrod_renderer.draw_if_changed(
