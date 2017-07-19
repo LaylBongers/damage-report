@@ -1,4 +1,4 @@
-use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle};
+use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle, InnerSpace};
 use window::{AdvancedWindow};
 use bus::{BusReader};
 
@@ -93,9 +93,9 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
     }
 
     fn update_camera<W: AdvancedWindow>(
-        &mut self, _delta: f32, input: &InputManager, window: &mut W
+        &mut self, delta: f32, input: &InputManager, window: &mut W
     ) {
-        if !input.navigate_button() {
+        if !input.camera_move_button {
             window.set_capture_cursor(false);
 
             // We don't need to do anything more
@@ -106,8 +106,8 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
 
         // Rotate the player's yaw depending on input
         let frame_input = input.frame();
-        self.camera_yaw += frame_input.mouse_x * -0.0002;
-        self.camera_pitch += frame_input.mouse_y * -0.0002;
+        self.camera_yaw += frame_input.mouse_x * -0.00025;
+        self.camera_pitch += frame_input.mouse_y * -0.00025;
 
         // Limit the pitch
         if self.camera_pitch > 0.25 {
@@ -116,6 +116,25 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
         if self.camera_pitch < -0.25 {
             self.camera_pitch = -0.25;
         }
+
+        // Calculate the current total WASD axes input
+        let mut axes: Vector2<f32> = Vector2::zero();
+        if input.forward_button { axes.y += 1.0; }
+        if input.backward_button { axes.y -= 1.0; }
+        if input.left_button { axes.x -= 1.0; }
+        if input.right_button { axes.x += 1.0; }
+        if axes == Vector2::zero() {
+            return;
+        }
+        axes = axes.normalize();
+
+        // Rotate the movement to relative to the camera
+        let rotation = self.create_camera_rotation();
+        let rotated_movement = rotation * Vector3::new(axes.x, 0.0, -axes.y);
+
+        // Apply the final movement
+        self.camera_position += rotated_movement * delta * 10.0;
+
     }
 
     fn add_brush(&mut self) {

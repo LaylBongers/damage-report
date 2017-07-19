@@ -1,7 +1,11 @@
-use input::{Input, Button, MouseButton, Motion};
+use input::{Input, Button, MouseButton, Motion, Key};
 
 pub struct InputManager {
-    navigate_button: bool,
+    pub camera_move_button: bool,
+    pub forward_button: bool,
+    pub left_button: bool,
+    pub backward_button: bool,
+    pub right_button: bool,
 
     frame: FrameInput,
 }
@@ -9,13 +13,14 @@ pub struct InputManager {
 impl InputManager {
     pub fn new() -> Self {
         InputManager {
-            navigate_button: false,
+            camera_move_button: false,
+            forward_button: false,
+            left_button: false,
+            backward_button: false,
+            right_button: false,
+
             frame: FrameInput::new(),
         }
-    }
-
-    pub fn navigate_button(&self) -> bool {
-        self.navigate_button
     }
 
     pub fn frame(&self) -> &FrameInput {
@@ -29,9 +34,30 @@ impl InputManager {
     pub fn handle_event(&mut self, event: &Input) {
         match *event {
             Input::Press(Button::Mouse(MouseButton::Right)) =>
-                self.navigate_button = true,
+                self.camera_move_button = true,
             Input::Release(Button::Mouse(MouseButton::Right)) =>
-                self.navigate_button = false,
+                self.camera_move_button = false,
+
+            Input::Press(Button::Keyboard(Key::W)) =>
+                self.forward_button = true,
+            Input::Release(Button::Keyboard(Key::W)) =>
+                self.forward_button = false,
+
+            Input::Press(Button::Keyboard(Key::A)) =>
+                self.left_button = true,
+            Input::Release(Button::Keyboard(Key::A)) =>
+                self.left_button = false,
+
+            Input::Press(Button::Keyboard(Key::S)) =>
+                self.backward_button = true,
+            Input::Release(Button::Keyboard(Key::S)) =>
+                self.backward_button = false,
+
+            Input::Press(Button::Keyboard(Key::D)) =>
+                self.right_button = true,
+            Input::Release(Button::Keyboard(Key::D)) =>
+                self.right_button = false,
+
             Input::Move(Motion::MouseRelative(x, y)) => {
                 self.frame.mouse_x += x as f32;
                 self.frame.mouse_y += y as f32;
