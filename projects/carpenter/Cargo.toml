@@ -11,7 +11,7 @@ calcium-rendering-world3d = {path = "../../libraries/rendering/calcium-rendering
 calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d", "world3d"]}
 calcium-conrod = {path = "../../libraries/ui/calcium-conrod"}
 cgmath = "0.14"
-conrod = {version = "0.53", features = ["piston"]}
+conrod = {version = "0.54", features = ["piston"]}
 pistoncore-window = "0.27"
 pistoncore-input = "0.18"
 slog = "2"

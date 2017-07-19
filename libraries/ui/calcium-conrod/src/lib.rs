@@ -9,7 +9,6 @@ extern crate palette;
 extern crate slog;
 
 mod conrod_renderer;
-mod line_renderer;
 mod text_renderer;
 mod util;
 

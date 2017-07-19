@@ -1,13 +1,14 @@
-use cgmath::{Vector2};
+use cgmath::{Vector2, Zero};
 
-use conrod::{Ui, Color};
+use conrod::{Ui, Color, Point};
 use conrod::render::{PrimitiveWalker, PrimitiveKind, Primitives};
 use conrod::position::rect::{Rect};
+use conrod::widget::primitive::shape::triangles::{Triangle, ColoredPoint};
+use conrod::color::{Rgba};
 
 use calcium_rendering::{Types, WindowRenderer, Renderer, Error};
-use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle};
+use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle, DrawVertex};
 
-use line_renderer::{push_lines};
 use text_renderer::{TextRenderer};
 use util;
 
@@ -54,11 +55,11 @@ impl<T: Types> ConrodRenderer<T> {
                 PrimitiveKind::Rectangle { color } => {
                     self.push_rect(&mut batch, half_size, &prim.rect, color);
                 },
-                PrimitiveKind::Polygon { color: _, points: _ } => {
-                    unimplemented!()
+                PrimitiveKind::TrianglesSingleColor { color, triangles } => {
+                    self.push_triangles_single_color(&mut batch, half_size, color, triangles);
                 },
-                PrimitiveKind::Lines { color, cap: _, thickness, points } => {
-                    push_lines(&mut batch, color, thickness, points, half_size);
+                PrimitiveKind::TrianglesMultiColor { triangles } => {
+                    self.push_triangles_multi_color(&mut batch, half_size, triangles);
                 },
                 PrimitiveKind::Image { image_id: _, color: _, source_rect: _ } => {
                     unimplemented!()
@@ -96,5 +97,33 @@ impl<T: Types> ConrodRenderer<T> {
             texture_source: None,
             color: util::color_conrod_to_calcium(color),
         });
+    }
+
+    fn push_triangles_single_color(
+        &self, batch: &mut RenderBatch<T>, half_size: Vector2<f32>,
+        color: Rgba, triangles: &[Triangle<Point>]
+    ) {
+        for triangle in triangles {
+            let point = triangle.0[0];
+            batch.vertices.push(DrawVertex::new(
+                Vector2::new(point[0], point[1]).cast() + half_size,
+                Vector2::zero(),
+                util::color_conrod_rgba_to_calcium(color),
+            ));
+        }
+    }
+
+    fn push_triangles_multi_color(
+        &self, batch: &mut RenderBatch<T>, half_size: Vector2<f32>,
+        triangles: &[Triangle<ColoredPoint>]
+    ) {
+        for triangle in triangles {
+            let point = triangle.0[0];
+            batch.vertices.push(DrawVertex::new(
+                Vector2::new(point.0[0], point.0[1]).cast() + half_size,
+                Vector2::zero(),
+                util::color_conrod_rgba_to_calcium(point.1),
+            ));
+        }
     }
 }
