@@ -106,8 +106,8 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
 
         // Rotate the player's yaw depending on input
         let frame_input = input.frame();
-        self.camera_yaw += frame_input.mouse_x * -0.0001;
-        self.camera_pitch += frame_input.mouse_y * -0.0001;
+        self.camera_yaw += frame_input.mouse_x * -0.0002;
+        self.camera_pitch += frame_input.mouse_y * -0.0002;
 
         // Limit the pitch
         if self.camera_pitch > 0.25 {
