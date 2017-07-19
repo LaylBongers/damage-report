@@ -10,8 +10,8 @@ pub struct EditorViewport<T: Types, WT: World3DTypes<T>> {
     camera: Camera,
     render_world: RenderWorld<T, WT>,
 
-    camera_pitch: f32,
-    camera_yaw: f32,
+    _camera_pitch: f32,
+    _camera_yaw: f32,
 }
 
 impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
@@ -27,8 +27,8 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
             camera,
             render_world,
 
-            camera_pitch: 0.0,
-            camera_yaw: 0.0,
+            _camera_pitch: 0.0,
+            _camera_yaw: 0.0,
         })
     }
 

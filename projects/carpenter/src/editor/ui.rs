@@ -1,5 +1,5 @@
 use cgmath::{Vector2};
-use conrod::{self, color, Widget, Positionable, Sizeable, Labelable, Ui, UiBuilder, Colorable};
+use conrod::{self, color, Widget, Positionable, Sizeable, Ui, UiBuilder, Colorable};
 use conrod::text::{FontCollection};
 use conrod::widget::{Text, Canvas, Button};
 
@@ -40,23 +40,33 @@ impl EditorUi {
         // Top ribbon
         Canvas::new()
             .top_left_of(self.ids.canvas)
-            .h(36.0) // Eventual full size: .h(96.0)
+            .h(96.0) // Tabs section: .h(36.0)
             .pad(3.0)
             .set(self.ids.top_ribbon_canvas, ui);
 
         // Save button
         Button::new()
-            .top_left_of(self.ids.top_ribbon_canvas)
-            .w_h(30.0, 30.0)
-            .label("S")
+            .up_from(self.ids.top_ribbon_save_label, 3.0)
+            .w_h(48.0, 48.0)
             .set(self.ids.top_ribbon_save, ui);
+        Text::new("Save As")
+            .bottom_left_of(self.ids.top_ribbon_canvas)
+            .w_h(48.0, 12.0)
+            .font_size(10)
+            .center_justify()
+            .set(self.ids.top_ribbon_save_label, ui);
 
         // Load button
         Button::new()
-            .right_from(self.ids.top_ribbon_save, 3.0)
-            .w_h(30.0, 30.0)
-            .label("L")
+            .up_from(self.ids.top_ribbon_load_label, 3.0)
+            .w_h(48.0, 48.0)
             .set(self.ids.top_ribbon_load, ui);
+        Text::new("Load")
+            .right_from(self.ids.top_ribbon_save_label, 3.0)
+            .w_h(48.0, 12.0)
+            .font_size(10)
+            .center_justify()
+            .set(self.ids.top_ribbon_load_label, ui);
 
         // Render performance debug information
         Text::new(&format!("FPS: {}", delta_to_fps(self.average_delta.get())))
@@ -98,7 +108,8 @@ widget_ids! { struct Ids {
     canvas,
 
     top_ribbon_canvas,
-    top_ribbon_save, top_ribbon_load,
+    top_ribbon_save, top_ribbon_save_label,
+    top_ribbon_load, top_ribbon_load_label,
 
     fps_label, ms_label,
     counter, text_field,
