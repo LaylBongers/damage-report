@@ -1,8 +1,8 @@
-use cgmath::{Vector3, Quaternion, One};
+use cgmath::{Vector2, Vector3, Quaternion, One};
 use window::{AdvancedWindow};
 use bus::{BusReader};
 
-use calcium_rendering::{Error, Types, Texture, TextureFormat};
+use calcium_rendering::{Error, Types, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material, World3DRenderTarget};
 
 use model::{Application, ApplicationEvent};
@@ -83,8 +83,15 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
         world3d_renderer: &mut WT::Renderer,
         world3d_rendertarget: &mut World3DRenderTarget<T, WT>,
     ) {
+        // Create a viewport that doesn't overlap the UI
+        let viewport = Viewport::new(
+            Vector2::new(0.0, 96.0),
+            window_renderer.size().cast() - Vector2::new(0.0, 96.0),
+        );
+
         world3d_renderer.render(
-            &self.render_world, &self.camera, world3d_rendertarget,
+            &self.render_world, &self.camera,
+            world3d_rendertarget, &viewport,
             renderer, window_renderer, frame
         );
     }

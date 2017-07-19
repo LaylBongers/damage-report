@@ -1,7 +1,7 @@
 #[cfg(feature = "world3d")]
 mod world3d {
     use std::sync::{Arc};
-    use calcium_rendering::{Types};
+    use calcium_rendering::{Types, Viewport};
     use calcium_rendering_world3d::{World3DTypes, Vertex, Mesh, World3DRenderer, RenderWorld, Camera, World3DRenderTargetRaw, World3DRenderTarget};
 
     pub struct UnsupportedWorld3DTypes;
@@ -18,6 +18,7 @@ mod world3d {
         fn render(
             &mut self, _world: &RenderWorld<T, UnsupportedWorld3DTypes>, _camera: &Camera,
             _world3d_rendertarget: &mut World3DRenderTarget<T, UnsupportedWorld3DTypes>,
+            _viewport: &Viewport,
             _renderer: &mut T::Renderer, _window_renderer: &mut T::WindowRenderer,
             _frame: &mut T::Frame
         ) {

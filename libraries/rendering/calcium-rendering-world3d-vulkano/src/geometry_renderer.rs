@@ -7,10 +7,10 @@ use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
-use vulkano::pipeline::viewport::{Viewport};
+use vulkano::pipeline::viewport::{Viewport as ViewportVk};
 
-use calcium_rendering::{Error, CalciumErrorMappable, WindowRenderer};
-use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoWindowRenderer};
+use calcium_rendering::{Error, CalciumErrorMappable, Viewport};
+use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity, World3DRenderTarget};
 
@@ -45,7 +45,7 @@ impl GeometryRenderer {
         world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, camera: &Camera,
         rendertarget: &World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
         renderer: &mut VulkanoRenderer,
-        window_renderer: &VulkanoWindowRenderer,
+        viewport: &Viewport,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             renderer.device().clone(), renderer.graphics_queue().family()
@@ -68,7 +68,7 @@ impl GeometryRenderer {
         ).unwrap();
 
         // Create the projection-view matrix needed for the perspective rendering
-        let projection_view = create_projection_view_matrix(window_renderer, camera);
+        let projection_view = create_projection_view_matrix(viewport, camera);
 
         // Create a culling frustum from that matrix
         let culling_frustum = Frustum::from_matrix4(projection_view).unwrap();
@@ -79,9 +79,10 @@ impl GeometryRenderer {
                 command_buffer_builder = self.render_entity(
                     entity,
                     rendertarget,
-                    renderer, window_renderer,
+                    renderer,
                     &projection_view, &culling_frustum,
-                    command_buffer_builder
+                    command_buffer_builder,
+                    viewport,
                 );
             }
         }
@@ -94,9 +95,10 @@ impl GeometryRenderer {
         &self,
         entity: &Entity<VulkanoTypes, VulkanoWorld3DTypes>,
         rendertarget: &World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
-        renderer: &mut VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
+        renderer: &mut VulkanoRenderer,
         projection_view: &Matrix4<f32>, culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,
+        viewport: &Viewport,
     ) -> AutoCommandBufferBuilder {
         // Check if this entity's mesh is visible to the current camera
         let mut culling_sphere = entity.mesh.culling_sphere;
@@ -151,20 +153,16 @@ impl GeometryRenderer {
         // Perform the actual draw
         // TODO: Investigate the possibility of using draw_indexed_indirect (when it's added to
         //  vulkano)
-        let size = window_renderer.size();
         command_buffer
             .draw_indexed(
                 rendertarget.raw.geometry_pipeline.clone(),
                 // TODO: When a lot is being rendered, check the performance impact of doing
                 //  this here instead of in the pipeline.
                 DynamicState {
-                    viewports: Some(vec!(Viewport {
+                    viewports: Some(vec!(ViewportVk {
                         origin: [0.0, 0.0],
                         depth_range: 0.0 .. 1.0,
-                        dimensions: [
-                            size.x as f32,
-                            size.y as f32
-                        ],
+                        dimensions: viewport.size.into(),
                     })),
                     .. DynamicState::none()
                 },
@@ -176,12 +174,11 @@ impl GeometryRenderer {
 }
 
 fn create_projection_view_matrix(
-    window_renderer: &VulkanoWindowRenderer, camera: &Camera
+    viewport: &Viewport, camera: &Camera
 ) -> Matrix4<f32> {
     // Create the projection matrix, which is what makes this a 3D perspective renderer
     let y_fov = Rad::full_turn() * 0.1638; // 90 deg x-fov for this aspect ratio
-    let size = window_renderer.size();
-    let aspect = size.x as f32 / size.y as f32;
+    let aspect = viewport.size.x / viewport.size.y;
     let projection = create_infinity_projection(y_fov, aspect, 0.1);
 
     // Combine the projection and the view, we don't need them separately

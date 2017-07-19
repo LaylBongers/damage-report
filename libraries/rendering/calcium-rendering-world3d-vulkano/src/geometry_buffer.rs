@@ -5,8 +5,8 @@ use vulkano::image::{ImageUsage};
 use vulkano::format::{self, Format};
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract};
 
-use calcium_rendering::{Renderer, WindowRenderer};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
+use calcium_rendering::{Renderer, Viewport};
+use calcium_rendering_vulkano::{VulkanoRenderer};
 
 pub struct GeometryBuffer {
     // TODO: This can be changed to R16G16B16A16Sfloat if lighting its positions are relative to
@@ -29,7 +29,7 @@ pub struct GeometryBuffer {
 impl GeometryBuffer {
     pub fn new(
         renderer: &VulkanoRenderer,
-        window_renderer: &VulkanoWindowRenderer,
+        viewport: &Viewport,
     ) -> Self {
         info!(renderer.log(), "Creating g-buffer");
 
@@ -42,27 +42,27 @@ impl GeometryBuffer {
 
         // Create the attachment images that make up the G-buffer
         let position_attachment = AttachmentImage::with_usage(
-            renderer.device().clone(), window_renderer.size().into(),
+            renderer.device().clone(), viewport.size.cast().into(),
             format::R32G32B32A32Sfloat, attach_usage
         ).unwrap();
         let base_color_attachment = AttachmentImage::with_usage(
-            renderer.device().clone(), window_renderer.size().into(),
+            renderer.device().clone(), viewport.size.cast().into(),
             format::R8G8B8A8Srgb, attach_usage
         ).unwrap();
         let normal_attachment = AttachmentImage::with_usage(
-            renderer.device().clone(), window_renderer.size().into(),
+            renderer.device().clone(), viewport.size.cast().into(),
             format::R16G16B16A16Sfloat, attach_usage
         ).unwrap();
         let metallic_attachment = AttachmentImage::with_usage(
-            renderer.device().clone(), window_renderer.size().into(),
+            renderer.device().clone(), viewport.size.cast().into(),
             format::R8Unorm, attach_usage
         ).unwrap();
         let roughness_attachment = AttachmentImage::with_usage(
-            renderer.device().clone(), window_renderer.size().into(),
+            renderer.device().clone(), viewport.size.cast().into(),
             format::R8Unorm, attach_usage
         ).unwrap();
         let depth_attachment = AttachmentImage::new(
-            renderer.device().clone(), window_renderer.size().into(),
+            renderer.device().clone(), viewport.size.cast().into(),
             format::D32Sfloat_S8Uint
         ).unwrap();
         // Rather than create our own depth attachment, we re-use the one of the framebuffer the

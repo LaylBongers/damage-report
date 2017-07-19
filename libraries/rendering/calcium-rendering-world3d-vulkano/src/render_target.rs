@@ -1,14 +1,14 @@
 use std::sync::{Arc};
 
+use cgmath::{Vector2};
 use slog::{Logger};
 use vulkano::framebuffer::{Subpass, Framebuffer, RenderPassAbstract, FramebufferAbstract};
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::depth_stencil::{DepthStencil, Compare};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
-use vulkano::image::attachment::{AttachmentImage};
 use vulkano::image::swapchain::{SwapchainImage};
 
-use calcium_rendering::{Renderer};
+use calcium_rendering::{Renderer, Viewport, WindowRenderer};
 use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs, lighting_vs, lighting_fs};
 use calcium_rendering_world3d::{World3DRenderTargetRaw};
@@ -24,6 +24,8 @@ pub struct VulkanoWorld3DRenderTargetRaw {
     window_render_pass: Arc<RenderPassAbstract + Send + Sync>,
     window_framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     window_framebuffers_images_id: usize,
+
+    viewport: Viewport,
 }
 
 impl VulkanoWorld3DRenderTargetRaw {
@@ -35,26 +37,27 @@ impl VulkanoWorld3DRenderTargetRaw {
     }
 
     pub fn resize_framebuffers(
-        &mut self, renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer
+        &mut self, renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
+        viewport: &Viewport,
     ) {
-        // If we don't have anything to update, just return
-        let current_images_id = window_renderer.swapchain.images_id();
-        if self.window_framebuffers_images_id == current_images_id {
-            return;
+        // We only need to update the gbuffer if the viewport got updated
+        if self.viewport != *viewport {
+            self.geometry_buffer = GeometryBuffer::new(
+                renderer, viewport,
+            );
+            self.viewport = viewport.clone();
         }
 
-        // Update the geometry buffer so it matches the window's size
-        self.geometry_buffer = GeometryBuffer::new(
-            renderer, window_renderer,
-        );
-
-        // Update the window framebuffers
-        self.window_framebuffers = create_window_framebuffers(
-            window_renderer.swapchain.images(),
-            &self.window_render_pass,
-            &self.geometry_buffer.depth_attachment,
-        );
-        self.window_framebuffers_images_id = current_images_id;
+        // We only need to update the window framebuffer if the window got updated
+        let current_images_id = window_renderer.swapchain.images_id();
+        if self.window_framebuffers_images_id != current_images_id {
+            // Update the window framebuffers
+            self.window_framebuffers = create_window_framebuffers(
+                window_renderer.swapchain.images(),
+                &self.window_render_pass,
+            );
+            self.window_framebuffers_images_id = current_images_id;
+        }
     }
 }
 
@@ -66,8 +69,10 @@ impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3
     ) -> Self {
         // TODO: Implement should_clear
 
+        // Likely the viewport is fullscreen, it will be updated anyways if that's wrong
+        let viewport = Viewport::new(Vector2::new(0.0, 0.0), window_renderer.size().cast());
         let geometry_buffer = GeometryBuffer::new(
-            renderer, window_renderer,
+            renderer, &viewport,
         );
 
         // TODO: Prevent shader re-loading
@@ -76,7 +81,6 @@ impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3
         );
 
         let color_buffer_format = window_renderer.swapchain.swapchain.format();
-        let depth_buffer_format = ::vulkano::format::Format::D32Sfloat_S8Uint;
         #[allow(dead_code)]
         let window_render_pass = Arc::new(single_pass_renderpass!(renderer.device().clone(),
             attachments: {
@@ -85,17 +89,11 @@ impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3
                     store: Store,
                     format: color_buffer_format,
                     samples: 1,
-                },
-                depth: {
-                    load: Clear,
-                    store: DontCare,
-                    format: depth_buffer_format,
-                    samples: 1,
                 }
             },
             pass: {
                 color: [color],
-                depth_stencil: {depth}
+                depth_stencil: {}
             }
         ).unwrap()) as Arc<RenderPassAbstract + Send + Sync>;
 
@@ -106,7 +104,6 @@ impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3
 
         let window_framebuffers = create_window_framebuffers(
             window_renderer.swapchain.images(), &window_render_pass,
-            &geometry_buffer.depth_attachment
         );
         let window_framebuffers_images_id = window_renderer.swapchain.images_id();
 
@@ -118,6 +115,8 @@ impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3
             window_render_pass,
             window_framebuffers,
             window_framebuffers_images_id,
+
+            viewport,
         }
     }
 }
@@ -187,12 +186,10 @@ fn load_lighting_pipeline(
 fn create_window_framebuffers(
     images: &Vec<Arc<SwapchainImage>>,
     render_pass: &Arc<RenderPassAbstract + Send + Sync>,
-    depth_attachment: &Arc<AttachmentImage<::vulkano::format::D32Sfloat_S8Uint>>,
 ) -> Vec<Arc<FramebufferAbstract + Send + Sync>> {
     images.iter().map(|image| {
         Arc::new(Framebuffer::start(render_pass.clone())
             .add(image.clone()).unwrap()
-            .add(depth_attachment.clone()).unwrap()
             .build().unwrap()
         ) as Arc<FramebufferAbstract + Send + Sync>
     }).collect()

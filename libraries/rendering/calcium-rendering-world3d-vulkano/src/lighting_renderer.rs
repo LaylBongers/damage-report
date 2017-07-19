@@ -5,10 +5,10 @@ use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
-use vulkano::pipeline::viewport::{Viewport};
+use vulkano::pipeline::viewport::{Viewport as VkViewport};
 
-use calcium_rendering::{WindowRenderer};
-use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoFrame, VulkanoWindowRenderer};
+use calcium_rendering::{Viewport};
+use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{lighting_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld, World3DRenderTarget};
 
@@ -44,8 +44,9 @@ impl LightingRenderer {
         &mut self,
         world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, camera: &Camera,
         rendertarget: &mut World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
-        renderer: &mut VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
+        renderer: &mut VulkanoRenderer,
         frame: &VulkanoFrame,
+        viewport: &Viewport,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
             renderer.device().clone(), renderer.graphics_queue().family()
@@ -149,21 +150,13 @@ impl LightingRenderer {
         );
 
         // Submit the triangle for rendering
-        let size = window_renderer.size();
         command_buffer_builder = command_buffer_builder
             .draw(
                 pipeline.clone(),
                 // TODO: When a lot is being rendered, check the performance impact of doing
                 //  this here instead of in the pipeline.
                 DynamicState {
-                    viewports: Some(vec!(Viewport {
-                        origin: [0.0, 0.0],
-                        depth_range: 0.0 .. 1.0,
-                        dimensions: [
-                            size.x as f32,
-                            size.y as f32
-                        ],
-                    })),
+                    viewports: Some(vec!(viewport_to_vk(viewport))),
                     .. DynamicState::none()
                 },
                 vec!(sst_buffer), set, ()
@@ -180,3 +173,11 @@ pub struct ScreenSizeTriVertex {
 }
 
 impl_vertex!(ScreenSizeTriVertex, v_position, v_uv);
+
+fn viewport_to_vk(viewport: &Viewport) -> VkViewport {
+    VkViewport {
+        origin: viewport.position.into(),
+        depth_range: 0.0 .. 1.0,
+        dimensions: viewport.size.into(),
+    }
+}
