@@ -91,8 +91,11 @@ impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DType
                 }
             }
 
-            // Update the UI and viewport
+            // Update the UI
             ui.update(delta, &mut app);
+            input.cursor_over_ui = ui.cursor_over_ui();
+
+            // Update the viewport
             viewport.update(delta, &input, &mut self.window);
 
             // Create render batches for the UI

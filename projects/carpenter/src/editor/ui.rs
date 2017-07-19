@@ -96,6 +96,15 @@ impl EditorUi {
             .font_size(12)
             .set(self.ids.ms_label, ui);
     }
+
+    pub fn cursor_over_ui(&self) -> bool {
+        let widget = self.ui.global_input().current.widget_under_mouse;
+        widget
+            // If we're over a widget, pass through the background canvas
+            .map(|w| w != self.ids.canvas)
+            // If there no widget, we're not over ui either way
+            .unwrap_or(false)
+    }
 }
 
 fn theme() -> conrod::Theme {

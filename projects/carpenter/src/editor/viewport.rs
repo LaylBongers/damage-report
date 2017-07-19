@@ -15,6 +15,7 @@ pub struct EditorViewport<T: Types, WT: World3DTypes<T>> {
     model: Model<T, WT>,
     material: Material<T>,
 
+    move_button_started_over_ui: bool,
     camera_position: Vector3<f32>,
     camera_pitch: f32,
     camera_yaw: f32,
@@ -50,6 +51,7 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
             model,
             material,
 
+            move_button_started_over_ui: false,
             camera_position: Vector3::new(0.0, 2.0, 5.0),
             camera_pitch: 0.0,
             camera_yaw: 0.0,
@@ -97,11 +99,24 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
     ) {
         if !input.camera_move_button {
             window.set_capture_cursor(false);
+            self.move_button_started_over_ui = false;
 
             // We don't need to do anything more
             return;
         }
 
+        // If the move button was started over UI, don't do anything
+        if self.move_button_started_over_ui {
+            return;
+        }
+
+        // Check if we're over ui and if so, mark the button as started over UI
+        if input.cursor_over_ui {
+            self.move_button_started_over_ui = true;
+            return;
+        }
+
+        // Finally, we've verified that we've got a real move input
         window.set_capture_cursor(true);
 
         // Rotate the player's yaw depending on input

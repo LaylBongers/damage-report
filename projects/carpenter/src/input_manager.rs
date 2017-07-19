@@ -7,6 +7,8 @@ pub struct InputManager {
     pub backward_button: bool,
     pub right_button: bool,
 
+    pub cursor_over_ui: bool,
+
     frame: FrameInput,
 }
 
@@ -18,6 +20,8 @@ impl InputManager {
             left_button: false,
             backward_button: false,
             right_button: false,
+
+            cursor_over_ui: false,
 
             frame: FrameInput::new(),
         }
