@@ -14,8 +14,10 @@ extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
 extern crate ttf_noto_sans;
+extern crate bus;
 
 mod editor;
+mod model;
 mod input_manager;
 mod runtime;
 

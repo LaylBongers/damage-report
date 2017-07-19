@@ -9,6 +9,7 @@ use calcium_conrod::{ConrodRenderer};
 
 use editor::ui::{EditorUi};
 use editor::viewport::{EditorViewport};
+use model::{Application};
 use input_manager::{InputManager};
 
 pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> {
@@ -17,11 +18,9 @@ pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTy
 
     simple2d_rendertarget: Simple2DRenderTarget<T, ST>,
     conrod_renderer: ConrodRenderer<T>,
-    ui: EditorUi,
     ui_batches: Vec<RenderBatch<T>>,
 
     world3d_rendertarget: World3DRenderTarget<T, WT>,
-    viewport: EditorViewport<T, WT>,
 }
 
 impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>>
@@ -36,16 +35,14 @@ impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DType
         let simple2d_rendertarget = Simple2DRenderTarget::new(
             false, renderer, &window_renderer, simple2d_renderer
         );
+        // TODO: Refactor these into EditorUi
         let conrod_renderer = ConrodRenderer::new(renderer)?;
         let ui_batches = vec!();
-        let ui = EditorUi::new(window_renderer.size());
 
         // Set up 3D viewport rendering
         let world3d_rendertarget = World3DRenderTarget::new(
             true, renderer, &window_renderer, world3d_renderer
         );
-
-        let viewport = EditorViewport::new(renderer)?;
 
         Ok(EditorWindow {
             window,
@@ -53,11 +50,9 @@ impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DType
 
             simple2d_rendertarget,
             conrod_renderer,
-            ui,
             ui_batches,
 
             world3d_rendertarget,
-            viewport,
         })
     }
 
@@ -70,6 +65,10 @@ impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DType
     ) -> Result<(), Error> {
         let mut input = InputManager::new();
         let mut timer = LoopTimer::start();
+
+        let mut app = Application::new();
+        let mut viewport = EditorViewport::new(renderer, &mut app)?;
+        let mut ui = EditorUi::new(self.window_renderer.size());
 
         while !self.window.should_close() {
             let delta = timer.tick();
@@ -87,24 +86,24 @@ impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DType
                 if let Some(event) = ::conrod::backend::piston::event::convert(
                     event.clone(), size.x as f64, size.y as f64
                 ) {
-                    self.ui.ui.handle_event(event);
+                    ui.ui.handle_event(event);
                 }
             }
 
             // Update the UI and viewport
-            self.ui.update(delta);
-            self.viewport.update(delta, &input, &mut self.window);
+            ui.update(delta, &mut app);
+            viewport.update(delta, &input, &mut self.window);
 
             // Create render batches for the UI
             if let Some(changed_batches) = self.conrod_renderer.draw_if_changed(
-                renderer, &self.window_renderer, &mut self.ui.ui
+                renderer, &self.window_renderer, &mut ui.ui
             )? {
                 self.ui_batches = changed_batches;
             }
 
             // Perform the rendering itself
             let mut frame = self.window_renderer.start_frame(renderer);
-            self.viewport.render(
+            viewport.render(
                 &mut frame,
                 renderer, &mut self.window_renderer,
                 world3d_renderer, &mut self.world3d_rendertarget,
