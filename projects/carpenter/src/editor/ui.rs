@@ -42,18 +42,18 @@ impl EditorUi {
         // Top ribbon
         Canvas::new()
             .top_left_of(self.ids.canvas)
-            .h(120.0) // Tabs section: .h(36.0)
+            .h(108.0)
             .pad(3.0)
             .set(self.ids.ribbon_canvas, ui);
 
         // Save button
         Button::new()
             .up_from(self.ids.ribbon_save_label, 3.0)
-            .w_h(48.0, 48.0)
+            .w_h(60.0, 60.0)
             .set(self.ids.ribbon_save, ui);
         Text::new("Save As")
             .bottom_left_of(self.ids.ribbon_canvas)
-            .w_h(48.0, 12.0)
+            .w_h(60.0, 12.0)
             .font_size(10)
             .center_justify()
             .set(self.ids.ribbon_save_label, ui);
@@ -61,11 +61,11 @@ impl EditorUi {
         // Load button
         Button::new()
             .up_from(self.ids.ribbon_load_label, 3.0)
-            .w_h(48.0, 48.0)
+            .w_h(60.0, 60.0)
             .set(self.ids.ribbon_load, ui);
         Text::new("Load")
             .right_from(self.ids.ribbon_save_label, 3.0)
-            .w_h(48.0, 12.0)
+            .w_h(60.0, 12.0)
             .font_size(10)
             .center_justify()
             .set(self.ids.ribbon_load_label, ui);
@@ -73,14 +73,14 @@ impl EditorUi {
         // New brush button
         for _click in Button::new()
             .up_from(self.ids.ribbon_new_brush_label, 3.0)
-            .w_h(48.0, 48.0)
+            .w_h(60.0, 60.0)
             .set(self.ids.ribbon_new_brush, ui) {
             app.new_brush();
         }
         Text::new("New Brush")
             .right_from(self.ids.ribbon_load_label, 3.0)
-            .w_h(48.0, 12.0)
-            .font_size(9)
+            .w_h(60.0, 12.0)
+            .font_size(10)
             .center_justify()
             .set(self.ids.ribbon_new_brush_label, ui);
 
