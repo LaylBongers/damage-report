@@ -7,12 +7,11 @@ use calcium_rendering_world3d::{World3DTypes, World3DRenderTarget};
 use calcium_rendering_static::{Initializer};
 use calcium_conrod::{ConrodRenderer};
 
-use editor::ui::{EditorUi};
-use editor::viewport::{EditorViewport};
+use view::{UiView, ViewportView};
 use model::{Application};
 use input_manager::{InputManager};
 
-pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> {
+pub struct WindowController<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>> {
     window: W,
     window_renderer: T::WindowRenderer,
 
@@ -24,7 +23,7 @@ pub struct EditorWindow<W: Window, T: Types, WT: World3DTypes<T>, ST: Simple2DTy
 }
 
 impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DTypes<T>>
-    EditorWindow<W, T, WT, ST> {
+    WindowController<W, T, WT, ST> {
     pub fn new(
         renderer: &mut T::Renderer,
         simple2d_renderer: &ST::Renderer,
@@ -44,7 +43,7 @@ impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DType
             true, renderer, &window_renderer, world3d_renderer
         );
 
-        Ok(EditorWindow {
+        Ok(WindowController {
             window,
             window_renderer,
 
@@ -67,8 +66,8 @@ impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DType
         let mut timer = LoopTimer::start();
 
         let mut app = Application::new();
-        let mut viewport = EditorViewport::new(renderer, &mut app)?;
-        let mut ui = EditorUi::new(self.window_renderer.size());
+        let mut viewport = ViewportView::new(renderer, &mut app)?;
+        let mut ui = UiView::new(self.window_renderer.size());
 
         while !self.window.should_close() {
             let delta = timer.tick();

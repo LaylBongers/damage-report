@@ -7,14 +7,14 @@ use calcium_game::{AverageDelta, delta_to_fps};
 
 use model::{Application};
 
-pub struct EditorUi {
+pub struct UiView {
     pub ui: Ui,
     ids: Ids,
 
     average_delta: AverageDelta,
 }
 
-impl EditorUi {
+impl UiView {
     pub fn new(size: Vector2<u32>) -> Self {
         let mut ui = UiBuilder::new(size.cast().into())
             .theme(theme())
@@ -22,7 +22,7 @@ impl EditorUi {
         ui.fonts.insert(FontCollection::from_bytes(::ttf_noto_sans::REGULAR).into_font().unwrap());
         let ids = Ids::new(ui.widget_id_generator());
 
-        EditorUi {
+        UiView {
             ui,
             ids,
 

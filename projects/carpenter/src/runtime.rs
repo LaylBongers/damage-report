@@ -4,7 +4,8 @@ use window::{WindowSettings};
 use calcium_rendering::{Error};
 use calcium_rendering_static::{Runtime, Initializer};
 
-use editor::{EditorWindow};
+use controller::{WindowController};
+
 pub struct StaticRuntime {
     pub log: Logger,
 }
@@ -21,12 +22,14 @@ impl Runtime for StaticRuntime {
         let mut world3d_renderer = init.world3d_renderer(&mut renderer)?;
 
         // Set up the main editor window
-        let mut editor_window = EditorWindow::new(
+        let mut window_controller = WindowController::new(
             &mut renderer, &simple2d_renderer, &world3d_renderer, window, window_renderer
         )?;
 
         // Run the actual game loop
         info!(self.log, "Finished loading, starting main loop");
-        editor_window.run_loop(&init, &mut renderer, &mut simple2d_renderer, &mut world3d_renderer)
+        window_controller.run_loop(
+            &init, &mut renderer, &mut simple2d_renderer, &mut world3d_renderer
+        )
     }
 }

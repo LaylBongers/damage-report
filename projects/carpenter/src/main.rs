@@ -16,8 +16,9 @@ extern crate slog_term;
 extern crate ttf_noto_sans;
 extern crate bus;
 
-mod editor;
+mod controller;
 mod model;
+mod view;
 mod input_manager;
 mod runtime;
 

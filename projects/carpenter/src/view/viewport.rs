@@ -8,7 +8,7 @@ use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Wo
 use model::{Application, ApplicationEvent};
 use input_manager::{InputManager};
 
-pub struct EditorViewport<T: Types, WT: World3DTypes<T>> {
+pub struct ViewportView<T: Types, WT: World3DTypes<T>> {
     render_world: RenderWorld<T, WT>,
     events: BusReader<ApplicationEvent>,
 
@@ -21,7 +21,7 @@ pub struct EditorViewport<T: Types, WT: World3DTypes<T>> {
     camera_yaw: f32,
 }
 
-impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
+impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
     pub fn new(renderer: &mut T::Renderer, app: &mut Application) -> Result<Self, Error> {
         let mut render_world = RenderWorld::new();
 
@@ -44,7 +44,7 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
             )?,
         };
 
-        Ok(EditorViewport {
+        Ok(ViewportView {
             render_world,
             events: app.subscribe(),
 
