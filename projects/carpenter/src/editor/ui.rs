@@ -42,7 +42,7 @@ impl EditorUi {
         // Top ribbon
         Canvas::new()
             .top_left_of(self.ids.canvas)
-            .h(96.0) // Tabs section: .h(36.0)
+            .h(120.0) // Tabs section: .h(36.0)
             .pad(3.0)
             .set(self.ids.ribbon_canvas, ui);
 
