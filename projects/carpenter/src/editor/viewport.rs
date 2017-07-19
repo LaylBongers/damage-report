@@ -1,4 +1,4 @@
-use cgmath::{Vector2, Vector3, Quaternion, One};
+use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle};
 use window::{AdvancedWindow};
 use bus::{BusReader};
 
@@ -9,23 +9,19 @@ use model::{Application, ApplicationEvent};
 use input_manager::{InputManager};
 
 pub struct EditorViewport<T: Types, WT: World3DTypes<T>> {
-    camera: Camera,
     render_world: RenderWorld<T, WT>,
     events: BusReader<ApplicationEvent>,
 
     model: Model<T, WT>,
     material: Material<T>,
 
-    _camera_pitch: f32,
-    _camera_yaw: f32,
+    camera_position: Vector3<f32>,
+    camera_pitch: f32,
+    camera_yaw: f32,
 }
 
 impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
     pub fn new(renderer: &mut T::Renderer, app: &mut Application) -> Result<Self, Error> {
-        let camera = Camera::new(
-            Vector3::new(0.0, 2.0, 5.0),
-            Quaternion::one(),
-        );
         let mut render_world = RenderWorld::new();
 
         render_world.ambient_light = Vector3::new(0.05, 0.05, 0.05);
@@ -48,15 +44,15 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
         };
 
         Ok(EditorViewport {
-            camera,
             render_world,
             events: app.subscribe(),
 
             model,
             material,
 
-            _camera_pitch: 0.0,
-            _camera_yaw: 0.0,
+            camera_position: Vector3::new(0.0, 2.0, 5.0),
+            camera_pitch: 0.0,
+            camera_yaw: 0.0,
         })
     }
 
@@ -90,7 +86,7 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
         );
 
         world3d_renderer.render(
-            &self.render_world, &self.camera,
+            &self.render_world, &self.create_camera(),
             world3d_rendertarget, &viewport,
             renderer, window_renderer, frame
         );
@@ -109,16 +105,17 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
         window.set_capture_cursor(true);
 
         // Rotate the player's yaw depending on input
-        /*self.pitch += frame_input.pitch;
-        self.yaw += frame_input.yaw;
+        let frame_input = input.frame();
+        self.camera_yaw += frame_input.mouse_x * -0.0001;
+        self.camera_pitch += frame_input.mouse_y * -0.0001;
 
         // Limit the pitch
-        if self.pitch > 0.25 {
-            self.pitch = 0.25;
+        if self.camera_pitch > 0.25 {
+            self.camera_pitch = 0.25;
         }
-        if self.pitch < -0.25 {
-            self.pitch = -0.25;
-        }*/
+        if self.camera_pitch < -0.25 {
+            self.camera_pitch = -0.25;
+        }
     }
 
     fn add_brush(&mut self) {
@@ -127,5 +124,21 @@ impl<T: Types, WT: World3DTypes<T>> EditorViewport<T, WT> {
             mesh: self.model.meshes[0].clone(),
             material: self.material.clone(),
         });
+    }
+
+
+    pub fn create_camera(&self) -> Camera {
+        Camera {
+            position: self.camera_position,
+            rotation: self.create_camera_rotation(),
+        }
+    }
+
+    fn create_camera_rotation(&self) -> Quaternion<f32> {
+        let yaw: Quaternion<f32> =
+            Euler::new(Rad::zero(), Rad::full_turn() * self.camera_yaw, Rad::zero()).into();
+        let pitch: Quaternion<f32> =
+            Euler::new(Rad::full_turn() * self.camera_pitch, Rad::zero(), Rad::zero()).into();
+        yaw * pitch
     }
 }

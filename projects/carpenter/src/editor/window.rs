@@ -74,6 +74,7 @@ impl<W: Window + AdvancedWindow, T: Types, WT: World3DTypes<T>, ST: Simple2DType
             let delta = timer.tick();
 
             // Poll for window events
+            input.new_frame();
             while let Some(event) = self.window.poll_event() {
                 // Let the initializer handle anything needed
                 init.handle_event(&event, renderer, &mut self.window, &mut self.window_renderer);
