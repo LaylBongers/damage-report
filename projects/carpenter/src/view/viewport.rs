@@ -5,8 +5,7 @@ use bus::{BusReader};
 use calcium_rendering::{Error, Types, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material, World3DRenderTarget};
 
-use model::{MapEditor, MapEditorEvent};
-use input_manager::{InputManager};
+use model::{MapEditorModel, MapEditorEvent, InputModel};
 
 pub struct ViewportView<T: Types, WT: World3DTypes<T>> {
     render_world: RenderWorld<T, WT>,
@@ -22,7 +21,7 @@ pub struct ViewportView<T: Types, WT: World3DTypes<T>> {
 }
 
 impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
-    pub fn new(renderer: &mut T::Renderer, editor: &mut MapEditor) -> Result<Self, Error> {
+    pub fn new(renderer: &mut T::Renderer, editor: &mut MapEditorModel) -> Result<Self, Error> {
         let mut render_world = RenderWorld::new();
 
         render_world.ambient_light = Vector3::new(0.05, 0.05, 0.05);
@@ -59,7 +58,7 @@ impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
     }
 
     pub fn update<W: AdvancedWindow>(
-        &mut self, delta: f32, input: &InputManager, window: &mut W
+        &mut self, delta: f32, input: &InputModel, window: &mut W
     ) {
         // Check if we got events
         while let Ok(ev) = self.events.try_recv() {
@@ -95,7 +94,7 @@ impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
     }
 
     fn update_camera<W: AdvancedWindow>(
-        &mut self, delta: f32, input: &InputManager, window: &mut W
+        &mut self, delta: f32, input: &InputModel, window: &mut W
     ) {
         if !input.camera_move_button {
             window.set_capture_cursor(false);

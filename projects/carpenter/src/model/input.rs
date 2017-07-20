@@ -1,6 +1,6 @@
 use input::{Input, Button, MouseButton, Motion, Key};
 
-pub struct InputManager {
+pub struct InputModel {
     pub camera_move_button: bool,
     pub forward_button: bool,
     pub left_button: bool,
@@ -12,9 +12,9 @@ pub struct InputManager {
     frame: FrameInput,
 }
 
-impl InputManager {
+impl InputModel {
     pub fn new() -> Self {
-        InputManager {
+        InputModel {
             camera_move_button: false,
             forward_button: false,
             left_button: false,

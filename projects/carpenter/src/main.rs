@@ -19,7 +19,6 @@ extern crate bus;
 mod controller;
 mod model;
 mod view;
-mod input_manager;
 mod runtime;
 
 use slog::{Logger, Drain};

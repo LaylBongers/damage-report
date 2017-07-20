@@ -9,7 +9,7 @@ use calcium_rendering::{Types, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DTypes, RenderBatch, Simple2DRenderTarget, Simple2DRenderer};
 use calcium_conrod::{ConrodRenderer};
 
-use model::{MapEditor};
+use model::{MapEditorModel};
 
 pub struct UiView<T: Types> {
     conrod_renderer: ConrodRenderer<T>,
@@ -52,7 +52,7 @@ impl<T: Types> UiView<T> {
         }
     }
 
-    pub fn update(&mut self, delta: f32, editor: &mut MapEditor) {
+    pub fn update(&mut self, delta: f32, editor: &mut MapEditorModel) {
         let ui = &mut self.ui.set_widgets();
         self.average_delta.accumulate(delta);
 

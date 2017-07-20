@@ -5,8 +5,7 @@ use calcium_rendering_static::{Initializer};
 use window::{Window, AdvancedWindow, WindowSettings};
 use slog::{Logger};
 
-use input_manager::{InputManager};
-use model::{MapEditor};
+use model::{MapEditorModel, InputModel};
 use view::{ViewportView, UiView};
 
 pub struct WindowView<W: Window, T: Types, ST: Simple2DTypes<T>, WT: World3DTypes<T>> {
@@ -29,7 +28,7 @@ impl<W: Window + AdvancedWindow, T: Types, ST: Simple2DTypes<T>, WT: World3DType
     pub fn new<I: Initializer<Window=W, Types=T, World3DTypes=WT, Simple2DTypes=ST>>(
         log: &Logger,
         init: &I,
-        editor: &mut MapEditor,
+        editor: &mut MapEditorModel,
     ) -> Result<Self, Error> {
         // Set up the renderers and open up a window to render to
         let window_settings = WindowSettings::new("Carpenter", [1280, 720]);
@@ -70,7 +69,7 @@ impl<W: Window + AdvancedWindow, T: Types, ST: Simple2DTypes<T>, WT: World3DType
     }
 
     pub fn handle_events<I: Initializer<Window=W, Types=T, World3DTypes=WT, Simple2DTypes=ST>>(
-        &mut self, init: &I, input: &mut InputManager
+        &mut self, init: &I, input: &mut InputModel
     ) {
         input.new_frame();
         while let Some(event) = self.window.poll_event() {
@@ -87,7 +86,7 @@ impl<W: Window + AdvancedWindow, T: Types, ST: Simple2DTypes<T>, WT: World3DType
         }
     }
 
-    pub fn update(&mut self, delta: f32, input: &mut InputManager, editor: &mut MapEditor) {
+    pub fn update(&mut self, delta: f32, input: &mut InputModel, editor: &mut MapEditorModel) {
         // Update the UI
         self.ui.update(delta, editor);
         input.cursor_over_ui = self.ui.cursor_over_ui();

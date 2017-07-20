@@ -1,12 +1,12 @@
 use bus::{Bus, BusReader};
 
-pub struct MapEditor {
+pub struct MapEditorModel {
     event_bus: Bus<MapEditorEvent>,
 }
 
-impl MapEditor {
+impl MapEditorModel {
     pub fn new() -> Self {
-        MapEditor {
+        MapEditorModel {
             event_bus: Bus::new(100),
         }
     }
