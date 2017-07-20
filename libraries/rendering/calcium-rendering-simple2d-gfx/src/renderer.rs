@@ -8,10 +8,10 @@ use gfx::traits::{FactoryExt};
 use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
 use calcium_rendering::{Error, Texture};
-use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxFrame, ColorFormat, GfxWindowRenderer};
+use calcium_rendering_gfx::{GfxRenderer, GfxFrame, ColorFormat, GfxWindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode, Simple2DRenderTarget};
 
-use {GfxSimple2DTypes};
+use {GfxSimple2DRenderTargetRaw};
 
 gfx_defines!{
     vertex Vertex {
@@ -41,7 +41,7 @@ gfx_defines!{
 
 pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + 'static> {
     pso: PipelineState<D::Resources, pipe::Meta>,
-    dummy_texture: Arc<Texture<GfxTypes<D, F>>>,
+    dummy_texture: Arc<Texture<GfxRenderer<D, F>>>,
     mode_buffers: Vec<Buffer<D::Resources, Mode>>,
 
     linear_sampler: Sampler<D::Resources>,
@@ -102,11 +102,13 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Simple2DRenderer<GfxTypes<D, F>, GfxSimple2DTypes> for GfxSimple2DRenderer<D, F> {
+    Simple2DRenderer<GfxRenderer<D, F>> for GfxSimple2DRenderer<D, F> {
+    type RenderTargetRaw = GfxSimple2DRenderTargetRaw;
+
     fn render(
         &mut self,
-        batches: &[RenderBatch<GfxTypes<D, F>>],
-        render_target: &mut Simple2DRenderTarget<GfxTypes<D, F>, GfxSimple2DTypes>,
+        batches: &[RenderBatch<GfxRenderer<D, F>>],
+        render_target: &mut Simple2DRenderTarget<GfxRenderer<D, F>, GfxSimple2DRenderer<D, F>>,
         renderer: &mut GfxRenderer<D, F>, _window_renderer: &mut GfxWindowRenderer,
         frame: &mut GfxFrame,
     ) {

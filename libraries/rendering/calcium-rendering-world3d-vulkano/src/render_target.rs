@@ -9,12 +9,12 @@ use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::image::swapchain::{SwapchainImage};
 
 use calcium_rendering::{Renderer, Viewport, WindowRenderer};
-use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoWindowRenderer};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs, lighting_vs, lighting_fs};
 use calcium_rendering_world3d::{World3DRenderTargetRaw};
 
 use geometry_buffer::{GeometryBuffer};
-use {VulkanoWorld3DTypes, VulkanoWorld3DRenderer};
+use {VulkanoWorld3DRenderer};
 
 pub struct VulkanoWorld3DRenderTargetRaw {
     pub geometry_buffer: GeometryBuffer,
@@ -61,7 +61,7 @@ impl VulkanoWorld3DRenderTargetRaw {
     }
 }
 
-impl World3DRenderTargetRaw<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRenderTargetRaw {
+impl World3DRenderTargetRaw<VulkanoRenderer, VulkanoWorld3DRenderer> for VulkanoWorld3DRenderTargetRaw {
     fn new(
         _should_clear: bool,
         renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,

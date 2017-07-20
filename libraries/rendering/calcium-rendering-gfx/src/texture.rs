@@ -9,14 +9,14 @@ use gfx::handle::{ShaderResourceView};
 
 use calcium_rendering::{TextureRaw, TextureFormat, Error, CalciumErrorMappable};
 
-use {GfxTypes, GfxRenderer};
+use {GfxRenderer};
 
 pub struct GfxTextureRaw<D: Device + 'static> {
     pub view: ShaderResourceView<D::Resources, [f32; 4]>,
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    TextureRaw<GfxTypes<D, F>> for GfxTextureRaw<D> {
+    TextureRaw<GfxRenderer<D, F>> for GfxTextureRaw<D> {
     fn from_file(
         renderer: &mut GfxRenderer<D, F>, path: PathBuf, _format: TextureFormat,
     ) -> Result<Self, Error> {

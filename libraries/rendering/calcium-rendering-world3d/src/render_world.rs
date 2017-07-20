@@ -1,12 +1,12 @@
 use std::sync::{Arc};
 use cgmath::{Vector3, InnerSpace};
 
-use calcium_rendering::{Types};
+use calcium_rendering::{Renderer};
 
-use {Material, World3DTypes};
+use {Material, World3DRenderer};
 
-pub struct RenderWorld<T: Types, WT: World3DTypes<T>> {
-    entities: Vec<Option<Entity<T, WT>>>,
+pub struct RenderWorld<R: Renderer, WR: World3DRenderer<R>> {
+    entities: Vec<Option<Entity<R, WR>>>,
     lights: Vec<Light>,
 
     pub ambient_light: Vector3<f32>,
@@ -14,7 +14,7 @@ pub struct RenderWorld<T: Types, WT: World3DTypes<T>> {
     pub directional_direction: Vector3<f32>,
 }
 
-impl<T: Types, WT: World3DTypes<T>> RenderWorld<T, WT> {
+impl<R: Renderer, WR: World3DRenderer<R>> RenderWorld<R, WR> {
     pub fn new() -> Self {
         RenderWorld {
             entities: Vec::new(),
@@ -26,7 +26,7 @@ impl<T: Types, WT: World3DTypes<T>> RenderWorld<T, WT> {
         }
     }
 
-    pub fn add_entity(&mut self, entity: Entity<T, WT>) -> EntityId {
+    pub fn add_entity(&mut self, entity: Entity<R, WR>) -> EntityId {
         // TODO: Find empty entity slots
 
         self.entities.push(Some(entity));
@@ -37,11 +37,11 @@ impl<T: Types, WT: World3DTypes<T>> RenderWorld<T, WT> {
         self.entities[id.0] = None;
     }
 
-    pub fn entities(&self) -> &Vec<Option<Entity<T, WT>>> {
+    pub fn entities(&self) -> &Vec<Option<Entity<R, WR>>> {
         &self.entities
     }
 
-    pub fn entity_mut(&mut self, id: EntityId) -> &mut Entity<T, WT> {
+    pub fn entity_mut(&mut self, id: EntityId) -> &mut Entity<R, WR> {
         self.entities[id.0].as_mut().unwrap()
     }
 
@@ -65,10 +65,10 @@ pub struct EntityId(usize);
 #[derive(Copy, Clone)]
 pub struct LightId(usize);
 
-pub struct Entity<T: Types, WT: World3DTypes<T>> {
+pub struct Entity<R: Renderer, WR: World3DRenderer<R>> {
     pub position: Vector3<f32>,
-    pub mesh: Arc<WT::Mesh>,
-    pub material: Material<T>,
+    pub mesh: Arc<WR::Mesh>,
+    pub material: Material<R>,
 }
 
 pub struct Light {

@@ -4,7 +4,7 @@ use gfx::handle::{RenderTargetView};
 
 use calcium_rendering::{Renderer};
 
-use {ColorFormat};
+use {ColorFormat, GfxTextureRaw, GfxFrame, GfxWindowRenderer};
 
 pub struct GfxRenderer<D: Device, F: Factory<D::Resources>> {
     pub log: Logger,
@@ -32,7 +32,11 @@ impl<D: Device, F: Factory<D::Resources>> GfxRenderer<D, F> {
     }
 }
 
-impl<D: Device, F: Factory<D::Resources>> Renderer for GfxRenderer<D, F> {
+impl<D: Device + 'static, F: Factory<D::Resources> + 'static> Renderer for GfxRenderer<D, F> {
+    type WindowRenderer = GfxWindowRenderer;
+    type Frame = GfxFrame;
+    type TextureRaw = GfxTextureRaw<D>;
+
     fn log(&self) -> &Logger {
         &self.log
     }

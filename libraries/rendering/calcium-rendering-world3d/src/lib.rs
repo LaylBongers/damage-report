@@ -11,7 +11,6 @@ mod model;
 mod render_target;
 mod render_world;
 mod renderer;
-mod types;
 
 pub use camera::{Camera};
 pub use material::{Material};
@@ -20,4 +19,3 @@ pub use model::{Model};
 pub use render_target::{World3DRenderTarget, World3DRenderTargetRaw};
 pub use render_world::{RenderWorld, Entity, Light, EntityId, LightId};
 pub use renderer::{World3DRenderer};
-pub use types::{World3DTypes};

@@ -1,10 +1,10 @@
 use cgmath::{Vector2};
-use {Types};
+use {Renderer};
 
 /// A representation of the render data needed to render to a window.
-pub trait WindowRenderer<T: Types> {
-    fn start_frame(&mut self, renderer: &mut T::Renderer) -> T::Frame;
-    fn finish_frame(&mut self, renderer: &mut T::Renderer, frame: T::Frame);
+pub trait WindowRenderer<R: Renderer> {
+    fn start_frame(&mut self, renderer: &mut R) -> R::Frame;
+    fn finish_frame(&mut self, renderer: &mut R, frame: R::Frame);
 
     fn size(&self) -> Vector2<u32>;
 }

@@ -10,11 +10,11 @@ use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::pipeline::viewport::{Viewport as ViewportVk};
 
 use calcium_rendering::{Error, CalciumErrorMappable, Viewport};
-use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity, World3DRenderTarget};
 
-use {VulkanoWorld3DTypes};
+use {VulkanoWorld3DRenderer};
 
 pub struct GeometryRenderer {
     linear_sampler: Arc<Sampler>,
@@ -42,8 +42,8 @@ impl GeometryRenderer {
 
     pub fn build_command_buffer(
         &self,
-        world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, camera: &Camera,
-        rendertarget: &World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
+        world: &RenderWorld<VulkanoRenderer, VulkanoWorld3DRenderer>, camera: &Camera,
+        rendertarget: &World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
         renderer: &mut VulkanoRenderer,
         viewport: &Viewport,
     ) -> AutoCommandBufferBuilder {
@@ -93,8 +93,8 @@ impl GeometryRenderer {
 
     fn render_entity(
         &self,
-        entity: &Entity<VulkanoTypes, VulkanoWorld3DTypes>,
-        rendertarget: &World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
+        entity: &Entity<VulkanoRenderer, VulkanoWorld3DRenderer>,
+        rendertarget: &World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
         renderer: &mut VulkanoRenderer,
         projection_view: &Matrix4<f32>, culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,

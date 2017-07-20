@@ -1,15 +1,15 @@
-use calcium_rendering::{Types};
-use {World3DTypes};
+use calcium_rendering::{Renderer};
+use {World3DRenderer};
 
-pub struct World3DRenderTarget<T: Types, WT: World3DTypes<T>> {
-    pub raw: WT::RenderTargetRaw,
+pub struct World3DRenderTarget<R: Renderer, WR: World3DRenderer<R>> {
+    pub raw: WR::RenderTargetRaw,
 }
 
-impl<T: Types, WT: World3DTypes<T>> World3DRenderTarget<T, WT> {
+impl<R: Renderer, WR: World3DRenderer<R>> World3DRenderTarget<R, WR> {
     pub fn new(
         should_clear: bool,
-        renderer: &T::Renderer, window_renderer: &T::WindowRenderer,
-        world3d_renderer: &WT::Renderer,
+        renderer: &R, window_renderer: &R::WindowRenderer,
+        world3d_renderer: &WR,
     ) -> Self {
         let raw = World3DRenderTargetRaw::new(
             should_clear, renderer, window_renderer, world3d_renderer
@@ -21,10 +21,10 @@ impl<T: Types, WT: World3DTypes<T>> World3DRenderTarget<T, WT> {
     }
 }
 
-pub trait World3DRenderTargetRaw<T: Types, WT: World3DTypes<T>> {
+pub trait World3DRenderTargetRaw<R: Renderer, WR: World3DRenderer<R>> {
     fn new(
         should_clear: bool,
-        renderer: &T::Renderer, window_renderer: &T::WindowRenderer,
-        world3d_renderer: &WT::Renderer,
+        renderer: &R, window_renderer: &R::WindowRenderer,
+        world3d_renderer: &WR,
     ) -> Self;
 }

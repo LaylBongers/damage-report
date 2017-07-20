@@ -1,26 +1,21 @@
 #[cfg(feature = "world3d")]
 mod world3d {
     use std::sync::{Arc};
-    use calcium_rendering::{Types, Viewport};
-    use calcium_rendering_world3d::{World3DTypes, Vertex, Mesh, World3DRenderer, RenderWorld, Camera, World3DRenderTargetRaw, World3DRenderTarget};
-
-    pub struct UnsupportedWorld3DTypes;
-
-    impl<T: Types> World3DTypes<T> for UnsupportedWorld3DTypes {
-        type Renderer = UnsupportedWorld3DRenderer;
-        type RenderTargetRaw = UnsupportedWorld3DRenderTargetRaw;
-        type Mesh = UnsupportedMesh;
-    }
+    use calcium_rendering::{Renderer, Viewport};
+    use calcium_rendering_world3d::{World3DRenderer, Vertex, Mesh, RenderWorld, Camera, World3DRenderTargetRaw, World3DRenderTarget};
 
     pub struct UnsupportedWorld3DRenderer;
 
-    impl<T: Types> World3DRenderer<T, UnsupportedWorld3DTypes> for UnsupportedWorld3DRenderer {
+    impl<R: Renderer> World3DRenderer<R> for UnsupportedWorld3DRenderer {
+        type RenderTargetRaw = UnsupportedWorld3DRenderTargetRaw;
+        type Mesh = UnsupportedMesh;
+
         fn render(
-            &mut self, _world: &RenderWorld<T, UnsupportedWorld3DTypes>, _camera: &Camera,
-            _world3d_rendertarget: &mut World3DRenderTarget<T, UnsupportedWorld3DTypes>,
+            &mut self, _world: &RenderWorld<R, Self>, _camera: &Camera,
+            _world3d_rendertarget: &mut World3DRenderTarget<R, UnsupportedWorld3DRenderer>,
             _viewport: &Viewport,
-            _renderer: &mut T::Renderer, _window_renderer: &mut T::WindowRenderer,
-            _frame: &mut T::Frame
+            _renderer: &mut R, _window_renderer: &mut R::WindowRenderer,
+            _frame: &mut R::Frame
         ) {
             panic!("Unsupported!")
         }
@@ -28,11 +23,11 @@ mod world3d {
 
     pub struct UnsupportedWorld3DRenderTargetRaw;
 
-    impl<T: Types> World3DRenderTargetRaw<T, UnsupportedWorld3DTypes>
+    impl<R: Renderer> World3DRenderTargetRaw<R, UnsupportedWorld3DRenderer>
         for UnsupportedWorld3DRenderTargetRaw {
         fn new(
             _should_clear: bool,
-            _renderer: &T::Renderer, _window_renderer: &T::WindowRenderer,
+            _renderer: &R, _window_renderer: &R::WindowRenderer,
             _world3d_renderer: &UnsupportedWorld3DRenderer,
         ) -> Self {
             UnsupportedWorld3DRenderTargetRaw {
@@ -43,9 +38,9 @@ mod world3d {
 
     pub struct UnsupportedMesh;
 
-    impl<T: Types> Mesh<T> for UnsupportedMesh {
+    impl<R: Renderer> Mesh<R> for UnsupportedMesh {
         fn new(
-            _renderer: &T::Renderer, _vertices: Vec<Vertex>, _indices: Vec<u32>,
+            _renderer: &R, _vertices: Vec<Vertex>, _indices: Vec<u32>,
         ) -> Arc<Self> {
             panic!("Unsupported!")
         }

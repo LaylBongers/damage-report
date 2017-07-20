@@ -9,7 +9,7 @@ use vulkano::image::{Dimensions};
 use vulkano::image::immutable::{ImmutableImage};
 
 use calcium_rendering::{TextureFormat, TextureRaw, CalciumErrorMappable, Error, Renderer};
-use {VulkanoTypes, VulkanoRenderer};
+use {VulkanoRenderer};
 
 pub struct VulkanoTextureRaw {
     image: Arc<ImmutableImage<Format>>,
@@ -49,7 +49,7 @@ impl VulkanoTextureRaw {
     }
 }
 
-impl TextureRaw<VulkanoTypes> for VulkanoTextureRaw {
+impl TextureRaw<VulkanoRenderer> for VulkanoTextureRaw {
     fn from_file(
         renderer: &mut VulkanoRenderer, path: PathBuf, format: TextureFormat
     ) -> Result<Self, Error> {

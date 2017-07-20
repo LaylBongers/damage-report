@@ -1,12 +1,17 @@
-use calcium_rendering::{Types, Viewport};
+use std::any::{Any};
 
-use {RenderWorld, World3DTypes, Camera, World3DRenderTarget};
+use calcium_rendering::{Viewport, Renderer};
 
-pub trait World3DRenderer<T: Types, WT: World3DTypes<T>> {
+use {RenderWorld, Camera, World3DRenderTarget, Mesh, World3DRenderTargetRaw};
+
+pub trait World3DRenderer<R: Renderer>: Any + Sized {
+    type RenderTargetRaw: World3DRenderTargetRaw<R, Self> + Any;
+    type Mesh: Mesh<R> + Any + Send + Sync;
+
     fn render(
         &mut self,
-        world: &RenderWorld<T, WT>, camera: &Camera,
-        world3d_rendertarget: &mut World3DRenderTarget<T, WT>, viewport: &Viewport,
-        renderer: &mut T::Renderer, window_renderer: &mut T::WindowRenderer, frame: &mut T::Frame
+        world: &RenderWorld<R, Self>, camera: &Camera,
+        world3d_rendertarget: &mut World3DRenderTarget<R, Self>, viewport: &Viewport,
+        renderer: &mut R, window_renderer: &mut R::WindowRenderer, frame: &mut R::Frame
     );
 }

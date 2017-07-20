@@ -1,15 +1,15 @@
 use std::sync::{Arc};
 
-use calcium_rendering::{Types, Texture};
+use calcium_rendering::{Renderer, Texture};
 
-pub struct Material<T: Types> {
-    pub base_color: Arc<Texture<T>>,
-    pub normal_map: Arc<Texture<T>>,
-    pub metallic_map: Arc<Texture<T>>,
-    pub roughness_map: Arc<Texture<T>>,
+pub struct Material<R: Renderer> {
+    pub base_color: Arc<Texture<R>>,
+    pub normal_map: Arc<Texture<R>>,
+    pub metallic_map: Arc<Texture<R>>,
+    pub roughness_map: Arc<Texture<R>>,
 }
 
-impl<T: Types> Clone for Material<T> {
+impl<R: Renderer> Clone for Material<R> {
     fn clone(&self) -> Self {
         Material {
             base_color: self.base_color.clone(),

@@ -9,27 +9,27 @@ use gfx_window_glutin::{self};
 use gfx_device_gl::{Device, Factory};
 
 use calcium_rendering::{Error, CalciumErrorMappable};
-use calcium_rendering_gfx::{GfxTypes, GfxRenderer, GfxWindowRenderer, ColorFormat, DepthFormat};
+use calcium_rendering_gfx::{GfxRenderer, GfxWindowRenderer, ColorFormat, DepthFormat};
 
 #[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d_gfx::{GfxSimple2DTypes, GfxSimple2DRenderer};
+use calcium_rendering_simple2d_gfx::{GfxSimple2DRenderer};
 
 #[cfg(feature = "world3d")]
-use unsupported::{UnsupportedWorld3DTypes, UnsupportedWorld3DRenderer};
+use unsupported::{UnsupportedWorld3DRenderer};
 
 use {Initializer};
 
 pub struct GfxOpenGlInitializer;
 
 impl Initializer for GfxOpenGlInitializer {
-    type Types = GfxTypes<Device, Factory>;
+    type Renderer = GfxRenderer<Device, Factory>;
     type Window = GlutinWindow;
 
     #[cfg(feature = "simple2d")]
-    type Simple2DTypes = GfxSimple2DTypes;
+    type Simple2DRenderer = GfxSimple2DRenderer<Device, Factory>;
 
     #[cfg(feature = "world3d")]
-    type World3DTypes = UnsupportedWorld3DTypes;
+    type World3DRenderer = UnsupportedWorld3DRenderer;
 
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,

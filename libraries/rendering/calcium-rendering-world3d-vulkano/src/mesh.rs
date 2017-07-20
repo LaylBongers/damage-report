@@ -6,7 +6,7 @@ use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use calcium_rendering::{Renderer};
-use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoRenderer};
 use calcium_rendering_world3d::{Vertex, Mesh};
 
 pub struct VulkanoMesh {
@@ -15,7 +15,7 @@ pub struct VulkanoMesh {
     pub culling_sphere: Sphere<f32>,
 }
 
-impl Mesh<VulkanoTypes> for VulkanoMesh {
+impl Mesh<VulkanoRenderer> for VulkanoMesh {
     fn new(
         renderer: &VulkanoRenderer, vertices: Vec<Vertex>, indices: Vec<u32>,
     ) -> Arc<VulkanoMesh> {

@@ -8,19 +8,19 @@ use conrod::render::{Text};
 use conrod::text::{GlyphCache};
 use conrod::text::font::{Id as FontId};
 
-use calcium_rendering::{Types, Texture, Error};
+use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, SampleMode};
 
 use util;
 
-pub struct TextRenderer<T: Types> {
+pub struct TextRenderer<R: Renderer> {
     glyph_cache: GlyphCache,
     glyph_image: GrayImage,
-    glyph_texture: Arc<Texture<T>>,
+    glyph_texture: Arc<Texture<R>>,
 }
 
-impl<T: Types> TextRenderer<T> {
-    pub fn new(renderer: &mut T::Renderer) -> Result<Self, Error> {
+impl<R: Renderer> TextRenderer<R> {
+    pub fn new(renderer: &mut R) -> Result<Self, Error> {
         let glyph_cache = GlyphCache::new(1024, 1024, 0.1, 0.1);
         let glyph_image = GrayImage::from_raw(1024, 1024, vec![0u8; 1024*1024]).unwrap();
         let glyph_texture = Texture::from_raw_greyscale(
@@ -36,7 +36,7 @@ impl<T: Types> TextRenderer<T> {
 
     pub fn push_text(
         &mut self,
-        renderer: &mut T::Renderer, batch: &mut RenderBatch<T>,
+        renderer: &mut R, batch: &mut RenderBatch<R>,
         color: Color, text: Text, font_id: FontId,
     ) -> Result<(), Error> {
         // Unfortunately this specific text rendering can't be moved into the core simple2d library

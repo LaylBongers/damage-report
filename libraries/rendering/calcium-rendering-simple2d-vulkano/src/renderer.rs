@@ -10,13 +10,13 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use calcium_rendering::{Renderer, Texture, Error, CalciumErrorMappable, WindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoFrame, VulkanoWindowRenderer};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoFrame, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
-use {VkVertex, VulkanoSimple2DTypes};
+use {VkVertex, VulkanoSimple2DRenderTargetRaw};
 
 pub struct VulkanoSimple2DRenderer {
-    dummy_texture: Arc<Texture<VulkanoTypes>>,
+    dummy_texture: Arc<Texture<VulkanoRenderer>>,
 
     pub vs: simple2d_vs::Shader,
     pub fs: simple2d_fs::Shader,
@@ -77,11 +77,13 @@ impl VulkanoSimple2DRenderer {
     }
 }
 
-impl Simple2DRenderer<VulkanoTypes, VulkanoSimple2DTypes> for VulkanoSimple2DRenderer {
+impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
+    type RenderTargetRaw = VulkanoSimple2DRenderTargetRaw;
+
     fn render(
         &mut self,
-        batches: &[RenderBatch<VulkanoTypes>],
-        render_target: &mut Simple2DRenderTarget<VulkanoTypes, VulkanoSimple2DTypes>,
+        batches: &[RenderBatch<VulkanoRenderer>],
+        render_target: &mut Simple2DRenderTarget<VulkanoRenderer, VulkanoSimple2DRenderer>,
         renderer: &mut VulkanoRenderer, window_renderer: &mut VulkanoWindowRenderer,
         frame: &mut VulkanoFrame,
     ) {

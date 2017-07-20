@@ -7,8 +7,6 @@ extern crate calcium_rendering_gfx;
 
 mod render_target;
 mod renderer;
-mod types;
 
 pub use render_target::{GfxSimple2DRenderTargetRaw};
 pub use renderer::{GfxSimple2DRenderer};
-pub use types::{GfxSimple2DTypes};

@@ -1,9 +1,9 @@
 use gfx::{Device, Factory};
 
-use calcium_rendering_gfx::{GfxRenderer, GfxTypes, GfxWindowRenderer};
+use calcium_rendering_gfx::{GfxRenderer, GfxWindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderTargetRaw};
 
-use {GfxSimple2DRenderer, GfxSimple2DTypes};
+use {GfxSimple2DRenderer};
 
 pub struct GfxSimple2DRenderTargetRaw {
     should_clear: bool,
@@ -16,7 +16,7 @@ impl GfxSimple2DRenderTargetRaw {
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Simple2DRenderTargetRaw<GfxTypes<D, F>, GfxSimple2DTypes> for GfxSimple2DRenderTargetRaw {
+    Simple2DRenderTargetRaw<GfxRenderer<D, F>, GfxSimple2DRenderer<D, F>> for GfxSimple2DRenderTargetRaw {
     fn new(
         should_clear: bool,
         _renderer: &GfxRenderer<D, F>, _window_renderer: &GfxWindowRenderer,

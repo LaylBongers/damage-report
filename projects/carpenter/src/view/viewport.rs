@@ -2,17 +2,17 @@ use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle, InnerSpace};
 use window::{AdvancedWindow};
 use bus::{BusReader};
 
-use calcium_rendering::{Error, Types, Texture, TextureFormat, Viewport, WindowRenderer};
-use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material, World3DRenderTarget};
+use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
+use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Model, Material, World3DRenderTarget};
 
 use model::{MapEditorModel, MapEditorEvent, InputModel};
 
-pub struct ViewportView<T: Types, WT: World3DTypes<T>> {
-    render_world: RenderWorld<T, WT>,
+pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
+    render_world: RenderWorld<R, WR>,
     events: BusReader<MapEditorEvent>,
 
-    model: Model<T, WT>,
-    material: Material<T>,
+    model: Model<R, WR>,
+    material: Material<R>,
 
     move_button_started_over_ui: bool,
     camera_position: Vector3<f32>,
@@ -20,14 +20,14 @@ pub struct ViewportView<T: Types, WT: World3DTypes<T>> {
     camera_yaw: f32,
 }
 
-impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
-    pub fn new(renderer: &mut T::Renderer, editor: &mut MapEditorModel) -> Result<Self, Error> {
+impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
+    pub fn new(renderer: &mut R, editor: &mut MapEditorModel) -> Result<Self, Error> {
         let mut render_world = RenderWorld::new();
 
         render_world.ambient_light = Vector3::new(0.05, 0.05, 0.05);
         render_world.directional_light = Vector3::new(1.0, 1.0, 1.0);
 
-        let model = Model::<T, WT>::load(renderer, "./assets/cube.obj", 1.0);
+        let model = Model::<R, WR>::load(renderer, "./assets/cube.obj", 1.0);
         let material = Material {
             base_color: Texture::from_file(
                 renderer, "./assets/texture.png", TextureFormat::Srgb
@@ -74,11 +74,11 @@ impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
 
     pub fn render(
         &self,
-        frame: &mut T::Frame,
-        renderer: &mut T::Renderer,
-        window_renderer: &mut T::WindowRenderer,
-        world3d_renderer: &mut WT::Renderer,
-        world3d_rendertarget: &mut World3DRenderTarget<T, WT>,
+        frame: &mut R::Frame,
+        renderer: &mut R,
+        window_renderer: &mut R::WindowRenderer,
+        world3d_renderer: &mut WR,
+        world3d_rendertarget: &mut World3DRenderTarget<R, WR>,
     ) {
         // Create a viewport that doesn't overlap the UI
         let viewport = Viewport::new(

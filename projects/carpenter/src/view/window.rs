@@ -1,6 +1,6 @@
-use calcium_rendering::{Types, Error, WindowRenderer};
-use calcium_rendering_simple2d::{Simple2DTypes, Simple2DRenderTarget};
-use calcium_rendering_world3d::{World3DTypes, World3DRenderTarget};
+use calcium_rendering::{Renderer, Error, WindowRenderer};
+use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
+use calcium_rendering_world3d::{World3DRenderer, World3DRenderTarget};
 use calcium_rendering_static::{Initializer};
 use window::{Window, AdvancedWindow, WindowSettings};
 use slog::{Logger};
@@ -8,24 +8,24 @@ use slog::{Logger};
 use model::{MapEditorModel, InputModel};
 use view::{ViewportView, UiView};
 
-pub struct WindowView<W: Window, T: Types, ST: Simple2DTypes<T>, WT: World3DTypes<T>> {
+pub struct WindowView<W: Window, R: Renderer, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>> {
     window: W,
-    renderer: T::Renderer,
-    window_renderer: T::WindowRenderer,
+    renderer: R,
+    window_renderer: R::WindowRenderer,
 
-    simple2d_renderer: ST::Renderer,
-    simple2d_rendertarget: Simple2DRenderTarget<T, ST>,
+    simple2d_renderer: SR,
+    simple2d_rendertarget: Simple2DRenderTarget<R, SR>,
 
-    world3d_renderer: WT::Renderer,
-    world3d_rendertarget: World3DRenderTarget<T, WT>,
+    world3d_renderer: WR,
+    world3d_rendertarget: World3DRenderTarget<R, WR>,
 
-    viewport: ViewportView<T, WT>,
-    ui: UiView<T>,
+    viewport: ViewportView<R, WR>,
+    ui: UiView<R>,
 }
 
-impl<W: Window + AdvancedWindow, T: Types, ST: Simple2DTypes<T>, WT: World3DTypes<T>>
-    WindowView<W, T, ST, WT> {
-    pub fn new<I: Initializer<Window=W, Types=T, World3DTypes=WT, Simple2DTypes=ST>>(
+impl<W: Window + AdvancedWindow, R: Renderer, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>>
+    WindowView<W, R, SR, WR> {
+    pub fn new<I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRenderer=SR>>(
         log: &Logger,
         init: &I,
         editor: &mut MapEditorModel,
@@ -68,7 +68,9 @@ impl<W: Window + AdvancedWindow, T: Types, ST: Simple2DTypes<T>, WT: World3DType
         self.window.should_close()
     }
 
-    pub fn handle_events<I: Initializer<Window=W, Types=T, World3DTypes=WT, Simple2DTypes=ST>>(
+    pub fn handle_events<
+        I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRenderer=SR>
+    >(
         &mut self, init: &I, input: &mut InputModel
     ) {
         input.new_frame();

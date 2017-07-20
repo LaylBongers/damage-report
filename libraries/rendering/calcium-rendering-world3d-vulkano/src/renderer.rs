@@ -1,12 +1,13 @@
 use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{Error, Renderer, Viewport};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoWindowRenderer, VulkanoFrame};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer, VulkanoFrame};
 use calcium_rendering_world3d::{World3DRenderer, RenderWorld, Camera, World3DRenderTarget};
 
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
-use {VulkanoWorld3DTypes};
+
+use {VulkanoMesh, VulkanoWorld3DRenderTargetRaw};
 
 pub struct VulkanoWorld3DRenderer {
     geometry_renderer: GeometryRenderer,
@@ -29,11 +30,14 @@ impl VulkanoWorld3DRenderer {
     }
 }
 
-impl World3DRenderer<VulkanoTypes, VulkanoWorld3DTypes> for VulkanoWorld3DRenderer {
+impl World3DRenderer<VulkanoRenderer> for VulkanoWorld3DRenderer {
+    type RenderTargetRaw = VulkanoWorld3DRenderTargetRaw;
+    type Mesh = VulkanoMesh;
+
     fn render(
         &mut self,
-        world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, camera: &Camera,
-        world3d_rendertarget: &mut World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
+        world: &RenderWorld<VulkanoRenderer, VulkanoWorld3DRenderer>, camera: &Camera,
+        world3d_rendertarget: &mut World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
         viewport: &Viewport,
         renderer: &mut VulkanoRenderer, window_renderer: &mut VulkanoWindowRenderer,
         frame: &mut VulkanoFrame,

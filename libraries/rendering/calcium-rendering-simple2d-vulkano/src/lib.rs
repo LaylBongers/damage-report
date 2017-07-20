@@ -10,10 +10,8 @@ extern crate calcium_rendering_vulkano_shaders;
 
 mod render_target;
 mod renderer;
-mod types;
 mod vertex;
 
 pub use render_target::{VulkanoSimple2DRenderTargetRaw};
 pub use renderer::{VulkanoSimple2DRenderer};
-pub use types::{VulkanoSimple2DTypes};
 pub use vertex::{VkVertex};

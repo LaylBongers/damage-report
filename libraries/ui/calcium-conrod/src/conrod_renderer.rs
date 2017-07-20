@@ -6,18 +6,18 @@ use conrod::position::rect::{Rect};
 use conrod::widget::primitive::shape::triangles::{Triangle, ColoredPoint};
 use conrod::color::{Rgba};
 
-use calcium_rendering::{Types, WindowRenderer, Renderer, Error};
+use calcium_rendering::{WindowRenderer, Renderer, Error};
 use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle, DrawVertex};
 
 use text_renderer::{TextRenderer};
 use util;
 
-pub struct ConrodRenderer<T: Types> {
-    text_renderer: TextRenderer<T>,
+pub struct ConrodRenderer<R: Renderer> {
+    text_renderer: TextRenderer<R>,
 }
 
-impl<T: Types> ConrodRenderer<T> {
-    pub fn new(renderer: &mut T::Renderer) -> Result<Self, Error> {
+impl<R: Renderer> ConrodRenderer<R> {
+    pub fn new(renderer: &mut R) -> Result<Self, Error> {
         info!(renderer.log(), "Creating conrod renderer");
 
         let text_renderer = TextRenderer::new(renderer)?;
@@ -29,8 +29,8 @@ impl<T: Types> ConrodRenderer<T> {
 
     pub fn draw_if_changed(
         &mut self,
-        renderer: &mut T::Renderer, window: &T::WindowRenderer, ui: &mut Ui,
-    ) -> Result<Option<Vec<RenderBatch<T>>>, Error> {
+        renderer: &mut R, window: &R::WindowRenderer, ui: &mut Ui,
+    ) -> Result<Option<Vec<RenderBatch<R>>>, Error> {
         let result = if let Some(primitives) = ui.draw_if_changed() {
             Some(self.draw_primitives(renderer, window, primitives)?)
         } else {
@@ -42,8 +42,8 @@ impl<T: Types> ConrodRenderer<T> {
 
     fn draw_primitives(
         &mut self,
-        renderer: &mut T::Renderer, window: &T::WindowRenderer, mut primitives: Primitives
-    ) -> Result<Vec<RenderBatch<T>>, Error> {
+        renderer: &mut R, window: &R::WindowRenderer, mut primitives: Primitives
+    ) -> Result<Vec<RenderBatch<R>>, Error> {
         // TODO: Support dpi factor
         let half_size: Vector2<f32> = window.size().cast() / 2.0;
 
@@ -86,7 +86,7 @@ impl<T: Types> ConrodRenderer<T> {
     }
 
     fn push_rect(
-        &self, batch: &mut RenderBatch<T>, half_size: Vector2<f32>,
+        &self, batch: &mut RenderBatch<R>, half_size: Vector2<f32>,
         rect: &Rect, color: Color
     ) {
         batch.rectangle(DrawRectangle {
@@ -100,7 +100,7 @@ impl<T: Types> ConrodRenderer<T> {
     }
 
     fn push_triangles_single_color(
-        &self, batch: &mut RenderBatch<T>, half_size: Vector2<f32>,
+        &self, batch: &mut RenderBatch<R>, half_size: Vector2<f32>,
         color: Rgba, triangles: &[Triangle<Point>]
     ) {
         for triangle in triangles {
@@ -114,7 +114,7 @@ impl<T: Types> ConrodRenderer<T> {
     }
 
     fn push_triangles_multi_color(
-        &self, batch: &mut RenderBatch<T>, half_size: Vector2<f32>,
+        &self, batch: &mut RenderBatch<R>, half_size: Vector2<f32>,
         triangles: &[Triangle<ColoredPoint>]
     ) {
         for triangle in triangles {

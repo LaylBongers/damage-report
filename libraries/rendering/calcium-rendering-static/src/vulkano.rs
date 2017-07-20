@@ -6,27 +6,27 @@ use input::{Input};
 use winit_window::{self, WinitWindow};
 
 use calcium_rendering::{Error};
-use calcium_rendering_vulkano::{VulkanoTypes, VulkanoWindowRenderer, VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
 
 use {Initializer};
 
 #[cfg(feature = "world3d")]
-use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer, VulkanoWorld3DTypes};
+use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer};
 
 #[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DTypes, VulkanoSimple2DRenderer};
+use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DRenderer};
 
 pub struct VulkanoInitializer;
 
 impl Initializer for VulkanoInitializer {
-    type Types = VulkanoTypes;
+    type Renderer = VulkanoRenderer;
     type Window = WinitWindow;
 
     #[cfg(feature = "world3d")]
-    type World3DTypes = VulkanoWorld3DTypes;
+    type World3DRenderer = VulkanoWorld3DRenderer;
 
     #[cfg(feature = "simple2d")]
-    type Simple2DTypes = VulkanoSimple2DTypes;
+    type Simple2DRenderer = VulkanoSimple2DRenderer;
 
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,

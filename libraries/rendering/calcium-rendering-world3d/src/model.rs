@@ -6,18 +6,18 @@ use std::sync::{Arc};
 use cgmath::{Vector2, Vector3};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
-use calcium_rendering::{Types, Renderer};
+use calcium_rendering::{Renderer};
 
 use mesh::{self, Mesh, Vertex};
-use {World3DTypes};
+use {World3DRenderer};
 
-pub struct Model<T: Types, WT: World3DTypes<T>> {
-    pub meshes: Vec<Arc<WT::Mesh>>,
+pub struct Model<R: Renderer, WR: World3DRenderer<R>> {
+    pub meshes: Vec<Arc<WR::Mesh>>,
 }
 
-impl<T: Types, WT: World3DTypes<T>> Model<T, WT> {
+impl<R: Renderer, WR: World3DRenderer<R>> Model<R, WR> {
     pub fn load<P: AsRef<Path>>(
-        renderer: &T::Renderer, path: P, scale: f32
+        renderer: &R, path: P, scale: f32
     ) -> Self {
         // TODO: Change unwraps to proper error handling
         info!(renderer.log(), "Loading model"; "path" => path.as_ref().display().to_string());
@@ -39,8 +39,8 @@ impl<T: Types, WT: World3DTypes<T>> Model<T, WT> {
     }
 
     fn obj_set_to_meshes(
-        renderer: &T::Renderer, obj_set: &ObjSet, scale: f32
-    ) -> Vec<Arc<WT::Mesh>> {
+        renderer: &R, obj_set: &ObjSet, scale: f32
+    ) -> Vec<Arc<WR::Mesh>> {
         let mut meshes = Vec::new();
 
         // Go over all objects in the file
@@ -72,7 +72,7 @@ impl<T: Types, WT: World3DTypes<T>> Model<T, WT> {
 
             // Convert the vertices to a mesh
             let v = mesh::flat_vertices_to_indexed(&vertices);
-            meshes.push(WT::Mesh::new(renderer, v.0, v.1));
+            meshes.push(WR::Mesh::new(renderer, v.0, v.1));
         }
 
         meshes

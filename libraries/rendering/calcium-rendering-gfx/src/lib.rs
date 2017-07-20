@@ -7,12 +7,10 @@ extern crate calcium_rendering;
 
 mod renderer;
 mod texture;
-mod types;
 mod window_renderer;
 
 pub use renderer::{GfxRenderer};
 pub use texture::{GfxTextureRaw};
-pub use types::{GfxTypes};
 pub use window_renderer::{GfxWindowRenderer, GfxFrame};
 
 pub type ColorFormat = ::gfx::format::Rgba8;

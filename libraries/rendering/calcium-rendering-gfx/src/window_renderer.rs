@@ -3,7 +3,7 @@ use gfx::{Device, Factory};
 
 use calcium_rendering::{WindowRenderer};
 
-use {GfxTypes, GfxRenderer};
+use {GfxRenderer};
 
 pub struct GfxWindowRenderer {
     pub size: Vector2<u32>,
@@ -20,7 +20,7 @@ impl GfxWindowRenderer {
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    WindowRenderer<GfxTypes<D, F>> for GfxWindowRenderer {
+    WindowRenderer<GfxRenderer<D, F>> for GfxWindowRenderer {
     fn start_frame(&mut self, renderer: &mut GfxRenderer<D, F>) -> GfxFrame {
         renderer.device.cleanup();
 

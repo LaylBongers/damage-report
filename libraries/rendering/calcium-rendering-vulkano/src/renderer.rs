@@ -11,6 +11,8 @@ use vulkano::command_buffer::{AutoCommandBufferBuilder};
 
 use calcium_rendering::{Error, CalciumErrorMappable, Renderer};
 
+use {VulkanoTextureRaw, VulkanoFrame, VulkanoWindowRenderer};
+
 pub struct VulkanoRenderer {
     log: Logger,
 
@@ -142,6 +144,10 @@ impl VulkanoRenderer {
 }
 
 impl Renderer for VulkanoRenderer {
+    type WindowRenderer = VulkanoWindowRenderer;
+    type Frame = VulkanoFrame;
+    type TextureRaw = VulkanoTextureRaw;
+
     fn log(&self) -> &Logger {
         &self.log
     }

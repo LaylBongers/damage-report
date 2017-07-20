@@ -8,11 +8,11 @@ use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::pipeline::viewport::{Viewport as VkViewport};
 
 use calcium_rendering::{Viewport};
-use calcium_rendering_vulkano::{VulkanoTypes, VulkanoRenderer, VulkanoFrame};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{lighting_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld, World3DRenderTarget};
 
-use {VulkanoWorld3DTypes};
+use {VulkanoWorld3DRenderer};
 
 pub struct LightingRenderer {
     sampler: Arc<Sampler>,
@@ -42,8 +42,8 @@ impl LightingRenderer {
 
     pub fn build_command_buffer(
         &mut self,
-        world: &RenderWorld<VulkanoTypes, VulkanoWorld3DTypes>, camera: &Camera,
-        rendertarget: &mut World3DRenderTarget<VulkanoTypes, VulkanoWorld3DTypes>,
+        world: &RenderWorld<VulkanoRenderer, VulkanoWorld3DRenderer>, camera: &Camera,
+        rendertarget: &mut World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
         renderer: &mut VulkanoRenderer,
         frame: &VulkanoFrame,
         viewport: &Viewport,

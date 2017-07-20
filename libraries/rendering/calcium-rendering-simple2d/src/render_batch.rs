@@ -2,18 +2,18 @@ use std::sync::{Arc};
 
 use cgmath::{Vector2, Vector4, BaseNum};
 
-use calcium_rendering::{Types, Texture};
+use calcium_rendering::{Renderer, Texture};
 
 /// A render batch that can be drawn by a renderer. Represents the equivalent of a single drawcall.
 // TODO: #[derive(Debug)]
-pub struct RenderBatch<T: Types> {
+pub struct RenderBatch<R: Renderer> {
     /// The shader mode in which a render batch will be drawn.
-    pub mode: ShaderMode<T>,
+    pub mode: ShaderMode<R>,
     /// The vertices that will be drawn.
     pub vertices: Vec<DrawVertex>,
 }
 
-impl<T: Types> RenderBatch<T> {
+impl<R: Renderer> RenderBatch<R> {
     /// Returns true if this render batch has nothing to be drawn.
     pub fn empty(&self) -> bool {
         self.vertices.len() == 0
@@ -42,8 +42,8 @@ impl<T: Types> RenderBatch<T> {
     }
 }
 
-impl<T: Types> RenderBatch<T> {
-    pub fn new(mode: ShaderMode<T>) -> Self {
+impl<R: Renderer> RenderBatch<R> {
+    pub fn new(mode: ShaderMode<R>) -> Self {
         RenderBatch {
             mode,
             .. RenderBatch::default()
@@ -51,7 +51,7 @@ impl<T: Types> RenderBatch<T> {
     }
 }
 
-impl<T: Types> Default for RenderBatch<T> {
+impl<R: Renderer> Default for RenderBatch<R> {
     fn default() -> Self {
         RenderBatch {
             mode: ShaderMode::Color,
@@ -61,13 +61,13 @@ impl<T: Types> Default for RenderBatch<T> {
 }
 
 /// Defines how the renderer should draw vertices.
-pub enum ShaderMode<T: Types> {
+pub enum ShaderMode<R: Renderer> {
     /// Uses only the vertices' colors.
     Color,
     /// Multiplies a texture sampled using the vertices' uvs by the vertices' color.
-    Texture(Arc<Texture<T>>, SampleMode),
+    Texture(Arc<Texture<R>>, SampleMode),
     /// Uses the vertices' color's RGB and the texture's Alpha.
-    Mask(Arc<Texture<T>>, SampleMode),
+    Mask(Arc<Texture<R>>, SampleMode),
 }
 
 /// TODO: This type should be changed to a Sampler resource that should be exposed and implemented

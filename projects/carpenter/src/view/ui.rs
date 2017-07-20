@@ -5,15 +5,15 @@ use conrod::widget::{Text, Canvas, Button};
 use input::{Input};
 
 use calcium_game::{AverageDelta, delta_to_fps};
-use calcium_rendering::{Types, WindowRenderer, Error};
-use calcium_rendering_simple2d::{Simple2DTypes, RenderBatch, Simple2DRenderTarget, Simple2DRenderer};
+use calcium_rendering::{Renderer, WindowRenderer, Error};
+use calcium_rendering_simple2d::{RenderBatch, Simple2DRenderTarget, Simple2DRenderer};
 use calcium_conrod::{ConrodRenderer};
 
 use model::{MapEditorModel};
 
-pub struct UiView<T: Types> {
-    conrod_renderer: ConrodRenderer<T>,
-    ui_batches: Vec<RenderBatch<T>>,
+pub struct UiView<R: Renderer> {
+    conrod_renderer: ConrodRenderer<R>,
+    ui_batches: Vec<RenderBatch<R>>,
 
     ui: Ui,
     ids: Ids,
@@ -21,8 +21,8 @@ pub struct UiView<T: Types> {
     average_delta: AverageDelta,
 }
 
-impl<T: Types> UiView<T> {
-    pub fn new(size: Vector2<u32>, renderer: &mut T::Renderer) -> Result<Self, Error> {
+impl<R: Renderer> UiView<R> {
+    pub fn new(size: Vector2<u32>, renderer: &mut R) -> Result<Self, Error> {
         let conrod_renderer = ConrodRenderer::new(renderer)?;
         let ui_batches = vec!();
 
@@ -43,7 +43,7 @@ impl<T: Types> UiView<T> {
         })
     }
 
-    pub fn handle_event(&mut self, event: &Input, window_renderer: &T::WindowRenderer) {
+    pub fn handle_event(&mut self, event: &Input, window_renderer: &R::WindowRenderer) {
         let size = window_renderer.size();
         if let Some(event) = ::conrod::backend::piston::event::convert(
             event.clone(), size.x as f64, size.y as f64
@@ -119,11 +119,11 @@ impl<T: Types> UiView<T> {
             .set(self.ids.ms_label, ui);
     }
 
-    pub fn render<ST: Simple2DTypes<T>>(
-        &mut self, frame: &mut T::Frame,
-        renderer: &mut T::Renderer, window_renderer: &mut T::WindowRenderer,
-        simple2d_renderer: &mut ST::Renderer,
-        simple2d_rendertarget: &mut Simple2DRenderTarget<T, ST>,
+    pub fn render<SR: Simple2DRenderer<R>>(
+        &mut self, frame: &mut R::Frame,
+        renderer: &mut R, window_renderer: &mut R::WindowRenderer,
+        simple2d_renderer: &mut SR,
+        simple2d_rendertarget: &mut Simple2DRenderTarget<R, SR>,
     ) -> Result<(), Error> {
         // Create render batches for the UI
         if let Some(changed_batches) = self.conrod_renderer.draw_if_changed(

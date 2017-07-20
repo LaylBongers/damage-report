@@ -5,11 +5,11 @@ use std::hash::{Hash, Hasher};
 
 use cgmath::{Vector2, Vector3};
 
-use calcium_rendering::{Types};
+use calcium_rendering::{Renderer};
 
-pub trait Mesh<T: Types> {
+pub trait Mesh<R: Renderer> {
     fn new(
-        renderer: &T::Renderer, vertices: Vec<Vertex>, indices: Vec<u32>,
+        renderer: &R, vertices: Vec<Vertex>, indices: Vec<u32>,
     ) -> Arc<Self>;
 }
 

@@ -7,10 +7,10 @@ use vulkano::format::{ClearValue};
 use vulkano::image::swapchain::{SwapchainImage};
 
 use calcium_rendering::{Renderer};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoTypes, VulkanoWindowRenderer};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderTargetRaw};
 
-use {VkVertex, VulkanoSimple2DTypes, VulkanoSimple2DRenderer};
+use {VkVertex, VulkanoSimple2DRenderer};
 
 pub struct VulkanoSimple2DRenderTargetRaw {
     render_pass: Arc<RenderPassAbstract + Send + Sync>,
@@ -52,7 +52,8 @@ impl VulkanoSimple2DRenderTargetRaw {
     }
 }
 
-impl Simple2DRenderTargetRaw<VulkanoTypes, VulkanoSimple2DTypes> for VulkanoSimple2DRenderTargetRaw {
+impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
+    for VulkanoSimple2DRenderTargetRaw {
     fn new(
         should_clear: bool,
         renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
