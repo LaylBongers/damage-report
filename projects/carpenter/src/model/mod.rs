@@ -1,3 +1,3 @@
-mod application;
+mod map_editor;
 
-pub use self::application::{Application, ApplicationEvent};
+pub use self::map_editor::{MapEditor, MapEditorEvent};

@@ -5,12 +5,12 @@ use bus::{BusReader};
 use calcium_rendering::{Error, Types, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, World3DTypes, Model, Material, World3DRenderTarget};
 
-use model::{Application, ApplicationEvent};
+use model::{MapEditor, MapEditorEvent};
 use input_manager::{InputManager};
 
 pub struct ViewportView<T: Types, WT: World3DTypes<T>> {
     render_world: RenderWorld<T, WT>,
-    events: BusReader<ApplicationEvent>,
+    events: BusReader<MapEditorEvent>,
 
     model: Model<T, WT>,
     material: Material<T>,
@@ -22,7 +22,7 @@ pub struct ViewportView<T: Types, WT: World3DTypes<T>> {
 }
 
 impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
-    pub fn new(renderer: &mut T::Renderer, app: &mut Application) -> Result<Self, Error> {
+    pub fn new(renderer: &mut T::Renderer, editor: &mut MapEditor) -> Result<Self, Error> {
         let mut render_world = RenderWorld::new();
 
         render_world.ambient_light = Vector3::new(0.05, 0.05, 0.05);
@@ -46,7 +46,7 @@ impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
 
         Ok(ViewportView {
             render_world,
-            events: app.subscribe(),
+            events: editor.subscribe(),
 
             model,
             material,
@@ -64,7 +64,7 @@ impl<T: Types, WT: World3DTypes<T>> ViewportView<T, WT> {
         // Check if we got events
         while let Ok(ev) = self.events.try_recv() {
             match ev {
-                ApplicationEvent::NewBrush =>
+                MapEditorEvent::NewBrush =>
                     self.add_brush(),
             }
         }

@@ -2,35 +2,57 @@ use cgmath::{Vector2};
 use conrod::{self, color, Widget, Positionable, Sizeable, Ui, UiBuilder, Colorable};
 use conrod::text::{FontCollection};
 use conrod::widget::{Text, Canvas, Button};
+use input::{Input};
 
 use calcium_game::{AverageDelta, delta_to_fps};
+use calcium_rendering::{Types, WindowRenderer, Error};
+use calcium_rendering_simple2d::{Simple2DTypes, RenderBatch, Simple2DRenderTarget, Simple2DRenderer};
+use calcium_conrod::{ConrodRenderer};
 
-use model::{Application};
+use model::{MapEditor};
 
-pub struct UiView {
-    pub ui: Ui,
+pub struct UiView<T: Types> {
+    conrod_renderer: ConrodRenderer<T>,
+    ui_batches: Vec<RenderBatch<T>>,
+
+    ui: Ui,
     ids: Ids,
 
     average_delta: AverageDelta,
 }
 
-impl UiView {
-    pub fn new(size: Vector2<u32>) -> Self {
+impl<T: Types> UiView<T> {
+    pub fn new(size: Vector2<u32>, renderer: &mut T::Renderer) -> Result<Self, Error> {
+        let conrod_renderer = ConrodRenderer::new(renderer)?;
+        let ui_batches = vec!();
+
         let mut ui = UiBuilder::new(size.cast().into())
             .theme(theme())
             .build();
         ui.fonts.insert(FontCollection::from_bytes(::ttf_noto_sans::REGULAR).into_font().unwrap());
         let ids = Ids::new(ui.widget_id_generator());
 
-        UiView {
+        Ok(UiView {
+            conrod_renderer,
+            ui_batches,
+
             ui,
             ids,
 
             average_delta: AverageDelta::new(),
+        })
+    }
+
+    pub fn handle_event(&mut self, event: &Input, window_renderer: &T::WindowRenderer) {
+        let size = window_renderer.size();
+        if let Some(event) = ::conrod::backend::piston::event::convert(
+            event.clone(), size.x as f64, size.y as f64
+        ) {
+            self.ui.handle_event(event);
         }
     }
 
-    pub fn update(&mut self, delta: f32, app: &mut Application) {
+    pub fn update(&mut self, delta: f32, editor: &mut MapEditor) {
         let ui = &mut self.ui.set_widgets();
         self.average_delta.accumulate(delta);
 
@@ -75,7 +97,7 @@ impl UiView {
             .up_from(self.ids.ribbon_new_brush_label, 3.0)
             .w_h(60.0, 60.0)
             .set(self.ids.ribbon_new_brush, ui) {
-            app.new_brush();
+            editor.new_brush();
         }
         Text::new("New Brush")
             .right_from(self.ids.ribbon_load_label, 3.0)
@@ -95,6 +117,27 @@ impl UiView {
             .w(96.0)
             .font_size(12)
             .set(self.ids.ms_label, ui);
+    }
+
+    pub fn render<ST: Simple2DTypes<T>>(
+        &mut self, frame: &mut T::Frame,
+        renderer: &mut T::Renderer, window_renderer: &mut T::WindowRenderer,
+        simple2d_renderer: &mut ST::Renderer,
+        simple2d_rendertarget: &mut Simple2DRenderTarget<T, ST>,
+    ) -> Result<(), Error> {
+        // Create render batches for the UI
+        if let Some(changed_batches) = self.conrod_renderer.draw_if_changed(
+            renderer, window_renderer, &mut self.ui
+        )? {
+            self.ui_batches = changed_batches;
+        }
+
+        simple2d_renderer.render(
+            &self.ui_batches, simple2d_rendertarget,
+            renderer, window_renderer, frame
+        );
+
+        Ok(())
     }
 
     pub fn cursor_over_ui(&self) -> bool {
