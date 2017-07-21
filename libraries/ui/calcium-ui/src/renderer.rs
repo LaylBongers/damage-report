@@ -27,16 +27,20 @@ impl UiRenderer {
         // Add this element itself
         let style = ui[element_id].style();
 
-        let position = match &style.position {
+        let mut position = match &style.position {
             &Position::Flow => Vector2::new(0.0, 0.0),
             &Position::Relative(position) => position,
         };
+        position += style.margin.left_top();
 
-        batcher.current_batch.rectangle(DrawRectangle {
-            destination: Rectangle::start_size(position, style.size),
-            color: Vector4::new(1.0, 0.0, 0.0, 1.0),
-            .. DrawRectangle::default()
-        });
+        // Draw a rect for the background if we've got a background color
+        if let Some(ref color) = style.background_color {
+            batcher.current_batch.rectangle(DrawRectangle {
+                destination: Rectangle::start_size(position, style.size),
+                color: Vector4::new(color.red, color.green, color.blue, color.alpha),
+                .. DrawRectangle::default()
+            });
+        }
 
         // Now go through all the children as well
         for child_id in ui.children_of(element_id) {

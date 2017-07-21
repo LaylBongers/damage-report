@@ -1,10 +1,11 @@
 use cgmath::{Vector2};
 use input::{Input};
+use palette::pixel::{Srgb};
 
 use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
-use calcium_ui::{UiRenderer, Ui, Element, ElementId, Style, Position};
+use calcium_ui::{UiRenderer, Ui, Element, ElementId, Style, Position, Lrtb};
 
 use model::{MapEditorModel};
 
@@ -25,22 +26,30 @@ impl UiView {
         let mut ui = Ui::new();
         let root_id = ui.root_id();
 
-        let button = Element::new(Style {
-            margin: Vector2::new(3.0, 3.0),
+        // Create the top ribbon
+        let ribbon_style = Style {
+            size: Vector2::new(600.0, 66.0),
+            background_color: Some(Srgb::new(0.18, 0.20, 0.21).into()),
+            .. Style::new()
+        };
+        let ribbon = Element::new(ribbon_style.clone());
+        let ribbon_id = ui.add_child(ribbon, root_id);
+
+        // Add a few buttons to the top ribbon
+        let button_style = Style {
+            margin: Lrtb::uniform(3.0),
             size: Vector2::new(60.0, 60.0),
+            background_color: Some(Srgb::new(0.53, 0.54, 0.52).into()),
             .. Style::new()
-        });
-        let button_id = ui.add_child(button, root_id);
+        };
 
-        let test = Element::new(Style {
-            size: Vector2::new(2.0, 2.0),
-            .. Style::new()
-        });
-        ui.add_child(test, button_id);
+        let button = Element::new(button_style.clone());
+        let button_id = ui.add_child(button, ribbon_id);
 
+        // Add a FPS label
         let fps = Element::new(Style {
             position: Position::Relative(Vector2::new(500.0, 0.0)),
-            margin: Vector2::new(3.0, 3.0),
+            margin: Lrtb::uniform(3.0),
             size: Vector2::new(120.0, 18.0),
             .. Style::new()
         });

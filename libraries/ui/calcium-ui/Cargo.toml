@@ -7,3 +7,4 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 calcium-rendering = {path = "../../rendering/calcium-rendering"}
 calcium-rendering-simple2d = {path = "../../rendering/calcium-rendering-simple2d"}
 cgmath = "0.14"
+palette = "0.2"

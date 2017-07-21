@@ -13,7 +13,9 @@ extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
 extern crate ttf_noto_sans;
+// TODO: Replace bus with a custom event queue that just works on a single thread
 extern crate bus;
+extern crate palette;
 
 mod controller;
 mod model;
