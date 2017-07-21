@@ -29,12 +29,19 @@ impl UiView {
 
         // Create the top ribbon
         let ribbon_style = Style {
-            size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(66.0)),
+            size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(102.0)),
             background_color: Some(Srgb::new(0.18, 0.20, 0.21).into()),
             .. Style::new()
         };
         let ribbon = Element::new(ribbon_style.clone());
         let ribbon_id = ui.add_child(ribbon, root_id);
+
+        let ribbon_buttons = Element::new(Style {
+            position: Position::Relative(Vector2::new(0.0, 18.0)),
+            size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(66.0)),
+            .. Style::new()
+        });
+        let ribbon_buttons_id = ui.add_child(ribbon_buttons, ribbon_id);
 
         // Add a few buttons to the top ribbon
         let button_color = Srgb::new(0.53, 0.54, 0.52).into();
@@ -47,10 +54,10 @@ impl UiView {
         };
 
         let button = Element::new(button_style.clone());
-        let button_id = ui.add_child(button, ribbon_id);
+        let button_id = ui.add_child(button, ribbon_buttons_id);
 
         let button2 = Element::new(button_style.clone());
-        ui.add_child(button2, ribbon_id);
+        ui.add_child(button2, ribbon_buttons_id);
 
         // Add a FPS label
         let fps = Element::new(Style {

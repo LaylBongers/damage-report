@@ -82,8 +82,8 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
     ) {
         // Create a viewport that doesn't overlap the UI
         let viewport = Viewport::new(
-            Vector2::new(0.0, 96.0),
-            window_renderer.size().cast() - Vector2::new(0.0, 96.0),
+            Vector2::new(0.0, 102.0),
+            window_renderer.size().cast() - Vector2::new(0.0, 102.0),
         );
 
         world3d_renderer.render(
