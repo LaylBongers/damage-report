@@ -47,6 +47,9 @@ impl UiView {
         let button = Element::new(button_style.clone());
         let button_id = ui.add_child(button, ribbon_id);
 
+        let button2 = Element::new(button_style.clone());
+        ui.add_child(button2, ribbon_id);
+
         // Add a FPS label
         let fps = Element::new(Style {
             position: Position::Relative(Vector2::new(500.0, 0.0)),
@@ -78,14 +81,14 @@ impl UiView {
         {
             let button = &mut self.ui[self.button_id];
             if button.clicked() {
-                button.style_mut().text = "1".to_string();
+                button.style.text = "1".to_string();
                 editor.new_brush();
             }
         }
 
         {
             let fps = &mut self.ui[self.fps_id];
-            fps.style_mut().text = format!("{}", delta_to_fps(self.average_delta.get()));
+            fps.style.text = format!("{}", delta_to_fps(self.average_delta.get()));
         }
     }
 

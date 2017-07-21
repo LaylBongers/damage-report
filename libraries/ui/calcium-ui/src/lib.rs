@@ -8,6 +8,6 @@ mod renderer;
 pub mod style;
 mod ui;
 
-pub use element::{Element};
+pub use element::{Element, Positioning};
 pub use renderer::{UiRenderer};
 pub use ui::{Ui, ElementId};
