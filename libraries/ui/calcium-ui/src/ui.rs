@@ -1,5 +1,6 @@
 use std::ops::{Index, IndexMut};
-use {Element, Style};
+use style::{Style};
+use {Element};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ElementId(usize);

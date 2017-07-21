@@ -2,7 +2,8 @@ use cgmath::{Vector2, Vector4};
 use calcium_rendering::{Renderer};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 
-use {Ui, ElementId, Position};
+use style::{Position};
+use {Ui, ElementId};
 
 pub struct UiRenderer {
 }
@@ -35,8 +36,13 @@ impl UiRenderer {
 
         // Draw a rect for the background if we've got a background color
         if let Some(ref color) = style.background_color {
+            // Get the final HDPI units for this element's size
+            // TODO: Actually track container size
+            let size = style.size.to_units(Vector2::new(600.0, 600.0));
+
+            // Draw the rectangle
             batcher.current_batch.rectangle(DrawRectangle {
-                destination: Rectangle::start_size(position, style.size),
+                destination: Rectangle::start_size(position, size),
                 color: Vector4::new(color.red, color.green, color.blue, color.alpha),
                 .. DrawRectangle::default()
             });

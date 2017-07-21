@@ -1,4 +1,4 @@
-use {Style};
+use style::{Style};
 
 pub struct Element {
     style: Style,

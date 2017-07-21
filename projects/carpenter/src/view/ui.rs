@@ -5,7 +5,8 @@ use palette::pixel::{Srgb};
 use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
-use calcium_ui::{UiRenderer, Ui, Element, ElementId, Style, Position, Lrtb};
+use calcium_ui::{UiRenderer, Ui, Element, ElementId};
+use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue};
 
 use model::{MapEditorModel};
 
@@ -28,7 +29,7 @@ impl UiView {
 
         // Create the top ribbon
         let ribbon_style = Style {
-            size: Vector2::new(600.0, 66.0),
+            size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(66.0)),
             background_color: Some(Srgb::new(0.18, 0.20, 0.21).into()),
             .. Style::new()
         };
@@ -38,7 +39,7 @@ impl UiView {
         // Add a few buttons to the top ribbon
         let button_style = Style {
             margin: Lrtb::uniform(3.0),
-            size: Vector2::new(60.0, 60.0),
+            size: Size::units(60.0, 60.0),
             background_color: Some(Srgb::new(0.53, 0.54, 0.52).into()),
             .. Style::new()
         };
@@ -50,7 +51,8 @@ impl UiView {
         let fps = Element::new(Style {
             position: Position::Relative(Vector2::new(500.0, 0.0)),
             margin: Lrtb::uniform(3.0),
-            size: Vector2::new(120.0, 18.0),
+            size: Size::units(120.0, 18.0),
+            text_color: Srgb::new(1.0, 1.0, 1.0).into(),
             .. Style::new()
         });
         let fps_id = ui.add_child(fps, root_id);

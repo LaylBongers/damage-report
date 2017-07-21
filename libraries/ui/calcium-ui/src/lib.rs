@@ -5,10 +5,9 @@ extern crate palette;
 
 mod element;
 mod renderer;
-mod style;
+pub mod style;
 mod ui;
 
 pub use element::{Element};
 pub use renderer::{UiRenderer};
-pub use style::{Style, Position, Lrtb};
 pub use ui::{Ui, ElementId};
