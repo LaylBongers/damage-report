@@ -1,0 +1,9 @@
+[package]
+name = "calcium-ui"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+calcium-rendering = {path = "../../rendering/calcium-rendering"}
+calcium-rendering-simple2d = {path = "../../rendering/calcium-rendering-simple2d"}
+cgmath = "0.14"

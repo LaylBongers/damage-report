@@ -9,9 +9,9 @@ calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
 calcium-rendering-simple2d = {path = "../../libraries/rendering/calcium-rendering-simple2d"}
 calcium-rendering-world3d = {path = "../../libraries/rendering/calcium-rendering-world3d"}
 calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d", "world3d"]}
-calcium-conrod = {path = "../../libraries/ui/calcium-conrod"}
+calcium-ui = {path = "../../libraries/ui/calcium-ui"}
 cgmath = "0.14"
-conrod = {version = "0.54", features = ["piston"]}
+nuklear-rust = "0.3.2"
 pistoncore-window = "0.27"
 pistoncore-input = "0.18"
 slog = "2"
