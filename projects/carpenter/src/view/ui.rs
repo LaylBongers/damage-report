@@ -95,7 +95,7 @@ impl UiView {
         simple2d_renderer: &mut SR,
         simple2d_rendertarget: &mut Simple2DRenderTarget<R, SR>,
     ) -> Result<(), Error> {
-        let ui_batches = self.ui_renderer.draw(&self.ui);
+        let ui_batches = self.ui_renderer.draw(&mut self.ui, window_renderer.size().cast());
 
         simple2d_renderer.render(
             &ui_batches, simple2d_rendertarget,
