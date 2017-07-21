@@ -1,6 +1,6 @@
 use palette::{Rgba};
 
-use style::{Position, Lrtb, Size, MouseBehavior};
+use style::{Position, Lrtb, Size, CursorBehavior};
 
 #[derive(Clone, Debug)]
 pub struct Style {
@@ -14,7 +14,7 @@ pub struct Style {
     pub text_color: Rgba,
     pub text: String,
 
-    pub mouse_behavior: MouseBehavior,
+    pub cursor_behavior: CursorBehavior,
 }
 
 impl Style {
@@ -28,7 +28,7 @@ impl Style {
             text_color: Rgba::new(0.0, 0.0, 0.0, 1.0),
             text: String::new(),
 
-            mouse_behavior: MouseBehavior::PassThrough,
+            cursor_behavior: CursorBehavior::PassThrough,
         }
     }
 }

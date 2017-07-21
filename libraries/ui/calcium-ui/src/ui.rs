@@ -1,14 +1,21 @@
 use std::ops::{Index, IndexMut};
+
+use calcium_rendering_simple2d::{Rectangle};
 use cgmath::{Vector2};
-use style::{Style, Size, Position};
-use {Element, Positioning};
+use input::{Input, Motion};
+
+use style::{Style, Size, Position, CursorBehavior};
+use element::{Positioning};
+use {Element};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ElementId(usize);
 
 pub struct Ui {
     elements: Vec<Element>,
-    child_connections: Vec<Vec<ElementId>>
+    child_connections: Vec<Vec<ElementId>>,
+
+    cursor_position: Vector2<f32>,
 }
 
 impl Ui {
@@ -17,6 +24,8 @@ impl Ui {
         Ui {
             elements: vec!(Element::new(Style::new())),
             child_connections: vec!(Vec::new()),
+
+            cursor_position: Vector2::new(0.0, 0.0),
         }
     }
 
@@ -47,6 +56,36 @@ impl Ui {
         self.child_connections[parent.0].push(child_id);
 
         child_id
+    }
+
+    pub fn handle_event(&mut self, event: &Input) {
+        match *event {
+            Input::Move(Motion::MouseCursor(x, y)) =>
+                self.cursor_position = Vector2::new(x, y).cast(),
+            _ => {}
+        }
+    }
+
+    /// Processes input gathered through handle_event and updates event values on elements.
+    pub fn process_input_frame(&mut self) {
+        // Go through all elements and see if the mouse is over any of them
+        for element in &mut self.elements {
+            // Un-set hovering and clicked on this element
+            // TODO: Only un-set it on the last frame's element
+            element.hovering = false;
+            element.clicked = false;
+
+            // Make sure this element actually captures mouse input
+            if element.style.cursor_behavior == CursorBehavior::PassThrough {
+                continue;
+            }
+
+            // Check if the mouse is over this and if so set it to hovering
+            // TODO: Make use of a layering value calculated during calculate_positioning
+            if element.positioning.rectangle.contains(self.cursor_position) {
+                element.hovering = true;
+            }
+        }
     }
 
     pub fn calculate_positioning(&mut self, viewport_size: Vector2<f32>) {
@@ -94,8 +133,7 @@ impl Ui {
 
             // Store the calculated data
             element.positioning = Positioning {
-                position: margined_position,
-                size: size,
+                rectangle: Rectangle::start_size(margined_position, size),
             };
         }
 

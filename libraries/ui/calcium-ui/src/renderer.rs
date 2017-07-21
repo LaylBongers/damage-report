@@ -1,7 +1,8 @@
 use cgmath::{Vector2, Vector4};
 use calcium_rendering::{Renderer};
-use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
+use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle};
 
+use style::{CursorBehavior};
 use {Ui, ElementId};
 
 pub struct UiRenderer {
@@ -35,11 +36,22 @@ impl UiRenderer {
         let style = &element.style;
         let positioning = &element.positioning;
 
-        // Draw a rect for the background if we've got a background color
-        if let Some(ref color) = style.background_color {
+        // Check which color this element is
+        let color = if !element.hovering() {
+            style.background_color
+        } else {
+            match style.cursor_behavior {
+                CursorBehavior::Clickable { hover, hold: _hold } =>
+                    hover.or(style.background_color),
+                _ => style.background_color,
+            }
+        };
+
+        // Draw a rect for the background if we've got a color
+        if let Some(ref color) = color {
             // Draw the rectangle
             batcher.current_batch.rectangle(DrawRectangle {
-                destination: Rectangle::start_size(positioning.position, positioning.size),
+                destination: positioning.rectangle.clone(),
                 color: Vector4::new(color.red, color.green, color.blue, color.alpha),
                 .. DrawRectangle::default()
             });

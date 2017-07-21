@@ -6,7 +6,7 @@ use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
 use calcium_ui::{UiRenderer, Ui, Element, ElementId};
-use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue};
+use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue, CursorBehavior};
 
 use model::{MapEditorModel};
 
@@ -37,10 +37,12 @@ impl UiView {
         let ribbon_id = ui.add_child(ribbon, root_id);
 
         // Add a few buttons to the top ribbon
+        let button_color = Srgb::new(0.53, 0.54, 0.52).into();
         let button_style = Style {
             margin: Lrtb::uniform(3.0),
             size: Size::units(60.0, 60.0),
-            background_color: Some(Srgb::new(0.53, 0.54, 0.52).into()),
+            background_color: Some(button_color),
+            cursor_behavior: CursorBehavior::clickable_autocolor(button_color),
             .. Style::new()
         };
 
@@ -73,9 +75,11 @@ impl UiView {
 
     pub fn handle_event<R: Renderer>(&mut self, event: &Input, window_renderer: &R::WindowRenderer) {
         let size = window_renderer.size();
+        self.ui.handle_event(event);
     }
 
     pub fn update(&mut self, delta: f32, editor: &mut MapEditorModel) {
+        self.ui.process_input_frame();
         self.average_delta.accumulate(delta);
 
         {

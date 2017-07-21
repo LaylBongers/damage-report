@@ -145,7 +145,7 @@ impl Default for DrawRectangle {
 }
 
 /// A rectangle defined by start and end coordinates.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Rectangle<S: BaseNum> {
     pub start: Vector2<S>,
     pub end: Vector2<S>,
@@ -173,5 +173,10 @@ impl<S: BaseNum> Rectangle<S> {
     /// Returns a new vector with the end's X and the start's Y.
     pub fn end_start(&self) -> Vector2<S> {
         Vector2::new(self.end.x, self.start.y)
+    }
+
+    pub fn contains(&self, value: Vector2<S>) -> bool {
+        value.x >= self.start.x && value.y >= self.start.y &&
+        value.x < self.end.x && value.y < self.end.y
     }
 }
