@@ -5,7 +5,7 @@ use style::{Style};
 pub struct Element {
     pub style: Style,
     pub(crate) positioning: Positioning,
-    pub(crate) hovering: bool,
+    pub(crate) cursor_state: ElementCursorState,
     pub(crate) clicked: bool,
 }
 
@@ -14,13 +14,17 @@ impl Element {
         Element {
             style,
             positioning: Positioning::new(),
-            hovering: false,
+            cursor_state: ElementCursorState::None,
             clicked: false,
         }
     }
 
     pub fn hovering(&self) -> bool {
-        self.hovering
+        self.cursor_state == ElementCursorState::Hovering
+    }
+
+    pub fn held(&self) -> bool {
+        self.cursor_state == ElementCursorState::Held
     }
 
     pub fn clicked(&self) -> bool {
@@ -39,4 +43,11 @@ impl Positioning {
             rectangle: Rectangle::new(Vector2::zero(), Vector2::zero()),
         }
     }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ElementCursorState {
+    None,
+    Hovering,
+    Held,
 }

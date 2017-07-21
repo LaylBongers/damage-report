@@ -2,11 +2,11 @@ use std::ops::{Index, IndexMut};
 
 use calcium_rendering_simple2d::{Rectangle};
 use cgmath::{Vector2};
-use input::{Input, Motion};
+use input::{Input, Motion, Button, MouseButton};
 
 use style::{Style, Size, Position, CursorBehavior};
 use element::{Positioning};
-use {Element};
+use {Element, ElementCursorState};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ElementId(usize);
@@ -16,6 +16,10 @@ pub struct Ui {
     child_connections: Vec<Vec<ElementId>>,
 
     cursor_position: Vector2<f32>,
+    // pressed/released are reset every frame, state is persistent
+    cursor_pressed: bool,
+    cursor_released: bool,
+    cursor_state: bool,
 }
 
 impl Ui {
@@ -26,6 +30,9 @@ impl Ui {
             child_connections: vec!(Vec::new()),
 
             cursor_position: Vector2::new(0.0, 0.0),
+            cursor_pressed: false,
+            cursor_released: false,
+            cursor_state: false,
         }
     }
 
@@ -60,6 +67,16 @@ impl Ui {
 
     pub fn handle_event(&mut self, event: &Input) {
         match *event {
+            Input::Press(Button::Mouse(MouseButton::Left)) => {
+                self.cursor_pressed = true;
+                self.cursor_released = false;
+                self.cursor_state = true;
+            },
+            Input::Release(Button::Mouse(MouseButton::Left)) => {
+                self.cursor_pressed = false;
+                self.cursor_released = true;
+                self.cursor_state = false;
+            },
             Input::Move(Motion::MouseCursor(x, y)) =>
                 self.cursor_position = Vector2::new(x, y).cast(),
             _ => {}
@@ -72,7 +89,7 @@ impl Ui {
         for element in &mut self.elements {
             // Un-set hovering and clicked on this element
             // TODO: Only un-set it on the last frame's element
-            element.hovering = false;
+            element.cursor_state = ElementCursorState::None;
             element.clicked = false;
 
             // Make sure this element actually captures mouse input
@@ -83,9 +100,24 @@ impl Ui {
             // Check if the mouse is over this and if so set it to hovering
             // TODO: Make use of a layering value calculated during calculate_positioning
             if element.positioning.rectangle.contains(self.cursor_position) {
-                element.hovering = true;
+                element.cursor_state = if self.cursor_state {
+                    ElementCursorState::Hovering
+                } else {
+                    ElementCursorState::Held
+                };
+
+                // Check if the cursor was released over this element so we can raise a click
+                // TODO: The expected behavior is to keep track of which element the click was
+                //  started on and raise the clicked event regardless of where it ended.
+                if self.cursor_released {
+                    element.clicked = true;
+                }
             }
         }
+
+        // Reset cursor pressed data
+        self.cursor_pressed = false;
+        self.cursor_released = false;
     }
 
     pub fn calculate_positioning(&mut self, viewport_size: Vector2<f32>) {

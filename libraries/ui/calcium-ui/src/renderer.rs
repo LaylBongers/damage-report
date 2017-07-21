@@ -3,7 +3,7 @@ use calcium_rendering::{Renderer};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle};
 
 use style::{CursorBehavior};
-use {Ui, ElementId};
+use {Ui, ElementId, ElementCursorState};
 
 pub struct UiRenderer {
 }
@@ -37,14 +37,20 @@ impl UiRenderer {
         let positioning = &element.positioning;
 
         // Check which color this element is
-        let color = if !element.hovering() {
-            style.background_color
-        } else {
-            match style.cursor_behavior {
-                CursorBehavior::Clickable { hover, hold: _hold } =>
-                    hover.or(style.background_color),
-                _ => style.background_color,
-            }
+        let color = match element.cursor_state {
+            ElementCursorState::None => style.background_color,
+            ElementCursorState::Hovering =>
+                match style.cursor_behavior {
+                    CursorBehavior::Clickable { hover, hold: _hold } =>
+                        hover.or(style.background_color),
+                    _ => style.background_color,
+                },
+            ElementCursorState::Held =>
+                match style.cursor_behavior {
+                    CursorBehavior::Clickable { hover: _hover, hold } =>
+                        hold.or(style.background_color),
+                    _ => style.background_color,
+                },
         };
 
         // Draw a rect for the background if we've got a color
