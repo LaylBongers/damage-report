@@ -1,0 +1,12 @@
+[package]
+name = "glyphlayout"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+keywords = ["rusttype", "glyph", "layout"]
+description = "A library for layouting text glyphs"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+
+[dependencies]
+rusttype = "0.2"
+unicode-normalization = "0.1"

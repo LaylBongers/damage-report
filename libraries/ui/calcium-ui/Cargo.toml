@@ -11,5 +11,5 @@ palette = "0.2"
 pistoncore-input = "0.18"
 rusttype = "0.2"
 image = "0.14"
-unicode-normalization = "0.1"
 ttf-noto-sans = "0.1"
+glyphlayout = {path = "../glyphlayout"}

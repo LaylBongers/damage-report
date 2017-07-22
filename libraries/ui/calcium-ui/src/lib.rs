@@ -5,7 +5,7 @@ extern crate palette;
 extern crate input;
 extern crate rusttype;
 extern crate image;
-extern crate unicode_normalization;
+extern crate glyphlayout;
 
 // TODO: Remove this and allow any font to be set
 extern crate ttf_noto_sans;

@@ -2,11 +2,11 @@ use std::sync::{Arc};
 
 use cgmath::{Vector2, Vector4};
 use rusttype::gpu_cache::{Cache};
-use rusttype::{Font, FontCollection, Scale, point, PositionedGlyph};
+use rusttype::{Font, FontCollection, point};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
-use unicode_normalization::{UnicodeNormalization};
 use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
+use glyphlayout;
 
 use style::{CursorBehavior};
 use {Ui, ElementId, ElementCursorState, Element, ElementText};
@@ -119,8 +119,9 @@ fn draw_element_text<R: Renderer>(
             return Ok(())
         }
 
-        let glyphs = layout_text(
-            text, element.positioning.rectangle.start, font, element.style.text_size
+        let position = element.positioning.rectangle.start;
+        let glyphs = glyphlayout::layout_text(
+            text, point(position.x, position.y), font, element.style.text_size
         );
 
         // Make sure the glyph cache knows what glyphs we need
@@ -183,54 +184,6 @@ fn draw_element_text<R: Renderer>(
     }
 
     Ok(())
-}
-
-fn layout_text<'a>(
-    text: &str, position: Vector2<f32>, font: &'a Font, text_size: f32
-) -> Vec<PositionedGlyph<'a>> {
-    let mut positioned_glyphs = Vec::new();
-
-    let scale = Scale::uniform(text_size);
-    let v_metrics = font.v_metrics(scale);
-
-    let mut caret = point(position.x, position.y + v_metrics.ascent);
-    let mut last_glyph_id = None;
-
-    // Convert the text to positioned glyphs
-    // Normalizing to "Normalized Form C", reduces mojibake
-    for c in text.nfc() {
-        // Skip control characters in single-line drawing
-        if c.is_control() {
-            continue;
-        }
-
-        // Look up the glyph for this character
-        let base_glyph = if let Some(glyph) = font.glyph(c) {
-            glyph
-        } else {
-            continue;
-        };
-
-        // Add the kerning needed for the last glyph next to this glyph
-        if let Some(id) = last_glyph_id.take() {
-            caret.x += font.pair_kerning(scale, id, base_glyph.id());
-        }
-        last_glyph_id = Some(base_glyph.id());
-
-        // Position the glyph for this character
-        let glyph = base_glyph.scaled(scale).positioned(caret);
-        /*if let Some(bb) = glyph.pixel_bounding_box() { TODO: Multi-line support
-            if bb.max.x > width as i32 {
-                caret = point(0.0, caret.y + advance_height);
-                glyph = glyph.into_unpositioned().positioned(caret);
-                last_glyph_id = None;
-            }
-        }*/
-        caret.x += glyph.unpositioned().h_metrics().advance_width;
-        positioned_glyphs.push(glyph);
-    }
-
-    positioned_glyphs
 }
 
 struct Batcher<R: Renderer> {
