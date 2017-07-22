@@ -175,6 +175,10 @@ impl<S: BaseNum> Rectangle<S> {
         Vector2::new(self.end.x, self.start.y)
     }
 
+    pub fn size(&self) -> Vector2<S> {
+        self.end - self.start
+    }
+
     pub fn contains(&self, value: Vector2<S>) -> bool {
         value.x >= self.start.x && value.y >= self.start.y &&
         value.x < self.end.x && value.y < self.end.y

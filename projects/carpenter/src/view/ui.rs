@@ -6,7 +6,7 @@ use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
 use calcium_ui::{UiRenderer, Ui, Element, ElementId, ElementText};
-use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue, CursorBehavior};
+use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue, CursorBehavior, DockH, DockV};
 
 use model::{MapEditorModel};
 
@@ -37,7 +37,7 @@ impl<R: Renderer> UiView<R> {
         let ribbon_id = ui.add_child(ribbon, root_id);
 
         let ribbon_buttons = Element::new(Style {
-            position: Position::Relative(Vector2::new(0.0, 18.0)),
+            position: Position::Relative(Vector2::new(0.0, 18.0), DockH::Left, DockV::Top),
             size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(66.0)),
             .. Style::new()
         });
@@ -61,7 +61,7 @@ impl<R: Renderer> UiView<R> {
 
         // Add a FPS label
         let fps = Element::new(Style {
-            position: Position::Relative(Vector2::new(500.0, 0.0)),
+            position: Position::Relative(Vector2::new(0.0, 0.0), DockH::Right, DockV::Top),
             size: Size::units(120.0, 18.0),
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
             text_size: 14.0,

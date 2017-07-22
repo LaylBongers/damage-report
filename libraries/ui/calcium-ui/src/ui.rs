@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut};
 
 use calcium_rendering_simple2d::{Rectangle};
-use cgmath::{Vector2};
+use cgmath::{Vector2, Zero};
 use input::{Input, Motion, Button, MouseButton};
 
 use style::{Style, Size, Position, CursorBehavior};
@@ -131,49 +131,63 @@ impl Ui {
 
         // Start off the calculation at the root
         self.calculate_element_positioning(
-            root_id, viewport_size, &mut Vector2::new(0.0, 0.0), &mut 0.0
+            root_id,
+            &Rectangle::new(Vector2::zero(), viewport_size), &mut Vector2::new(0.0, 0.0), &mut 0.0
         );
     }
 
     pub fn calculate_element_positioning(
         &mut self, element_id: ElementId,
-        parent_size: Vector2<f32>, flow_position: &mut Vector2<f32>, flow_margin: &mut f32,
+        container: &Rectangle<f32>, flow_position: &mut Vector2<f32>, flow_margin: &mut f32,
     ) {
-        let margined_position;
+        let position;
         let size;
 
         {
             let element = &mut self[element_id];
             let style = &element.style;
 
-            // Calculate the final position of this element
-            let position = match &style.position {
-                &Position::Flow => *flow_position,
-                // TODO: Make use of parent container position
-                &Position::Relative(position) => position,
-            };
-            margined_position = position + style.margin.max_left(*flow_margin).left_top();
-
-            // Calculate the final size of this element
+            // Calculate the final size of this element, this is needed for some positioning types
+            let parent_size = container.size();
             size = style.size.to_units(parent_size);
+
+            // Calculate the base position of this element
+            let marginless_position = match &style.position {
+                &Position::Flow => *flow_position,
+                &Position::Relative(position, dock_h, dock_v) => {
+                    // Calculate the position based on our size, the container, and the docking
+                    Vector2::new(
+                        dock_h.relative_position(position.x, size.x, parent_size.x),
+                        dock_v.relative_position(position.y, size.y, parent_size.y),
+                    ) + container.start
+                },
+            };
+
+            // Add margins to that base position if we're in flow mode, merging margins
+            position = if style.position.is_flow() {
+                marginless_position + style.margin.max_left(*flow_margin).left_top()
+            } else {
+                marginless_position
+            };
 
             // If we're positioned using flow, adjust the flow position
             if style.position.is_flow() {
-                flow_position.x = margined_position.x + size.x;
+                flow_position.x = position.x + size.x;
                 *flow_margin = style.margin.right;
             }
 
             // Store the calculated data
             element.positioning = Positioning {
-                rectangle: Rectangle::start_size(margined_position, size),
+                rectangle: Rectangle::start_size(position, size),
             };
         }
 
         // Now go through all the children as well
-        let mut child_flow_position = margined_position;
+        let mut child_flow_position = position;
+        let our_container = Rectangle::new(position, size);
         for child_id in self.children_of(element_id).clone() {
             self.calculate_element_positioning(
-                child_id, size, &mut child_flow_position, &mut 0.0,
+                child_id, &our_container, &mut child_flow_position, &mut 0.0,
             );
         }
     }

@@ -218,7 +218,7 @@ dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-simple2d 0.1.0",
  "cgmath 0.14.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "glyphformat 0.1.0",
+ "glyphlayout 0.1.0",
  "image 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "palette 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -626,7 +626,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "glyphformat"
+name = "glyphlayout"
 version = "0.1.0"
 dependencies = [
  "rusttype 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
