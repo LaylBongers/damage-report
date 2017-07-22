@@ -114,7 +114,9 @@ fn draw_element_text<R: Renderer>(
     //  so text height can be used automatically for layouting.
 
     if let ElementText::SingleLine(ref text) = element.text {
-        let glyphs = layout_text(text, font, element.style.text_size);
+        let glyphs = layout_text(
+            text, element.positioning.rectangle.start, font, element.style.text_size
+        );
 
         // Make sure the glyph cache knows what glyphs we need
         for glyph in &glyphs {
@@ -178,14 +180,15 @@ fn draw_element_text<R: Renderer>(
     Ok(())
 }
 
-fn layout_text<'a>(text: &str, font: &'a Font, text_size: f32) -> Vec<PositionedGlyph<'a>> {
+fn layout_text<'a>(
+    text: &str, position: Vector2<f32>, font: &'a Font, text_size: f32
+) -> Vec<PositionedGlyph<'a>> {
     let mut positioned_glyphs = Vec::new();
 
     let scale = Scale::uniform(text_size);
     let v_metrics = font.v_metrics(scale);
-    let advance_height = v_metrics.ascent + -v_metrics.descent + v_metrics.line_gap;
 
-    let mut caret = point(0.0, advance_height);
+    let mut caret = point(position.x, position.y + v_metrics.ascent);
     let mut last_glyph_id = None;
 
     // Convert the text to positioned glyphs

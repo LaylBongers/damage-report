@@ -62,10 +62,9 @@ impl<R: Renderer> UiView<R> {
         // Add a FPS label
         let fps = Element::new(Style {
             position: Position::Relative(Vector2::new(500.0, 0.0)),
-            margin: Lrtb::uniform(3.0),
             size: Size::units(120.0, 18.0),
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
-            text_size: 12.0,
+            text_size: 14.0,
             .. Style::new()
         });
         let fps_id = ui.add_child(fps, root_id);
