@@ -51,6 +51,8 @@ fn init_logger() -> Logger {
 }
 
 fn run_game(log: &Logger) -> Result<(), Error> {
+    calcium_game::log_sys_info(log);
+
     // TODO: Read in from configuration and UI
     let backend = Backend::Vulkano;
 
