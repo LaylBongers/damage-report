@@ -26,7 +26,8 @@ impl Style {
 
             background_color: None,
             text_color: Rgba::new(0.0, 0.0, 0.0, 1.0),
-            text_size: 10.0, // Reasonable default, 0.0 crashes TODO: gracefully handle 0.0
+            // Reasonable default, if it's at 0 users will get confused about text not rendering
+            text_size: 10.0,
 
             cursor_behavior: CursorBehavior::PassThrough,
         }

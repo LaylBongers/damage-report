@@ -114,6 +114,11 @@ fn draw_element_text<R: Renderer>(
     //  so text height can be used automatically for layouting.
 
     if let ElementText::SingleLine(ref text) = element.text {
+        // If the text size is too small, we can't render anything
+        if element.style.text_size <= 0.5 {
+            return Ok(())
+        }
+
         let glyphs = layout_text(
             text, element.positioning.rectangle.start, font, element.style.text_size
         );
