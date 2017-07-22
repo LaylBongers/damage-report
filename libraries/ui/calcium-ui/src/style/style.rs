@@ -12,7 +12,7 @@ pub struct Style {
 
     pub background_color: Option<Rgba>,
     pub text_color: Rgba,
-    pub text: String,
+    pub text_size: f32,
 
     pub cursor_behavior: CursorBehavior,
 }
@@ -26,7 +26,7 @@ impl Style {
 
             background_color: None,
             text_color: Rgba::new(0.0, 0.0, 0.0, 1.0),
-            text: String::new(),
+            text_size: 10.0, // Reasonable default, 0.0 crashes TODO: gracefully handle 0.0
 
             cursor_behavior: CursorBehavior::PassThrough,
         }

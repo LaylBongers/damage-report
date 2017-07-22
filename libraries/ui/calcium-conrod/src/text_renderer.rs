@@ -50,7 +50,7 @@ impl<R: Renderer> TextRenderer<R> {
 
         // Queue up those glyphs in the cache
         for glyph in positioned_glyphs.iter() {
-            self.glyph_cache.queue_glyph(font_id.index(), glyph.clone());
+            self.glyph_cache.queue_glyph(font_id_u, glyph.clone());
         }
 
         // Now see if we need to create a new glyph cache
@@ -82,7 +82,6 @@ impl<R: Renderer> TextRenderer<R> {
         batch.mode = ShaderMode::Mask(self.glyph_texture.clone(), SampleMode::Nearest);
 
         // Actually render the text
-        // TODO: Make use of a glyphs texture
         for glyph in positioned_glyphs.iter() {
             if let Ok(Some((uv_rect, screen_rect))) = self.glyph_cache.rect_for(font_id_u, glyph) {
                 // Push this glyph into this draw batch

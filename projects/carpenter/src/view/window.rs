@@ -20,7 +20,7 @@ pub struct WindowView<W: Window, R: Renderer, SR: Simple2DRenderer<R>, WR: World
     world3d_rendertarget: World3DRenderTarget<R, WR>,
 
     viewport: ViewportView<R, WR>,
-    ui: UiView,
+    ui: UiView<R>,
 }
 
 impl<W: Window + AdvancedWindow, R: Renderer, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>>
@@ -84,7 +84,7 @@ impl<W: Window + AdvancedWindow, R: Renderer, SR: Simple2DRenderer<R>, WR: World
             input.handle_event(&event);
 
             // Pass the event to the ui
-            self.ui.handle_event::<R>(&event, &self.window_renderer);
+            self.ui.handle_event(&event);
         }
     }
 

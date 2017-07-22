@@ -5,13 +5,13 @@ use palette::pixel::{Srgb};
 use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
-use calcium_ui::{UiRenderer, Ui, Element, ElementId};
+use calcium_ui::{UiRenderer, Ui, Element, ElementId, ElementText};
 use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue, CursorBehavior};
 
 use model::{MapEditorModel};
 
-pub struct UiView {
-    ui_renderer: UiRenderer,
+pub struct UiView<R: Renderer> {
+    ui_renderer: UiRenderer<R>,
 
     ui: Ui,
     button_id: ElementId,
@@ -20,9 +20,9 @@ pub struct UiView {
     average_delta: AverageDelta,
 }
 
-impl UiView {
-    pub fn new<R: Renderer>(renderer: &mut R) -> Result<Self, Error> {
-        let ui_renderer = UiRenderer::new();
+impl<R: Renderer> UiView<R> {
+    pub fn new(renderer: &mut R) -> Result<Self, Error> {
+        let ui_renderer = UiRenderer::new(renderer)?;
 
         let mut ui = Ui::new();
         let root_id = ui.root_id();
@@ -65,6 +65,7 @@ impl UiView {
             margin: Lrtb::uniform(3.0),
             size: Size::units(120.0, 18.0),
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
+            text_size: 12.0,
             .. Style::new()
         });
         let fps_id = ui.add_child(fps, root_id);
@@ -80,8 +81,7 @@ impl UiView {
         })
     }
 
-    pub fn handle_event<R: Renderer>(&mut self, event: &Input, window_renderer: &R::WindowRenderer) {
-        let size = window_renderer.size();
+    pub fn handle_event(&mut self, event: &Input) {
         self.ui.handle_event(event);
     }
 
@@ -92,24 +92,28 @@ impl UiView {
         {
             let button = &mut self.ui[self.button_id];
             if button.clicked() {
-                button.style.text = "1".to_string();
+                button.text = ElementText::SingleLine("1".into());
                 editor.new_brush();
             }
         }
 
         {
             let fps = &mut self.ui[self.fps_id];
-            fps.style.text = format!("{}", delta_to_fps(self.average_delta.get()));
+            fps.text = ElementText::SingleLine(
+                format!("FPS: {}", delta_to_fps(self.average_delta.get()))
+            );
         }
     }
 
-    pub fn render<R: Renderer, SR: Simple2DRenderer<R>>(
+    pub fn render<SR: Simple2DRenderer<R>>(
         &mut self, frame: &mut R::Frame,
         renderer: &mut R, window_renderer: &mut R::WindowRenderer,
         simple2d_renderer: &mut SR,
         simple2d_rendertarget: &mut Simple2DRenderTarget<R, SR>,
     ) -> Result<(), Error> {
-        let ui_batches = self.ui_renderer.draw(&mut self.ui, window_renderer.size().cast());
+        let ui_batches = self.ui_renderer.draw(
+            &mut self.ui, window_renderer.size().cast(), renderer
+        )?;
 
         simple2d_renderer.render(
             &ui_batches, simple2d_rendertarget,

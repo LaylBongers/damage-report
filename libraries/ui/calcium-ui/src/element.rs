@@ -4,7 +4,12 @@ use style::{Style};
 
 pub struct Element {
     pub style: Style,
+    pub text: ElementText,
+
+    // Cached data
     pub(crate) positioning: Positioning,
+
+    // Input state
     pub(crate) cursor_state: ElementCursorState,
     pub(crate) clicked: bool,
 }
@@ -13,7 +18,10 @@ impl Element {
     pub fn new(style: Style) -> Self {
         Element {
             style,
+            text: ElementText::None,
+
             positioning: Positioning::new(),
+
             cursor_state: ElementCursorState::None,
             clicked: false,
         }
@@ -50,4 +58,10 @@ pub enum ElementCursorState {
     None,
     Hovering,
     Held,
+}
+
+#[derive(Debug)]
+pub enum ElementText {
+    None,
+    SingleLine(String),
 }
