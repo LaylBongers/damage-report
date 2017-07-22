@@ -147,7 +147,7 @@ impl Ui {
             let element = &mut self[element_id];
             let style = &element.style;
 
-            // Calculate the final size of this element, this is needed for some positioning types
+            // Calculate the final size of this element, it's needed for some positioning types
             let parent_size = container.size();
             size = style.size.to_units(parent_size);
 
@@ -184,7 +184,7 @@ impl Ui {
 
         // Now go through all the children as well
         let mut child_flow_position = position;
-        let our_container = Rectangle::new(position, size);
+        let our_container = Rectangle::start_size(position, size);
         for child_id in self.children_of(element_id).clone() {
             self.calculate_element_positioning(
                 child_id, &our_container, &mut child_flow_position, &mut 0.0,

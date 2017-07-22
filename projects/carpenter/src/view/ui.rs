@@ -6,7 +6,7 @@ use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
 use calcium_ui::{UiRenderer, Ui, Element, ElementId, ElementText};
-use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue, CursorBehavior, DockH, DockV};
+use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue, CursorBehavior, SideH, SideV};
 
 use model::{MapEditorModel};
 
@@ -28,17 +28,18 @@ impl<R: Renderer> UiView<R> {
         let root_id = ui.root_id();
 
         // Create the top ribbon
+        let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
         let ribbon_style = Style {
             size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(102.0)),
-            background_color: Some(Srgb::new(0.18, 0.20, 0.21).into()),
+            background_color: Some(ribbon_color),
             .. Style::new()
         };
         let ribbon = Element::new(ribbon_style.clone());
         let ribbon_id = ui.add_child(ribbon, root_id);
 
         let ribbon_buttons = Element::new(Style {
-            position: Position::Relative(Vector2::new(0.0, 18.0), DockH::Left, DockV::Top),
-            size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(66.0)),
+            position: Position::Relative(Vector2::new(0.0, 22.0), SideH::Left, SideV::Top),
+            size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(84.0)),
             .. Style::new()
         });
         let ribbon_buttons_id = ui.add_child(ribbon_buttons, ribbon_id);
@@ -47,22 +48,39 @@ impl<R: Renderer> UiView<R> {
         let button_color = Srgb::new(0.53, 0.54, 0.52).into();
         let button_style = Style {
             margin: Lrtb::uniform(3.0),
+            size: Size::units(60.0, 74.0),
+            cursor_behavior: CursorBehavior::clickable_autocolor(ribbon_color),
+            .. Style::new()
+        };
+        let button_image_style = Style {
             size: Size::units(60.0, 60.0),
             background_color: Some(button_color),
-            cursor_behavior: CursorBehavior::clickable_autocolor(button_color),
+            .. Style::new()
+        };
+        let button_text_style = Style {
+            size: Size::units(60.0, 14.0),
+            position: Position::Relative(Vector2::new(0.0, 0.0), SideH::Left, SideV::Bottom),
+            text_size: 14.0,
+            text_color: Srgb::new(1.0, 1.0, 1.0).into(),
+            text_align: (SideH::Middle, SideV::Top),
             .. Style::new()
         };
 
         let button = Element::new(button_style.clone());
         let button_id = ui.add_child(button, ribbon_buttons_id);
+        let button_image = Element::new(button_image_style.clone());
+        ui.add_child(button_image, button_id);
+        let mut button_text = Element::new(button_text_style.clone());
+        button_text.text = Some(ElementText::new("New Brush"));
+        ui.add_child(button_text, button_id);
 
         let button2 = Element::new(button_style.clone());
         ui.add_child(button2, ribbon_buttons_id);
 
         // Add a FPS label
         let fps = Element::new(Style {
-            position: Position::Relative(Vector2::new(0.0, 0.0), DockH::Right, DockV::Top),
-            size: Size::units(120.0, 18.0),
+            position: Position::Relative(Vector2::new(0.0, 0.0), SideH::Right, SideV::Top),
+            size: Size::units(120.0, 14.0),
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
             text_size: 14.0,
             .. Style::new()
@@ -91,16 +109,16 @@ impl<R: Renderer> UiView<R> {
         {
             let button = &mut self.ui[self.button_id];
             if button.clicked() {
-                button.text = ElementText::SingleLine("1".into());
+                button.text = Some(ElementText::new("1"));
                 editor.new_brush();
             }
         }
 
         {
             let fps = &mut self.ui[self.fps_id];
-            fps.text = ElementText::SingleLine(
+            fps.text = Some(ElementText::new(
                 format!("FPS: {}", delta_to_fps(self.average_delta.get()))
-            );
+            ));
         }
     }
 

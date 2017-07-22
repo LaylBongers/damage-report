@@ -6,7 +6,7 @@ mod size;
 mod style;
 
 pub use self::cursor::{CursorBehavior};
-pub use self::position::{Position, DockH, DockV};
+pub use self::position::{Position, SideH, SideV};
 pub use self::size::{Size, SizeValue};
 pub use self::style::{Style};
 

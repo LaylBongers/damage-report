@@ -4,7 +4,7 @@ use style::{Style};
 
 pub struct Element {
     pub style: Style,
-    pub text: ElementText,
+    pub text: Option<ElementText>,
 
     // Cached data
     pub(crate) positioning: Positioning,
@@ -18,7 +18,7 @@ impl Element {
     pub fn new(style: Style) -> Self {
         Element {
             style,
-            text: ElementText::None,
+            text: None,
 
             positioning: Positioning::new(),
 
@@ -61,7 +61,14 @@ pub enum ElementCursorState {
 }
 
 #[derive(Debug)]
-pub enum ElementText {
-    None,
-    SingleLine(String),
+pub struct ElementText {
+    pub(crate) text: String,
+}
+
+impl ElementText {
+    pub fn new<S: Into<String>>(text: S) -> Self {
+        ElementText {
+            text: text.into()
+        }
+    }
 }

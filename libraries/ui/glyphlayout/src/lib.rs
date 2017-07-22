@@ -6,7 +6,7 @@ use unicode_normalization::{UnicodeNormalization};
 
 pub fn layout_text<'a>(
     text: &str, position: Point<f32>, font: &'a Font, text_size: f32
-) -> Vec<PositionedGlyph<'a>> {
+) -> (Vec<PositionedGlyph<'a>>, f32) {
     let mut positioned_glyphs = Vec::new();
 
     let scale = Scale::uniform(text_size);
@@ -49,5 +49,5 @@ pub fn layout_text<'a>(
         positioned_glyphs.push(glyph);
     }
 
-    positioned_glyphs
+    (positioned_glyphs, caret.x - position.x)
 }

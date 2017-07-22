@@ -5,7 +5,7 @@ pub enum Position {
     /// Positions the element using previous elements.
     Flow,
     /// Positions the element using a position relative to the parent.
-    Relative(Vector2<f32>, DockH, DockV),
+    Relative(Vector2<f32>, SideH, SideV),
 }
 
 impl Position {
@@ -15,32 +15,32 @@ impl Position {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DockH {
+pub enum SideH {
     Left, Middle, Right,
 }
 
-impl DockH {
+impl SideH {
     pub fn relative_position(&self, docked_position: f32, size: f32, container: f32) -> f32 {
         match *self {
-            DockH::Left => docked_position,
-            DockH::Middle => container*0.5 - size*0.5 + docked_position,
-            DockH::Right => container - size + docked_position,
+            SideH::Left => docked_position,
+            SideH::Middle => container*0.5 - size*0.5 + docked_position,
+            SideH::Right => container - size + docked_position,
         }
     }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum DockV {
+pub enum SideV {
     Top, Middle, Bottom,
 }
 
 
-impl DockV {
+impl SideV {
     pub fn relative_position(&self, docked_position: f32, size: f32, container: f32) -> f32 {
         match *self {
-            DockV::Top => docked_position,
-            DockV::Middle => container*0.5 - size*0.5 + docked_position,
-            DockV::Bottom => container - size + docked_position,
+            SideV::Top => docked_position,
+            SideV::Middle => container*0.5 - size*0.5 + docked_position,
+            SideV::Bottom => container - size + docked_position,
         }
     }
 }
