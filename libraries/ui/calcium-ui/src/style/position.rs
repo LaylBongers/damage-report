@@ -16,14 +16,14 @@ impl Position {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SideH {
-    Left, Middle, Right,
+    Left, Center, Right,
 }
 
 impl SideH {
     pub fn relative_position(&self, docked_position: f32, size: f32, container: f32) -> f32 {
         match *self {
             SideH::Left => docked_position,
-            SideH::Middle => container*0.5 - size*0.5 + docked_position,
+            SideH::Center => container*0.5 - size*0.5 + docked_position,
             SideH::Right => container - size + docked_position,
         }
     }
@@ -31,7 +31,7 @@ impl SideH {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum SideV {
-    Top, Middle, Bottom,
+    Top, Center, Bottom,
 }
 
 
@@ -39,7 +39,7 @@ impl SideV {
     pub fn relative_position(&self, docked_position: f32, size: f32, container: f32) -> f32 {
         match *self {
             SideV::Top => docked_position,
-            SideV::Middle => container*0.5 - size*0.5 + docked_position,
+            SideV::Center => container*0.5 - size*0.5 + docked_position,
             SideV::Bottom => container - size + docked_position,
         }
     }

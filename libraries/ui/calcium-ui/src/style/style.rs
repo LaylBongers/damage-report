@@ -13,8 +13,7 @@ pub struct Style {
     pub background_color: Option<Rgba>,
     pub text_color: Rgba,
     pub text_size: f32,
-    /// Not fully implemented, only supports the following variants:
-    /// SideH::Left, SideH::Middle, SideV::Top
+    /// Not fully implemented, only supports horizontal align right now.
     pub text_align: (SideH, SideV),
 
     pub cursor_behavior: CursorBehavior,

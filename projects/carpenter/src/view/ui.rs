@@ -62,7 +62,7 @@ impl<R: Renderer> UiView<R> {
             position: Position::Relative(Vector2::new(0.0, 0.0), SideH::Left, SideV::Bottom),
             text_size: 14.0,
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
-            text_align: (SideH::Middle, SideV::Top),
+            text_align: (SideH::Center, SideV::Top),
             .. Style::new()
         };
 

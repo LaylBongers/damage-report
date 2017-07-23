@@ -2,11 +2,11 @@ use std::sync::{Arc};
 
 use cgmath::{Vector2, Vector4};
 use rusttype::gpu_cache::{Cache};
-use rusttype::{Font, FontCollection, point};
+use rusttype::{Font, FontCollection, point, Rect};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
-use glyphlayout;
+use glyphlayout::{self, AlignH};
 
 use style::{CursorBehavior, SideH};
 use {Ui, ElementId, ElementCursorState, Element};
@@ -120,25 +120,20 @@ fn draw_element_text<R: Renderer>(
         }
 
         // Layout the text
-        let position = element.positioning.rectangle.start;
-        let (mut glyphs, line_width) = glyphlayout::layout_text(
-            &text.text, point(position.x, position.y), font, element.style.text_size
+        let align = match element.style.text_align.0 {
+            SideH::Left => AlignH::Left,
+            SideH::Center => AlignH::Center,
+            SideH::Right => AlignH::Right,
+        };
+        let container_min = element.positioning.rectangle.start;
+        let container_max = element.positioning.rectangle.end;
+        let glyphs = glyphlayout::layout_text(
+            &text.text, font, element.style.text_size,
+            Rect {
+                min: point(container_min.x, container_min.y),
+                max: point(container_max.x, container_max.y),
+            }, align,
         );
-
-        // If we got told to use middle-alignment, we need to offset all glyphs using the
-        //  line_width we got from the layouting.
-        // TODO: Move this logic to glyphlayout
-        if element.style.text_align.0 == SideH::Middle {
-            let half_width = line_width * 0.5;
-            for glyph in &mut glyphs {
-                let mut position = glyph.position();
-                position.x += element.positioning.rectangle.size().x*0.5 - half_width;
-                // TODO: Avoid this clone by just measuring before positioning the first time if we
-                //  know we're doing middle-alignment.
-                *glyph = glyph.unpositioned().clone()
-                    .positioned(position);
-            }
-        }
 
         // Make sure the glyph cache knows what glyphs we need
         for glyph in &glyphs {

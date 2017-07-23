@@ -10,9 +10,10 @@ extern crate glyphlayout;
 // TODO: Remove this and allow any font to be set
 extern crate ttf_noto_sans;
 
+pub mod style;
+pub mod widget;
 mod element;
 mod renderer;
-pub mod style;
 mod ui;
 
 pub use element::{Element, ElementCursorState, ElementText};
