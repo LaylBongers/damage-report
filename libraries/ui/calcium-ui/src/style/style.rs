@@ -1,6 +1,6 @@
 use palette::{Rgba};
 
-use style::{Position, Lrtb, Size, CursorBehavior, SideH, SideV};
+use style::{Position, Lrtb, Size, CursorBehavior, SideH, SideV, FlowDirection};
 
 #[derive(Clone, Debug)]
 pub struct Style {
@@ -9,6 +9,7 @@ pub struct Style {
     /// container edges. Bordering elements' margins overlap.
     pub margin: Lrtb,
     pub size: Size,
+    pub flow_direction: FlowDirection,
 
     pub background_color: Option<Rgba>,
     pub text_color: Rgba,
@@ -23,8 +24,9 @@ impl Style {
     pub fn new() -> Self {
         Style {
             position: Position::Flow,
-            margin: Lrtb::new(0.0, 0.0, 0.0, 0.0),
+            margin: Lrtb::uniform(0.0),
             size: Size::units(0.0, 0.0),
+            flow_direction: FlowDirection::Right,
 
             background_color: None,
             text_color: Rgba::new(0.0, 0.0, 0.0, 1.0),

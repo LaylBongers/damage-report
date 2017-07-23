@@ -79,7 +79,7 @@ impl<R: Renderer> UiView<R> {
             }
         };
         if open_save_dialog {
-            self.save_dialog = Some(widget::FileDialog::new(&mut self.ui, root_id));
+            self.save_dialog = Some(widget::FileDialog::new(root_id, &mut self.ui));
         }
 
         {

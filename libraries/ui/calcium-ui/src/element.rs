@@ -30,6 +30,12 @@ impl Element {
         }
     }
 
+    pub fn with_text<S: Into<String>>(text: S, style: Style) -> Self {
+        let mut element = Self::new(style);
+        element.set_text(text);
+        element
+    }
+
     pub fn hovering(&self) -> bool {
         self.cursor_state == ElementCursorState::Hovering
     }

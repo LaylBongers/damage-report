@@ -4,7 +4,7 @@ use calcium_rendering_simple2d::{Rectangle};
 use cgmath::{Vector2, Zero};
 use input::{Input, Motion, Button, MouseButton};
 
-use style::{Style, Size, Position, CursorBehavior};
+use style::{Style, Size, Position, CursorBehavior, FlowDirection};
 use element::{Positioning};
 use {Element, ElementCursorState};
 
@@ -160,16 +160,20 @@ impl Ui {
         // Start off the calculation at the root
         self.calculate_element_positioning(
             root_id,
-            &Rectangle::new(Vector2::zero(), viewport_size), &mut Vector2::new(0.0, 0.0), &mut 0.0
+            &Rectangle::new(Vector2::zero(), viewport_size),
+            &mut Vector2::new(0.0, 0.0), &mut 0.0, FlowDirection::Right,
         );
     }
 
     pub fn calculate_element_positioning(
         &mut self, element_id: ElementId,
-        container: &Rectangle<f32>, flow_position: &mut Vector2<f32>, flow_margin: &mut f32,
+        container: &Rectangle<f32>,
+        flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
     ) {
-        let position;
         let size;
+        let our_container;
+        let mut child_flow_cursor;
+        let child_flow_direction;
 
         {
             let element = &mut self[element_id];
@@ -181,7 +185,7 @@ impl Ui {
 
             // Calculate the base position of this element
             let marginless_position = match &style.position {
-                &Position::Flow => *flow_position,
+                &Position::Flow => flow_direction.position(*flow_cursor, size),
                 &Position::Relative(position, dock_h, dock_v) => {
                     // Calculate the position based on our size, the container, and the docking
                     Vector2::new(
@@ -192,7 +196,8 @@ impl Ui {
             };
 
             // Add margins to that base position if we're in flow mode, merging margins
-            position = if style.position.is_flow() {
+            let position = if style.position.is_flow() {
+                // TODO: This doesn't take flow direction into account and assumes Right
                 marginless_position + style.margin.max_left(*flow_margin).left_top()
             } else {
                 marginless_position
@@ -200,7 +205,8 @@ impl Ui {
 
             // If we're positioned using flow, adjust the flow position
             if style.position.is_flow() {
-                flow_position.x = position.x + size.x;
+                *flow_cursor = flow_direction.advance_cursor(position, size, *flow_cursor);
+                // TODO: This doesn't take flow direction into account and assumes Right
                 *flow_margin = style.margin.right;
             }
 
@@ -208,14 +214,18 @@ impl Ui {
             element.positioning = Positioning {
                 rectangle: Rectangle::start_size(position, size),
             };
+
+            // Calculate the flow start position needed by the children based on our flow direction
+            our_container = Rectangle::start_size(position, size);
+            child_flow_direction = element.style.flow_direction;
+            child_flow_cursor = child_flow_direction.flow_start(&our_container);
         }
 
         // Now go through all the children as well
-        let mut child_flow_position = position;
-        let our_container = Rectangle::start_size(position, size);
         for child_id in self.children_of(element_id).clone() {
             self.calculate_element_positioning(
-                child_id, &our_container, &mut child_flow_position, &mut 0.0,
+                child_id, &our_container,
+                &mut child_flow_cursor, &mut 0.0, child_flow_direction,
             );
         }
     }
