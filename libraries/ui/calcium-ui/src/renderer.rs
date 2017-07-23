@@ -54,6 +54,13 @@ impl<R: Renderer> UiRenderer<R> {
         // Draw all the elements recursively starting at the root
         self.draw_element(ui.root_id(), ui, &mut batcher, renderer)?;
 
+        // Make sure all cached batches have the same text texture, this will only matter for the
+        //  next frame, but it should clean up some stale textures.
+        // TODO: Add something to Texture that just overwrites its data.
+        for entry in &mut self.batch_cache {
+            entry.1.mode = ShaderMode::Mask(self.glyph_texture.clone(), SampleMode::Nearest);
+        }
+
         Ok(batcher.finish())
     }
 
