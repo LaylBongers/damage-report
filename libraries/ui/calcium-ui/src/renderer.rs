@@ -18,6 +18,7 @@ pub struct UiRenderer<R: Renderer> {
     glyph_image: GrayImage,
     glyph_texture: Arc<Texture<R>>,
     font: Font<'static>,
+    // TODO: The batch cache will contain unused batches when elements are removed
     batch_cache: HashMap<i32, RenderBatch<R>>,
 }
 
