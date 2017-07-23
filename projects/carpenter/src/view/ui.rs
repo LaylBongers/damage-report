@@ -6,7 +6,7 @@ use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
 use calcium_ui::{UiRenderer, Ui, Element, ElementId, widget};
-use calcium_ui::style::{Style, Position, Size, SizeValue, SideH, SideV};
+use calcium_ui::style::{Style, Position, Size, SideH, SideV};
 
 use model::{MapEditorModel};
 
@@ -28,21 +28,7 @@ impl<R: Renderer> UiView<R> {
         let root_id = ui.root_id();
 
         // Create the top ribbon
-        let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
-        let ribbon_style = Style {
-            size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(102.0)),
-            background_color: Some(ribbon_color),
-            .. Style::new()
-        };
-        let ribbon = Element::new(ribbon_style.clone());
-        let ribbon_id = ui.add_child(ribbon, root_id);
-
-        let ribbon_buttons = Element::new(Style {
-            position: Position::Relative(Vector2::new(0.0, 22.0), SideH::Left, SideV::Top),
-            size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(84.0)),
-            .. Style::new()
-        });
-        let ribbon_buttons_id = ui.add_child(ribbon_buttons, ribbon_id);
+        let ribbon_buttons_id = widget::ribbon(&mut ui, root_id);
 
         // Add a few buttons to the top ribbon
         let _ = widget::ribbon_buton("Save As", &mut ui, ribbon_buttons_id);
@@ -112,12 +98,6 @@ impl<R: Renderer> UiView<R> {
     }
 
     pub fn cursor_over_ui(&self) -> bool {
-        /*let widget = self.ui.global_input().current.widget_under_mouse;
-        widget
-            // If we're over a widget, pass through the background canvas
-            .map(|w| w != self.ids.canvas)
-            // If there no widget, we're not over ui either way
-            .unwrap_or(false)*/
-        false
+        self.ui.cursor_active_element().is_some()
     }
 }

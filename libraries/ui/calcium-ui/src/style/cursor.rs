@@ -2,10 +2,10 @@ use palette::{Rgba, Luma};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum CursorBehavior {
-    /// Doesn't listen to cursor events, but clicks and hovering get blocked by it.
-    Block,
     /// Doesn't listen to cursor events, clicks and hovering go right through.
     PassThrough,
+    /// Doesn't listen to cursor events, but clicks and hovering get blocked by it.
+    Block,
     /// Can be clicked, can change colors if hovered over or clicked.
     Clickable {
         hover: Option<Rgba>,

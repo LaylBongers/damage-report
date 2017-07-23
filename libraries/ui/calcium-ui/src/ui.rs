@@ -17,6 +17,8 @@ pub struct Ui {
     next_inner_id: i32,
 
     cursor_position: Vector2<f32>,
+    cursor_active_element: Option<usize>,
+
     // pressed/released are reset every frame, state is persistent
     cursor_pressed: bool,
     cursor_released: bool,
@@ -35,6 +37,8 @@ impl Ui {
             next_inner_id: 1,
 
             cursor_position: Vector2::new(0.0, 0.0),
+            cursor_active_element: None,
+
             cursor_pressed: false,
             cursor_released: false,
             cursor_state: false,
@@ -51,6 +55,10 @@ impl Ui {
 
     pub fn get_mut(&mut self, id: ElementId) -> Option<&mut Element> {
         self.elements.get_mut(id.0)
+    }
+
+    pub fn cursor_active_element(&self) -> Option<ElementId> {
+        self.cursor_active_element.map(|v| ElementId(v))
     }
 
     pub fn children_of(&self, parent: ElementId) -> &Vec<ElementId> {
@@ -94,12 +102,16 @@ impl Ui {
 
     /// Processes input gathered through handle_event and updates event values on elements.
     pub fn process_input_frame(&mut self) {
-        // Go through all elements and see if the mouse is over any of them
-        for element in &mut self.elements {
-            // Un-set hovering and clicked on this element
-            // TODO: Only un-set it on the last frame's element
+        // Reset the previous input frame
+        if let Some(id) = self.cursor_active_element.take() {
+            let element = &mut self.elements[id];
             element.cursor_state = ElementCursorState::None;
             element.clicked = false;
+        }
+
+        // Go through all elements and see if the mouse is over any of them
+        for id in 0..self.elements.len() {
+            let element = &mut self.elements[id];
 
             // Make sure this element actually captures mouse input
             if element.style.cursor_behavior == CursorBehavior::PassThrough {
@@ -109,6 +121,8 @@ impl Ui {
             // Check if the mouse is over this and if so set it to hovering
             // TODO: Make use of a layering value calculated during calculate_positioning
             if element.positioning.rectangle.contains(self.cursor_position) {
+                self.cursor_active_element = Some(id);
+
                 element.cursor_state = if self.cursor_state {
                     ElementCursorState::Hovering
                 } else {
