@@ -17,6 +17,10 @@ impl Size {
         Self::new(SizeValue::Units(width), SizeValue::Units(height))
     }
 
+    pub fn scale(width: f32, height: f32) -> Self {
+        Self::new(SizeValue::Scale(width), SizeValue::Scale(height))
+    }
+
     pub fn to_units(&self, container_size: Vector2<f32>) -> Vector2<f32> {
         Vector2::new(
             self.width.to_units(container_size.x),

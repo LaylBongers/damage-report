@@ -121,20 +121,25 @@ impl Ui {
             // Check if the mouse is over this and if so set it to hovering
             // TODO: Make use of a layering value calculated during calculate_positioning
             if element.positioning.rectangle.contains(self.cursor_position) {
+                // Remember this element so we can update it later if it's indeed on top
                 self.cursor_active_element = Some(id);
+            }
+        }
 
-                element.cursor_state = if self.cursor_state {
-                    ElementCursorState::Hovering
-                } else {
-                    ElementCursorState::Held
-                };
+        // If anything became active again, mark it as such
+        if let Some(id) = self.cursor_active_element {
+            let element = &mut self.elements[id];
+            element.cursor_state = if self.cursor_state {
+                ElementCursorState::Hovering
+            } else {
+                ElementCursorState::Held
+            };
 
-                // Check if the cursor was released over this element so we can raise a click
-                // TODO: The expected behavior is to keep track of which element the click was
-                //  started on and raise the clicked event regardless of where it ended.
-                if self.cursor_released {
-                    element.clicked = true;
-                }
+            // Check if the cursor was released over this element so we can raise a click
+            // TODO: The expected behavior is to keep track of which element the click was
+            //  started on and raise the clicked event regardless of where it ended.
+            if self.cursor_released {
+                element.clicked = true;
             }
         }
 

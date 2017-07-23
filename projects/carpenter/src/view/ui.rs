@@ -7,6 +7,7 @@ use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
 use calcium_ui::{UiRenderer, Ui, Element, ElementId, widget};
 use calcium_ui::style::{Style, Position, Size, SideH, SideV};
+use calcium_ui::widget::{FileDialog};
 
 use model::{MapEditorModel};
 
@@ -14,8 +15,10 @@ pub struct UiView<R: Renderer> {
     ui_renderer: UiRenderer<R>,
 
     ui: Ui,
-    new_brush_button_id: ElementId,
+    save_as_id: ElementId,
+    new_brush_id: ElementId,
     fps_id: ElementId,
+    save_dialog: Option<FileDialog>,
 
     average_delta: AverageDelta,
 }
@@ -31,9 +34,9 @@ impl<R: Renderer> UiView<R> {
         let ribbon_buttons_id = widget::ribbon(&mut ui, root_id);
 
         // Add a few buttons to the top ribbon
-        let _ = widget::ribbon_buton("Save As", &mut ui, ribbon_buttons_id);
+        let save_as_id = widget::ribbon_buton("Save As", &mut ui, ribbon_buttons_id);
         let _ = widget::ribbon_buton("Load", &mut ui, ribbon_buttons_id);
-        let new_brush_button_id = widget::ribbon_buton("New Brush", &mut ui, ribbon_buttons_id);
+        let new_brush_id = widget::ribbon_buton("New Brush", &mut ui, ribbon_buttons_id);
 
         // Add a FPS label
         let fps = Element::new(Style {
@@ -49,8 +52,10 @@ impl<R: Renderer> UiView<R> {
             ui_renderer,
 
             ui,
-            new_brush_button_id,
+            save_as_id,
+            new_brush_id,
             fps_id,
+            save_dialog: None,
 
             average_delta: AverageDelta::new(),
         })
@@ -63,9 +68,22 @@ impl<R: Renderer> UiView<R> {
     pub fn update(&mut self, delta: f32, editor: &mut MapEditorModel) {
         self.ui.process_input_frame();
         self.average_delta.accumulate(delta);
+        let root_id = self.ui.root_id();
+
+        let open_save_dialog ={
+            let button = &mut self.ui[self.save_as_id];
+            if button.clicked() {
+                true
+            } else {
+                false
+            }
+        };
+        if open_save_dialog {
+            self.save_dialog = Some(widget::FileDialog::new(&mut self.ui, root_id));
+        }
 
         {
-            let button = &mut self.ui[self.new_brush_button_id];
+            let button = &mut self.ui[self.new_brush_id];
             if button.clicked() {
                 editor.new_brush();
             }
