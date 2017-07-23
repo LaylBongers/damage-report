@@ -14,6 +14,7 @@ pub struct ElementId(usize);
 pub struct Ui {
     elements: Vec<Element>,
     child_connections: Vec<Vec<ElementId>>,
+    next_inner_id: i32,
 
     cursor_position: Vector2<f32>,
     // pressed/released are reset every frame, state is persistent
@@ -24,10 +25,14 @@ pub struct Ui {
 
 impl Ui {
     pub fn new() -> Self {
+        let mut root = Element::new(Style::new());
+        root.inner_id = 0;
+
         // The UI should already include a root
         Ui {
-            elements: vec!(Element::new(Style::new())),
+            elements: vec!(root),
             child_connections: vec!(Vec::new()),
+            next_inner_id: 1,
 
             cursor_position: Vector2::new(0.0, 0.0),
             cursor_pressed: false,
@@ -52,7 +57,11 @@ impl Ui {
         &self.child_connections[parent.0]
     }
 
-    pub fn add_child(&mut self, child: Element, parent: ElementId) -> ElementId {
+    pub fn add_child(&mut self, mut child: Element, parent: ElementId) -> ElementId {
+        // Make sure this element gets an inner ID as well
+        child.inner_id = self.next_inner_id;
+        self.next_inner_id += 1;
+
         // Add the element itself
         // TODO: Allow element removal and re-use element slots
         self.elements.push(child);

@@ -5,7 +5,6 @@ use cgmath::{Vector2, Vector4, BaseNum};
 use calcium_rendering::{Renderer, Texture};
 
 /// A render batch that can be drawn by a renderer. Represents the equivalent of a single drawcall.
-// TODO: #[derive(Debug)]
 pub struct RenderBatch<R: Renderer> {
     /// The shader mode in which a render batch will be drawn.
     pub mode: ShaderMode<R>,
@@ -14,6 +13,13 @@ pub struct RenderBatch<R: Renderer> {
 }
 
 impl<R: Renderer> RenderBatch<R> {
+    pub fn new(mode: ShaderMode<R>) -> Self {
+        RenderBatch {
+            mode,
+            .. RenderBatch::default()
+        }
+    }
+
     /// Returns true if this render batch has nothing to be drawn.
     pub fn empty(&self) -> bool {
         self.vertices.len() == 0
@@ -42,20 +48,20 @@ impl<R: Renderer> RenderBatch<R> {
     }
 }
 
-impl<R: Renderer> RenderBatch<R> {
-    pub fn new(mode: ShaderMode<R>) -> Self {
-        RenderBatch {
-            mode,
-            .. RenderBatch::default()
-        }
-    }
-}
-
 impl<R: Renderer> Default for RenderBatch<R> {
     fn default() -> Self {
         RenderBatch {
             mode: ShaderMode::Color,
             vertices: Vec::new(),
+        }
+    }
+}
+
+impl<R: Renderer> Clone for RenderBatch<R> {
+    fn clone(&self) -> Self {
+        RenderBatch {
+            mode: self.mode.clone(),
+            vertices: self.vertices.clone(),
         }
     }
 }
@@ -70,8 +76,19 @@ pub enum ShaderMode<R: Renderer> {
     Mask(Arc<Texture<R>>, SampleMode),
 }
 
+impl<R: Renderer> Clone for ShaderMode<R> {
+    fn clone(&self) -> Self {
+        match *self {
+            ShaderMode::Color => ShaderMode::Color,
+            ShaderMode::Texture(ref t, s) => ShaderMode::Texture(t.clone(), s),
+            ShaderMode::Mask(ref t, s) => ShaderMode::Mask(t.clone(), s),
+        }
+    }
+}
+
 /// TODO: This type should be changed to a Sampler resource that should be exposed and implemented
 ///  at the level of calcium-renderer.
+#[derive(Clone, Copy)]
 pub enum SampleMode {
     Linear,
     Nearest,

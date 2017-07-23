@@ -80,7 +80,6 @@ fn reposition_center(
     for glyph in &mut glyphs {
         let mut position = glyph.position();
         position.x += half_container_size - half_glyphs_size;
-        // TODO: Avoid this clone somehow
         *glyph = glyph.unpositioned().clone()
             .positioned(position);
     }
@@ -97,7 +96,6 @@ fn reposition_right(
     for glyph in &mut glyphs {
         let mut position = glyph.position();
         position.x += container_size - text_size;
-        // TODO: Avoid this clone somehow
         *glyph = glyph.unpositioned().clone()
             .positioned(position);
     }

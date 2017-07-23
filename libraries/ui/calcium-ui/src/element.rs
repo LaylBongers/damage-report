@@ -4,9 +4,10 @@ use style::{Style};
 
 pub struct Element {
     pub style: Style,
-    pub text: Option<ElementText>,
+    pub(crate) text: Option<ElementText>,
 
-    // Cached data
+    // Cache data
+    pub(crate) inner_id: i32,
     pub(crate) positioning: Positioning,
 
     // Input state
@@ -17,6 +18,8 @@ pub struct Element {
 impl Element {
     pub fn new(style: Style) -> Self {
         Element {
+            inner_id: -1,
+
             style,
             text: None,
 
@@ -37,6 +40,17 @@ impl Element {
 
     pub fn clicked(&self) -> bool {
         self.clicked
+    }
+
+    pub fn set_text<S: Into<String>>(&mut self, text: S) {
+        let text = text.into();
+
+        if let Some(ref mut element_text) = self.text {
+            element_text.set_text(text);
+            return;
+        }
+
+        self.text = Some(ElementText::new(text));
     }
 }
 
@@ -63,12 +77,21 @@ pub enum ElementCursorState {
 #[derive(Debug)]
 pub struct ElementText {
     pub(crate) text: String,
+    pub(crate) cache_stale: bool,
 }
 
 impl ElementText {
-    pub fn new<S: Into<String>>(text: S) -> Self {
+    pub fn new(text: String) -> Self {
         ElementText {
-            text: text.into()
+            text: text,
+            cache_stale: true,
+        }
+    }
+
+    pub fn set_text(&mut self, text: String) {
+        if text != self.text {
+            self.cache_stale = true;
+            self.text = text;
         }
     }
 }

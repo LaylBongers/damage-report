@@ -12,6 +12,7 @@ pub struct VulkanoWindowRenderer {
     pub surface: Arc<Surface>,
     pub swapchain: WindowSwapchain,
     queued_resize: bool,
+    next_frame_id: u64,
 }
 
 impl VulkanoWindowRenderer {
@@ -28,6 +29,7 @@ impl VulkanoWindowRenderer {
             surface,
             swapchain,
             queued_resize: false,
+            next_frame_id: 0,
         }
     }
 
@@ -63,9 +65,11 @@ impl WindowRenderer<VulkanoRenderer> for VulkanoWindowRenderer {
         //  command buffer submissions.
         let (image_num, future) = self.swapchain.start_frame();
 
+        self.next_frame_id += 1;
         VulkanoFrame {
             image_num,
             future: Some(future),
+            frame_id: self.next_frame_id - 1,
         }
     }
 
@@ -83,4 +87,5 @@ impl WindowRenderer<VulkanoRenderer> for VulkanoWindowRenderer {
 pub struct VulkanoFrame {
     pub image_num: usize,
     pub future: Option<Box<GpuFuture + Send + Sync>>,
+    pub frame_id: u64,
 }

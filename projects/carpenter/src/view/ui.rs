@@ -5,7 +5,7 @@ use palette::pixel::{Srgb};
 use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
-use calcium_ui::{UiRenderer, Ui, Element, ElementId, ElementText, widget};
+use calcium_ui::{UiRenderer, Ui, Element, ElementId, widget};
 use calcium_ui::style::{Style, Position, Size, SizeValue, SideH, SideV};
 
 use model::{MapEditorModel};
@@ -48,6 +48,23 @@ impl<R: Renderer> UiView<R> {
         let _ = widget::ribbon_buton("Save As", &mut ui, ribbon_buttons_id);
         let _ = widget::ribbon_buton("Load", &mut ui, ribbon_buttons_id);
         let button_id = widget::ribbon_buton("New Brush", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
 
         // Add a FPS label
         let fps = Element::new(Style {
@@ -81,16 +98,16 @@ impl<R: Renderer> UiView<R> {
         {
             let button = &mut self.ui[self.button_id];
             if button.clicked() {
-                button.text = Some(ElementText::new("1"));
+                button.set_text("1");
                 editor.new_brush();
             }
         }
 
         {
             let fps = &mut self.ui[self.fps_id];
-            fps.text = Some(ElementText::new(
+            fps.set_text(
                 format!("FPS: {}", delta_to_fps(self.average_delta.get()))
-            ));
+            );
         }
     }
 

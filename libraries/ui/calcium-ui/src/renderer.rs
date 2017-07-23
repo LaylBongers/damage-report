@@ -1,4 +1,5 @@
 use std::sync::{Arc};
+use std::collections::{HashMap};
 
 use cgmath::{Vector2, Vector4};
 use rusttype::gpu_cache::{Cache};
@@ -8,7 +9,8 @@ use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
 use glyphlayout::{self, AlignH};
 
-use style::{CursorBehavior, SideH};
+use style::{CursorBehavior, SideH, Style};
+use element::{Positioning, ElementText};
 use {Ui, ElementId, ElementCursorState, Element};
 
 pub struct UiRenderer<R: Renderer> {
@@ -16,6 +18,7 @@ pub struct UiRenderer<R: Renderer> {
     glyph_image: GrayImage,
     glyph_texture: Arc<Texture<R>>,
     font: Font<'static>,
+    batch_cache: HashMap<i32, RenderBatch<R>>,
 }
 
 impl<R: Renderer> UiRenderer<R> {
@@ -35,6 +38,7 @@ impl<R: Renderer> UiRenderer<R> {
             glyph_image,
             glyph_texture,
             font,
+            batch_cache: HashMap::new(),
         })
     }
 
@@ -54,20 +58,22 @@ impl<R: Renderer> UiRenderer<R> {
     }
 
     fn draw_element(
-        &mut self, element_id: ElementId, ui: &Ui, batcher: &mut Batcher<R>, renderer: &mut R,
+        &mut self, element_id: ElementId, ui: &mut Ui, batcher: &mut Batcher<R>, renderer: &mut R,
     ) -> Result<(), Error> {
-        let element = &ui[element_id];
+        {
+            let element = &mut ui[element_id];
 
-        draw_element_box(element, batcher);
-        draw_element_text(
-            element, &self.font,
-            &mut self.glyph_cache, &mut self.glyph_image, &mut self.glyph_texture,
-            batcher, renderer
-        )?;
+            draw_element_box(element, batcher);
+            draw_element_text(
+                element, &self.font,
+                &mut self.glyph_cache, &mut self.glyph_image, &mut self.glyph_texture,
+                batcher, &mut self.batch_cache, renderer
+            )?;
+        }
 
         // Now go through all the children as well
-        for child_id in ui.children_of(element_id) {
-            self.draw_element(*child_id, ui, batcher, renderer)?;
+        for child_id in ui.children_of(element_id).clone() {
+            self.draw_element(child_id, ui, batcher, renderer)?;
         }
 
         Ok(())
@@ -106,88 +112,19 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
 }
 
 fn draw_element_text<R: Renderer>(
-    element: &Element, font: &Font,
+    element: &mut Element, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
-    batcher: &mut Batcher<R>, renderer: &mut R,
+    batcher: &mut Batcher<R>, batch_cache: &mut HashMap<i32, RenderBatch<R>>, renderer: &mut R,
 ) -> Result<(), Error> {
     // TODO: Glyph positioning should be done during layouting in Ui and cached for future frames,
     //  so text height can be used for automatic layouting as well.
 
-    if let Some(ref text) = element.text {
-        // If the text size is too small, we can't render anything
-        if element.style.text_size <= 0.5 {
-            return Ok(())
-        }
-
-        // Layout the text
-        let align = match element.style.text_align.0 {
-            SideH::Left => AlignH::Left,
-            SideH::Center => AlignH::Center,
-            SideH::Right => AlignH::Right,
-        };
-        let container_min = element.positioning.rectangle.start;
-        let container_max = element.positioning.rectangle.end;
-        let glyphs = glyphlayout::layout_text(
-            &text.text, font, element.style.text_size,
-            Rect {
-                min: point(container_min.x, container_min.y),
-                max: point(container_max.x, container_max.y),
-            }, align,
-        );
-
-        // Make sure the glyph cache knows what glyphs we need
-        for glyph in &glyphs {
-            glyph_cache.queue_glyph(0, glyph.clone());
-        }
-
-        // Now see if we need to create a new glyph cache
-        let mut changed = false;
-        glyph_cache.cache_queued(|rect, data| {
-            // Create an image from the data we got
-            // TODO: See if we can avoid copying all pixel data to create the image
-            let new_glyphs_subimage: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::from_raw(
-                rect.width(), rect.height(), data.into()
-            ).unwrap();
-
-            // Copy the data into the full glyphs image
-            glyph_image.copy_from(&new_glyphs_subimage, rect.min.x, rect.min.y);
-            changed = true;
-        }).unwrap();
-
-        // If the image has actually changed, update the texture. This is done afterwards because
-        //  the cache_queued callback may be called multiple times
-        if changed {
-            // Upload the glyphs into a texture
-            // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
-            *glyph_texture = Texture::from_raw_greyscale(
-                renderer, &glyph_image, Vector2::new(1024, 1024)
-            )?;
-        }
-
-        // Actually set the texture in the render batch
-        batcher.next_batch(RenderBatch::new(
-            ShaderMode::Mask(glyph_texture.clone(), SampleMode::Nearest)
-        ));
-
-        // Actually render the text
-        let c = element.style.text_color;
-        let text_color = Vector4::new(c.red, c.green, c.blue, c.alpha);
-        for glyph in glyphs.iter() {
-            if let Ok(Some((uv_rect, screen_rect))) = glyph_cache.rect_for(0, glyph) {
-                // Push this glyph into this draw batch
-                batcher.current_batch.rectangle(DrawRectangle {
-                    destination: Rectangle {
-                        start: Vector2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
-                        end: Vector2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
-                    },
-                    texture_source: Some(Rectangle {
-                        start: Vector2::new(uv_rect.min.x, uv_rect.min.y),
-                        end: Vector2::new(uv_rect.max.x, uv_rect.max.y),
-                    }),
-                    color: text_color,
-                });
-            }
-        }
+    if let Some(ref mut text) = element.text {
+        batcher.next_batch(retrieve_or_create_batch(
+            text, &element.style, &element.positioning, element.inner_id, font,
+            glyph_cache, glyph_image, glyph_texture,
+            batch_cache, renderer,
+        )?);
 
         // Finish off this batch and start on a color batch again
         // TODO: Instead make the batcher know when it should finish off a batch
@@ -195,6 +132,108 @@ fn draw_element_text<R: Renderer>(
     }
 
     Ok(())
+}
+
+fn retrieve_or_create_batch<R: Renderer>(
+    text: &mut ElementText, style: &Style, positioning: &Positioning, inner_id: i32, font: &Font,
+    glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
+    batch_cache: &mut HashMap<i32, RenderBatch<R>>, renderer: &mut R,
+) -> Result<RenderBatch<R>, Error> {
+    if !text.cache_stale {
+        if let Some(cached_batch) = batch_cache.get(&inner_id) {
+            return Ok(cached_batch.clone())
+        }
+    }
+
+    let batch = generate_text_batch(
+        text, style, positioning, font,
+        glyph_cache, glyph_image, glyph_texture,
+        renderer,
+    )?;
+    batch_cache.insert(inner_id, batch.clone());
+    text.cache_stale = false;
+    Ok(batch)
+}
+
+fn generate_text_batch<R: Renderer>(
+    text: &ElementText, style: &Style, positioning: &Positioning, font: &Font,
+    glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
+    renderer: &mut R,
+) -> Result<RenderBatch<R>, Error> {
+    // If the text size is too small, we can't render anything
+    if style.text_size <= 0.5 {
+        return Ok(RenderBatch::new(ShaderMode::Color))
+    }
+
+    // Layout the text
+    let align = match style.text_align.0 {
+        SideH::Left => AlignH::Left,
+        SideH::Center => AlignH::Center,
+        SideH::Right => AlignH::Right,
+    };
+    let container_min = positioning.rectangle.start;
+    let container_max = positioning.rectangle.end;
+    let glyphs = glyphlayout::layout_text(
+        &text.text, font, style.text_size,
+        Rect {
+            min: point(container_min.x, container_min.y),
+            max: point(container_max.x, container_max.y),
+        }, align,
+    );
+
+    // Make sure the glyph cache knows what glyphs we need
+    for glyph in &glyphs {
+        glyph_cache.queue_glyph(0, glyph.clone());
+    }
+
+    // Now see if we need to create a new glyph cache
+    let mut changed = false;
+    glyph_cache.cache_queued(|rect, data| {
+        // Create an image from the data we got
+        // TODO: See if we can avoid copying all pixel data to create the image
+        let new_glyphs_subimage: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::from_raw(
+            rect.width(), rect.height(), data.into()
+        ).unwrap();
+
+        // Copy the data into the full glyphs image
+        glyph_image.copy_from(&new_glyphs_subimage, rect.min.x, rect.min.y);
+        changed = true;
+    }).unwrap();
+
+    // If the image has actually changed, update the texture. This is done afterwards because
+    //  the cache_queued callback may be called multiple times
+    if changed {
+        // Upload the glyphs into a texture
+        // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
+        *glyph_texture = Texture::from_raw_greyscale(
+            renderer, &glyph_image, Vector2::new(1024, 1024)
+        )?;
+    }
+
+    // Set the texture in the render batch
+    let mut batch = RenderBatch::new(ShaderMode::Mask(glyph_texture.clone(), SampleMode::Nearest));
+
+    // Actually render the text
+    let c = style.text_color;
+    let text_color = Vector4::new(c.red, c.green, c.blue, c.alpha);
+    for glyph in glyphs.iter() {
+        if let Ok(Some((uv_rect, screen_rect))) = glyph_cache.rect_for(0, glyph) {
+            // Push this glyph into this draw batch
+            batch.rectangle(DrawRectangle {
+                destination: Rectangle {
+                    start: Vector2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
+                    end: Vector2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
+                },
+                texture_source: Some(Rectangle {
+                    start: Vector2::new(uv_rect.min.x, uv_rect.min.y),
+                    end: Vector2::new(uv_rect.max.x, uv_rect.max.y),
+                }),
+                color: text_color,
+            });
+        }
+    }
+
+    Ok(batch)
 }
 
 struct Batcher<R: Renderer> {

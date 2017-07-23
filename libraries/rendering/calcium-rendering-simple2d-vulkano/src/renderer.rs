@@ -4,8 +4,8 @@ use cgmath::{self, Vector2};
 use vulkano::sync::{GpuFuture};
 use vulkano::pipeline::viewport::{Viewport};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
-use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
+use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 
 use calcium_rendering::{Renderer, Texture, Error, CalciumErrorMappable, WindowRenderer};
@@ -17,12 +17,10 @@ use {VkVertex, VulkanoSimple2DRenderTargetRaw};
 
 pub struct VulkanoSimple2DRenderer {
     dummy_texture: Arc<Texture<VulkanoRenderer>>,
+    samplers: Samplers,
 
     pub vs: simple2d_vs::Shader,
     pub fs: simple2d_fs::Shader,
-
-    linear_sampler: Arc<Sampler>,
-    nearest_sampler: Arc<Sampler>,
 }
 
 impl VulkanoSimple2DRenderer {
@@ -37,43 +35,87 @@ impl VulkanoSimple2DRenderer {
         let vs = simple2d_vs::Shader::load(renderer.device().clone()).unwrap();
         let fs = simple2d_fs::Shader::load(renderer.device().clone()).unwrap();
 
-        // Set up the samplers for the sampling modes
-        let linear_sampler = Sampler::new(
-            renderer.device().clone(),
-            Filter::Linear,
-            Filter::Linear,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
-        ).map_platform_err()?;
-        let nearest_sampler = Sampler::new(
-            renderer.device().clone(),
-            Filter::Nearest,
-            Filter::Nearest,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
-        ).map_platform_err()?;
+        let samplers = Samplers::new(renderer)?;
 
         Ok(VulkanoSimple2DRenderer {
             dummy_texture,
+            samplers,
 
             vs, fs,
-
-            linear_sampler,
-            nearest_sampler,
         })
     }
 
-    fn sampler_for_mode(&self, sample_mode: &SampleMode) -> &Arc<Sampler> {
-        match sample_mode {
-            &SampleMode::Linear => &self.linear_sampler,
-            &SampleMode::Nearest => &self.nearest_sampler,
+    fn render_batch(
+        &mut self, batch: &RenderBatch<VulkanoRenderer>, builder: AutoCommandBufferBuilder,
+        size: Vector2<u32>, renderer: &VulkanoRenderer,
+        render_target: &mut Simple2DRenderTarget<VulkanoRenderer, VulkanoSimple2DRenderer>,
+        matrix_data_buffer: &Arc<CpuAccessibleBuffer<simple2d_vs::ty::MatrixData>>,
+    ) -> AutoCommandBufferBuilder {
+        // Create a big mesh of all the rectangles we got told to draw this batch
+        let mut vertices = Vec::new();
+        for vertex in &batch.vertices {
+            vertices.push(VkVertex {
+                v_position: vertex.position.into(),
+                v_uv: vertex.uv.into(),
+                v_color: vertex.color.into(),
+            });
         }
+
+        // Create the final vertex buffer that we'll send over to the GPU for rendering
+        let vertex_buffer = CpuAccessibleBuffer::from_iter(
+            renderer.device().clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue().family()),
+            vertices.into_iter()
+        ).unwrap();
+
+        // Get the mode ID this batch has and a texture to render
+        // TODO: Figure out a way to avoid having to have a dummy texture
+        // TODO: Make use of the sample mode
+        let (mode_id, image, sampler) = match &batch.mode {
+            &ShaderMode::Color =>
+                (0, self.dummy_texture.raw.image(), &self.samplers.linear_sampler),
+            &ShaderMode::Texture(ref texture, ref sample_mode) =>
+                (1, texture.raw.image(), self.samplers.sampler_for_mode(sample_mode)),
+            &ShaderMode::Mask(ref texture, ref sample_mode) =>
+                (2, texture.raw.image(), self.samplers.sampler_for_mode(sample_mode)),
+        };
+
+        // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
+        let mode_data_buffer = CpuAccessibleBuffer::<simple2d_fs::ty::ModeData>::from_data(
+            renderer.device().clone(), BufferUsage::all(),
+            Some(renderer.graphics_queue().family()),
+            simple2d_fs::ty::ModeData { mode: mode_id },
+        ).unwrap();
+
+        // Create the uniform data set to send over
+        // TODO: Wait for vulkano to add
+        let set = Arc::new(
+            PersistentDescriptorSet::start(render_target.raw.pipeline().clone(), 0)
+                .add_buffer(matrix_data_buffer.clone()).unwrap()
+                .add_sampled_image(image.clone(), sampler.clone()).unwrap()
+                .add_buffer(mode_data_buffer.clone()).unwrap()
+                .build().unwrap()
+        );
+
+        // Add the draw command to the command buffer
+        builder.draw(
+            render_target.raw.pipeline().clone(),
+            // TODO: When a lot is being rendered, check the performance impact of doing
+            //  this here instead of in the pipeline.
+            DynamicState {
+                viewports: Some(vec!(Viewport {
+                    origin: [0.0, 0.0],
+                    depth_range: 0.0 .. 1.0,
+                    dimensions: [
+                        size.x as f32,
+                        size.y as f32
+                    ],
+                })),
+                .. DynamicState::none()
+            },
+            vec!(vertex_buffer.clone()),
+            set, ()
+        ).unwrap()
     }
 }
 
@@ -122,75 +164,12 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
 
         // Go over all batches
         for batch in batches {
-            // Create a big mesh of all the rectangles we got told to draw this batch
-            let mut vertices = Vec::new();
-            for vertex in &batch.vertices {
-                vertices.push(VkVertex {
-                    v_position: vertex.position.into(),
-                    v_uv: vertex.uv.into(),
-                    v_color: vertex.color.into(),
-                });
-            }
-
-            // Create the final vertex buffer that we'll send over to the GPU for rendering
-            let vertex_buffer = CpuAccessibleBuffer::from_iter(
-                renderer.device().clone(), BufferUsage::all(),
-                Some(renderer.graphics_queue().family()),
-                vertices.into_iter()
-            ).unwrap();
-
-            // Get the mode ID this batch has and a texture to render
-            // TODO: Figure out a way to avoid having to have a dummy texture
-            // TODO: Make use of the sample mode
-            let (mode_id, image, sampler) = match &batch.mode {
-                &ShaderMode::Color =>
-                    (0, self.dummy_texture.raw.image(), &self.linear_sampler),
-                &ShaderMode::Texture(ref texture, ref sample_mode) =>
-                    (1, texture.raw.image(), self.sampler_for_mode(sample_mode)),
-                &ShaderMode::Mask(ref texture, ref sample_mode) =>
-                    (2, texture.raw.image(), self.sampler_for_mode(sample_mode)),
-            };
-
-            // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
-            let mode_buffer = CpuAccessibleBuffer::<simple2d_fs::ty::ModeData>::from_data(
-                renderer.device().clone(), BufferUsage::all(),
-                Some(renderer.graphics_queue().family()),
-                simple2d_fs::ty::ModeData {
-                    mode: mode_id,
-                }
-            ).unwrap();
-
-            // Create the uniform data set to send over
-            // TODO: Make sure this isn't a performance problem with many draw calls
-            let set = Arc::new(
-                PersistentDescriptorSet::start(render_target.raw.pipeline().clone(), 0)
-                    .add_buffer(matrix_data_buffer.clone()).unwrap()
-                    .add_sampled_image(image.clone(), sampler.clone()).unwrap()
-                    .add_buffer(mode_buffer.clone()).unwrap()
-                    .build().unwrap()
+            command_buffer_builder = self.render_batch(
+                &batch, command_buffer_builder,
+                size, renderer,
+                render_target,
+                &matrix_data_buffer,
             );
-
-            // Add the draw command to the command buffer
-            command_buffer_builder = command_buffer_builder
-                .draw(
-                    render_target.raw.pipeline().clone(),
-                    // TODO: When a lot is being rendered, check the performance impact of doing
-                    //  this here instead of in the pipeline.
-                    DynamicState {
-                        viewports: Some(vec!(Viewport {
-                            origin: [0.0, 0.0],
-                            depth_range: 0.0 .. 1.0,
-                            dimensions: [
-                                size.x as f32,
-                                size.y as f32
-                            ],
-                        })),
-                        .. DynamicState::none()
-                    },
-                    vec!(vertex_buffer.clone()),
-                    set, ()
-                ).unwrap()
-
         }
 
         // Finish the command buffer
@@ -204,5 +183,48 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
             .unwrap()
         );
         frame.future = Some(future);
+    }
+}
+
+struct Samplers {
+    linear_sampler: Arc<Sampler>,
+    nearest_sampler: Arc<Sampler>,
+}
+
+impl Samplers {
+    fn new(renderer: &VulkanoRenderer) -> Result<Self, Error> {
+        // Set up the samplers for the sampling modes
+        let linear_sampler = Sampler::new(
+            renderer.device().clone(),
+            Filter::Linear,
+            Filter::Linear,
+            MipmapMode::Nearest,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            0.0, 1.0, 0.0, 0.0
+        ).map_platform_err()?;
+        let nearest_sampler = Sampler::new(
+            renderer.device().clone(),
+            Filter::Nearest,
+            Filter::Nearest,
+            MipmapMode::Nearest,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            SamplerAddressMode::Repeat,
+            0.0, 1.0, 0.0, 0.0
+        ).map_platform_err()?;
+
+        Ok(Samplers {
+            linear_sampler,
+            nearest_sampler,
+        })
+    }
+
+    fn sampler_for_mode(&self, sample_mode: &SampleMode) -> &Arc<Sampler> {
+        match sample_mode {
+            &SampleMode::Linear => &self.linear_sampler,
+            &SampleMode::Nearest => &self.nearest_sampler,
+        }
     }
 }

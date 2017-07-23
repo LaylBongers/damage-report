@@ -2,7 +2,7 @@ use cgmath::{Vector2};
 use palette::pixel::{Srgb};
 
 use style::{Style, Lrtb, Size, CursorBehavior, Position, SideH, SideV};
-use {Element, ElementId, Ui, ElementText};
+use {Element, ElementId, Ui};
 
 pub fn ribbon_buton(label: &str, ui: &mut Ui, parent: ElementId) -> ElementId {
     let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
@@ -35,7 +35,7 @@ pub fn ribbon_buton(label: &str, ui: &mut Ui, parent: ElementId) -> ElementId {
     ui.add_child(button_image, button_id);
 
     let mut button_text = Element::new(button_text_style.clone());
-    button_text.text = Some(ElementText::new(label));
+    button_text.set_text(label);
     ui.add_child(button_text, button_id);
 
     button_id

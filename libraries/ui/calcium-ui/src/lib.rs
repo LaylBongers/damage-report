@@ -16,6 +16,6 @@ mod element;
 mod renderer;
 mod ui;
 
-pub use element::{Element, ElementCursorState, ElementText};
+pub use element::{Element, ElementCursorState};
 pub use renderer::{UiRenderer};
 pub use ui::{Ui, ElementId};
