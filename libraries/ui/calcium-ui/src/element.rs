@@ -78,6 +78,7 @@ pub enum ElementCursorState {
 pub struct ElementText {
     pub(crate) text: String,
     pub(crate) cache_stale: bool,
+    pub(crate) cache_rect: Rectangle<f32>,
 }
 
 impl ElementText {
@@ -85,13 +86,14 @@ impl ElementText {
         ElementText {
             text: text,
             cache_stale: true,
+            cache_rect: Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(0.0, 0.0)),
         }
     }
 
     pub fn set_text(&mut self, text: String) {
         if text != self.text {
-            self.cache_stale = true;
             self.text = text;
+            self.cache_stale = true;
         }
     }
 }

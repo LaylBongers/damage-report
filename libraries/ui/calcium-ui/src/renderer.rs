@@ -23,8 +23,8 @@ pub struct UiRenderer<R: Renderer> {
 
 impl<R: Renderer> UiRenderer<R> {
     pub fn new(renderer: &mut R) -> Result<Self, Error> {
-        let glyph_cache = Cache::new(1024, 1024, 0.1, 0.1);
-        let glyph_image = GrayImage::from_raw(1024, 1024, vec![0u8; 1024*1024]).unwrap();
+        let glyph_cache = Cache::new(512, 512, 0.1, 0.1);
+        let glyph_image = GrayImage::from_raw(512, 512, vec![0u8; 512*512]).unwrap();
         let glyph_texture = Texture::from_raw_greyscale(
             renderer, &vec![0u8; 8*8], Vector2::new(8, 8)
         )?; // We will never use this initial texture, so just use something cheap
@@ -139,7 +139,7 @@ fn retrieve_or_create_batch<R: Renderer>(
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
     batch_cache: &mut HashMap<i32, RenderBatch<R>>, renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
-    if !text.cache_stale {
+    if !text.cache_stale && text.cache_rect == positioning.rectangle {
         if let Some(cached_batch) = batch_cache.get(&inner_id) {
             return Ok(cached_batch.clone())
         }
@@ -152,6 +152,7 @@ fn retrieve_or_create_batch<R: Renderer>(
     )?;
     batch_cache.insert(inner_id, batch.clone());
     text.cache_stale = false;
+    text.cache_rect = positioning.rectangle.clone();
     Ok(batch)
 }
 
@@ -206,7 +207,7 @@ fn generate_text_batch<R: Renderer>(
         // Upload the glyphs into a texture
         // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
         *glyph_texture = Texture::from_raw_greyscale(
-            renderer, &glyph_image, Vector2::new(1024, 1024)
+            renderer, &glyph_image, Vector2::new(512, 512)
         )?;
     }
 

@@ -14,7 +14,7 @@ pub struct UiView<R: Renderer> {
     ui_renderer: UiRenderer<R>,
 
     ui: Ui,
-    button_id: ElementId,
+    new_brush_button_id: ElementId,
     fps_id: ElementId,
 
     average_delta: AverageDelta,
@@ -47,24 +47,7 @@ impl<R: Renderer> UiView<R> {
         // Add a few buttons to the top ribbon
         let _ = widget::ribbon_buton("Save As", &mut ui, ribbon_buttons_id);
         let _ = widget::ribbon_buton("Load", &mut ui, ribbon_buttons_id);
-        let button_id = widget::ribbon_buton("New Brush", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Perf Test", &mut ui, ribbon_buttons_id);
+        let new_brush_button_id = widget::ribbon_buton("New Brush", &mut ui, ribbon_buttons_id);
 
         // Add a FPS label
         let fps = Element::new(Style {
@@ -80,7 +63,7 @@ impl<R: Renderer> UiView<R> {
             ui_renderer,
 
             ui,
-            button_id,
+            new_brush_button_id,
             fps_id,
 
             average_delta: AverageDelta::new(),
@@ -96,9 +79,8 @@ impl<R: Renderer> UiView<R> {
         self.average_delta.accumulate(delta);
 
         {
-            let button = &mut self.ui[self.button_id];
+            let button = &mut self.ui[self.new_brush_button_id];
             if button.clicked() {
-                button.set_text("1");
                 editor.new_brush();
             }
         }

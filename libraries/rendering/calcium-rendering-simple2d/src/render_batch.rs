@@ -162,7 +162,7 @@ impl Default for DrawRectangle {
 }
 
 /// A rectangle defined by start and end coordinates.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Rectangle<S: BaseNum> {
     pub start: Vector2<S>,
     pub end: Vector2<S>,
