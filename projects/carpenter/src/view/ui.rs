@@ -5,8 +5,8 @@ use palette::pixel::{Srgb};
 use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
-use calcium_ui::{UiRenderer, Ui, Element, ElementId, ElementText};
-use calcium_ui::style::{Style, Position, Lrtb, Size, SizeValue, CursorBehavior, SideH, SideV};
+use calcium_ui::{UiRenderer, Ui, Element, ElementId, ElementText, widget};
+use calcium_ui::style::{Style, Position, Size, SizeValue, SideH, SideV};
 
 use model::{MapEditorModel};
 
@@ -45,37 +45,9 @@ impl<R: Renderer> UiView<R> {
         let ribbon_buttons_id = ui.add_child(ribbon_buttons, ribbon_id);
 
         // Add a few buttons to the top ribbon
-        let button_color = Srgb::new(0.53, 0.54, 0.52).into();
-        let button_style = Style {
-            margin: Lrtb::uniform(3.0),
-            size: Size::units(60.0, 74.0),
-            cursor_behavior: CursorBehavior::clickable_autocolor(ribbon_color),
-            .. Style::new()
-        };
-        let button_image_style = Style {
-            size: Size::units(60.0, 60.0),
-            background_color: Some(button_color),
-            .. Style::new()
-        };
-        let button_text_style = Style {
-            size: Size::units(60.0, 14.0),
-            position: Position::Relative(Vector2::new(0.0, 0.0), SideH::Left, SideV::Bottom),
-            text_size: 14.0,
-            text_color: Srgb::new(1.0, 1.0, 1.0).into(),
-            text_align: (SideH::Center, SideV::Top),
-            .. Style::new()
-        };
-
-        let button = Element::new(button_style.clone());
-        let button_id = ui.add_child(button, ribbon_buttons_id);
-        let button_image = Element::new(button_image_style.clone());
-        ui.add_child(button_image, button_id);
-        let mut button_text = Element::new(button_text_style.clone());
-        button_text.text = Some(ElementText::new("New Brush"));
-        ui.add_child(button_text, button_id);
-
-        let button2 = Element::new(button_style.clone());
-        ui.add_child(button2, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Save As", &mut ui, ribbon_buttons_id);
+        let _ = widget::ribbon_buton("Load", &mut ui, ribbon_buttons_id);
+        let button_id = widget::ribbon_buton("New Brush", &mut ui, ribbon_buttons_id);
 
         // Add a FPS label
         let fps = Element::new(Style {
