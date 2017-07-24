@@ -6,7 +6,9 @@ use style::{Style, Size, Position, SideH, SideV, Lrtb, SizeValue, FlowDirection}
 use {Ui, Element, ElementId, ElementMode};
 
 pub struct FileDialog {
-    _shade_id: ElementId,
+    removed: bool,
+    shade_id: ElementId,
+    cancel_button_id: ElementId,
 }
 
 impl FileDialog {
@@ -42,7 +44,7 @@ impl FileDialog {
         });
         let buttons_id = ui.add_child(buttons, dialog_id);
         let _submit_button_id = widget::button("Save", buttons_id, ui);
-        let _cancel_button_id = widget::button("Cancel", buttons_id, ui);
+        let cancel_button_id = widget::button("Cancel", buttons_id, ui);
 
         // Styles for input fields
         let label_style = Style {
@@ -71,7 +73,18 @@ impl FileDialog {
         ui.add_child(Element::with_text("my_map", textfield_style.clone()), dialog_id);
 
         FileDialog {
-            _shade_id: shade_id,
+            removed: false,
+            shade_id,
+            cancel_button_id,
+        }
+    }
+
+    pub fn update(&mut self, ui: &mut Ui) {
+        if self.removed { return }
+
+        if ui[self.cancel_button_id].clicked() {
+            ui.remove(self.shade_id);
+            self.removed = true;
         }
     }
 }

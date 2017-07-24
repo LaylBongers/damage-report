@@ -18,8 +18,7 @@ pub struct UiRenderer<R: Renderer> {
     glyph_image: GrayImage,
     glyph_texture: Arc<Texture<R>>,
     font: Font<'static>,
-    // TODO: The batch cache will contain unused batches when elements are removed
-    batch_cache: HashMap<i32, RenderBatch<R>>,
+    text_cache: HashMap<ElementId, RenderBatch<R>>,
 }
 
 impl<R: Renderer> UiRenderer<R> {
@@ -39,7 +38,7 @@ impl<R: Renderer> UiRenderer<R> {
             glyph_image,
             glyph_texture,
             font,
-            batch_cache: HashMap::new(),
+            text_cache: HashMap::new(),
         })
     }
 
@@ -52,13 +51,16 @@ impl<R: Renderer> UiRenderer<R> {
         // changes are applied, and so input can use the values for click detection.
         ui.calculate_positioning(viewport_size);
 
+        // Clear unused entries in the text cache
+        self.text_cache.retain(|id, _| ui.get(*id).is_some());
+
         // Draw all the elements recursively starting at the root
         self.draw_element(ui.root_id(), ui, &mut batcher, renderer)?;
 
         // Make sure all cached batches have the same text texture, this will only matter for the
         //  next frame, but it should clean up some stale textures.
         // TODO: Add something to Texture that just overwrites its data.
-        for entry in &mut self.batch_cache {
+        for entry in &mut self.text_cache {
             entry.1.mode = ShaderMode::Mask(self.glyph_texture.clone(), SampleMode::Nearest);
         }
 
@@ -73,9 +75,9 @@ impl<R: Renderer> UiRenderer<R> {
 
             draw_element_box(element, batcher);
             draw_element_text(
-                element, &self.font,
+                element_id, element, &self.font,
                 &mut self.glyph_cache, &mut self.glyph_image, &mut self.glyph_texture,
-                batcher, &mut self.batch_cache, renderer
+                batcher, &mut self.text_cache, renderer
             )?;
         }
 
@@ -112,18 +114,19 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
 }
 
 fn draw_element_text<R: Renderer>(
+    id: ElementId,
     element: &mut Element, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
-    batcher: &mut Batcher<R>, batch_cache: &mut HashMap<i32, RenderBatch<R>>, renderer: &mut R,
+    batcher: &mut Batcher<R>, text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut R,
 ) -> Result<(), Error> {
     // TODO: Glyph positioning should be done during layouting in Ui and cached for future frames,
     //  so text height can be used for automatic layouting as well.
 
     if let Some(ref mut text) = element.text {
         batcher.next_batch(retrieve_or_create_batch(
-            text, &element.style, &element.positioning, element.inner_id, font,
+            id, text, &element.style, &element.positioning, font,
             glyph_cache, glyph_image, glyph_texture,
-            batch_cache, renderer,
+            text_cache, renderer,
         )?);
 
         // Finish off this batch and start on a color batch again
@@ -135,12 +138,12 @@ fn draw_element_text<R: Renderer>(
 }
 
 fn retrieve_or_create_batch<R: Renderer>(
-    text: &mut ElementText, style: &Style, positioning: &Positioning, inner_id: i32, font: &Font,
+    id: ElementId, text: &mut ElementText, style: &Style, positioning: &Positioning, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
-    batch_cache: &mut HashMap<i32, RenderBatch<R>>, renderer: &mut R,
+    text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
     if !text.cache_stale && text.cache_rect == positioning.rectangle {
-        if let Some(cached_batch) = batch_cache.get(&inner_id) {
+        if let Some(cached_batch) = text_cache.get(&id) {
             return Ok(cached_batch.clone())
         }
     }
@@ -150,7 +153,7 @@ fn retrieve_or_create_batch<R: Renderer>(
         glyph_cache, glyph_image, glyph_texture,
         renderer,
     )?;
-    batch_cache.insert(inner_id, batch.clone());
+    text_cache.insert(id, batch.clone());
     text.cache_stale = false;
     text.cache_rect = positioning.rectangle.clone();
     Ok(batch)

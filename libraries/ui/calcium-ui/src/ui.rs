@@ -12,8 +12,8 @@ use {Element, ElementCursorState, ElementMode};
 pub struct ElementId(usize);
 
 pub struct Ui {
-    elements: Vec<Element>,
-    child_connections: Vec<Vec<ElementId>>,
+    elements: Vec<Option<Element>>,
+    child_connections: Vec<(ElementId, Vec<ElementId>)>, // Parent, then children
     next_inner_id: i32,
 
     cursor_position: Vector2<f32>,
@@ -32,8 +32,8 @@ impl Ui {
 
         // The UI should already include a root
         Ui {
-            elements: vec!(root),
-            child_connections: vec!(Vec::new()),
+            elements: vec!(Some(root)),
+            child_connections: vec!((ElementId(0), Vec::new())),
             next_inner_id: 1,
 
             cursor_position: Vector2::new(0.0, 0.0),
@@ -51,18 +51,24 @@ impl Ui {
 
     pub fn get(&self, id: ElementId) -> Option<&Element> {
         self.elements.get(id.0)
+            .and_then(|e| e.as_ref())
     }
 
     pub fn get_mut(&mut self, id: ElementId) -> Option<&mut Element> {
         self.elements.get_mut(id.0)
+            .and_then(|e| e.as_mut())
     }
 
     pub fn cursor_active_element(&self) -> Option<ElementId> {
         self.cursor_active_element.map(|v| ElementId(v))
     }
 
+    pub fn parent_of(&self, child: ElementId) -> ElementId {
+        self.child_connections[child.0].0
+    }
+
     pub fn children_of(&self, parent: ElementId) -> &Vec<ElementId> {
-        &self.child_connections[parent.0]
+        &self.child_connections[parent.0].1
     }
 
     pub fn add_child(&mut self, mut child: Element, parent: ElementId) -> ElementId {
@@ -71,15 +77,34 @@ impl Ui {
         self.next_inner_id += 1;
 
         // Add the element itself
-        // TODO: Allow element removal and re-use element slots
-        self.elements.push(child);
+        // TODO: Re-use element slots, but do it safely using incremental IDs.
+        self.elements.push(Some(child));
         let child_id = ElementId(self.elements.len() - 1);
 
         // Add the child connections for this element
-        self.child_connections.push(Vec::new());
-        self.child_connections[parent.0].push(child_id);
+        self.child_connections.push((parent, Vec::new()));
+        self.child_connections[parent.0].1.push(child_id);
 
         child_id
+    }
+
+    pub fn remove(&mut self, id: ElementId) -> ElementId {
+        // First, remove the element and replace the dependencies vector for it
+        self.elements[id.0] = None;
+        let children = ::std::mem::replace(
+            &mut self.child_connections[id.0],
+            (ElementId(0), Vec::new())
+        );
+
+        // Remove the element from its parent, this may just do nothing if it's an orphan element
+        self.child_connections[(children.0).0].1.retain(|v| id != *v);
+
+        // Now go through all the children of the element and do the same thing recursively
+        for child in children.1 {
+            self.remove(child);
+        }
+
+        ElementId(0)
     }
 
     pub fn handle_event(&mut self, event: &Input) {
@@ -104,31 +129,32 @@ impl Ui {
     pub fn process_input_frame(&mut self) {
         // Reset the previous input frame
         if let Some(id) = self.cursor_active_element.take() {
-            let element = &mut self.elements[id];
-            element.cursor_state = ElementCursorState::None;
-            element.clicked = false;
+            if let Some(ref mut element) = self.elements[id] {
+                element.cursor_state = ElementCursorState::None;
+                element.clicked = false;
+            }
         }
 
         // Go through all elements and see if the mouse is over any of them
         for id in 0..self.elements.len() {
-            let element = &mut self.elements[id];
+            if let Some(ref element) = self.elements[id] {
+                // Make sure this element actually captures mouse input
+                if element.mode == ElementMode::Passive {
+                    continue;
+                }
 
-            // Make sure this element actually captures mouse input
-            if element.mode == ElementMode::Passive {
-                continue;
-            }
-
-            // Check if the mouse is over this and if so set it to hovering
-            // TODO: Make use of a layering value calculated during calculate_positioning
-            if element.positioning.rectangle.contains(self.cursor_position) {
-                // Remember this element so we can update it later if it's indeed on top
-                self.cursor_active_element = Some(id);
+                // Check if the mouse is over this and if so set it to hovering
+                // TODO: Make use of a layering value calculated during calculate_positioning
+                if element.positioning.rectangle.contains(self.cursor_position) {
+                    // Remember this element so we can update it later if it's indeed on top
+                    self.cursor_active_element = Some(id);
+                }
             }
         }
 
         // If anything became active again, mark it as such
         if let Some(id) = self.cursor_active_element {
-            let element = &mut self.elements[id];
+            let element = self.elements[id].as_mut().unwrap();
             element.cursor_state = if self.cursor_state {
                 ElementCursorState::Hovering
             } else {

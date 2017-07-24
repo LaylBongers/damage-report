@@ -70,6 +70,11 @@ impl<R: Renderer> UiView<R> {
         self.average_delta.accumulate(delta);
         let root_id = self.ui.root_id();
 
+        {
+            let fps = &mut self.ui[self.fps_id];
+            fps.set_text(format!("FPS: {}", delta_to_fps(self.average_delta.get())));
+        }
+
         if self.ui[self.save_as_id].clicked() {
             self.save_dialog = Some(widget::FileDialog::new(root_id, &mut self.ui));
         }
@@ -78,11 +83,8 @@ impl<R: Renderer> UiView<R> {
             editor.new_brush();
         }
 
-        {
-            let fps = &mut self.ui[self.fps_id];
-            fps.set_text(
-                format!("FPS: {}", delta_to_fps(self.average_delta.get()))
-            );
+        if let Some(ref mut save_dialog) = self.save_dialog {
+            save_dialog.update(&mut self.ui);
         }
     }
 
