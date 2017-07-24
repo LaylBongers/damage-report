@@ -1,6 +1,6 @@
 use palette::{Rgba};
 
-use style::{Position, Lrtb, Size, CursorBehavior, SideH, SideV, FlowDirection};
+use style::{Position, Lrtb, Size, SideH, SideV, FlowDirection};
 
 #[derive(Clone, Debug)]
 pub struct Style {
@@ -16,12 +16,13 @@ pub struct Style {
     pub flow_direction: FlowDirection,
 
     pub background_color: Option<Rgba>,
+    pub hover_color: Option<Rgba>,
+    pub active_color: Option<Rgba>,
+
     pub text_color: Rgba,
     pub text_size: f32,
     /// Not fully implemented, only supports horizontal align right now.
     pub text_align: (SideH, SideV),
-
-    pub cursor_behavior: CursorBehavior,
 }
 
 impl Style {
@@ -34,12 +35,13 @@ impl Style {
             flow_direction: FlowDirection::Right,
 
             background_color: None,
+            hover_color: None,
+            active_color: None,
+
             text_color: Rgba::new(0.0, 0.0, 0.0, 1.0),
             // Reasonable default, if it's at 0 users will get confused about text not rendering
             text_size: 10.0,
             text_align: (SideH::Left, SideV::Top),
-
-            cursor_behavior: CursorBehavior::PassThrough,
         }
     }
 }

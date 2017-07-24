@@ -9,7 +9,7 @@ use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
 use glyphlayout::{self, AlignH, AlignV};
 
-use style::{CursorBehavior, SideH, SideV, Style};
+use style::{SideH, SideV, Style};
 use element::{Positioning, ElementText};
 use {Ui, ElementId, ElementCursorState, Element};
 
@@ -94,18 +94,10 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
     // Check which color this element is
     let color = match element.cursor_state {
         ElementCursorState::None => style.background_color,
-        ElementCursorState::Hovering =>
-            match style.cursor_behavior {
-                CursorBehavior::Clickable { hover, hold: _hold } =>
-                    hover.or(style.background_color),
-                _ => style.background_color,
-            },
-        ElementCursorState::Held =>
-            match style.cursor_behavior {
-                CursorBehavior::Clickable { hover: _hover, hold } =>
-                    hold.or(style.background_color),
-                _ => style.background_color,
-            },
+        ElementCursorState::Hovering => style.hover_color.or(style.background_color),
+        ElementCursorState::Held => style.active_color
+            .or(style.hover_color)
+            .or(style.background_color),
     };
 
     // Draw a rect for the background if we've got a color

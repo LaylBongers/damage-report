@@ -1,37 +1,8 @@
 use palette::{Rgba, Luma};
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum CursorBehavior {
-    /// Doesn't listen to cursor events, clicks and hovering go right through.
-    PassThrough,
-    /// Doesn't listen to cursor events, but clicks and hovering get blocked by it.
-    Block,
-    /// Can be clicked, can change colors if hovered over or clicked.
-    Clickable {
-        hover: Option<Rgba>,
-        hold: Option<Rgba>,
-    },
-}
+pub fn color_highlight(color: Rgba) -> Rgba {
+    let luma: Luma = color.into();
 
-impl CursorBehavior {
-    pub fn clickable(hover: Option<Rgba>, hold: Option<Rgba>) -> Self {
-        CursorBehavior::Clickable {
-            hover,
-            hold,
-        }
-    }
-
-    pub fn clickable_autocolor(base: Rgba) -> Self {
-        let luma: Luma = base.into();
-
-        let highlighted = highlighted_for(luma, base);
-        let hold = hold_for(luma, base);
-
-        CursorBehavior::clickable(Some(highlighted), Some(hold))
-    }
-}
-
-fn highlighted_for(luma: Luma, color: Rgba) -> Rgba {
     if luma.luma > 0.8 {
         Rgba::new(color.red - 0.2, color.green - 0.2, color.blue - 0.2, color.alpha)
     } else if luma.luma < 0.2 {
@@ -46,7 +17,9 @@ fn highlighted_for(luma: Luma, color: Rgba) -> Rgba {
     }
 }
 
-fn hold_for(luma: Luma, color: Rgba) -> Rgba {
+pub fn color_active(color: Rgba) -> Rgba {
+    let luma: Luma = color.into();
+
     if luma.luma > 0.8 {
         Rgba::new(color.red, color.green - 0.2, color.blue - 0.2, color.alpha)
     } else if luma.luma < 0.2 {

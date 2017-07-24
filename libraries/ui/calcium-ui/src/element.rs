@@ -4,6 +4,7 @@ use style::{Style};
 
 pub struct Element {
     pub style: Style,
+    pub mode: ElementMode,
     pub(crate) text: Option<ElementText>,
 
     // Cache data
@@ -18,11 +19,11 @@ pub struct Element {
 impl Element {
     pub fn new(style: Style) -> Self {
         Element {
-            inner_id: -1,
-
             style,
+            mode: ElementMode::Passive,
             text: None,
 
+            inner_id: -1,
             positioning: Positioning::new(),
 
             cursor_state: ElementCursorState::None,
@@ -58,6 +59,14 @@ impl Element {
 
         self.text = Some(ElementText::new(text));
     }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ElementMode {
+    /// Does not respond to mouse input.
+    Passive,
+    /// Blocks mouse input, detects click events, uses hover and active styling.
+    Clickable,
 }
 
 #[derive(Debug)]

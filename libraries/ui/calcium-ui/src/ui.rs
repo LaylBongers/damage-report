@@ -4,9 +4,9 @@ use calcium_rendering_simple2d::{Rectangle};
 use cgmath::{Vector2, Zero};
 use input::{Input, Motion, Button, MouseButton};
 
-use style::{Style, Size, Position, CursorBehavior, FlowDirection, Lrtb};
+use style::{Style, Size, Position, FlowDirection, Lrtb};
 use element::{Positioning};
-use {Element, ElementCursorState};
+use {Element, ElementCursorState, ElementMode};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ElementId(usize);
@@ -114,7 +114,7 @@ impl Ui {
             let element = &mut self.elements[id];
 
             // Make sure this element actually captures mouse input
-            if element.style.cursor_behavior == CursorBehavior::PassThrough {
+            if element.mode == ElementMode::Passive {
                 continue;
             }
 

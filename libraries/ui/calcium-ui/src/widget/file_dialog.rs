@@ -2,8 +2,8 @@ use cgmath::{Vector2, Zero};
 use palette::pixel::{Srgb};
 
 use widget;
-use style::{Style, CursorBehavior, Size, Position, SideH, SideV, Lrtb, SizeValue, FlowDirection};
-use {Ui, Element, ElementId};
+use style::{Style, Size, Position, SideH, SideV, Lrtb, SizeValue, FlowDirection};
+use {Ui, Element, ElementId, ElementMode};
 
 pub struct FileDialog {
     _shade_id: ElementId,
@@ -12,13 +12,13 @@ pub struct FileDialog {
 impl FileDialog {
     pub fn new(parent_id: ElementId, ui: &mut Ui) -> Self {
         // Transparent shade that blocks off the background, making this a modal dialog
-        let shade = Element::new(Style {
+        let mut shade = Element::new(Style {
             position: Position::Relative(Vector2::zero(), SideH::Left, SideV::Top),
             size: Size::scale(1.0, 1.0),
             background_color: Some(Srgb::with_alpha(0.0, 0.0, 0.0, 0.5).into()),
-            cursor_behavior: CursorBehavior::Block,
             .. Style::new()
         });
+        shade.mode = ElementMode::Clickable;
         let shade_id = ui.add_child(shade, parent_id);
 
         // Build up the actual dialog itself

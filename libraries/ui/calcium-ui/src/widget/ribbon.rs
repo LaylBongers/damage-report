@@ -1,18 +1,18 @@
 use cgmath::{Vector2};
 use palette::pixel::{Srgb};
 
-use style::{Style, Lrtb, Size, CursorBehavior, Position, SideH, SideV, SizeValue};
-use {Element, ElementId, Ui};
+use style::{Style, Lrtb, Size, Position, SideH, SideV, SizeValue, color_highlight, color_active};
+use {Element, ElementId, Ui, ElementMode};
 
 pub fn ribbon(ui: &mut Ui, parent: ElementId) -> ElementId {
     let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
     let ribbon_style = Style {
         size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(102.0)),
         background_color: Some(ribbon_color),
-        cursor_behavior: CursorBehavior::Block,
         .. Style::new()
     };
-    let ribbon = Element::new(ribbon_style.clone());
+    let mut ribbon = Element::new(ribbon_style.clone());
+    ribbon.mode = ElementMode::Clickable;
     let ribbon_id = ui.add_child(ribbon, parent);
 
     let ribbon_buttons = Element::new(Style {
@@ -32,7 +32,8 @@ pub fn ribbon_buton(label: &str, ui: &mut Ui, parent: ElementId) -> ElementId {
     let button_style = Style {
         margin: Lrtb::uniform(3.0),
         size: Size::units(60.0, 74.0),
-        cursor_behavior: CursorBehavior::clickable_autocolor(ribbon_color),
+        hover_color: Some(color_highlight(ribbon_color)),
+        active_color: Some(color_active(ribbon_color)),
         .. Style::new()
     };
     let button_image_style = Style {
@@ -49,7 +50,8 @@ pub fn ribbon_buton(label: &str, ui: &mut Ui, parent: ElementId) -> ElementId {
         .. Style::new()
     };
 
-    let button = Element::new(button_style.clone());
+    let mut button = Element::new(button_style.clone());
+    button.mode = ElementMode::Clickable;
     let button_id = ui.add_child(button, parent);
 
     let button_image = Element::new(button_image_style.clone());

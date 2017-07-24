@@ -2,12 +2,12 @@ use cgmath::{Vector2};
 
 use calcium_rendering_simple2d::{Rectangle};
 
-mod cursor;
+mod color;
 mod position;
 mod size;
 mod style;
 
-pub use self::cursor::{CursorBehavior};
+pub use self::color::{color_highlight, color_active};
 pub use self::position::{Position, SideH, SideV};
 pub use self::size::{Size, SizeValue};
 pub use self::style::{Style};
