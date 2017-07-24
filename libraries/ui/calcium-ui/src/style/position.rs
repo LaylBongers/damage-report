@@ -36,11 +36,11 @@ pub enum SideV {
 
 
 impl SideV {
-    pub fn relative_position(&self, docked_position: f32, size: f32, container: f32) -> f32 {
+    pub fn relative_position(&self, docked_position: f32, size: f32, container_size: f32) -> f32 {
         match *self {
             SideV::Top => docked_position,
-            SideV::Center => container*0.5 - size*0.5 + docked_position,
-            SideV::Bottom => container - size + docked_position,
+            SideV::Center => container_size*0.5 - size*0.5 + docked_position,
+            SideV::Bottom => container_size - size + docked_position,
         }
     }
 }

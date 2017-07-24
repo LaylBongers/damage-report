@@ -1,5 +1,7 @@
 use cgmath::{Vector2};
 
+use style::{Lrtb};
+
 #[derive(Clone, Debug)]
 pub struct Size {
     pub width: SizeValue,
@@ -21,10 +23,12 @@ impl Size {
         Self::new(SizeValue::Scale(width), SizeValue::Scale(height))
     }
 
-    pub fn to_units(&self, container_size: Vector2<f32>) -> Vector2<f32> {
+    pub fn to_units(
+        &self, container_size: Vector2<f32>, container_padding: &Lrtb
+    ) -> Vector2<f32> {
         Vector2::new(
-            self.width.to_units(container_size.x),
-            self.height.to_units(container_size.y),
+            self.width.to_units(container_size.x - container_padding.left - container_padding.right),
+            self.height.to_units(container_size.y - container_padding.top - container_padding.bottom),
         )
     }
 }

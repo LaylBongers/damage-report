@@ -8,6 +8,10 @@ pub struct Style {
     /// The minimum spacing this element will have from the bordering elements and the parent's
     /// container edges. Bordering elements' margins overlap.
     pub margin: Lrtb,
+    /// The minimum spacing this element's child elements will have from the container. Padding
+    /// overlaps with child margins. Child scale sizing is done relative to the container after
+    /// padding.
+    pub padding: Lrtb,
     pub size: Size,
     pub flow_direction: FlowDirection,
 
@@ -25,6 +29,7 @@ impl Style {
         Style {
             position: Position::Flow,
             margin: Lrtb::uniform(0.0),
+            padding: Lrtb::uniform(0.0),
             size: Size::units(0.0, 0.0),
             flow_direction: FlowDirection::Right,
 

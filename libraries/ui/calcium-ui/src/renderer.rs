@@ -185,8 +185,8 @@ fn generate_text_batch<R: Renderer>(
     let glyphs = glyphlayout::layout_text(
         &text.text, font, style.text_size,
         Rect {
-            min: point(container_min.x, container_min.y),
-            max: point(container_max.x, container_max.y),
+            min: point(container_min.x + style.padding.left, container_min.y + style.padding.top),
+            max: point(container_max.x - style.padding.right, container_max.y - style.padding.bottom),
         }, align,
     );
 

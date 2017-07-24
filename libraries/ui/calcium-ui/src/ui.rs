@@ -4,7 +4,7 @@ use calcium_rendering_simple2d::{Rectangle};
 use cgmath::{Vector2, Zero};
 use input::{Input, Motion, Button, MouseButton};
 
-use style::{Style, Size, Position, CursorBehavior, FlowDirection};
+use style::{Style, Size, Position, CursorBehavior, FlowDirection, Lrtb};
 use element::{Positioning};
 use {Element, ElementCursorState};
 
@@ -160,19 +160,21 @@ impl Ui {
         // Start off the calculation at the root
         self.calculate_element_positioning(
             root_id,
-            &Rectangle::new(Vector2::zero(), viewport_size),
+            &Rectangle::new(Vector2::zero(), viewport_size), &Lrtb::uniform(0.0),
             &mut Vector2::new(0.0, 0.0), &mut 0.0, FlowDirection::Right,
         );
     }
 
     pub fn calculate_element_positioning(
         &mut self, element_id: ElementId,
-        container: &Rectangle<f32>,
+        parent_container: &Rectangle<f32>, parent_padding: &Lrtb,
         flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
     ) {
         let size;
         let our_container;
+        let our_padding;
         let mut child_flow_cursor;
+        let mut child_flow_margin;
         let child_flow_direction;
 
         {
@@ -180,8 +182,8 @@ impl Ui {
             let style = &element.style;
 
             // Calculate the final size of this element, it's needed for some positioning types
-            let parent_size = container.size();
-            size = style.size.to_units(parent_size);
+            let parent_size = parent_container.size();
+            size = style.size.to_units(parent_size, parent_padding);
 
             // Calculate the base position of this element
             let marginless_position = match &style.position {
@@ -189,9 +191,15 @@ impl Ui {
                 &Position::Relative(position, dock_h, dock_v) => {
                     // Calculate the position based on our size, the container, and the docking
                     Vector2::new(
-                        dock_h.relative_position(position.x, size.x, parent_size.x),
-                        dock_v.relative_position(position.y, size.y, parent_size.y),
-                    ) + container.start
+                        dock_h.relative_position(
+                            position.x, size.x,
+                            parent_size.x - parent_padding.left - parent_padding.right
+                        ),
+                        dock_v.relative_position(
+                            position.y, size.y,
+                            parent_size.y - parent_padding.top - parent_padding.bottom
+                        ),
+                    ) + parent_container.start + parent_padding.left_top()
                 },
             };
 
@@ -215,17 +223,19 @@ impl Ui {
                 rectangle: Rectangle::start_size(position, size),
             };
 
-            // Calculate the flow start position needed by the children based on our flow direction
+            // Calculate the flow data needed by the children based on this element's flow data
             our_container = Rectangle::start_size(position, size);
+            our_padding = element.style.padding.clone();
             child_flow_direction = element.style.flow_direction;
+            child_flow_margin = element.style.padding.left;
             child_flow_cursor = child_flow_direction.flow_start(&our_container);
         }
 
         // Now go through all the children as well
         for child_id in self.children_of(element_id).clone() {
             self.calculate_element_positioning(
-                child_id, &our_container,
-                &mut child_flow_cursor, &mut 0.0, child_flow_direction,
+                child_id, &our_container, &our_padding,
+                &mut child_flow_cursor, &mut child_flow_margin, child_flow_direction,
             );
         }
     }
