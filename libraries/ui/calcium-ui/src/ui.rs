@@ -72,18 +72,34 @@ impl Ui {
     }
 
     pub fn add_child(&mut self, mut child: Element, parent: ElementId) -> ElementId {
-        // Make sure this element gets an inner ID as well
+        // Make sure this element gets an inner ID
+        // TODO: Not currently use, use for preventing stale index IDs by adding an extra check
         child.inner_id = self.next_inner_id;
         self.next_inner_id += 1;
 
-        // Add the element itself
-        // TODO: Re-use element slots, but do it safely using incremental IDs.
+        // Check if we can find an empty slot
+        if let Some((index, slot)) = self.elements.iter_mut()
+            .enumerate().find(|v| v.1.is_none()) {
+            // We found an empty slot, fill it
+            *slot = Some(child);
+            let child_id = ElementId(index);
+
+            // Since this is an existing slot, we already have a (cleared) child connections list,
+            // we only need to set the parent
+            self.child_connections[parent.0].1.push(child_id);
+
+            return child_id
+        }
+
+        // We didn't find an empty slot, add a new one at the end
         self.elements.push(Some(child));
         let child_id = ElementId(self.elements.len() - 1);
 
-        // Add the child connections for this element
+        // Add the child connections for this element as well
         self.child_connections.push((parent, Vec::new()));
         self.child_connections[parent.0].1.push(child_id);
+
+        println!("New slot!");
 
         child_id
     }
