@@ -1,22 +1,51 @@
 extern crate rusttype;
 extern crate unicode_normalization;
 
-use rusttype::{Font, Scale, PositionedGlyph, Rect, Vector, point, vector};
+use rusttype::{Font, Scale, PositionedGlyph, Rect, Vector, Point, point, vector};
 use unicode_normalization::{UnicodeNormalization};
 
 #[derive(Clone, PartialEq)]
 pub enum AlignH { Left, Center, Right, }
 
-pub fn layout_text<'a>(
-    text: &str, font: &'a Font, text_size: f32, container: Rect<f32>, align: AlignH,
-) -> Vec<PositionedGlyph<'a>> {
-    let (glyphs, glyphs_size) = layout_text_line(text, font, text_size, container);
+#[derive(Clone, PartialEq)]
+pub enum AlignV { Top, Center, Bottom, }
 
-    match align {
+pub fn layout_text<'a>(
+    text: &str, font: &'a Font, text_size: f32, container: Rect<f32>, align: (AlignH, AlignV),
+) -> Vec<PositionedGlyph<'a>> {
+    let (mut glyphs, glyphs_size) = layout_text_line(text, font, text_size, container);
+
+    let container_size = rect_size(container);
+    let half_container_size = container_size * 0.5;
+    let half_glyphs_size = glyphs_size * 0.5;
+
+    // Align horizontally
+    glyphs = match align.0 {
         AlignH::Left => glyphs,
-        AlignH::Center => reposition_center(glyphs, glyphs_size, container),
-        AlignH::Right => reposition_right(glyphs, glyphs_size, container),
-    }
+        AlignH::Center => reposition(glyphs, |p| point(
+            p.x + half_container_size.x - half_glyphs_size.x, p.y
+        )),
+        AlignH::Right => reposition(glyphs, |p| point(
+            p.x + container_size.x - glyphs_size.x, p.y
+        )),
+    };
+
+    // Align vertically
+    glyphs = match align.1 {
+        AlignV::Top => glyphs,
+        AlignV::Center => reposition(glyphs, |p| point(
+            p.x, p.y + half_container_size.y - half_glyphs_size.y
+        )),
+        AlignV::Bottom => reposition(glyphs, |p| point(
+            p.x, p.y + container_size.y - glyphs_size.y
+        )),
+    };
+
+    glyphs
+}
+
+fn rect_size(rect: Rect<f32>) -> Vector<f32> {
+    vector(rect.width(), rect.height())
 }
 
 fn layout_text_line<'a>(
@@ -71,31 +100,11 @@ fn layout_text_line<'a>(
     ))
 }
 
-fn reposition_center(
-    mut glyphs: Vec<PositionedGlyph>, glyphs_size: Vector<f32>, container: Rect<f32>
+fn reposition<F: Fn(Point<f32>) -> Point<f32>>(
+    mut glyphs: Vec<PositionedGlyph>, positioner: F
 ) -> Vec<PositionedGlyph> {
-    let half_container_size = container.width() * 0.5;
-    let half_glyphs_size = glyphs_size.x * 0.5;
-
     for glyph in &mut glyphs {
-        let mut position = glyph.position();
-        position.x += half_container_size - half_glyphs_size;
-        *glyph = glyph.unpositioned().clone()
-            .positioned(position);
-    }
-
-    glyphs
-}
-
-fn reposition_right(
-    mut glyphs: Vec<PositionedGlyph>, text_size: Vector<f32>, container: Rect<f32>
-) -> Vec<PositionedGlyph> {
-    let container_size = container.width() * 0.5;
-    let text_size = text_size.x * 0.5;
-
-    for glyph in &mut glyphs {
-        let mut position = glyph.position();
-        position.x += container_size - text_size;
+        let position = positioner(glyph.position());
         *glyph = glyph.unpositioned().clone()
             .positioned(position);
     }

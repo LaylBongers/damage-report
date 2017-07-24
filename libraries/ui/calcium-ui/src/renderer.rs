@@ -7,9 +7,9 @@ use rusttype::{Font, FontCollection, point, Rect};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
-use glyphlayout::{self, AlignH};
+use glyphlayout::{self, AlignH, AlignV};
 
-use style::{CursorBehavior, SideH, Style};
+use style::{CursorBehavior, SideH, SideV, Style};
 use element::{Positioning, ElementText};
 use {Ui, ElementId, ElementCursorState, Element};
 
@@ -175,10 +175,15 @@ fn generate_text_batch<R: Renderer>(
     }
 
     // Layout the text
-    let align = match style.text_align.0 {
+    let align_h = match style.text_align.0 {
         SideH::Left => AlignH::Left,
         SideH::Center => AlignH::Center,
         SideH::Right => AlignH::Right,
+    };
+    let align_v = match style.text_align.1 {
+        SideV::Top => AlignV::Top,
+        SideV::Center => AlignV::Center,
+        SideV::Bottom => AlignV::Bottom,
     };
     let container_min = positioning.rectangle.start;
     let container_max = positioning.rectangle.end;
@@ -187,7 +192,7 @@ fn generate_text_batch<R: Renderer>(
         Rect {
             min: point(container_min.x + style.padding.left, container_min.y + style.padding.top),
             max: point(container_max.x - style.padding.right, container_max.y - style.padding.bottom),
-        }, align,
+        }, (align_h, align_v),
     );
 
     // Make sure the glyph cache knows what glyphs we need
