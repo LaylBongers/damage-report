@@ -99,8 +99,6 @@ impl Ui {
         self.child_connections.push((parent, Vec::new()));
         self.child_connections[parent.0].1.push(child_id);
 
-        println!("New slot!");
-
         child_id
     }
 

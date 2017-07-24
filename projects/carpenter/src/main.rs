@@ -16,6 +16,7 @@ extern crate ttf_noto_sans;
 // TODO: Replace bus with a custom event queue that just works on a single thread
 extern crate bus;
 extern crate palette;
+extern crate home;
 
 mod controller;
 mod model;

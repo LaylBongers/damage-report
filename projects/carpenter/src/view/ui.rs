@@ -31,12 +31,12 @@ impl<R: Renderer> UiView<R> {
         let root_id = ui.root_id();
 
         // Create the top ribbon
-        let ribbon_buttons_id = widget::ribbon(&mut ui, root_id);
+        let ribbon_buttons_id = widget::ribbon(root_id, &mut ui);
 
         // Add a few buttons to the top ribbon
-        let save_as_id = widget::ribbon_buton("Save As", &mut ui, ribbon_buttons_id);
-        let _ = widget::ribbon_buton("Load", &mut ui, ribbon_buttons_id);
-        let new_brush_id = widget::ribbon_buton("New Brush", &mut ui, ribbon_buttons_id);
+        let save_as_id = widget::ribbon_buton("Save As", ribbon_buttons_id, &mut ui);
+        let _ = widget::ribbon_buton("Load", ribbon_buttons_id, &mut ui);
+        let new_brush_id = widget::ribbon_buton("New Brush", ribbon_buttons_id, &mut ui);
 
         // Add a FPS label
         let fps = Element::new(Style {
@@ -76,7 +76,9 @@ impl<R: Renderer> UiView<R> {
         }
 
         if self.ui[self.save_as_id].clicked() {
-            self.save_dialog = Some(widget::FileDialog::new(root_id, &mut self.ui));
+            self.save_dialog = Some(widget::FileDialog::new(
+                ::home::home_dir().unwrap_or("/".into()), root_id, &mut self.ui
+            ));
         }
 
         if self.ui[self.new_brush_id].clicked() {

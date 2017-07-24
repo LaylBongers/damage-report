@@ -1,3 +1,5 @@
+use std::path::{PathBuf};
+
 use cgmath::{Vector2, Zero};
 use palette::pixel::{Srgb};
 
@@ -12,7 +14,7 @@ pub struct FileDialog {
 }
 
 impl FileDialog {
-    pub fn new(parent_id: ElementId, ui: &mut Ui) -> Self {
+    pub fn new(directory: PathBuf, parent_id: ElementId, ui: &mut Ui) -> Self {
         // Transparent shade that blocks off the background, making this a modal dialog
         let mut shade = Element::new(Style {
             position: Position::Relative(Vector2::zero(), SideH::Left, SideV::Top),
@@ -66,7 +68,9 @@ impl FileDialog {
 
         // Add the directory field
         ui.add_child(Element::with_text("Directory", label_style.clone()), dialog_id);
-        ui.add_child(Element::with_text("C:\\", textfield_style.clone()), dialog_id);
+        ui.add_child(Element::with_text(
+            directory.to_str().unwrap(), textfield_style.clone()), dialog_id
+        );
 
         // Add the file field
         ui.add_child(Element::with_text("File Name", label_style.clone()), dialog_id);

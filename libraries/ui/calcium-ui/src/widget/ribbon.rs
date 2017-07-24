@@ -4,7 +4,7 @@ use palette::pixel::{Srgb};
 use style::{Style, Lrtb, Size, Position, SideH, SideV, SizeValue, color_highlight, color_active};
 use {Element, ElementId, Ui, ElementMode};
 
-pub fn ribbon(ui: &mut Ui, parent: ElementId) -> ElementId {
+pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
     let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
     let ribbon_style = Style {
         size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(102.0)),
@@ -25,7 +25,7 @@ pub fn ribbon(ui: &mut Ui, parent: ElementId) -> ElementId {
     ribbon_buttons_id
 }
 
-pub fn ribbon_buton(label: &str, ui: &mut Ui, parent: ElementId) -> ElementId {
+pub fn ribbon_buton(label: &str, parent: ElementId, ui: &mut Ui) -> ElementId {
     let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
     let button_color = Srgb::new(0.53, 0.54, 0.52).into();
 
