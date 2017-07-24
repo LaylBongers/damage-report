@@ -70,23 +70,12 @@ impl<R: Renderer> UiView<R> {
         self.average_delta.accumulate(delta);
         let root_id = self.ui.root_id();
 
-        let open_save_dialog ={
-            let button = &mut self.ui[self.save_as_id];
-            if button.clicked() {
-                true
-            } else {
-                false
-            }
-        };
-        if open_save_dialog {
+        if self.ui[self.save_as_id].clicked() {
             self.save_dialog = Some(widget::FileDialog::new(root_id, &mut self.ui));
         }
 
-        {
-            let button = &mut self.ui[self.new_brush_id];
-            if button.clicked() {
-                editor.new_brush();
-            }
+        if self.ui[self.new_brush_id].clicked() {
+            editor.new_brush();
         }
 
         {
