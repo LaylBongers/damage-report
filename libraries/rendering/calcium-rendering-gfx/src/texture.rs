@@ -18,22 +18,31 @@ pub struct GfxTextureRaw<D: Device + 'static> {
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     TextureRaw<GfxRenderer<D, F>> for GfxTextureRaw<D> {
     fn from_file(
-        renderer: &mut GfxRenderer<D, F>, path: PathBuf, _format: TextureFormat,
+        renderer: &mut GfxRenderer<D, F>, path: PathBuf, format: TextureFormat,
     ) -> Result<Self, Error> {
         info!(renderer.log,
             "Loading texture from file"; "path" => path.display().to_string()
         );
 
-        // We aren't using single-channel specific texture formats because gfx doesn't support them
-
         // Load in the image file
         let img = image::open(path).unwrap().to_rgba();;
         let (width, height) = img.dimensions();
 
+        // TODO: Figure out a way to support single-channel formats, I don't think using the
+        // following in place of Srgba8/Rgba8 will work by itself and I don't currently have time
+        // to test it.
+        //type Sr8 = (R8, Srgb);
+
         // Load in the texture
         let kind = Kind::D2(width as Size, height as Size, AaMode::Single);
-        let (_, view) = renderer.factory.create_texture_immutable_u8::<Srgba8>(kind, &[&img])
-            .map_platform_err()?;
+        let (_, view) = match format {
+            TextureFormat::Srgb =>
+                renderer.factory.create_texture_immutable_u8::<Srgba8>(kind, &[&img]),
+            TextureFormat::Linear =>
+                renderer.factory.create_texture_immutable_u8::<Rgba8>(kind, &[&img]),
+            TextureFormat::LinearRed =>
+                unimplemented!(),
+        }.map_platform_err()?;
 
         Ok(GfxTextureRaw {
             view
