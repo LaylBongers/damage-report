@@ -93,13 +93,20 @@ impl<R: Renderer> UiRenderer<R> {
 fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
     let style = &element.style;
 
-    // Check which color this element is
-    let color = match element.cursor_state {
-        ElementCursorState::None => style.background_color,
-        ElementCursorState::Hovering => style.hover_color.or(style.background_color),
-        ElementCursorState::Held => style.active_color
+    // If this element is focused, its color should be overwritten with active_color
+    let color = if element.focused {
+        style.active_color
             .or(style.hover_color)
-            .or(style.background_color),
+            .or(style.background_color)
+    } else {
+        // Check which color this element is
+        match element.cursor_state {
+            ElementCursorState::None => style.background_color,
+            ElementCursorState::Hovering => style.hover_color.or(style.background_color),
+            ElementCursorState::Held => style.active_color
+                .or(style.hover_color)
+                .or(style.background_color),
+        }
     };
 
     // Draw a rect for the background if we've got a color

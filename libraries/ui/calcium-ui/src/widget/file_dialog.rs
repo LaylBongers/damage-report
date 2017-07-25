@@ -4,7 +4,7 @@ use cgmath::{Vector2, Zero};
 use palette::pixel::{Srgb};
 
 use widget;
-use style::{Style, Size, Position, SideH, SideV, Lrtb, SizeValue, FlowDirection};
+use style::{Style, Size, Position, SideH, SideV, Lrtb, SizeValue, FlowDirection, color_active};
 use {Ui, Element, ElementId, ElementMode};
 
 pub struct FileDialog {
@@ -56,11 +56,16 @@ impl FileDialog {
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
             .. Style::new()
         };
+        let textfield_color = Srgb::new(0.53, 0.54, 0.52).into();
         let textfield_style = Style {
             size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(18.0 + 12.0)),
             margin: Lrtb::uniform(6.0),
             padding: Lrtb::uniform(6.0),
-            background_color: Some(Srgb::new(0.53, 0.54, 0.52).into()),
+
+            background_color: Some(textfield_color),
+            hover_color: Some(color_active(textfield_color)),
+            active_color: Some(color_active(textfield_color)),
+
             text_size: 18.0,
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
             .. Style::new()
@@ -68,13 +73,17 @@ impl FileDialog {
 
         // Add the directory field
         ui.add_child(Element::with_text("Directory", label_style.clone()), dialog_id);
-        ui.add_child(Element::with_text(
-            directory.to_str().unwrap(), textfield_style.clone()), dialog_id
+        let mut directory_textfield = Element::with_text(
+            directory.to_str().unwrap(), textfield_style.clone()
         );
+        directory_textfield.mode = ElementMode::TextField;
+        ui.add_child(directory_textfield, dialog_id);
 
         // Add the file field
         ui.add_child(Element::with_text("File Name", label_style.clone()), dialog_id);
-        ui.add_child(Element::with_text("my_map", textfield_style.clone()), dialog_id);
+        let mut filename_textfield = Element::with_text("my_map", textfield_style.clone());
+        filename_textfield.mode = ElementMode::TextField;
+        ui.add_child(filename_textfield, dialog_id);
 
         FileDialog {
             removed: false,

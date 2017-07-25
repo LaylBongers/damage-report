@@ -18,6 +18,7 @@ pub struct Ui {
 
     cursor_position: Vector2<f32>,
     cursor_active_element: Option<usize>,
+    text_active_element: Option<usize>,
 
     // pressed/released are reset every frame, state is persistent
     cursor_pressed: bool,
@@ -38,6 +39,7 @@ impl Ui {
 
             cursor_position: Vector2::new(0.0, 0.0),
             cursor_active_element: None,
+            text_active_element: None,
 
             cursor_pressed: false,
             cursor_released: false,
@@ -149,6 +151,16 @@ impl Ui {
             }
         }
 
+        // If we clicked, clear the previous active text field element, so when we click outside
+        // with one focused, it gets un-focused
+        if self.cursor_released {
+            if let Some(id) = self.text_active_element.take() {
+                if let Some(ref mut element) = self.elements[id] {
+                    element.focused = false;
+                }
+            }
+        }
+
         // Go through all elements and see if the mouse is over any of them
         for id in 0..self.elements.len() {
             if let Some(ref element) = self.elements[id] {
@@ -180,6 +192,13 @@ impl Ui {
             //  started on and raise the clicked event regardless of where it ended.
             if self.cursor_released {
                 element.clicked = true;
+
+                // If the element clicked on was a text field, set it as the active text element so
+                // it can be rendered focused and receive input
+                if element.mode == ElementMode::TextField {
+                    element.focused = true;
+                    self.text_active_element = Some(id);
+                }
             }
         }
 

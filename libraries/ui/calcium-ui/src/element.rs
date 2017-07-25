@@ -14,6 +14,7 @@ pub struct Element {
     // Input state
     pub(crate) cursor_state: ElementCursorState,
     pub(crate) clicked: bool,
+    pub(crate) focused: bool,
 }
 
 impl Element {
@@ -28,6 +29,7 @@ impl Element {
 
             cursor_state: ElementCursorState::None,
             clicked: false,
+            focused: false,
         }
     }
 
@@ -67,6 +69,8 @@ pub enum ElementMode {
     Passive,
     /// Blocks mouse input, detects click events, uses hover and active styling.
     Clickable,
+    /// On click, will be focused and receive text input.
+    TextField,
 }
 
 #[derive(Debug)]
