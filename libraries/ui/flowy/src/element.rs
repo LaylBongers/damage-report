@@ -1,11 +1,11 @@
 use cgmath::{Vector2, Zero};
-use calcium_rendering_simple2d::{Rectangle};
+use screenmath::{Rectangle};
 use style::{Style};
 
 pub struct Element {
     pub style: Style,
     pub mode: ElementMode,
-    pub(crate) text: Option<ElementText>,
+    pub text: Option<ElementText>,
 
     // Cache data
     pub(crate) inner_id: i32,
@@ -39,6 +39,14 @@ impl Element {
         element
     }
 
+    pub fn positioning(&self) -> &Positioning {
+        &self.positioning
+    }
+
+    pub fn cursor_state(&self) -> ElementCursorState {
+        self.cursor_state
+    }
+
     pub fn hovering(&self) -> bool {
         self.cursor_state == ElementCursorState::Hovering
     }
@@ -49,6 +57,10 @@ impl Element {
 
     pub fn clicked(&self) -> bool {
         self.clicked
+    }
+
+    pub fn focused(&self) -> bool {
+        self.focused
     }
 
     pub fn set_text<S: Into<String>>(&mut self, text: S) {
@@ -86,7 +98,7 @@ impl Positioning {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ElementCursorState {
     None,
     Hovering,
@@ -95,9 +107,10 @@ pub enum ElementCursorState {
 
 #[derive(Debug)]
 pub struct ElementText {
+    // TODO: Eliminate this pub(crate)
     pub(crate) text: String,
-    pub(crate) cache_stale: bool,
-    pub(crate) cache_rect: Rectangle<f32>,
+    pub cache_stale: bool,
+    pub cache_rect: Rectangle<f32>,
 }
 
 impl ElementText {
@@ -107,6 +120,10 @@ impl ElementText {
             cache_stale: true,
             cache_rect: Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(0.0, 0.0)),
         }
+    }
+
+    pub fn text(&self) -> &String {
+        &self.text
     }
 
     pub fn set_text(&mut self, text: String) {

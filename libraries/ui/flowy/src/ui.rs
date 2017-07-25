@@ -1,10 +1,10 @@
 use std::ops::{Index, IndexMut};
 
-use calcium_rendering_simple2d::{Rectangle};
+use screenmath::{Rectangle, Lrtb};
 use cgmath::{Vector2, Zero};
 use input::{Input, Motion, Button, MouseButton, Key};
 
-use style::{Style, Size, Position, FlowDirection, Lrtb};
+use style::{Style, Size, Position, FlowDirection};
 use element::{Positioning};
 use {Element, ElementCursorState, ElementMode};
 
@@ -278,7 +278,7 @@ impl Ui {
                             position.y, size.y,
                             parent_size.y - parent_padding.top - parent_padding.bottom
                         ),
-                    ) + parent_container.start + parent_padding.left_top()
+                    ) + parent_container.min + parent_padding.left_top()
                 },
             };
 

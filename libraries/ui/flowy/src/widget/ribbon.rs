@@ -1,7 +1,8 @@
 use cgmath::{Vector2};
 use palette::pixel::{Srgb};
+use screenmath::{Lrtb};
 
-use style::{Style, Lrtb, Size, Position, SideH, SideV, SizeValue, color_highlight, color_active};
+use style::{Style, Size, Position, SideH, SideV, SizeValue, color_highlight, color_active};
 use {Element, ElementId, Ui, ElementMode};
 
 pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {

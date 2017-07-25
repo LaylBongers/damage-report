@@ -1,15 +1,12 @@
 [package]
-name = "calcium-ui"
+name = "flowy"
 version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-calcium-rendering = {path = "../../rendering/calcium-rendering"}
-calcium-rendering-simple2d = {path = "../../rendering/calcium-rendering-simple2d"}
 cgmath = "0.14"
 palette = "0.2"
 pistoncore-input = "0.18"
 rusttype = "0.2"
-image = "0.14"
-ttf-noto-sans = "0.1"
 glyphlayout = {path = "../glyphlayout"}
+screenmath = {path = "../screenmath"}

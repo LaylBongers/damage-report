@@ -1,0 +1,7 @@
+[package]
+name = "screenmath"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+cgmath = "0.14"

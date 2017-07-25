@@ -1,7 +1,5 @@
 use cgmath::{Vector2};
 
-use calcium_rendering_simple2d::{Rectangle};
-
 mod color;
 mod position;
 mod size;
@@ -12,37 +10,8 @@ pub use self::position::{Position, SideH, SideV};
 pub use self::size::{Size, SizeValue};
 pub use self::style::{Style};
 
-#[derive(Clone, Debug)]
-pub struct Lrtb {
-    pub left: f32,
-    pub right: f32,
-    pub top: f32,
-    pub bottom: f32,
-}
-
-impl Lrtb {
-    pub fn new(left: f32, right: f32, top: f32, bottom: f32) -> Self {
-        Lrtb {
-            left, right, top, bottom
-        }
-    }
-
-    pub fn uniform(value: f32) -> Self {
-        Self::new(value, value, value, value)
-    }
-
-    pub fn left_top(&self) -> Vector2<f32> {
-        Vector2::new(self.left, self.top)
-    }
-
-    /// Takes the value and its own left value, then returns a new Lrtb with the maximum of the two
-    /// left values.
-    pub fn max_left(&self, value: f32) -> Self {
-        let mut lrtb = self.clone();
-        lrtb.left = f32::max(value, lrtb.left);
-        lrtb
-    }
-}
+// Re-export screenmath types for convenience
+pub use screenmath::{Rectangle};
 
 #[derive(Debug, Clone, Copy)]
 pub enum FlowDirection {
@@ -55,10 +24,10 @@ pub enum FlowDirection {
 impl FlowDirection {
     pub fn flow_start(&self, container: &Rectangle<f32>) -> Vector2<f32> {
         match *self {
-            FlowDirection::Right => container.start,
-            FlowDirection::Left => Vector2::new(container.end.x, container.start.y),
-            FlowDirection::Down => container.start,
-            FlowDirection::Up => Vector2::new(container.start.x, container.end.y),
+            FlowDirection::Right => container.min,
+            FlowDirection::Left => Vector2::new(container.max.x, container.min.y),
+            FlowDirection::Down => container.min,
+            FlowDirection::Up => Vector2::new(container.min.x, container.max.y),
         }
     }
 

@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 
-use cgmath::{Vector2, Vector4, BaseNum};
+use cgmath::{Vector2, Vector4};
+use screenmath::{Rectangle};
 
 use calcium_rendering::{Renderer, Texture};
 
@@ -27,22 +28,22 @@ impl<R: Renderer> RenderBatch<R> {
 
     /// Adds vertices for a rectangle to this render batch.
     pub fn rectangle(&mut self, rect: DrawRectangle) {
-        let destination_start_end = rect.destination.start_end().cast();
-        let destination_end_start = rect.destination.end_start().cast();
+        let destination_start_end = rect.destination.min_max().cast();
+        let destination_end_start = rect.destination.max_min().cast();
         let uvs = rect.texture_source.unwrap_or(
             Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0))
         );
-        let uvs_start_end = uvs.start_end();
-        let uvs_end_start = uvs.end_start();
+        let uvs_start_end = uvs.min_max();
+        let uvs_end_start = uvs.max_min();
 
         self.vertices.extend_from_slice(&DrawVertex::new_triangle(
-            [rect.destination.start.cast(), destination_start_end, destination_end_start],
-            [uvs.start, uvs_start_end, uvs_end_start],
+            [rect.destination.min.cast(), destination_start_end, destination_end_start],
+            [uvs.min, uvs_start_end, uvs_end_start],
             rect.color,
         ));
         self.vertices.extend_from_slice(&DrawVertex::new_triangle(
-            [rect.destination.end.cast(), destination_end_start, destination_start_end],
-            [uvs.end, uvs_end_start, uvs_start_end],
+            [rect.destination.max.cast(), destination_end_start, destination_start_end],
+            [uvs.max, uvs_end_start, uvs_start_end],
             rect.color,
         ));
     }
@@ -158,46 +159,5 @@ impl Default for DrawRectangle {
             texture_source: None,
             color: Vector4::new(1.0, 1.0, 1.0, 1.0),
         }
-    }
-}
-
-/// A rectangle defined by start and end coordinates.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Rectangle<S: BaseNum> {
-    pub start: Vector2<S>,
-    pub end: Vector2<S>,
-}
-
-impl<S: BaseNum> Rectangle<S> {
-    /// Creates a new rectangle.
-    pub fn new(start: Vector2<S>, end: Vector2<S>) -> Self {
-        Rectangle {
-            start,
-            end,
-        }
-    }
-
-    /// Creates a new rectangle from a start coordinate and a size.
-    pub fn start_size(start: Vector2<S>, size: Vector2<S>) -> Self {
-        Self::new(start, start + size)
-    }
-
-    /// Returns a new vector with the start's X and the end's Y.
-    pub fn start_end(&self) -> Vector2<S> {
-        Vector2::new(self.start.x, self.end.y)
-    }
-
-    /// Returns a new vector with the end's X and the start's Y.
-    pub fn end_start(&self) -> Vector2<S> {
-        Vector2::new(self.end.x, self.start.y)
-    }
-
-    pub fn size(&self) -> Vector2<S> {
-        self.end - self.start
-    }
-
-    pub fn contains(&self, value: Vector2<S>) -> bool {
-        value.x >= self.start.x && value.y >= self.start.y &&
-        value.x < self.end.x && value.y < self.end.y
     }
 }

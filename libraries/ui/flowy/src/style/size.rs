@@ -1,6 +1,5 @@
 use cgmath::{Vector2};
-
-use style::{Lrtb};
+use screenmath::{Lrtb};
 
 #[derive(Clone, Debug)]
 pub struct Size {

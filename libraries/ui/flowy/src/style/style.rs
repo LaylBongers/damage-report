@@ -1,6 +1,7 @@
 use palette::{Rgba};
+use screenmath::{Lrtb};
 
-use style::{Position, Lrtb, Size, SideH, SideV, FlowDirection};
+use style::{Position, Size, SideH, SideV, FlowDirection};
 
 #[derive(Clone, Debug)]
 pub struct Style {

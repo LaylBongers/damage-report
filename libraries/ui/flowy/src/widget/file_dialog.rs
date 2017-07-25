@@ -2,9 +2,10 @@ use std::path::{PathBuf};
 
 use cgmath::{Vector2, Zero};
 use palette::pixel::{Srgb};
+use screenmath::{Lrtb};
 
 use widget;
-use style::{Style, Size, Position, SideH, SideV, Lrtb, SizeValue, FlowDirection, color_active};
+use style::{Style, Size, Position, SideH, SideV, SizeValue, FlowDirection, color_active};
 use {Ui, Element, ElementId, ElementMode};
 
 pub struct FileDialog {

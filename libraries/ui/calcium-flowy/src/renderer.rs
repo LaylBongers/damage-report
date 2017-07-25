@@ -9,11 +9,10 @@ use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
 use glyphlayout::{self, AlignH, AlignV};
 
-use style::{SideH, SideV, Style};
-use element::{Positioning, ElementText};
-use {Ui, ElementId, ElementCursorState, Element};
+use flowy::style::{SideH, SideV, Style};
+use flowy::{Ui, ElementId, ElementCursorState, Element, ElementText};
 
-pub struct UiRenderer<R: Renderer> {
+pub struct FlowyRenderer<R: Renderer> {
     glyph_cache: Cache,
     glyph_image: GrayImage,
     glyph_texture: Arc<Texture<R>>,
@@ -21,7 +20,7 @@ pub struct UiRenderer<R: Renderer> {
     text_cache: HashMap<ElementId, RenderBatch<R>>,
 }
 
-impl<R: Renderer> UiRenderer<R> {
+impl<R: Renderer> FlowyRenderer<R> {
     pub fn new(renderer: &mut R) -> Result<Self, Error> {
         let glyph_cache = Cache::new(512, 512, 0.1, 0.1);
         let glyph_image = GrayImage::from_raw(512, 512, vec![0u8; 512*512]).unwrap();
@@ -33,7 +32,7 @@ impl<R: Renderer> UiRenderer<R> {
             ::ttf_noto_sans::REGULAR
         ).into_font().unwrap();
 
-        Ok(UiRenderer {
+        Ok(FlowyRenderer {
             glyph_cache,
             glyph_image,
             glyph_texture,
@@ -94,13 +93,13 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
     let style = &element.style;
 
     // If this element is focused, its color should be overwritten with active_color
-    let color = if element.focused {
+    let color = if element.focused() {
         style.active_color
             .or(style.hover_color)
             .or(style.background_color)
     } else {
         // Check which color this element is
-        match element.cursor_state {
+        match element.cursor_state() {
             ElementCursorState::None => style.background_color,
             ElementCursorState::Hovering => style.hover_color.or(style.background_color),
             ElementCursorState::Held => style.active_color
@@ -113,7 +112,7 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
     if let Some(ref color) = color {
         // Draw the rectangle
         batcher.current_batch.rectangle(DrawRectangle {
-            destination: element.positioning.rectangle.clone(),
+            destination: element.positioning().rectangle.clone(),
             color: Vector4::new(color.red, color.green, color.blue, color.alpha),
             .. DrawRectangle::default()
         });
@@ -129,9 +128,9 @@ fn draw_element_text<R: Renderer>(
     // TODO: Glyph positioning should be done during layouting in Ui and cached for future frames,
     //  so text height can be used for automatic layouting as well.
 
-    if let Some(ref mut text) = element.text {
+    if element.text.is_some() {
         batcher.next_batch(retrieve_or_create_batch(
-            id, text, &element.style, &element.positioning, font,
+            id, element, font,
             glyph_cache, glyph_image, glyph_texture,
             text_cache, renderer,
         )?);
@@ -145,29 +144,36 @@ fn draw_element_text<R: Renderer>(
 }
 
 fn retrieve_or_create_batch<R: Renderer>(
-    id: ElementId, text: &mut ElementText, style: &Style, positioning: &Positioning, font: &Font,
+    id: ElementId, element: &mut Element, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
     text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
-    if !text.cache_stale && text.cache_rect == positioning.rectangle {
+    let positioning_rectangle = element.positioning().rectangle.clone();
+    let text = element.text.as_mut().unwrap();
+    let style = &element.style;
+
+    if !text.cache_stale && text.cache_rect == positioning_rectangle {
         if let Some(cached_batch) = text_cache.get(&id) {
             return Ok(cached_batch.clone())
         }
     }
 
+    // Couldn't find something in the cache, generate a new batch
     let batch = generate_text_batch(
-        text, style, positioning, font,
+        text, style, &positioning_rectangle, font,
         glyph_cache, glyph_image, glyph_texture,
         renderer,
     )?;
+
+    // Store the batch and mark on the element what its data is
     text_cache.insert(id, batch.clone());
     text.cache_stale = false;
-    text.cache_rect = positioning.rectangle.clone();
+    text.cache_rect = positioning_rectangle.clone();
     Ok(batch)
 }
 
 fn generate_text_batch<R: Renderer>(
-    text: &ElementText, style: &Style, positioning: &Positioning, font: &Font,
+    text: &ElementText, style: &Style, positioning_rectangle: &Rectangle<f32>, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
     renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
@@ -187,10 +193,10 @@ fn generate_text_batch<R: Renderer>(
         SideV::Center => AlignV::Center,
         SideV::Bottom => AlignV::Bottom,
     };
-    let container_min = positioning.rectangle.start;
-    let container_max = positioning.rectangle.end;
+    let container_min = positioning_rectangle.min;
+    let container_max = positioning_rectangle.max;
     let glyphs = glyphlayout::layout_text(
-        &text.text, font, style.text_size,
+        text.text(), font, style.text_size,
         Rect {
             min: point(container_min.x + style.padding.left, container_min.y + style.padding.top),
             max: point(container_max.x - style.padding.right, container_max.y - style.padding.bottom),
@@ -237,12 +243,12 @@ fn generate_text_batch<R: Renderer>(
             // Push this glyph into this draw batch
             batch.rectangle(DrawRectangle {
                 destination: Rectangle {
-                    start: Vector2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
-                    end: Vector2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
+                    min: Vector2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
+                    max: Vector2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
                 },
                 texture_source: Some(Rectangle {
-                    start: Vector2::new(uv_rect.min.x, uv_rect.min.y),
-                    end: Vector2::new(uv_rect.max.x, uv_rect.max.y),
+                    min: Vector2::new(uv_rect.min.x, uv_rect.min.y),
+                    max: Vector2::new(uv_rect.max.x, uv_rect.max.y),
                 }),
                 color: text_color,
             });

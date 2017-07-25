@@ -6,3 +6,4 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.14"
 calcium-rendering = {path = "../calcium-rendering"}
+screenmath = {path = "../../ui/screenmath"}

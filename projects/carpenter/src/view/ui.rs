@@ -5,14 +5,15 @@ use palette::pixel::{Srgb};
 use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
-use calcium_ui::{UiRenderer, Ui, Element, ElementId, widget};
-use calcium_ui::style::{Style, Position, Size, SideH, SideV};
-use calcium_ui::widget::{FileDialog};
+use calcium_flowy::{FlowyRenderer};
+use flowy::{Ui, Element, ElementId, widget};
+use flowy::style::{Style, Position, Size, SideH, SideV};
+use flowy::widget::{FileDialog};
 
 use model::{MapEditorModel};
 
 pub struct UiView<R: Renderer> {
-    ui_renderer: UiRenderer<R>,
+    ui_renderer: FlowyRenderer<R>,
 
     ui: Ui,
     save_as_id: ElementId,
@@ -25,7 +26,7 @@ pub struct UiView<R: Renderer> {
 
 impl<R: Renderer> UiView<R> {
     pub fn new(renderer: &mut R) -> Result<Self, Error> {
-        let ui_renderer = UiRenderer::new(renderer)?;
+        let ui_renderer = FlowyRenderer::new(renderer)?;
 
         let mut ui = Ui::new();
         let root_id = ui.root_id();
