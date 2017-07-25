@@ -4,8 +4,7 @@ use screenmath::{Rectangle, Lrtb};
 use cgmath::{Vector2, Zero};
 use input::{Input, Motion, Button, MouseButton, Key};
 
-use style::{Style, Size, Position, FlowDirection};
-use element::{Positioning};
+use style::{Style, Size, FlowDirection};
 use {Element, ElementCursorState, ElementMode};
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash)]
@@ -146,15 +145,13 @@ impl Ui {
             Input::Text(ref text) => {
                 // We received text, so pass it to the element
                 if let Some(el_text) = el_text {
-                    el_text.text.push_str(text);
-                    el_text.cache_stale = true;
+                    el_text.text_mut().push_str(text);
                 }
             },
             Input::Press(Button::Keyboard(Key::Backspace)) => {
                 // We received a backspace, remove text from the element
                 if let Some(el_text) = el_text {
-                    el_text.text.pop();
-                    el_text.cache_stale = true;
+                    el_text.text_mut().pop();
                 }
             },
             _ => {}
@@ -191,7 +188,7 @@ impl Ui {
 
                 // Check if the mouse is over this and if so set it to hovering
                 // TODO: Make use of a layering value calculated during calculate_positioning
-                if element.positioning.rectangle.contains(self.cursor_position) {
+                if element.positioning.container.contains(self.cursor_position) {
                     // Remember this element so we can update it later if it's indeed on top
                     self.cursor_active_element = Some(id);
                 }
@@ -227,7 +224,7 @@ impl Ui {
         self.cursor_released = false;
     }
 
-    pub fn calculate_positioning(&mut self, viewport_size: Vector2<f32>) {
+    pub fn update_layout(&mut self, viewport_size: Vector2<f32>) {
         let root_id = self.root_id();
 
         // Lock the root to match the viewport
@@ -237,19 +234,18 @@ impl Ui {
         }
 
         // Start off the calculation at the root
-        self.calculate_element_positioning(
+        self.update_element_layout(
             root_id,
             &Rectangle::new(Vector2::zero(), viewport_size), &Lrtb::uniform(0.0),
             &mut Vector2::new(0.0, 0.0), &mut 0.0, FlowDirection::Right,
         );
     }
 
-    pub fn calculate_element_positioning(
+    fn update_element_layout(
         &mut self, element_id: ElementId,
         parent_container: &Rectangle<f32>, parent_padding: &Lrtb,
         flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
     ) {
-        let size;
         let our_container;
         let our_padding;
         let mut child_flow_cursor;
@@ -258,52 +254,13 @@ impl Ui {
 
         {
             let element = &mut self[element_id];
-            let style = &element.style;
-
-            // Calculate the final size of this element, it's needed for some positioning types
-            let parent_size = parent_container.size();
-            size = style.size.to_units(parent_size, parent_padding);
-
-            // Calculate the base position of this element
-            let marginless_position = match &style.position {
-                &Position::Flow => flow_direction.position(*flow_cursor, size),
-                &Position::Relative(position, dock_h, dock_v) => {
-                    // Calculate the position based on our size, the container, and the docking
-                    Vector2::new(
-                        dock_h.relative_position(
-                            position.x, size.x,
-                            parent_size.x - parent_padding.left - parent_padding.right
-                        ),
-                        dock_v.relative_position(
-                            position.y, size.y,
-                            parent_size.y - parent_padding.top - parent_padding.bottom
-                        ),
-                    ) + parent_container.min + parent_padding.left_top()
-                },
-            };
-
-            // Add margins to that base position if we're in flow mode, merging margins
-            let position = if style.position.is_flow() {
-                // TODO: This doesn't take flow direction into account and assumes Right
-                marginless_position + style.margin.max_left(*flow_margin).left_top()
-            } else {
-                marginless_position
-            };
-
-            // If we're positioned using flow, adjust the flow position
-            if style.position.is_flow() {
-                *flow_cursor = flow_direction.advance_cursor(position, size, *flow_cursor);
-                // TODO: This doesn't take flow direction into account and assumes Right
-                *flow_margin = style.margin.right;
-            }
-
-            // Store the calculated data
-            element.positioning = Positioning {
-                rectangle: Rectangle::start_size(position, size),
-            };
+            element.update_positioning(
+                parent_container, parent_padding,
+                flow_cursor, flow_margin, flow_direction
+            );
 
             // Calculate the flow data needed by the children based on this element's flow data
-            our_container = Rectangle::start_size(position, size);
+            our_container = element.positioning.container.clone();
             our_padding = element.style.padding.clone();
             child_flow_direction = element.style.flow_direction;
             child_flow_margin = element.style.padding.left;
@@ -312,7 +269,7 @@ impl Ui {
 
         // Now go through all the children as well
         for child_id in self.children_of(element_id).clone() {
-            self.calculate_element_positioning(
+            self.update_element_layout(
                 child_id, &our_container, &our_padding,
                 &mut child_flow_cursor, &mut child_flow_margin, child_flow_direction,
             );

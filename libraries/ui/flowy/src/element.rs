@@ -1,14 +1,16 @@
 use cgmath::{Vector2, Zero};
-use screenmath::{Rectangle};
-use style::{Style};
+use screenmath::{Rectangle, Lrtb};
+use style::{Style, FlowDirection, Position};
 
 pub struct Element {
+    // TODO: Use this value to check against stale index IDs
+    pub(crate) inner_id: i32,
+
     pub style: Style,
     pub mode: ElementMode,
     pub text: Option<ElementText>,
 
     // Cache data
-    pub(crate) inner_id: i32,
     pub(crate) positioning: Positioning,
 
     // Input state
@@ -20,11 +22,12 @@ pub struct Element {
 impl Element {
     pub fn new(style: Style) -> Self {
         Element {
+            inner_id: -1,
+
             style,
             mode: ElementMode::Passive,
             text: None,
 
-            inner_id: -1,
             positioning: Positioning::new(),
 
             cursor_state: ElementCursorState::None,
@@ -73,6 +76,56 @@ impl Element {
 
         self.text = Some(ElementText::new(text));
     }
+
+    pub fn update_positioning(
+        &mut self,
+        parent_container: &Rectangle<f32>, parent_padding: &Lrtb,
+        flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
+    ) {
+        let style = &self.style;
+
+        // Calculate the final size of this element, it's needed for some positioning types
+        let parent_size = parent_container.size();
+        let size = style.size.to_units(parent_size, parent_padding);
+
+        // Calculate the base position of this element
+        let marginless_position = match &style.position {
+            &Position::Flow => flow_direction.position(*flow_cursor, size),
+            &Position::Relative(position, dock_h, dock_v) => {
+                // Calculate the position based on our size, the container, and the docking
+                Vector2::new(
+                    dock_h.relative_position(
+                        position.x, size.x,
+                        parent_size.x - parent_padding.left - parent_padding.right
+                    ),
+                    dock_v.relative_position(
+                        position.y, size.y,
+                        parent_size.y - parent_padding.top - parent_padding.bottom
+                    ),
+                ) + parent_container.min + parent_padding.left_top()
+            },
+        };
+
+        // Add margins to that base position if we're in flow mode, merging margins
+        let position = if style.position.is_flow() {
+            // TODO: This doesn't take flow direction into account and assumes Right
+            marginless_position + style.margin.max_left(*flow_margin).left_top()
+        } else {
+            marginless_position
+        };
+
+        // If we're positioned using flow, adjust the flow position
+        if style.position.is_flow() {
+            *flow_cursor = flow_direction.advance_cursor(position, size, *flow_cursor);
+            // TODO: This doesn't take flow direction into account and assumes Right
+            *flow_margin = style.margin.right;
+        }
+
+        // Store the calculated data
+        self.positioning = Positioning {
+            container: Rectangle::start_size(position, size),
+        };
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -87,13 +140,13 @@ pub enum ElementMode {
 
 #[derive(Debug)]
 pub struct Positioning {
-    pub rectangle: Rectangle<f32>,
+    pub container: Rectangle<f32>,
 }
 
 impl Positioning {
     pub fn new() -> Self {
         Positioning {
-            rectangle: Rectangle::new(Vector2::zero(), Vector2::zero()),
+            container: Rectangle::new(Vector2::zero(), Vector2::zero()),
         }
     }
 }
@@ -107,8 +160,8 @@ pub enum ElementCursorState {
 
 #[derive(Debug)]
 pub struct ElementText {
-    // TODO: Eliminate this pub(crate)
-    pub(crate) text: String,
+    text: String,
+    glyphs: Option<Vec<GlyphData>>,
     pub cache_stale: bool,
     pub cache_rect: Rectangle<f32>,
 }
@@ -117,6 +170,7 @@ impl ElementText {
     pub fn new(text: String) -> Self {
         ElementText {
             text: text,
+            glyphs: None,
             cache_stale: true,
             cache_rect: Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(0.0, 0.0)),
         }
@@ -126,10 +180,21 @@ impl ElementText {
         &self.text
     }
 
+    /// Marks the cache data as stale.
+    pub fn text_mut(&mut self) -> &mut String {
+        self.cache_stale = true;
+        &mut self.text
+    }
+
+    /// Marks the cache data as stale.
     pub fn set_text(&mut self, text: String) {
         if text != self.text {
             self.text = text;
             self.cache_stale = true;
         }
     }
+}
+
+#[derive(Debug)]
+struct GlyphData {
 }

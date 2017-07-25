@@ -48,7 +48,7 @@ impl<R: Renderer> FlowyRenderer<R> {
 
         // Calculate positioning in the element tree, this needs to be done before rendering so any
         // changes are applied, and so input can use the values for click detection.
-        ui.calculate_positioning(viewport_size);
+        ui.update_layout(viewport_size);
 
         // Clear unused entries in the text cache
         self.text_cache.retain(|id, _| ui.get(*id).is_some());
@@ -112,7 +112,7 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
     if let Some(ref color) = color {
         // Draw the rectangle
         batcher.current_batch.rectangle(DrawRectangle {
-            destination: element.positioning().rectangle.clone(),
+            destination: element.positioning().container.clone(),
             color: Vector4::new(color.red, color.green, color.blue, color.alpha),
             .. DrawRectangle::default()
         });
@@ -148,11 +148,11 @@ fn retrieve_or_create_batch<R: Renderer>(
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
     text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
-    let positioning_rectangle = element.positioning().rectangle.clone();
+    let container = element.positioning().container.clone();
     let text = element.text.as_mut().unwrap();
     let style = &element.style;
 
-    if !text.cache_stale && text.cache_rect == positioning_rectangle {
+    if !text.cache_stale && text.cache_rect == container {
         if let Some(cached_batch) = text_cache.get(&id) {
             return Ok(cached_batch.clone())
         }
@@ -160,7 +160,7 @@ fn retrieve_or_create_batch<R: Renderer>(
 
     // Couldn't find something in the cache, generate a new batch
     let batch = generate_text_batch(
-        text, style, &positioning_rectangle, font,
+        text, style, &container, font,
         glyph_cache, glyph_image, glyph_texture,
         renderer,
     )?;
@@ -168,12 +168,12 @@ fn retrieve_or_create_batch<R: Renderer>(
     // Store the batch and mark on the element what its data is
     text_cache.insert(id, batch.clone());
     text.cache_stale = false;
-    text.cache_rect = positioning_rectangle.clone();
+    text.cache_rect = container.clone();
     Ok(batch)
 }
 
 fn generate_text_batch<R: Renderer>(
-    text: &ElementText, style: &Style, positioning_rectangle: &Rectangle<f32>, font: &Font,
+    text: &ElementText, style: &Style, container: &Rectangle<f32>, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
     renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
@@ -193,13 +193,11 @@ fn generate_text_batch<R: Renderer>(
         SideV::Center => AlignV::Center,
         SideV::Bottom => AlignV::Bottom,
     };
-    let container_min = positioning_rectangle.min;
-    let container_max = positioning_rectangle.max;
     let glyphs = glyphlayout::layout_text(
         text.text(), font, style.text_size,
         Rect {
-            min: point(container_min.x + style.padding.left, container_min.y + style.padding.top),
-            max: point(container_max.x - style.padding.right, container_max.y - style.padding.bottom),
+            min: point(container.min.x + style.padding.left, container.min.y + style.padding.top),
+            max: point(container.max.x - style.padding.right, container.max.y - style.padding.bottom),
         }, (align_h, align_v),
     );
 

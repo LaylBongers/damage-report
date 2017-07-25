@@ -11,7 +11,7 @@ pub use self::size::{Size, SizeValue};
 pub use self::style::{Style};
 
 // Re-export screenmath types for convenience
-pub use screenmath::{Rectangle};
+pub use screenmath::{Rectangle, Lrtb};
 
 #[derive(Debug, Clone, Copy)]
 pub enum FlowDirection {
