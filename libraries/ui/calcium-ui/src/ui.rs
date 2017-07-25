@@ -2,7 +2,7 @@ use std::ops::{Index, IndexMut};
 
 use calcium_rendering_simple2d::{Rectangle};
 use cgmath::{Vector2, Zero};
-use input::{Input, Motion, Button, MouseButton};
+use input::{Input, Motion, Button, MouseButton, Key};
 
 use style::{Style, Size, Position, FlowDirection, Lrtb};
 use element::{Positioning};
@@ -124,6 +124,12 @@ impl Ui {
     }
 
     pub fn handle_event(&mut self, event: &Input) {
+        // In case we have text input
+        let elements = &mut self.elements;
+        let el_text = self.text_active_element
+            .and_then(|id| elements[id].as_mut())
+            .and_then(|element| element.text.as_mut());
+
         match *event {
             Input::Press(Button::Mouse(MouseButton::Left)) => {
                 self.cursor_pressed = true;
@@ -137,6 +143,20 @@ impl Ui {
             },
             Input::Move(Motion::MouseCursor(x, y)) =>
                 self.cursor_position = Vector2::new(x, y).cast(),
+            Input::Text(ref text) => {
+                // We received text, so pass it to the element
+                if let Some(el_text) = el_text {
+                    el_text.text.push_str(text);
+                    el_text.cache_stale = true;
+                }
+            },
+            Input::Press(Button::Keyboard(Key::Backspace)) => {
+                // We received a backspace, remove text from the element
+                if let Some(el_text) = el_text {
+                    el_text.text.pop();
+                    el_text.cache_stale = true;
+                }
+            },
             _ => {}
         }
     }

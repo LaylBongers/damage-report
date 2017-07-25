@@ -19,3 +19,6 @@ mod ui;
 pub use element::{Element, ElementCursorState, ElementMode};
 pub use renderer::{UiRenderer};
 pub use ui::{Ui, ElementId};
+
+// TODO: This crate contains a lot of `pub(crate)`, most of this should be made private.
+// TODO: Calcium rendering should be moved to a separate crate.
