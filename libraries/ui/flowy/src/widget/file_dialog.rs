@@ -24,7 +24,7 @@ impl FileDialog {
             .. Style::new()
         });
         shade.mode = ElementMode::Clickable;
-        let shade_id = ui.add_child(shade, parent_id);
+        let shade_id = ui.elements.add_child(shade, parent_id);
 
         // Build up the actual dialog itself
         let dialog = Element::new(Style {
@@ -35,7 +35,7 @@ impl FileDialog {
             background_color: Some(Srgb::new(0.18, 0.20, 0.21).into()),
             .. Style::new()
         });
-        let dialog_id = ui.add_child(dialog, shade_id);
+        let dialog_id = ui.elements.add_child(dialog, shade_id);
 
         // Create a the submit and cancel buttons
         let buttons = Element::new(Style {
@@ -45,7 +45,7 @@ impl FileDialog {
             size: Size::units(90.0*2.0 + 6.0*3.0, 24.0 + 6.0*2.0),
             .. Style::new()
         });
-        let buttons_id = ui.add_child(buttons, dialog_id);
+        let buttons_id = ui.elements.add_child(buttons, dialog_id);
         let _submit_button_id = widget::button("Save", buttons_id, ui);
         let cancel_button_id = widget::button("Cancel", buttons_id, ui);
 
@@ -73,18 +73,18 @@ impl FileDialog {
         };
 
         // Add the directory field
-        ui.add_child(Element::with_text("Directory", label_style.clone()), dialog_id);
+        ui.elements.add_child(Element::with_text("Directory", label_style.clone()), dialog_id);
         let mut directory_textfield = Element::with_text(
             directory.to_str().unwrap(), textfield_style.clone()
         );
         directory_textfield.mode = ElementMode::TextField;
-        ui.add_child(directory_textfield, dialog_id);
+        ui.elements.add_child(directory_textfield, dialog_id);
 
         // Add the file field
-        ui.add_child(Element::with_text("File Name", label_style.clone()), dialog_id);
+        ui.elements.add_child(Element::with_text("File Name", label_style.clone()), dialog_id);
         let mut filename_textfield = Element::with_text("my_map", textfield_style.clone());
         filename_textfield.mode = ElementMode::TextField;
-        ui.add_child(filename_textfield, dialog_id);
+        ui.elements.add_child(filename_textfield, dialog_id);
 
         FileDialog {
             removed: false,
@@ -96,8 +96,8 @@ impl FileDialog {
     pub fn update(&mut self, ui: &mut Ui) {
         if self.removed { return }
 
-        if ui[self.cancel_button_id].clicked() {
-            ui.remove(self.shade_id);
+        if ui.elements[self.cancel_button_id].clicked() {
+            ui.elements.remove(self.shade_id);
             self.removed = true;
         }
     }

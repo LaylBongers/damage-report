@@ -1,6 +1,7 @@
 use cgmath::{Vector2};
 use input::{Input};
 use palette::pixel::{Srgb};
+use rusttype::{FontCollection};
 
 use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
@@ -29,7 +30,13 @@ impl<R: Renderer> UiView<R> {
         let ui_renderer = FlowyRenderer::new(renderer)?;
 
         let mut ui = Ui::new();
-        let root_id = ui.root_id();
+        let root_id = ui.elements.root_id();
+
+        // Load in a font
+        let font = FontCollection::from_bytes(
+            ::ttf_noto_sans::REGULAR
+        ).into_font().unwrap();
+        ui.fonts.push(font);
 
         // Create the top ribbon
         let ribbon_buttons_id = widget::ribbon(root_id, &mut ui);
@@ -47,7 +54,7 @@ impl<R: Renderer> UiView<R> {
             text_size: 14.0,
             .. Style::new()
         });
-        let fps_id = ui.add_child(fps, root_id);
+        let fps_id = ui.elements.add_child(fps, root_id);
 
         Ok(UiView {
             ui_renderer,
@@ -69,20 +76,20 @@ impl<R: Renderer> UiView<R> {
     pub fn update(&mut self, delta: f32, editor: &mut MapEditorModel) {
         self.ui.process_input_frame();
         self.average_delta.accumulate(delta);
-        let root_id = self.ui.root_id();
+        let root_id = self.ui.elements.root_id();
 
         {
-            let fps = &mut self.ui[self.fps_id];
+            let fps = &mut self.ui.elements[self.fps_id];
             fps.set_text(format!("FPS: {}", delta_to_fps(self.average_delta.get())));
         }
 
-        if self.ui[self.save_as_id].clicked() {
+        if self.ui.elements[self.save_as_id].clicked() {
             self.save_dialog = Some(widget::FileDialog::new(
                 ::home::home_dir().unwrap_or("/".into()), root_id, &mut self.ui
             ));
         }
 
-        if self.ui[self.new_brush_id].clicked() {
+        if self.ui.elements[self.new_brush_id].clicked() {
             editor.new_brush();
         }
 

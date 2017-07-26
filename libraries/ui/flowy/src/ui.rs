@@ -1,23 +1,21 @@
-use std::ops::{Index, IndexMut};
-
 use screenmath::{Rectangle, Lrtb};
 use cgmath::{Vector2, Zero};
 use input::{Input, Motion, Button, MouseButton, Key};
+use rusttype::{Font};
 
-use style::{Style, Size, FlowDirection};
-use {Element, ElementCursorState, ElementMode};
+use style::{Size, FlowDirection};
+use {ElementCursorState, ElementMode, Elements, ElementId};
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ElementId(usize);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct FontId(pub usize);
 
 pub struct Ui {
-    elements: Vec<Option<Element>>,
-    child_connections: Vec<(ElementId, Vec<ElementId>)>, // Parent, then children
-    next_inner_id: i32,
+    pub elements: Elements,
+    pub fonts: Vec<Font<'static>>,
 
     cursor_position: Vector2<f32>,
-    cursor_active_element: Option<usize>,
-    text_active_element: Option<usize>,
+    cursor_active_element: Option<ElementId>,
+    text_active_element: Option<ElementId>,
 
     // pressed/released are reset every frame, state is persistent
     cursor_pressed: bool,
@@ -27,14 +25,9 @@ pub struct Ui {
 
 impl Ui {
     pub fn new() -> Self {
-        let mut root = Element::new(Style::new());
-        root.inner_id = 0;
-
-        // The UI should already include a root
         Ui {
-            elements: vec!(Some(root)),
-            child_connections: vec!((ElementId(0), Vec::new())),
-            next_inner_id: 1,
+            elements: Elements::new(),
+            fonts: Vec::new(),
 
             cursor_position: Vector2::new(0.0, 0.0),
             cursor_active_element: None,
@@ -46,87 +39,15 @@ impl Ui {
         }
     }
 
-    pub fn root_id(&self) -> ElementId {
-        ElementId(0)
-    }
-
-    pub fn get(&self, id: ElementId) -> Option<&Element> {
-        self.elements.get(id.0)
-            .and_then(|e| e.as_ref())
-    }
-
-    pub fn get_mut(&mut self, id: ElementId) -> Option<&mut Element> {
-        self.elements.get_mut(id.0)
-            .and_then(|e| e.as_mut())
-    }
-
     pub fn cursor_active_element(&self) -> Option<ElementId> {
-        self.cursor_active_element.map(|v| ElementId(v))
-    }
-
-    pub fn parent_of(&self, child: ElementId) -> ElementId {
-        self.child_connections[child.0].0
-    }
-
-    pub fn children_of(&self, parent: ElementId) -> &Vec<ElementId> {
-        &self.child_connections[parent.0].1
-    }
-
-    pub fn add_child(&mut self, mut child: Element, parent: ElementId) -> ElementId {
-        // Make sure this element gets an inner ID
-        // TODO: Not currently use, use for preventing stale index IDs by adding an extra check
-        child.inner_id = self.next_inner_id;
-        self.next_inner_id += 1;
-
-        // Check if we can find an empty slot
-        if let Some((index, slot)) = self.elements.iter_mut()
-            .enumerate().find(|v| v.1.is_none()) {
-            // We found an empty slot, fill it
-            *slot = Some(child);
-            let child_id = ElementId(index);
-
-            // Since this is an existing slot, we already have a (cleared) child connections list,
-            // we only need to set the parent
-            self.child_connections[parent.0].1.push(child_id);
-
-            return child_id
-        }
-
-        // We didn't find an empty slot, add a new one at the end
-        self.elements.push(Some(child));
-        let child_id = ElementId(self.elements.len() - 1);
-
-        // Add the child connections for this element as well
-        self.child_connections.push((parent, Vec::new()));
-        self.child_connections[parent.0].1.push(child_id);
-
-        child_id
-    }
-
-    pub fn remove(&mut self, id: ElementId) -> ElementId {
-        // First, remove the element and replace the dependencies vector for it
-        self.elements[id.0] = None;
-        let children = ::std::mem::replace(
-            &mut self.child_connections[id.0],
-            (ElementId(0), Vec::new())
-        );
-
-        // Remove the element from its parent, this may just do nothing if it's an orphan element
-        self.child_connections[(children.0).0].1.retain(|v| id != *v);
-
-        // Now go through all the children of the element and do the same thing recursively
-        for child in children.1 {
-            self.remove(child);
-        }
-
-        ElementId(0)
+        self.cursor_active_element
     }
 
     pub fn handle_event(&mut self, event: &Input) {
         // In case we have text input
         let elements = &mut self.elements;
         let el_text = self.text_active_element
-            .and_then(|id| elements[id].as_mut())
+            .and_then(|id| elements.get_mut(id))
             .and_then(|element| element.text.as_mut());
 
         match *event {
@@ -162,7 +83,7 @@ impl Ui {
     pub fn process_input_frame(&mut self) {
         // Reset the previous input frame
         if let Some(id) = self.cursor_active_element.take() {
-            if let Some(ref mut element) = self.elements[id] {
+            if let Some(ref mut element) = self.elements.get_mut(id) {
                 element.cursor_state = ElementCursorState::None;
                 element.clicked = false;
             }
@@ -172,32 +93,35 @@ impl Ui {
         // with one focused, it gets un-focused
         if self.cursor_released {
             if let Some(id) = self.text_active_element.take() {
-                if let Some(ref mut element) = self.elements[id] {
+                if let Some(ref mut element) = self.elements.get_mut(id) {
                     element.focused = false;
                 }
             }
         }
 
         // Go through all elements and see if the mouse is over any of them
-        for id in 0..self.elements.len() {
-            if let Some(ref element) = self.elements[id] {
-                // Make sure this element actually captures mouse input
-                if element.mode == ElementMode::Passive {
-                    continue;
-                }
+        {
+            let all_elements = self.elements.all();
+            for id in 0..all_elements.len() {
+                if let Some(ref element) = all_elements[id] {
+                    // Make sure this element actually captures mouse input
+                    if element.mode == ElementMode::Passive {
+                        continue;
+                    }
 
-                // Check if the mouse is over this and if so set it to hovering
-                // TODO: Make use of a layering value calculated during calculate_positioning
-                if element.positioning.container.contains(self.cursor_position) {
-                    // Remember this element so we can update it later if it's indeed on top
-                    self.cursor_active_element = Some(id);
+                    // Check if the mouse is over this and if so set it to hovering
+                    // TODO: Make use of a layering value calculated during calculate_positioning
+                    if element.positioning.container.contains(self.cursor_position) {
+                        // Remember this element so we can update it later if it's indeed on top
+                        self.cursor_active_element = Some(ElementId(id));
+                    }
                 }
             }
         }
 
         // If anything became active again, mark it as such
         if let Some(id) = self.cursor_active_element {
-            let element = self.elements[id].as_mut().unwrap();
+            let element = self.elements.get_mut(id).unwrap();
             element.cursor_state = if self.cursor_state {
                 ElementCursorState::Hovering
             } else {
@@ -225,11 +149,11 @@ impl Ui {
     }
 
     pub fn update_layout(&mut self, viewport_size: Vector2<f32>) {
-        let root_id = self.root_id();
+        let root_id = self.elements.root_id();
 
         // Lock the root to match the viewport
         {
-            let style = &mut self[root_id].style;
+            let style = &mut self.elements[root_id].style;
             style.size = Size::units(viewport_size.x, viewport_size.y);
         }
 
@@ -253,10 +177,11 @@ impl Ui {
         let child_flow_direction;
 
         {
-            let element = &mut self[element_id];
-            element.update_positioning(
+            let element = self.elements.get_mut(element_id).unwrap();
+            element.update_layout(
                 parent_container, parent_padding,
-                flow_cursor, flow_margin, flow_direction
+                flow_cursor, flow_margin, flow_direction,
+                &self.fonts,
             );
 
             // Calculate the flow data needed by the children based on this element's flow data
@@ -268,25 +193,11 @@ impl Ui {
         }
 
         // Now go through all the children as well
-        for child_id in self.children_of(element_id).clone() {
+        for child_id in self.elements.children_of(element_id).clone() {
             self.update_element_layout(
                 child_id, &our_container, &our_padding,
                 &mut child_flow_cursor, &mut child_flow_margin, child_flow_direction,
             );
         }
-    }
-}
-
-impl Index<ElementId> for Ui {
-    type Output = Element;
-
-    fn index<'a>(&'a self, index: ElementId) -> &'a Element {
-        self.get(index).expect("Unable to find element")
-    }
-}
-
-impl IndexMut<ElementId> for Ui {
-    fn index_mut<'a>(&'a mut self, index: ElementId) -> &'a mut Element {
-        self.get_mut(index).expect("Unable to find element")
     }
 }

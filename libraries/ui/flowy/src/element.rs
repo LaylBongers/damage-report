@@ -1,6 +1,9 @@
 use cgmath::{Vector2, Zero};
 use screenmath::{Rectangle, Lrtb};
-use style::{Style, FlowDirection, Position};
+use rusttype::{Point, GlyphId, Rect, point, Font};
+use glyphlayout::{self, AlignH, AlignV};
+
+use style::{Style, FlowDirection, Position, SideH, SideV};
 
 pub struct Element {
     // TODO: Use this value to check against stale index IDs
@@ -77,7 +80,22 @@ impl Element {
         self.text = Some(ElementText::new(text));
     }
 
-    pub fn update_positioning(
+    pub fn update_layout(
+        &mut self,
+        parent_container: &Rectangle<f32>, parent_padding: &Lrtb,
+        flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
+        fonts: &Vec<Font>,
+    ) {
+        self.update_positioning(
+            parent_container, parent_padding, flow_cursor, flow_margin, flow_direction
+        );
+
+        if let Some(ref mut text) = self.text {
+            text.update_glyphs(&self.positioning.container, &self.style, fonts);
+        }
+    }
+
+    fn update_positioning(
         &mut self,
         parent_container: &Rectangle<f32>, parent_padding: &Lrtb,
         flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
@@ -161,7 +179,9 @@ pub enum ElementCursorState {
 #[derive(Debug)]
 pub struct ElementText {
     text: String,
-    glyphs: Option<Vec<GlyphData>>,
+    glyphs: Option<Vec<(GlyphId, Point<f32>)>>,
+
+    // This is stuff for the renderer to touch
     pub cache_stale: bool,
     pub cache_rect: Rectangle<f32>,
 }
@@ -171,6 +191,7 @@ impl ElementText {
         ElementText {
             text: text,
             glyphs: None,
+
             cache_stale: true,
             cache_rect: Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(0.0, 0.0)),
         }
@@ -182,6 +203,7 @@ impl ElementText {
 
     /// Marks the cache data as stale.
     pub fn text_mut(&mut self) -> &mut String {
+        self.glyphs = None;
         self.cache_stale = true;
         &mut self.text
     }
@@ -190,11 +212,39 @@ impl ElementText {
     pub fn set_text(&mut self, text: String) {
         if text != self.text {
             self.text = text;
+            self.glyphs = None;
             self.cache_stale = true;
         }
     }
-}
 
-#[derive(Debug)]
-struct GlyphData {
+    pub fn update_glyphs(&mut self, container: &Rectangle<f32>, style: &Style, fonts: &Vec<Font>) {
+        if self.glyphs.is_some() {
+            return;
+        }
+
+        // Layout the text
+        let align_h = match style.text_align.0 {
+            SideH::Left => AlignH::Left,
+            SideH::Center => AlignH::Center,
+            SideH::Right => AlignH::Right,
+        };
+        let align_v = match style.text_align.1 {
+            SideV::Top => AlignV::Top,
+            SideV::Center => AlignV::Center,
+            SideV::Bottom => AlignV::Bottom,
+        };
+        let font = fonts.get(style.text_font.0).expect("Unable to find font on element");
+        let glyphs = glyphlayout::layout_text(
+            &self.text, font, style.text_size,
+            Rect {
+                min: point(container.min.x + style.padding.left, container.min.y + style.padding.top),
+                max: point(container.max.x - style.padding.right, container.max.y - style.padding.bottom),
+            }, (align_h, align_v),
+        );
+
+        // Extract just the data we need
+        for glyph in glyphs {
+            // TODO
+        }
+    }
 }

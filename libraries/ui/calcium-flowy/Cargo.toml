@@ -7,7 +7,6 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 calcium-rendering = {path = "../../rendering/calcium-rendering"}
 calcium-rendering-simple2d = {path = "../../rendering/calcium-rendering-simple2d"}
 flowy = {path = "../flowy"}
-ttf-noto-sans = "0.1"
 glyphlayout = {path = "../glyphlayout"}
 image = "0.14"
 rusttype = "0.2"

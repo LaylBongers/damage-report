@@ -22,6 +22,7 @@ ttf-noto-sans = "0.1.1"
 bus = "1.3"
 palette = "0.2"
 home = "0.3.0"
+rusttype = "0.2"
 
 # If you want optimizations in dev while keeping debug symbols, use these
 [profile.dev]

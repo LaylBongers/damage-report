@@ -18,6 +18,7 @@ extern crate ttf_noto_sans;
 extern crate bus;
 extern crate palette;
 extern crate home;
+extern crate rusttype;
 
 mod controller;
 mod model;

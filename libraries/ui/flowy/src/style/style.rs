@@ -2,6 +2,7 @@ use palette::{Rgba};
 use screenmath::{Lrtb};
 
 use style::{Position, Size, SideH, SideV, FlowDirection};
+use {FontId};
 
 #[derive(Clone, Debug)]
 pub struct Style {
@@ -20,6 +21,7 @@ pub struct Style {
     pub hover_color: Option<Rgba>,
     pub active_color: Option<Rgba>,
 
+    pub text_font: FontId,
     pub text_color: Rgba,
     pub text_size: f32,
     /// Not fully implemented, only supports horizontal align right now.
@@ -39,6 +41,8 @@ impl Style {
             hover_color: None,
             active_color: None,
 
+            // First font should be assumed as default
+            text_font: FontId(0),
             text_color: Rgba::new(0.0, 0.0, 0.0, 1.0),
             // Reasonable default, if it's at 0 users will get confused about text not rendering
             text_size: 10.0,

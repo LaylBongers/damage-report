@@ -14,14 +14,14 @@ pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
     };
     let mut ribbon = Element::new(ribbon_style.clone());
     ribbon.mode = ElementMode::Clickable;
-    let ribbon_id = ui.add_child(ribbon, parent);
+    let ribbon_id = ui.elements.add_child(ribbon, parent);
 
     let ribbon_buttons = Element::new(Style {
         position: Position::Relative(Vector2::new(0.0, 22.0), SideH::Left, SideV::Top),
         size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(84.0)),
         .. Style::new()
     });
-    let ribbon_buttons_id = ui.add_child(ribbon_buttons, ribbon_id);
+    let ribbon_buttons_id = ui.elements.add_child(ribbon_buttons, ribbon_id);
 
     ribbon_buttons_id
 }
@@ -53,14 +53,14 @@ pub fn ribbon_buton(label: &str, parent: ElementId, ui: &mut Ui) -> ElementId {
 
     let mut button = Element::new(button_style.clone());
     button.mode = ElementMode::Clickable;
-    let button_id = ui.add_child(button, parent);
+    let button_id = ui.elements.add_child(button, parent);
 
     let button_image = Element::new(button_image_style.clone());
-    ui.add_child(button_image, button_id);
+    ui.elements.add_child(button_image, button_id);
 
     let mut button_text = Element::new(button_text_style.clone());
     button_text.set_text(label);
-    ui.add_child(button_text, button_id);
+    ui.elements.add_child(button_text, button_id);
 
     button_id
 }

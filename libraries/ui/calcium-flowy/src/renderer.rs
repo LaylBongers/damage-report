@@ -3,7 +3,7 @@ use std::collections::{HashMap};
 
 use cgmath::{Vector2, Vector4};
 use rusttype::gpu_cache::{Cache};
-use rusttype::{Font, FontCollection, point, Rect};
+use rusttype::{Font, point, Rect};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
@@ -16,7 +16,6 @@ pub struct FlowyRenderer<R: Renderer> {
     glyph_cache: Cache,
     glyph_image: GrayImage,
     glyph_texture: Arc<Texture<R>>,
-    font: Font<'static>,
     text_cache: HashMap<ElementId, RenderBatch<R>>,
 }
 
@@ -28,15 +27,10 @@ impl<R: Renderer> FlowyRenderer<R> {
             renderer, &vec![0u8; 8*8], Vector2::new(8, 8)
         )?; // We will never use this initial texture, so just use something cheap
 
-        let font = FontCollection::from_bytes(
-            ::ttf_noto_sans::REGULAR
-        ).into_font().unwrap();
-
         Ok(FlowyRenderer {
             glyph_cache,
             glyph_image,
             glyph_texture,
-            font,
             text_cache: HashMap::new(),
         })
     }
@@ -51,10 +45,10 @@ impl<R: Renderer> FlowyRenderer<R> {
         ui.update_layout(viewport_size);
 
         // Clear unused entries in the text cache
-        self.text_cache.retain(|id, _| ui.get(*id).is_some());
+        self.text_cache.retain(|id, _| ui.elements.get(*id).is_some());
 
         // Draw all the elements recursively starting at the root
-        self.draw_element(ui.root_id(), ui, &mut batcher, renderer)?;
+        self.draw_element(ui.elements.root_id(), ui, &mut batcher, renderer)?;
 
         // Make sure all cached batches have the same text texture, this will only matter for the
         //  next frame, but it should clean up some stale textures.
@@ -70,18 +64,19 @@ impl<R: Renderer> FlowyRenderer<R> {
         &mut self, element_id: ElementId, ui: &mut Ui, batcher: &mut Batcher<R>, renderer: &mut R,
     ) -> Result<(), Error> {
         {
-            let element = &mut ui[element_id];
+            let element = &mut ui.elements[element_id];
 
             draw_element_box(element, batcher);
             draw_element_text(
-                element_id, element, &self.font,
+                &ui.fonts,
+                element_id, element,
                 &mut self.glyph_cache, &mut self.glyph_image, &mut self.glyph_texture,
                 batcher, &mut self.text_cache, renderer
             )?;
         }
 
         // Now go through all the children as well
-        for child_id in ui.children_of(element_id).clone() {
+        for child_id in ui.elements.children_of(element_id).clone() {
             self.draw_element(child_id, ui, batcher, renderer)?;
         }
 
@@ -120,8 +115,8 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
 }
 
 fn draw_element_text<R: Renderer>(
-    id: ElementId,
-    element: &mut Element, font: &Font,
+    fonts: &Vec<Font>,
+    id: ElementId, element: &mut Element,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
     batcher: &mut Batcher<R>, text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut R,
 ) -> Result<(), Error> {
@@ -129,6 +124,7 @@ fn draw_element_text<R: Renderer>(
     //  so text height can be used for automatic layouting as well.
 
     if element.text.is_some() {
+        let font = fonts.get(element.style.text_font.0).expect("Unable to find font on element");
         batcher.next_batch(retrieve_or_create_batch(
             id, element, font,
             glyph_cache, glyph_image, glyph_texture,

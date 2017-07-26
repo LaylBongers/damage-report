@@ -9,9 +9,11 @@ extern crate screenmath;
 pub mod style;
 pub mod widget;
 mod element;
+mod elements;
 mod ui;
 
 pub use element::{Element, ElementCursorState, ElementMode, Positioning, ElementText};
-pub use ui::{Ui, ElementId};
+pub use elements::{Elements, ElementId};
+pub use ui::{Ui, FontId};
 
-// TODO: This crate contains a lot of `pub(crate)`, most of this should be made private.
+// TODO: This crate contains a lot of `pub(crate)`, most of these should be made private.
