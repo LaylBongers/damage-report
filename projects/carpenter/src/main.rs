@@ -17,12 +17,11 @@ extern crate ttf_noto_sans;
 extern crate palette;
 extern crate home;
 extern crate rusttype;
+extern crate carpenter_model;
 
 mod controller;
-mod model;
 mod view;
 mod runtime;
-mod stbus;
 
 use slog::{Logger, Drain};
 use slog_async::{Async};

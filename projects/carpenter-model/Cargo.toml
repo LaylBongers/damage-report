@@ -1,0 +1,11 @@
+[package]
+name = "carpenter-model"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+slog = "2"
+pistoncore-input = "0.18"
+serde = "1"
+serde_derive = "1"
+serde_json = "1"

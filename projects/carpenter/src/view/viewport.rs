@@ -1,11 +1,10 @@
 use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle, InnerSpace};
 use window::{AdvancedWindow};
-use stbus::{BusReader};
 
 use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Model, Material, World3DRenderTarget};
 
-use model::{MapEditor, MapEditorEvent, InputModel};
+use carpenter_model::{MapEditor, MapEditorEvent, InputModel, BusReader};
 
 pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
     render_world: RenderWorld<R, WR>,

@@ -1,13 +1,15 @@
 use std::path::{PathBuf};
 
 use slog::{Logger};
-use stbus::{Bus, BusReader};
 
-use model::autosave::{Autosave};
+use autosave::{Autosave};
+use map::{Map, Brush};
+use {Bus, BusReader, Error};
 
 pub struct MapEditor {
     event_bus: Bus<MapEditorEvent>,
     autosave: Option<Autosave>,
+    map: Map,
 }
 
 impl MapEditor {
@@ -15,6 +17,7 @@ impl MapEditor {
         MapEditor {
             event_bus: Bus::new(),
             autosave: None,
+            map: Map::new(),
         }
     }
 
@@ -23,6 +26,7 @@ impl MapEditor {
     }
 
     pub fn new_brush(&mut self) {
+        self.map.brushes.push(Brush::new());
         self.event_bus.broadcast(&MapEditorEvent::NewBrush);
     }
 
@@ -30,10 +34,20 @@ impl MapEditor {
         self.autosave = Some(Autosave::new(target));
     }
 
-    pub fn update(&mut self, delta: f32, log: &Logger) {
+    pub fn update(&mut self, delta: f32, log: &Logger) -> Result<(), Error> {
         if let Some(ref mut autosave) = self.autosave {
-            autosave.update(delta, log);
+            autosave.update(delta, &self.map, log)?;
         }
+
+        Ok(())
+    }
+
+    pub fn force_save(&mut self, log: &Logger) -> Result<(), Error> {
+        if let Some(ref mut autosave) = self.autosave {
+            autosave.force_save(&self.map, log)?;
+        }
+
+        Ok(())
     }
 }
 

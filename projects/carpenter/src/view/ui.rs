@@ -11,7 +11,7 @@ use flowy::{Ui, Element, ElementId, widget};
 use flowy::style::{Style, Position, Size, SideH, SideV};
 use flowy::widget::{FileDialog};
 
-use model::{MapEditor};
+use carpenter_model::{MapEditor};
 
 pub struct UiView<R: Renderer> {
     ui_renderer: FlowyRenderer<R>,
