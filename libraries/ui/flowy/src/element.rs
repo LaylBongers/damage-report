@@ -183,6 +183,8 @@ pub struct ElementText {
 
     // This is stuff for the renderer to touch
     pub cache_stale: bool,
+    // TODO: Previously the renderer would use this rect to know when to reposition glyphs, but the
+    // new layout glyphs system doesn't use it, make sure it moves glyphs when needed.
     pub cache_rect: Rectangle<f32>,
 }
 
