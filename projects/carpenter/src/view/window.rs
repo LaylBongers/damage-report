@@ -5,7 +5,7 @@ use calcium_rendering_static::{Initializer};
 use window::{Window, AdvancedWindow, WindowSettings};
 use slog::{Logger};
 
-use model::{MapEditorModel, InputModel};
+use model::{MapEditor, InputModel};
 use view::{ViewportView, UiView};
 
 pub struct WindowView<W: Window, R: Renderer, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>> {
@@ -28,7 +28,7 @@ impl<W: Window + AdvancedWindow, R: Renderer, SR: Simple2DRenderer<R>, WR: World
     pub fn new<I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRenderer=SR>>(
         log: &Logger,
         init: &I,
-        editor: &mut MapEditorModel,
+        editor: &mut MapEditor,
     ) -> Result<Self, Error> {
         // Set up the renderers and open up a window to render to
         let window_settings = WindowSettings::new("Carpenter", [1280, 720]);
@@ -88,7 +88,9 @@ impl<W: Window + AdvancedWindow, R: Renderer, SR: Simple2DRenderer<R>, WR: World
         }
     }
 
-    pub fn update(&mut self, delta: f32, input: &mut InputModel, editor: &mut MapEditorModel) {
+    pub fn update(
+        &mut self, delta: f32, input: &mut InputModel, editor: &mut MapEditor
+    ) {
         // Update the UI
         self.ui.update(delta, editor);
         input.cursor_over_ui = self.ui.cursor_over_ui();

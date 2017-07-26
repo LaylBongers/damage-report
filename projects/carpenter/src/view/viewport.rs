@@ -5,7 +5,7 @@ use stbus::{BusReader};
 use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Model, Material, World3DRenderTarget};
 
-use model::{MapEditorModel, MapEditorEvent, InputModel};
+use model::{MapEditor, MapEditorEvent, InputModel};
 
 pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
     render_world: RenderWorld<R, WR>,
@@ -21,7 +21,7 @@ pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
 }
 
 impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
-    pub fn new(renderer: &mut R, editor: &mut MapEditorModel) -> Result<Self, Error> {
+    pub fn new(renderer: &mut R, editor: &mut MapEditor) -> Result<Self, Error> {
         let mut render_world = RenderWorld::new();
 
         render_world.ambient_light = Vector3::new(0.05, 0.05, 0.05);

@@ -11,7 +11,7 @@ use flowy::{Ui, Element, ElementId, widget};
 use flowy::style::{Style, Position, Size, SideH, SideV};
 use flowy::widget::{FileDialog};
 
-use model::{MapEditorModel};
+use model::{MapEditor};
 
 pub struct UiView<R: Renderer> {
     ui_renderer: FlowyRenderer<R>,
@@ -73,7 +73,7 @@ impl<R: Renderer> UiView<R> {
         self.ui.handle_event(event);
     }
 
-    pub fn update(&mut self, delta: f32, editor: &mut MapEditorModel) {
+    pub fn update(&mut self, delta: f32, editor: &mut MapEditor) {
         self.ui.process_input_frame();
         self.average_delta.accumulate(delta);
         let root_id = self.ui.elements.root_id();

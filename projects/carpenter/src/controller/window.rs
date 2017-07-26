@@ -4,7 +4,7 @@ use calcium_rendering_static::{Initializer};
 use slog::{Logger};
 
 use view::{WindowView};
-use model::{MapEditorModel, InputModel};
+use model::{MapEditor, InputModel};
 
 pub struct WindowController {}
 
@@ -18,13 +18,15 @@ impl WindowController {
         let mut timer = LoopTimer::start();
 
         // Model
-        let mut editor = MapEditorModel::new();
+        let mut editor = MapEditor::new();
 
         // View
         let mut window_view = WindowView::new(log, init, &mut editor)?;
 
         while !window_view.should_close() {
             let delta = timer.tick();
+
+            editor.update(delta, log);
 
             window_view.handle_events(init, &mut input);
             window_view.update(delta, &mut input, &mut editor);

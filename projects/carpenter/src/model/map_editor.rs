@@ -1,16 +1,20 @@
 use std::path::{PathBuf};
+
+use slog::{Logger};
 use stbus::{Bus, BusReader};
 
-pub struct MapEditorModel {
-    save_target: Option<PathBuf>,
+use model::autosave::{Autosave};
+
+pub struct MapEditor {
     event_bus: Bus<MapEditorEvent>,
+    autosave: Option<Autosave>,
 }
 
-impl MapEditorModel {
+impl MapEditor {
     pub fn new() -> Self {
-        MapEditorModel {
-            save_target: None,
+        MapEditor {
             event_bus: Bus::new(),
+            autosave: None,
         }
     }
 
@@ -23,8 +27,13 @@ impl MapEditorModel {
     }
 
     pub fn set_save_target(&mut self, target: PathBuf) {
-        println!("Target: {}", target.display());
-        self.save_target = Some(target);
+        self.autosave = Some(Autosave::new(target));
+    }
+
+    pub fn update(&mut self, delta: f32, log: &Logger) {
+        if let Some(ref mut autosave) = self.autosave {
+            autosave.update(delta, log);
+        }
     }
 }
 
