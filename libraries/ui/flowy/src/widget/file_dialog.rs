@@ -9,9 +9,15 @@ use style::{Style, Size, Position, SideH, SideV, SizeValue, FlowDirection, color
 use {Ui, Element, ElementId, ElementMode};
 
 pub struct FileDialog {
-    removed: bool,
     shade_id: ElementId,
+    directory_textfield_id: ElementId,
+    filename_textfield_id: ElementId,
     cancel_button_id: ElementId,
+    submit_button_id: ElementId,
+
+    closed: bool,
+    submitted: bool,
+    path: PathBuf,
 }
 
 impl FileDialog {
@@ -36,18 +42,6 @@ impl FileDialog {
             .. Style::new()
         });
         let dialog_id = ui.elements.add_child(dialog, shade_id);
-
-        // Create a the submit and cancel buttons
-        let buttons = Element::new(Style {
-            // This position should counter-act the button's margins
-            position: Position::Relative(Vector2::new(6.0, 6.0), SideH::Right, SideV::Bottom),
-            // Button sizes + margins
-            size: Size::units(90.0*2.0 + 6.0*3.0, 24.0 + 6.0*2.0),
-            .. Style::new()
-        });
-        let buttons_id = ui.elements.add_child(buttons, dialog_id);
-        let _submit_button_id = widget::button("Save", buttons_id, ui);
-        let cancel_button_id = widget::button("Cancel", buttons_id, ui);
 
         // Styles for input fields
         let label_style = Style {
@@ -78,27 +72,77 @@ impl FileDialog {
             directory.to_str().unwrap(), textfield_style.clone()
         );
         directory_textfield.mode = ElementMode::TextField;
-        ui.elements.add_child(directory_textfield, dialog_id);
+        let directory_textfield_id = ui.elements.add_child(directory_textfield, dialog_id);
 
         // Add the file field
         ui.elements.add_child(Element::with_text("File Name", label_style.clone()), dialog_id);
         let mut filename_textfield = Element::with_text("my_map", textfield_style.clone());
         filename_textfield.mode = ElementMode::TextField;
-        ui.elements.add_child(filename_textfield, dialog_id);
+        let filename_textfield_id = ui.elements.add_child(filename_textfield, dialog_id);
+
+        // Create the submit and cancel buttons
+        let buttons = Element::new(Style {
+            // This position should counter-act the buttons' margins
+            position: Position::Relative(Vector2::new(6.0, 6.0), SideH::Right, SideV::Bottom),
+            // Button sizes + margins TODO: Auto-Size
+            size: Size::units(90.0*2.0 + 6.0*3.0, 24.0 + 6.0*2.0),
+            .. Style::new()
+        });
+        let buttons_id = ui.elements.add_child(buttons, dialog_id);
+        let submit_button_id = widget::button("Save", buttons_id, ui);
+        let cancel_button_id = widget::button("Cancel", buttons_id, ui);
 
         FileDialog {
-            removed: false,
             shade_id,
+            directory_textfield_id,
+            filename_textfield_id,
             cancel_button_id,
+            submit_button_id,
+
+            closed: false,
+            submitted: false,
+            path: PathBuf::new(),
         }
     }
 
+    pub fn closed(&self) -> bool {
+        self.closed
+    }
+
+    pub fn submitted(&self) -> bool {
+        self.submitted
+    }
+
+    pub fn selected_path(&self) -> &PathBuf {
+        &self.path
+    }
+
     pub fn update(&mut self, ui: &mut Ui) {
-        if self.removed { return }
+        if self.closed { return }
 
         if ui.elements[self.cancel_button_id].clicked() {
-            ui.elements.remove(self.shade_id);
-            self.removed = true;
+            self.close(ui);
+            return
         }
+
+        if ui.elements[self.submit_button_id].clicked() {
+            {
+                let directory_str = ui.elements[self.directory_textfield_id].text();
+                let filename_str = ui.elements[self.filename_textfield_id].text();
+
+                let mut path = PathBuf::from(directory_str);
+                path.push(filename_str);
+                self.path = path;
+            }
+
+            self.submitted = true;
+            self.close(ui);
+            return
+        }
+    }
+
+    pub fn close(&mut self, ui: &mut Ui) {
+        ui.elements.remove(self.shade_id);
+        self.closed = true;
     }
 }

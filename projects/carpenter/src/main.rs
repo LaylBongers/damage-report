@@ -14,8 +14,6 @@ extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
 extern crate ttf_noto_sans;
-// TODO: Replace bus with a custom event queue that just works on a single thread
-extern crate bus;
 extern crate palette;
 extern crate home;
 extern crate rusttype;
@@ -24,6 +22,7 @@ mod controller;
 mod model;
 mod view;
 mod runtime;
+mod stbus;
 
 use slog::{Logger, Drain};
 use slog_async::{Async};

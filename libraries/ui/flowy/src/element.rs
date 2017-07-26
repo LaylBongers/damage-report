@@ -69,6 +69,15 @@ impl Element {
         self.focused
     }
 
+    /// Retrieves the text from the inner text structure, or returns an empty string.
+    pub fn text(&self) -> &str {
+        if let Some(ref element_text) = self.text {
+            element_text.text()
+        } else {
+            ""
+        }
+    }
+
     pub fn set_text<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
 

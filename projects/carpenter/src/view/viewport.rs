@@ -1,6 +1,6 @@
 use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle, InnerSpace};
 use window::{AdvancedWindow};
-use bus::{BusReader};
+use stbus::{BusReader};
 
 use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Model, Material, World3DRenderTarget};
@@ -61,7 +61,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         &mut self, delta: f32, input: &InputModel, window: &mut W
     ) {
         // Check if we got events
-        while let Ok(ev) = self.events.try_recv() {
+        while let Some(ev) = self.events.try_recv() {
             match ev {
                 MapEditorEvent::NewBrush =>
                     self.add_brush(),

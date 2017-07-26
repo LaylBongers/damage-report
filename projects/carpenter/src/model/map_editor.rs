@@ -1,13 +1,16 @@
-use bus::{Bus, BusReader};
+use std::path::{PathBuf};
+use stbus::{Bus, BusReader};
 
 pub struct MapEditorModel {
+    save_target: Option<PathBuf>,
     event_bus: Bus<MapEditorEvent>,
 }
 
 impl MapEditorModel {
     pub fn new() -> Self {
         MapEditorModel {
-            event_bus: Bus::new(100),
+            save_target: None,
+            event_bus: Bus::new(),
         }
     }
 
@@ -16,7 +19,12 @@ impl MapEditorModel {
     }
 
     pub fn new_brush(&mut self) {
-        self.event_bus.try_broadcast(MapEditorEvent::NewBrush).unwrap();
+        self.event_bus.broadcast(&MapEditorEvent::NewBrush);
+    }
+
+    pub fn set_save_target(&mut self, target: PathBuf) {
+        println!("Target: {}", target.display());
+        self.save_target = Some(target);
     }
 }
 

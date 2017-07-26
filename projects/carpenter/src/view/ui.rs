@@ -93,8 +93,17 @@ impl<R: Renderer> UiView<R> {
             editor.new_brush();
         }
 
-        if let Some(ref mut save_dialog) = self.save_dialog {
+        if let Some(mut save_dialog) = self.save_dialog.take() {
             save_dialog.update(&mut self.ui);
+
+            if save_dialog.submitted() {
+                let target = save_dialog.selected_path();
+                editor.set_save_target(target.clone());
+            }
+
+            if !save_dialog.closed() {
+                self.save_dialog = Some(save_dialog);
+            }
         }
     }
 
