@@ -217,6 +217,10 @@ impl ElementText {
         }
     }
 
+    pub fn cached_glyphs(&self) -> Option<&Vec<(GlyphId, Point<f32>)>> {
+        self.glyphs.as_ref()
+    }
+
     pub fn update_glyphs(&mut self, container: &Rectangle<f32>, style: &Style, fonts: &Vec<Font>) {
         if self.glyphs.is_some() {
             return;
@@ -243,8 +247,10 @@ impl ElementText {
         );
 
         // Extract just the data we need
+        let mut cached_glyphs = Vec::new();
         for glyph in glyphs {
-            // TODO
+            cached_glyphs.push((glyph.id(), glyph.position()));
         }
+        self.glyphs = Some(cached_glyphs);
     }
 }

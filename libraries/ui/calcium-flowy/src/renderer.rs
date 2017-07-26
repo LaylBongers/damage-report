@@ -3,13 +3,12 @@ use std::collections::{HashMap};
 
 use cgmath::{Vector2, Vector4};
 use rusttype::gpu_cache::{Cache};
-use rusttype::{Font, point, Rect};
+use rusttype::{Font, Scale};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Texture, Error};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
-use glyphlayout::{self, AlignH, AlignV};
 
-use flowy::style::{SideH, SideV, Style};
+use flowy::style::{Style};
 use flowy::{Ui, ElementId, ElementCursorState, Element, ElementText};
 
 pub struct FlowyRenderer<R: Renderer> {
@@ -156,7 +155,7 @@ fn retrieve_or_create_batch<R: Renderer>(
 
     // Couldn't find something in the cache, generate a new batch
     let batch = generate_text_batch(
-        text, style, &container, font,
+        text, style, font,
         glyph_cache, glyph_image, glyph_texture,
         renderer,
     )?;
@@ -169,7 +168,7 @@ fn retrieve_or_create_batch<R: Renderer>(
 }
 
 fn generate_text_batch<R: Renderer>(
-    text: &ElementText, style: &Style, container: &Rectangle<f32>, font: &Font,
+    text: &ElementText, style: &Style, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
     renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
@@ -178,24 +177,13 @@ fn generate_text_batch<R: Renderer>(
         return Ok(RenderBatch::new(ShaderMode::Color))
     }
 
-    // Layout the text
-    let align_h = match style.text_align.0 {
-        SideH::Left => AlignH::Left,
-        SideH::Center => AlignH::Center,
-        SideH::Right => AlignH::Right,
-    };
-    let align_v = match style.text_align.1 {
-        SideV::Top => AlignV::Top,
-        SideV::Center => AlignV::Center,
-        SideV::Bottom => AlignV::Bottom,
-    };
-    let glyphs = glyphlayout::layout_text(
-        text.text(), font, style.text_size,
-        Rect {
-            min: point(container.min.x + style.padding.left, container.min.y + style.padding.top),
-            max: point(container.max.x - style.padding.right, container.max.y - style.padding.bottom),
-        }, (align_h, align_v),
-    );
+    // Translate the cached glyphs back into regular glyphs
+    let scale = Scale::uniform(style.text_size);
+    let mut glyphs = Vec::new();
+    for cached_glyph in text.cached_glyphs().unwrap() {
+        let glyph = font.glyph(cached_glyph.0).unwrap();
+        glyphs.push(glyph.scaled(scale).positioned(cached_glyph.1));
+    }
 
     // Make sure the glyph cache knows what glyphs we need
     for glyph in &glyphs {
