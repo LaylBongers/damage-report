@@ -70,7 +70,8 @@ impl World3DRenderer<VulkanoRenderer> for VulkanoWorld3DRenderer {
         //  than subpasses at the moment.
         let future = frame.future.take().unwrap()
             .then_execute(renderer.graphics_queue().clone(), geometry_command_buffer)
-            .unwrap()
+            .unwrap();
+        let future = future
             .then_execute(renderer.graphics_queue().clone(), lighting_command_buffer)
             .unwrap();
         frame.future = Some(Box::new(future));

@@ -76,7 +76,7 @@ impl FileDialog {
 
         // Add the file field
         ui.elements.add_child(Element::with_text("File Name", label_style.clone()), dialog_id);
-        let mut filename_textfield = Element::with_text("my_map", textfield_style.clone());
+        let mut filename_textfield = Element::with_text("my_map.carpenter", textfield_style.clone());
         filename_textfield.mode = ElementMode::TextField;
         let filename_textfield_id = ui.elements.add_child(filename_textfield, dialog_id);
 

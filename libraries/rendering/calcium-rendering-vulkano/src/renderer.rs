@@ -1,13 +1,10 @@
 use std::sync::{Arc};
 
 use slog::{Logger};
-use vulkano::format::{Format};
-use vulkano::buffer::{CpuAccessibleBuffer};
 use vulkano::device::{DeviceExtensions, Device, Queue};
 use vulkano::instance::{Instance, PhysicalDevice, InstanceExtensions};
-use vulkano::image::immutable::{ImmutableImage};
-use vulkano::sync::{GpuFuture};
-use vulkano::command_buffer::{AutoCommandBufferBuilder};
+use vulkano::sync::{NowFuture, GpuFuture};
+use vulkano::command_buffer::{CommandBufferExecFuture, AutoCommandBuffer};
 
 use calcium_rendering::{Error, CalciumErrorMappable, Renderer};
 
@@ -21,7 +18,7 @@ pub struct VulkanoRenderer {
     graphics_queue: Arc<Queue>,
 
     // Queued up things we need to submit as part of command buffers
-    queued_image_copies: Vec<(Arc<CpuAccessibleBuffer<[u8]>>, Arc<ImmutableImage<Format>>)>,
+    queued_image_copies: Vec<CommandBufferExecFuture<NowFuture, AutoCommandBuffer>>,
 }
 
 impl VulkanoRenderer {
@@ -106,10 +103,9 @@ impl VulkanoRenderer {
 
     pub fn queue_image_copy(
         &mut self,
-        buffer: Arc<CpuAccessibleBuffer<[u8]>>,
-        image: Arc<ImmutableImage<Format>>,
+        command_buffer_exec: CommandBufferExecFuture<NowFuture, AutoCommandBuffer>,
     ) {
-        self.queued_image_copies.push((buffer, image));
+        self.queued_image_copies.push(command_buffer_exec);
     }
 
     pub fn submit_queued_commands(
@@ -120,24 +116,11 @@ impl VulkanoRenderer {
             return future;
         }
 
-        // Create a command buffer to upload the textures with
-        let mut image_copy_buffer_builder = AutoCommandBufferBuilder::new(
-            self.device.clone(), self.graphics_queue.family()
-        ).unwrap();
-
-        // Add any textures we need to upload to the command buffer
+        // Join together the upload futures
+        // TODO: Add functionality for concurrent or non-blocking uploading of textures
         while let Some(val) = self.queued_image_copies.pop() {
-            // Add the copy to the buffer
-            image_copy_buffer_builder = image_copy_buffer_builder
-                .copy_buffer_to_image(val.0, val.1)
-                .unwrap();
+            future = Box::new(future.join(val));
         }
-
-        // Add the command buffer to the future so it will be executed
-        let image_copy_buffer = image_copy_buffer_builder.build().unwrap();
-        future = Box::new(future
-            .then_execute(self.graphics_queue.clone(), image_copy_buffer).unwrap()
-        );
 
         future
     }

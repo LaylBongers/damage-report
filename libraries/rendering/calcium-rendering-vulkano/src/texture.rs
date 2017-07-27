@@ -18,7 +18,8 @@ pub struct VulkanoTextureRaw {
 impl VulkanoTextureRaw {
     fn from_buffer(
         renderer: &mut VulkanoRenderer,
-        buffer: Arc<CpuAccessibleBuffer<[u8]>>, size: Vector2<u32>,
+        buffer: Arc<CpuAccessibleBuffer<[u8]>>,
+        size: Vector2<u32>,
         format: TextureFormat
     ) -> Result<Self, Error> {
         // Get the correct format for the srgb parameter we got passed
@@ -30,14 +31,16 @@ impl VulkanoTextureRaw {
 
         // Create the texture and sampler for the image, the texture data will later be copied in
         //  a command buffer
-        let image = ImmutableImage::new(
-            renderer.device().clone(),
+        let (image, command_buffer_exec) = ImmutableImage::from_buffer(
+            buffer,
             Dimensions::Dim2d { width: size.x, height: size.y },
-            format, Some(renderer.graphics_queue().family())
+            format,
+            Some(renderer.graphics_queue().family()),
+            renderer.graphics_queue().clone(),
         ).map_platform_err()?;
 
         // Queue copying the data to the image so it will be available when rendering
-        renderer.queue_image_copy(buffer, image.clone());
+        renderer.queue_image_copy(command_buffer_exec);
 
         Ok(VulkanoTextureRaw {
             image,
