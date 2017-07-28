@@ -1,6 +1,6 @@
 #[macro_use]
 extern crate slog;
-extern crate input;
+extern crate input as pinput;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
@@ -9,12 +9,11 @@ extern crate cgmath;
 
 mod autosave;
 mod error;
-mod input_model;
+pub mod input;
 mod map_editor;
 pub mod map;
 mod stbus;
 
 pub use error::{Error};
-pub use input_model::{InputModel};
 pub use map_editor::{MapEditor, MapEditorEvent};
 pub use stbus::{Bus, BusReader};

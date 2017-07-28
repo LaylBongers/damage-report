@@ -4,7 +4,8 @@ use slog::{Logger};
 
 use autosave::{Autosave};
 use map::{Map, Brush};
-use {Bus, BusReader, Error, InputModel};
+use input::{InputModel};
+use {Bus, BusReader, Error};
 
 pub struct MapEditor {
     event_bus: Bus<MapEditorEvent>,
@@ -40,7 +41,7 @@ impl MapEditor {
 
     pub fn update(&mut self, delta: f32, input: &InputModel, log: &Logger) -> Result<(), Error> {
         // Check if we got a select click
-        if input.primary_action_button_pressed {
+        if input.primary_action.pressed {
             info!(log, "Select!");
         }
 

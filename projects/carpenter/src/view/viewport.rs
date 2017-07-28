@@ -5,7 +5,8 @@ use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, Windo
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh};
 
 use carpenter_model::map::{Brush};
-use carpenter_model::{MapEditor, MapEditorEvent, InputModel, BusReader};
+use carpenter_model::input::{InputModel, ButtonState};
+use carpenter_model::{MapEditor, MapEditorEvent, BusReader};
 
 pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
     render_world: RenderWorld<R, WR>,
@@ -94,7 +95,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
     fn update_camera<W: AdvancedWindow>(
         &mut self, delta: f32, input: &InputModel, window: &mut W
     ) {
-        if !input.camera_move_button {
+        if input.camera_move.state == ButtonState::Released {
             window.set_capture_cursor(false);
             self.move_button_started_over_ui = false;
 
@@ -131,10 +132,10 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
 
         // Calculate the current total WASD axes input
         let mut axes: Vector2<f32> = Vector2::zero();
-        if input.forward_button { axes.y += 1.0; }
-        if input.backward_button { axes.y -= 1.0; }
-        if input.left_button { axes.x -= 1.0; }
-        if input.right_button { axes.x += 1.0; }
+        if input.forward.state == ButtonState::Pressed { axes.y += 1.0; }
+        if input.backward.state == ButtonState::Pressed { axes.y -= 1.0; }
+        if input.left.state == ButtonState::Pressed { axes.x -= 1.0; }
+        if input.right.state == ButtonState::Pressed { axes.x += 1.0; }
         if axes == Vector2::zero() {
             return;
         }

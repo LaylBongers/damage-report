@@ -5,7 +5,9 @@ use calcium_rendering_static::{Initializer};
 use window::{Window, AdvancedWindow, WindowSettings};
 use slog::{Logger};
 
-use carpenter_model::{MapEditor, InputModel};
+use carpenter_model::input::{InputModel};
+use carpenter_model::{MapEditor};
+
 use view::{ViewportView, UiView};
 
 pub struct WindowView<W: Window, R: Renderer, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>> {

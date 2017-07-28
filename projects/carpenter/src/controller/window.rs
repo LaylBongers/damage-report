@@ -3,8 +3,10 @@ use calcium_rendering::{Error};
 use calcium_rendering_static::{Initializer};
 use slog::{Logger};
 
+use carpenter_model::input::{InputModel};
+use carpenter_model::{MapEditor};
+
 use view::{WindowView};
-use carpenter_model::{MapEditor, InputModel};
 
 pub struct WindowController {}
 
