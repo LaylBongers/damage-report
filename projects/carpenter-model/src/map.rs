@@ -16,7 +16,7 @@ impl Map {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Brush {
     pub vertices: Vec<Vector3<f32>>,
-    pub planes: Vec<Plane>,
+    pub faces: Vec<Face>,
 }
 
 impl Brush {
@@ -37,32 +37,32 @@ impl Brush {
             Vector3::new(1.0, 1.0, -1.0), // 7
         );
 
-        let planes = vec!(
+        let faces = vec!(
             // Side planes
-            Plane::square(0, 1, 2, 3),
-            Plane::square(1, 4, 7, 2),
-            Plane::square(4, 5, 6, 7),
-            Plane::square(5, 0, 3, 6),
+            Face::square(0, 1, 2, 3),
+            Face::square(1, 4, 7, 2),
+            Face::square(4, 5, 6, 7),
+            Face::square(5, 0, 3, 6),
             // Bottom and top planes
-            Plane::square(5, 4, 1, 0),
-            Plane::square(7, 6, 3, 2),
+            Face::square(5, 4, 1, 0),
+            Face::square(7, 6, 3, 2),
         );
 
         Brush {
             vertices,
-            planes,
+            faces,
         }
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Plane {
+pub struct Face {
     pub indices: Vec<usize>,
 }
 
-impl Plane {
+impl Face {
     pub fn square(a: usize, b: usize, c: usize, d: usize) -> Self {
-        Plane {
+        Face {
             indices: vec!(a, b, c, d),
         }
     }

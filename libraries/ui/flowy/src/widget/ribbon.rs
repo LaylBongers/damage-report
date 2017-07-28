@@ -8,7 +8,7 @@ use {Element, ElementId, Ui, ElementMode};
 pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
     let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
     let ribbon_style = Style {
-        size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(102.0)),
+        size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(104.0)),
         background_color: Some(ribbon_color),
         .. Style::new()
     };
@@ -17,7 +17,7 @@ pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
     let ribbon_id = ui.elements.add_child(ribbon, parent);
 
     let ribbon_buttons = Element::new(Style {
-        position: Position::Relative(Vector2::new(0.0, 22.0), SideH::Left, SideV::Top),
+        position: Position::Relative(Vector2::new(0.0, 24.0), SideH::Left, SideV::Top),
         size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(84.0)),
         .. Style::new()
     });

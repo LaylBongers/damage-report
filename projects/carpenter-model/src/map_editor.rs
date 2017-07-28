@@ -4,7 +4,6 @@ use slog::{Logger};
 
 use autosave::{Autosave};
 use map::{Map, Brush};
-use input::{InputModel};
 use {Bus, BusReader, Error};
 
 pub struct MapEditor {
@@ -39,12 +38,7 @@ impl MapEditor {
         self.autosave = Some(Autosave::new(target));
     }
 
-    pub fn update(&mut self, delta: f32, input: &InputModel, log: &Logger) -> Result<(), Error> {
-        // Check if we got a select click
-        if input.primary_action.pressed {
-            info!(log, "Select!");
-        }
-
+    pub fn update(&mut self, delta: f32, log: &Logger) -> Result<(), Error> {
         // Check if saving has been enabled, and if so, update the autosave model
         if let Some(ref mut autosave) = self.autosave {
             autosave.update(delta, &self.map, log)?;

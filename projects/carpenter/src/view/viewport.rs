@@ -1,3 +1,4 @@
+use slog::{Logger};
 use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle, InnerSpace};
 use window::{AdvancedWindow};
 
@@ -56,9 +57,25 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
     }
 
     pub fn update<W: AdvancedWindow>(
-        &mut self, delta: f32, editor: &MapEditor, input: &InputModel, renderer: &R, window: &mut W
+        &mut self, delta: f32, editor: &MapEditor, input: &InputModel,
+        renderer: &R, window: &mut W, log: &Logger,
     ) {
-        // Check if we got events
+        // Check if we got a select click
+        if input.primary_action.pressed {
+            // TODO: Translate the window coordinates to normalized screen coordintes for the viewport
+
+            // TODO: Create a ray matching the normalized screen coordinate
+
+            // TODO: Check all brush faces for ray hits
+            // TODO: Check that faces are facing the camera before doing a ray hit
+
+            // TODO: If we found a hit, tell the map editor model that we want it selected
+            // TODO: If we found no hit, tell the map editor model that we want nothing selected
+
+            info!(log, "Select!");
+        }
+
+        // Check if we got model events
         while let Some(ev) = self.events.try_recv() {
             match ev {
                 MapEditorEvent::NewBrush(index) => {
@@ -80,9 +97,10 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         world3d_rendertarget: &mut World3DRenderTarget<R, WR>,
     ) {
         // Create a viewport that doesn't overlap the UI
+        // TODO: Query viewport height offset from the UI's ribbon size 
         let viewport = Viewport::new(
-            Vector2::new(0.0, 102.0),
-            window_renderer.size().cast() - Vector2::new(0.0, 102.0),
+            Vector2::new(0.0, 108.0),
+            window_renderer.size().cast() - Vector2::new(0.0, 108.0),
         );
 
         world3d_renderer.render(
@@ -147,7 +165,6 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
 
         // Apply the final movement
         self.camera_position += rotated_movement * delta * 10.0;
-
     }
 
     fn add_brush(&mut self, brush: &Brush, renderer: &R) {
@@ -155,14 +172,14 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         // every brush face will always have hard edges
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
-        for plane in &brush.planes {
-            let normal = plane.normal(brush);
+        for face in &brush.faces {
+            let normal = face.normal(brush);
 
             // Fan-triangulage the face
             // TODO: Optionally support concave faces
-            let fan_anchor = brush.vertices[plane.indices[0]];
-            let mut last_vertex = brush.vertices[plane.indices[1]];
-            for index in plane.indices.iter().skip(2) {
+            let fan_anchor = brush.vertices[face.indices[0]];
+            let mut last_vertex = brush.vertices[face.indices[1]];
+            for index in face.indices.iter().skip(2) {
                 let vertex = brush.vertices[*index];
                 let indices_start = vertices.len() as u32;
 
