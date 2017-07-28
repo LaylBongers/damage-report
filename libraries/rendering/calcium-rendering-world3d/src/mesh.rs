@@ -6,11 +6,25 @@ use std::hash::{Hash, Hasher};
 use cgmath::{Vector2, Vector3};
 
 use calcium_rendering::{Renderer};
+use {World3DRenderer};
 
-pub trait Mesh<R: Renderer> {
+pub struct Mesh<R: Renderer, WR: World3DRenderer<R>> {
+    pub raw: WR::MeshRaw,
+}
+
+impl<R: Renderer, WR: World3DRenderer<R>> Mesh<R, WR> {
+    pub fn new(
+        renderer: &R, vertices: Vec<Vertex>, indices: Vec<u32>,
+    ) -> Arc<Self> {
+        let raw = WR::MeshRaw::new(renderer, vertices, indices);
+        Arc::new(Mesh { raw })
+    }
+}
+
+pub trait MeshRaw<R: Renderer> {
     fn new(
         renderer: &R, vertices: Vec<Vertex>, indices: Vec<u32>,
-    ) -> Arc<Self>;
+    ) -> Self;
 }
 
 #[derive(Clone, PartialEq)]

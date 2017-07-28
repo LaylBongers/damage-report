@@ -3,7 +3,7 @@ use cgmath::{Vector3, InnerSpace};
 
 use calcium_rendering::{Renderer};
 
-use {Material, World3DRenderer};
+use {Material, World3DRenderer, Mesh};
 
 pub struct RenderWorld<R: Renderer, WR: World3DRenderer<R>> {
     entities: Vec<Option<Entity<R, WR>>>,
@@ -67,7 +67,7 @@ pub struct LightId(usize);
 
 pub struct Entity<R: Renderer, WR: World3DRenderer<R>> {
     pub position: Vector3<f32>,
-    pub mesh: Arc<WR::Mesh>,
+    pub mesh: Arc<Mesh<R, WR>>,
     pub material: Material<R>,
 }
 

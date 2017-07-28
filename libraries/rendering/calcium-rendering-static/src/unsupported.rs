@@ -1,14 +1,13 @@
 #[cfg(feature = "world3d")]
 mod world3d {
-    use std::sync::{Arc};
     use calcium_rendering::{Renderer, Viewport};
-    use calcium_rendering_world3d::{World3DRenderer, Vertex, Mesh, RenderWorld, Camera, World3DRenderTargetRaw, World3DRenderTarget};
+    use calcium_rendering_world3d::{World3DRenderer, Vertex, MeshRaw, RenderWorld, Camera, World3DRenderTargetRaw, World3DRenderTarget};
 
     pub struct UnsupportedWorld3DRenderer;
 
     impl<R: Renderer> World3DRenderer<R> for UnsupportedWorld3DRenderer {
         type RenderTargetRaw = UnsupportedWorld3DRenderTargetRaw;
-        type Mesh = UnsupportedMesh;
+        type MeshRaw = UnsupportedMeshRaw;
 
         fn render(
             &mut self, _world: &RenderWorld<R, Self>, _camera: &Camera,
@@ -36,12 +35,12 @@ mod world3d {
     }
 
 
-    pub struct UnsupportedMesh;
+    pub struct UnsupportedMeshRaw;
 
-    impl<R: Renderer> Mesh<R> for UnsupportedMesh {
+    impl<R: Renderer> MeshRaw<R> for UnsupportedMeshRaw {
         fn new(
             _renderer: &R, _vertices: Vec<Vertex>, _indices: Vec<u32>,
-        ) -> Arc<Self> {
+        ) -> Self {
             panic!("Unsupported!")
         }
     }

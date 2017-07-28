@@ -14,7 +14,7 @@ mod renderer;
 
 pub use camera::{Camera};
 pub use material::{Material};
-pub use mesh::{Mesh, Vertex, flat_vertices_to_indexed};
+pub use mesh::{Mesh, MeshRaw, Vertex, flat_vertices_to_indexed};
 pub use model::{Model};
 pub use render_target::{World3DRenderTarget, World3DRenderTargetRaw};
 pub use render_world::{RenderWorld, Entity, Light, EntityId, LightId};

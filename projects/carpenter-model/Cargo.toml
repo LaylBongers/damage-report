@@ -9,3 +9,4 @@ pistoncore-input = "0.18"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
+cgmath = { version = "0.14", features = ["eders"] }

@@ -27,10 +27,10 @@ impl WindowController {
             let delta = timer.tick();
 
             // TODO: Handle errors
-            editor.update(delta, log).unwrap();
+            editor.update(delta, &input, log).unwrap();
 
             window_view.handle_events(init, &mut input);
-            window_view.update(delta, &mut input, &mut editor);
+            window_view.update(delta, &mut editor, &mut input);
             window_view.render()?;
         }
 

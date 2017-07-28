@@ -101,7 +101,7 @@ impl GeometryRenderer {
         viewport: &Viewport,
     ) -> AutoCommandBufferBuilder {
         // Check if this entity's mesh is visible to the current camera
-        let mut culling_sphere = entity.mesh.culling_sphere;
+        let mut culling_sphere = entity.mesh.raw.culling_sphere;
         culling_sphere.center.x += entity.position.x;
         culling_sphere.center.y += entity.position.y;
         culling_sphere.center.z += entity.position.z;
@@ -166,8 +166,8 @@ impl GeometryRenderer {
                     })),
                     .. DynamicState::none()
                 },
-                vec!(entity.mesh.vertex_buffer.clone()),
-                entity.mesh.index_buffer.clone(),
+                vec!(entity.mesh.raw.vertex_buffer.clone()),
+                entity.mesh.raw.index_buffer.clone(),
                 set, ()
             ).unwrap()
     }

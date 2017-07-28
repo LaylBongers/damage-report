@@ -7,7 +7,7 @@ use calcium_rendering_world3d::{World3DRenderer, RenderWorld, Camera, World3DRen
 use geometry_renderer::{GeometryRenderer};
 use lighting_renderer::{LightingRenderer};
 
-use {VulkanoMesh, VulkanoWorld3DRenderTargetRaw};
+use {VulkanoMeshRaw, VulkanoWorld3DRenderTargetRaw};
 
 pub struct VulkanoWorld3DRenderer {
     geometry_renderer: GeometryRenderer,
@@ -32,7 +32,7 @@ impl VulkanoWorld3DRenderer {
 
 impl World3DRenderer<VulkanoRenderer> for VulkanoWorld3DRenderer {
     type RenderTargetRaw = VulkanoWorld3DRenderTargetRaw;
-    type Mesh = VulkanoMesh;
+    type MeshRaw = VulkanoMeshRaw;
 
     fn render(
         &mut self,

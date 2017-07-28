@@ -12,7 +12,7 @@ use mesh::{self, Mesh, Vertex};
 use {World3DRenderer};
 
 pub struct Model<R: Renderer, WR: World3DRenderer<R>> {
-    pub meshes: Vec<Arc<WR::Mesh>>,
+    pub meshes: Vec<Arc<Mesh<R, WR>>>,
 }
 
 impl<R: Renderer, WR: World3DRenderer<R>> Model<R, WR> {
@@ -40,7 +40,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> Model<R, WR> {
 
     fn obj_set_to_meshes(
         renderer: &R, obj_set: &ObjSet, scale: f32
-    ) -> Vec<Arc<WR::Mesh>> {
+    ) -> Vec<Arc<Mesh<R, WR>>> {
         let mut meshes = Vec::new();
 
         // Go over all objects in the file
@@ -72,7 +72,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> Model<R, WR> {
 
             // Convert the vertices to a mesh
             let v = mesh::flat_vertices_to_indexed(&vertices);
-            meshes.push(WR::Mesh::new(renderer, v.0, v.1));
+            meshes.push(Mesh::new(renderer, v.0, v.1));
         }
 
         meshes

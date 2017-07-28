@@ -16,6 +16,6 @@ mod mesh;
 mod render_target;
 mod renderer;
 
-pub use mesh::{VulkanoMesh};
+pub use mesh::{VulkanoMeshRaw};
 pub use render_target::{VulkanoWorld3DRenderTargetRaw};
 pub use renderer::{VulkanoWorld3DRenderer};

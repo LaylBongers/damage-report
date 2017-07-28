@@ -4,7 +4,7 @@ use slog::{Logger};
 
 use autosave::{Autosave};
 use map::{Map, Brush};
-use {Bus, BusReader, Error};
+use {Bus, BusReader, Error, InputModel};
 
 pub struct MapEditor {
     event_bus: Bus<MapEditorEvent>,
@@ -26,15 +26,25 @@ impl MapEditor {
     }
 
     pub fn new_brush(&mut self) {
-        self.map.brushes.push(Brush::new());
-        self.event_bus.broadcast(&MapEditorEvent::NewBrush);
+        self.map.brushes.push(Brush::cube());
+        self.event_bus.broadcast(&MapEditorEvent::NewBrush(self.map.brushes.len() - 1));
+    }
+
+    pub fn brush(&self, index: usize) -> &Brush {
+        &self.map.brushes[index]
     }
 
     pub fn set_save_target(&mut self, target: PathBuf) {
         self.autosave = Some(Autosave::new(target));
     }
 
-    pub fn update(&mut self, delta: f32, log: &Logger) -> Result<(), Error> {
+    pub fn update(&mut self, delta: f32, input: &InputModel, log: &Logger) -> Result<(), Error> {
+        // Check if we got a select click
+        if input.primary_action_button_pressed {
+            info!(log, "Select!");
+        }
+
+        // Check if saving has been enabled, and if so, update the autosave model
         if let Some(ref mut autosave) = self.autosave {
             autosave.update(delta, &self.map, log)?;
         }
@@ -53,5 +63,5 @@ impl MapEditor {
 
 #[derive(Clone, Debug)]
 pub enum MapEditorEvent {
-    NewBrush,
+    NewBrush(usize),
 }

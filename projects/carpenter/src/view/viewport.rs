@@ -2,15 +2,15 @@ use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle, InnerSpace};
 use window::{AdvancedWindow};
 
 use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
-use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Model, Material, World3DRenderTarget};
+use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh};
 
+use carpenter_model::map::{Brush};
 use carpenter_model::{MapEditor, MapEditorEvent, InputModel, BusReader};
 
 pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
     render_world: RenderWorld<R, WR>,
     events: BusReader<MapEditorEvent>,
 
-    model: Model<R, WR>,
     material: Material<R>,
 
     move_button_started_over_ui: bool,
@@ -26,7 +26,6 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         render_world.ambient_light = Vector3::new(0.05, 0.05, 0.05);
         render_world.directional_light = Vector3::new(1.0, 1.0, 1.0);
 
-        let model = Model::<R, WR>::load(renderer, "./assets/cube.obj", 1.0);
         let material = Material {
             base_color: Texture::from_file(
                 renderer, "./assets/texture.png", TextureFormat::Srgb
@@ -46,7 +45,6 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
             render_world,
             events: editor.subscribe(),
 
-            model,
             material,
 
             move_button_started_over_ui: false,
@@ -57,13 +55,14 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
     }
 
     pub fn update<W: AdvancedWindow>(
-        &mut self, delta: f32, input: &InputModel, window: &mut W
+        &mut self, delta: f32, editor: &MapEditor, input: &InputModel, renderer: &R, window: &mut W
     ) {
         // Check if we got events
         while let Some(ev) = self.events.try_recv() {
             match ev {
-                MapEditorEvent::NewBrush =>
-                    self.add_brush(),
+                MapEditorEvent::NewBrush(index) => {
+                    self.add_brush(editor.brush(index), renderer)
+                },
             }
         }
 
@@ -150,10 +149,51 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
 
     }
 
-    fn add_brush(&mut self) {
+    fn add_brush(&mut self, brush: &Brush, renderer: &R) {
+        // Create a list of indices and vertices from the brush, we can't merge on indices because
+        // every brush face will always have hard edges
+        let mut vertices = Vec::new();
+        let mut indices = Vec::new();
+        for plane in &brush.planes {
+            let normal = plane.normal(brush);
+
+            // Fan-triangulage the face
+            // TODO: Optionally support concave faces
+            let fan_anchor = brush.vertices[plane.indices[0]];
+            let mut last_vertex = brush.vertices[plane.indices[1]];
+            for index in plane.indices.iter().skip(2) {
+                let vertex = brush.vertices[*index];
+                let indices_start = vertices.len() as u32;
+
+                vertices.push(Vertex {
+                    position: fan_anchor,
+                    normal,
+                    uv: Vector2::new(0.0, 0.0),
+                });
+                vertices.push(Vertex {
+                    position: last_vertex,
+                    normal,
+                    uv: Vector2::new(0.0, 0.0),
+                });
+                vertices.push(Vertex {
+                    position: vertex,
+                    normal,
+                    uv: Vector2::new(0.0, 0.0),
+                });
+                // TODO: We can re-use indices here on the same face
+                indices.push(indices_start);
+                indices.push(indices_start + 1);
+                indices.push(indices_start + 2);
+
+                last_vertex = vertex;
+            }
+        }
+
+        // Now upload the vertices into a mesh and create the world entity
+        let mesh = Mesh::new(renderer, vertices, indices);
         self.render_world.add_entity(Entity {
             position: Vector3::new(0.0, 0.0, 0.0),
-            mesh: self.model.meshes[0].clone(),
+            mesh: mesh,
             material: self.material.clone(),
         });
     }

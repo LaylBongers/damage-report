@@ -89,14 +89,14 @@ impl<W: Window + AdvancedWindow, R: Renderer, SR: Simple2DRenderer<R>, WR: World
     }
 
     pub fn update(
-        &mut self, delta: f32, input: &mut InputModel, editor: &mut MapEditor
+        &mut self, delta: f32, editor: &mut MapEditor, input: &mut InputModel
     ) {
         // Update the UI
         self.ui.update(delta, editor);
         input.cursor_over_ui = self.ui.cursor_over_ui();
 
         // Update the viewport
-        self.viewport.update(delta, &input, &mut self.window);
+        self.viewport.update(delta, editor, input, &self.renderer, &mut self.window);
     }
 
     pub fn render(&mut self) -> Result<(), Error> {

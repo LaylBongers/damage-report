@@ -7,18 +7,18 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use calcium_rendering::{Renderer};
 use calcium_rendering_vulkano::{VulkanoRenderer};
-use calcium_rendering_world3d::{Vertex, Mesh};
+use calcium_rendering_world3d::{Vertex, MeshRaw};
 
-pub struct VulkanoMesh {
+pub struct VulkanoMeshRaw {
     pub vertex_buffer: Arc<CpuAccessibleBuffer<[VkVertex]>>,
     pub index_buffer: Arc<CpuAccessibleBuffer<[u32]>>,
     pub culling_sphere: Sphere<f32>,
 }
 
-impl Mesh<VulkanoRenderer> for VulkanoMesh {
+impl MeshRaw<VulkanoRenderer> for VulkanoMeshRaw {
     fn new(
         renderer: &VulkanoRenderer, vertices: Vec<Vertex>, indices: Vec<u32>,
-    ) -> Arc<VulkanoMesh> {
+    ) -> VulkanoMeshRaw {
         let indices_len = indices.len();
 
         // We need tangents for proper normal mapping
@@ -52,11 +52,11 @@ impl Mesh<VulkanoRenderer> for VulkanoMesh {
         debug!(renderer.log(), "Created new mesh";
             "vertices" => vertices.len(), "indices" => indices_len
         );
-        Arc::new(VulkanoMesh {
+        VulkanoMeshRaw {
             vertex_buffer,
             index_buffer,
             culling_sphere,
-        })
+        }
     }
 }
 
@@ -82,6 +82,11 @@ fn calculate_tangents(
 
     // Go over all triangles and calculate tangents for them
     for tri in indices.chunks(3) {
+        if tri.len() != 3 {
+            // TODO: Change to Result
+            panic!("Mesh does not have a valid amount of indices, needs to be a multiple of 3");
+        }
+
         // Retrieve the relevant vertices
         let v0 = &vertices[tri[0] as usize];
         let v1 = &vertices[tri[1] as usize];

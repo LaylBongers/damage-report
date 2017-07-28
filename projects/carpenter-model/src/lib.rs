@@ -5,12 +5,13 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate cgmath;
 
 mod autosave;
 mod error;
 mod input_model;
 mod map_editor;
-mod map;
+pub mod map;
 mod stbus;
 
 pub use error::{Error};
