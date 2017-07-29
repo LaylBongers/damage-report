@@ -2,7 +2,7 @@ use slog::{Logger};
 use cgmath::prelude::*;
 use cgmath::{Point2, Point3, Vector2, Vector3, Quaternion, Rad, Euler};
 use window::{AdvancedWindow};
-use collision::{Ray3, Intersect};
+use collision::{Ray3};
 
 use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh};
@@ -138,20 +138,32 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         let direction = (end - start).normalize();
         let ray = Ray3::new(start, direction);
 
-        // Check the first brush's first face TODO: Remove this debugging code
-        let plane = {
-            let map = editor.map();
-            map.brushes[0].faces[0].plane(&map.brushes[0])
-        };
-        if let Some(intersection) = (plane, ray).intersection() {
-            editor.new_brush(intersection);
+        // Check all brushes to see if we got ray hits, we need to get the closest one
+        let mut closest: Option<(_, f32)> = None;
+        for i in 0..editor.map().brushes.len() {
+            let brush = &editor.map().brushes[i];
+            for face in &brush.faces {
+                // TODO: We can skip faces that can't possibly be closer than the point we have,
+                // use the nearest vertex to do that.
+
+                if let Some(intersection) = face.check_intersection(ray, brush) {
+                    // Check if this one's closer
+                    if intersection.distance2 < closest.map(|v| v.1).unwrap_or(1_000_000.0) {
+                        closest = Some((i, intersection.distance2));
+                    }
+                }
+            }
         }
 
-        // TODO: Check all brush faces for ray hits
-        // TODO: Check that faces are facing the camera before doing a ray hit
+        if let Some((brush_index, distance2)) = closest {
+            info!(log, "Selectin brush {} at distance squared {}", brush_index, distance2);
 
-        // TODO: If we found a hit, tell the map editor model that we want it selected
-        // TODO: If we found no hit, tell the map editor model that we want nothing selected
+            // TODO: If we found a hit, tell the map editor model that we want it selected
+        } else {
+            info!(log, "Deselecting all");
+            // TODO: If we found no hit, tell the map editor model that we want nothing selected
+        }
+
     }
 
     fn update_camera<W: AdvancedWindow>(
@@ -216,11 +228,13 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         // every brush face will always have hard edges
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
+        // TODO: Use triangles functions from map
         for face in &brush.faces {
             let normal = face.normal(brush);
 
             // Fan-triangulage the face
             // TODO: Optionally support concave faces
+            // TODO: Use per-triangle normals
             let fan_anchor = brush.vertices[face.indices[0]];
             let mut last_vertex = brush.vertices[face.indices[1]];
             for index in face.indices.iter().skip(2) {

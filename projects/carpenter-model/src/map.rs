@@ -1,5 +1,6 @@
-use cgmath::{Vector3, Point3};
-use collision::{Plane};
+use cgmath::prelude::*;
+use cgmath::{Vector3, Point3, Point2};
+use collision::{Plane, Ray3, Intersect};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Map {
@@ -79,12 +80,112 @@ impl Face {
         u.cross(v)
     }
 
-    // TODO: Extend to create multiple planes with bounding data for every triangle
-    pub fn plane(&self, brush: &Brush) -> Plane<f32> {
-        Plane::from_points(
-            brush.vertices[self.indices[0]],
-            brush.vertices[self.indices[1]],
-            brush.vertices[self.indices[2]],
-        ).unwrap()
+    pub fn check_intersection(&self, ray: Ray3<f32>, brush: &Brush) -> Option<PlaneIntersection> {
+        // TODO: Check that the triangle is facing the ray before doing a ray hit
+        let values = self.triangles_planes(brush);
+
+        for (triangle, plane) in values {
+            if let Some(intersection) = (plane, ray).intersection() {
+                let axes = create_axes_for_plane(&plane);
+                let origin = Point3::from_vec(plane.n * plane.d);
+
+                // Convert the intersection and triangle points to 2D coordinates
+                let p = project_3d_to_2d(intersection, axes, origin);
+                let a = project_3d_to_2d(triangle[0], axes, origin);
+                let b = project_3d_to_2d(triangle[1], axes, origin);
+                let c = project_3d_to_2d(triangle[2], axes, origin);
+
+                // Now that we have 2D coordinates, we need to check if it's within the triangle.
+                // We use the Barycentric Technique for this, which I really just copied from
+                // reference.
+
+                // Compute vectors
+                let v0 = c - a;
+                let v1 = b - a;
+                let v2 = p - a;
+
+                // Compute dot products
+                let dot00 = v0.dot(v0);
+                let dot01 = v0.dot(v1);
+                let dot02 = v0.dot(v2);
+                let dot11 = v1.dot(v1);
+                let dot12 = v1.dot(v2);
+
+                // Compute barycentric coordinates
+                let inv_denom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+                let u = (dot11 * dot02 - dot01 * dot12) * inv_denom;
+                let v = (dot00 * dot12 - dot01 * dot02) * inv_denom;
+
+                // Check if point is in triangle
+                let is_in = (u >= 0.0) && (v >= 0.0) && (u + v < 1.0);
+
+                if is_in {
+                    return Some(PlaneIntersection {
+                        distance2: ray.origin.distance2(intersection),
+                    })
+                }
+            }
+        }
+
+        None
     }
+
+    pub fn triangles(&self, brush: &Brush) -> Vec<[Point3<f32>; 3]> {
+        let mut triangles = Vec::new();
+
+        // Fan-triangulage the face
+        // TODO: Optionally support concave faces
+        let fan_anchor = brush.vertices[self.indices[0]];
+        let mut last_vertex = brush.vertices[self.indices[1]];
+        for index in self.indices.iter().skip(2) {
+            let vertex = brush.vertices[*index];
+
+            triangles.push([
+                fan_anchor,
+                last_vertex,
+                vertex,
+            ]);
+
+            last_vertex = vertex;
+        }
+
+        triangles
+    }
+
+    fn triangles_planes(&self, brush: &Brush) -> Vec<([Point3<f32>; 3], Plane<f32>)> {
+        self.triangles(brush).into_iter().map(|vertices| {
+            (vertices, Plane::from_points(vertices[0], vertices[1], vertices[2]).unwrap())
+        }).collect()
+    }
+}
+
+pub struct PlaneIntersection {
+    pub distance2: f32,
+}
+
+/// Constructs arbitrary axes for a plane, used for 2D bounds checking
+fn create_axes_for_plane(plane: &Plane<f32>) -> (Vector3<f32>, Vector3<f32>) {
+    // Figure out if we should use an up vector to get a perpendicular or a X+1, it needs to be not
+    // a parallel.
+    let up = Vector3::new(0.0, 1.0, 0.0);
+    let right = Vector3::new(1.0, 0.0, 0.0);
+    let perp_seed = if plane.n == up { right } else { up };
+
+    // Now use that seed vector to create an perpendicular, then use that to create another
+    let x_axis = plane.n.cross(perp_seed);
+    let y_axis = plane.n.cross(x_axis);
+
+    (x_axis, y_axis)
+}
+
+fn project_3d_to_2d(
+    point: Point3<f32>, axes: (Vector3<f32>, Vector3<f32>), origin: Point3<f32>
+) -> Point2<f32> {
+    let relative_point = point - origin;
+
+    //let separation = plane.n.dot(intersection_relative);
+    let x = axes.0.dot(relative_point);
+    let y = axes.1.dot(relative_point);
+
+    Point2::new(x, y)
 }
