@@ -81,10 +81,11 @@ impl Face {
     }
 
     pub fn check_intersection(&self, ray: Ray3<f32>, brush: &Brush) -> Option<PlaneIntersection> {
-        // TODO: Check that the triangle is facing the ray before doing a ray hit
         let values = self.triangles_planes(brush);
 
         for (triangle, plane) in values {
+            // TODO: Check that the triangle is facing the ray before doing a ray hit
+
             if let Some(intersection) = (plane, ray).intersection() {
                 let axes = create_axes_for_plane(&plane);
                 let origin = Point3::from_vec(plane.n * plane.d);

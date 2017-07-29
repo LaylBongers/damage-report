@@ -148,7 +148,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
 
                 if let Some(intersection) = face.check_intersection(ray, brush) {
                     // Check if this one's closer
-                    if intersection.distance2 < closest.map(|v| v.1).unwrap_or(1_000_000.0) {
+                    if closest.map(|v| intersection.distance2 < v.1).unwrap_or(true) {
                         closest = Some((i, intersection.distance2));
                     }
                 }
@@ -156,14 +156,12 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         }
 
         if let Some((brush_index, distance2)) = closest {
-            info!(log, "Selectin brush {} at distance squared {}", brush_index, distance2);
-
+            info!(log, "Selecting brush {} at distance squared {}", brush_index, distance2);
             // TODO: If we found a hit, tell the map editor model that we want it selected
         } else {
             info!(log, "Deselecting all");
             // TODO: If we found no hit, tell the map editor model that we want nothing selected
         }
-
     }
 
     fn update_camera<W: AdvancedWindow>(
