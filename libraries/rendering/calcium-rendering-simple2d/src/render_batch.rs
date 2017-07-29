@@ -1,6 +1,6 @@
 use std::sync::{Arc};
 
-use cgmath::{Vector2, Vector4};
+use cgmath::{Vector4, Point2};
 use screenmath::{Rectangle};
 
 use calcium_rendering::{Renderer, Texture};
@@ -31,7 +31,7 @@ impl<R: Renderer> RenderBatch<R> {
         let destination_start_end = rect.destination.min_max().cast();
         let destination_end_start = rect.destination.max_min().cast();
         let uvs = rect.texture_source.unwrap_or(
-            Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0))
+            Rectangle::new(Point2::new(0.0, 0.0), Point2::new(1.0, 1.0))
         );
         let uvs_start_end = uvs.min_max();
         let uvs_end_start = uvs.max_min();
@@ -99,9 +99,9 @@ pub enum SampleMode {
 #[derive(Debug, Clone)]
 pub struct DrawVertex {
     /// The 2D position of the vertex in screen pixel coordinates, starting at the top left.
-    pub position: Vector2<f32>,
+    pub position: Point2<f32>,
     /// The UV values of the vertex, in Texture and Mask batch mode to sample the texture.
-    pub uv: Vector2<f32>,
+    pub uv: Point2<f32>,
     /// The color of this vertex, used differently in different batch modes. This color is in
     /// linear color space, rather than sRGB.
     pub color: Vector4<f32>,
@@ -109,7 +109,7 @@ pub struct DrawVertex {
 
 impl DrawVertex {
     /// Creates a new vertex.
-    pub fn new(position: Vector2<f32>, uv: Vector2<f32>, color: Vector4<f32>) -> Self {
+    pub fn new(position: Point2<f32>, uv: Point2<f32>, color: Vector4<f32>) -> Self {
         DrawVertex {
             position: position,
             uv: uv,
@@ -119,7 +119,7 @@ impl DrawVertex {
 
     /// Creates a triangle of new vertices, with one flat color.
     pub fn new_triangle(
-        positions: [Vector2<f32>; 3], uvs: [Vector2<f32>; 3], color: Vector4<f32>
+        positions: [Point2<f32>; 3], uvs: [Point2<f32>; 3], color: Vector4<f32>
     ) -> [Self; 3] {
         [
             DrawVertex::new(positions[0], uvs[0], color),
@@ -155,7 +155,7 @@ impl DrawRectangle {
 impl Default for DrawRectangle {
     fn default() -> Self {
         DrawRectangle {
-            destination: Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(0.0, 0.0)),
+            destination: Rectangle::new(Point2::new(0.0, 0.0), Point2::new(0.0, 0.0)),
             texture_source: None,
             color: Vector4::new(1.0, 1.0, 1.0, 1.0),
         }

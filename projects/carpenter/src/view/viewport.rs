@@ -1,6 +1,8 @@
 use slog::{Logger};
-use cgmath::{Vector2, Vector3, Quaternion, Rad, Zero, Euler, Angle, InnerSpace};
+use cgmath::prelude::*;
+use cgmath::{Point2, Point3, Vector2, Vector3, Quaternion, Rad, Euler};
 use window::{AdvancedWindow};
+use collision::{Ray3, Intersect};
 
 use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh};
@@ -11,9 +13,9 @@ use carpenter_model::{MapEditor, MapEditorEvent, BusReader};
 
 pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
     render_world: RenderWorld<R, WR>,
-    events: BusReader<MapEditorEvent>,
-
     material: Material<R>,
+    last_viewport: Viewport,
+    events: BusReader<MapEditorEvent>,
 
     move_button_started_over_ui: bool,
     camera_position: Vector3<f32>,
@@ -43,11 +45,13 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
             )?,
         };
 
+        let last_viewport = Viewport::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0));
+
         Ok(ViewportView {
             render_world,
-            events: editor.subscribe(),
-
             material,
+            last_viewport,
+            events: editor.subscribe(),
 
             move_button_started_over_ui: false,
             camera_position: Vector3::new(0.0, 2.0, 5.0),
@@ -57,29 +61,19 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
     }
 
     pub fn update<W: AdvancedWindow>(
-        &mut self, delta: f32, editor: &MapEditor, input: &InputModel,
+        &mut self, delta: f32, editor: &mut MapEditor, input: &InputModel,
         renderer: &R, window: &mut W, log: &Logger,
     ) {
         // Check if we got a select click
         if input.primary_action.pressed {
-            // TODO: Translate the window coordinates to normalized screen coordintes for the viewport
-
-            // TODO: Create a ray matching the normalized screen coordinate
-
-            // TODO: Check all brush faces for ray hits
-            // TODO: Check that faces are facing the camera before doing a ray hit
-
-            // TODO: If we found a hit, tell the map editor model that we want it selected
-            // TODO: If we found no hit, tell the map editor model that we want nothing selected
-
-            info!(log, "Select!");
+            self.select_at_cursor(editor, input, log);
         }
 
         // Check if we got model events
         while let Some(ev) = self.events.try_recv() {
             match ev {
                 MapEditorEvent::NewBrush(index) => {
-                    self.add_brush(editor.brush(index), renderer)
+                    self.add_brush(&editor.map().brushes[index], renderer)
                 },
             }
         }
@@ -89,7 +83,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
     }
 
     pub fn render(
-        &self,
+        &mut self,
         frame: &mut R::Frame,
         renderer: &mut R,
         window_renderer: &mut R::WindowRenderer,
@@ -97,17 +91,67 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         world3d_rendertarget: &mut World3DRenderTarget<R, WR>,
     ) {
         // Create a viewport that doesn't overlap the UI
-        // TODO: Query viewport height offset from the UI's ribbon size 
-        let viewport = Viewport::new(
+        // TODO: Query viewport height offset from the UI's ribbon size
+        let mut viewport = Viewport::new(
             Vector2::new(0.0, 108.0),
             window_renderer.size().cast() - Vector2::new(0.0, 108.0),
         );
 
+        // Fix invalid viewports, they won't be visible but at least they won't crash
+        if viewport.size.x < 1.0 {
+            viewport.size.x = 1.0;
+        }
+        if viewport.size.y < 1.0 {
+            viewport.size.y = 1.0;
+        }
+
         world3d_renderer.render(
             &self.render_world, &self.create_camera(),
-            world3d_rendertarget, &viewport,
+            world3d_rendertarget, &self.last_viewport,
             renderer, window_renderer, frame
         );
+        self.last_viewport = viewport;
+    }
+
+    fn select_at_cursor(&self, editor: &mut MapEditor, input: &InputModel, log: &Logger) {
+        // Translate the window coordinates to normalized screen coordintes for the viewport
+        // TODO: Add this as a function to viewport
+        let viewport_cursor_pixel = input.cursor_pixel_position - self.last_viewport.position;
+        let normalized_cursor = Vector2::new(
+            (viewport_cursor_pixel.x / self.last_viewport.size.x) * 2.0 - 1.0,
+            (viewport_cursor_pixel.y / self.last_viewport.size.y) * 2.0 - 1.0,
+        );
+
+        // If these normalized coordinates are out of range, we should have no selection change.
+        // This includes de-selecting because this is most likely a UI click.
+        if normalized_cursor.x < -1.0 || normalized_cursor.x > 1.0 ||
+           normalized_cursor.y < -1.0 || normalized_cursor.y > 1.0 {
+            return;
+        }
+
+        // Create a ray matching the normalized screen coordinate
+        // TODO: Add this as a function to camera
+        let matrix = self.create_camera().screen_to_world_matrix(&self.last_viewport);
+        // The matrix approaches infinity distance towards 0, 1 is near clipping plane
+        let start = matrix.transform_point(Point3::from_vec(normalized_cursor.extend(1.0)));
+        let end = matrix.transform_point(Point3::from_vec(normalized_cursor.extend(0.9)));
+        let direction = (end - start).normalize();
+        let ray = Ray3::new(start, direction);
+
+        // Check the first brush's first face TODO: Remove this debugging code
+        let plane = {
+            let map = editor.map();
+            map.brushes[0].faces[0].plane(&map.brushes[0])
+        };
+        if let Some(intersection) = (plane, ray).intersection() {
+            editor.new_brush(intersection);
+        }
+
+        // TODO: Check all brush faces for ray hits
+        // TODO: Check that faces are facing the camera before doing a ray hit
+
+        // TODO: If we found a hit, tell the map editor model that we want it selected
+        // TODO: If we found no hit, tell the map editor model that we want nothing selected
     }
 
     fn update_camera<W: AdvancedWindow>(
@@ -186,17 +230,17 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
                 vertices.push(Vertex {
                     position: fan_anchor,
                     normal,
-                    uv: Vector2::new(0.0, 0.0),
+                    uv: Point2::new(0.0, 0.0),
                 });
                 vertices.push(Vertex {
                     position: last_vertex,
                     normal,
-                    uv: Vector2::new(0.0, 0.0),
+                    uv: Point2::new(0.0, 0.0),
                 });
                 vertices.push(Vertex {
                     position: vertex,
                     normal,
-                    uv: Vector2::new(0.0, 0.0),
+                    uv: Point2::new(0.0, 0.0),
                 });
                 // TODO: We can re-use indices here on the same face
                 indices.push(indices_start);

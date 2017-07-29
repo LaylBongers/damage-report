@@ -3,7 +3,7 @@ use std::io::{Read};
 use std::fs::{File};
 use std::sync::{Arc};
 
-use cgmath::{Vector2, Vector3};
+use cgmath::{Vector3, Point2, Point3};
 use wavefront_obj::obj::{self, Primitive, ObjSet, Object, VTNIndex};
 
 use calcium_rendering::{Renderer};
@@ -82,12 +82,12 @@ impl<R: Renderer, WR: World3DRenderer<R>> Model<R, WR> {
         let pos = object.vertices[obj_vertex.0];
         let uv = obj_vertex.1
             .map(|t| object.tex_vertices[t])
-            .map(|tex| Vector2::new(tex.u as f32, tex.v as f32))
-            .unwrap_or(Vector2::new(0.0, 0.0));
+            .map(|tex| Point2::new(tex.u as f32, tex.v as f32))
+            .unwrap_or(Point2::new(0.0, 0.0));
         let norm = object.normals[obj_vertex.2.unwrap()];
 
         Vertex {
-            position: Vector3::new(pos.x as f32, pos.y as f32, pos.z as f32) * scale,
+            position: Point3::new(pos.x as f32, pos.y as f32, pos.z as f32) * scale,
             uv: uv,
             normal: Vector3::new(norm.x as f32, norm.y as f32, norm.z as f32),
         }

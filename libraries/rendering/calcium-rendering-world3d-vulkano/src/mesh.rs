@@ -168,7 +168,7 @@ fn calculate_culling_sphere(vertices: &Vec<Vertex>) -> Sphere<f32> {
     }
 }
 
-fn find_furthest_point(point: Vector3<f32>, vertices: &Vec<Vertex>) -> Vector3<f32> {
+fn find_furthest_point(point: Point3<f32>, vertices: &Vec<Vertex>) -> Point3<f32> {
     let mut stored_point = point;
     let mut stored_distance_squared = 0.0;
 

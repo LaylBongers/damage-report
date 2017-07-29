@@ -1,6 +1,7 @@
 use std::path::{PathBuf};
 
 use slog::{Logger};
+use cgmath::{Point3};
 
 use autosave::{Autosave};
 use map::{Map, Brush};
@@ -21,21 +22,21 @@ impl MapEditor {
         }
     }
 
+    pub fn set_save_target(&mut self, target: PathBuf) {
+        self.autosave = Some(Autosave::new(target));
+    }
+
+    pub fn map(&self) -> &Map {
+        &self.map
+    }
+
     pub fn subscribe(&mut self) -> BusReader<MapEditorEvent> {
         self.event_bus.add_rx()
     }
 
-    pub fn new_brush(&mut self) {
-        self.map.brushes.push(Brush::cube());
+    pub fn new_brush(&mut self, position: Point3<f32>) {
+        self.map.brushes.push(Brush::cube(position));
         self.event_bus.broadcast(&MapEditorEvent::NewBrush(self.map.brushes.len() - 1));
-    }
-
-    pub fn brush(&self, index: usize) -> &Brush {
-        &self.map.brushes[index]
-    }
-
-    pub fn set_save_target(&mut self, target: PathBuf) {
-        self.autosave = Some(Autosave::new(target));
     }
 
     pub fn update(&mut self, delta: f32, log: &Logger) -> Result<(), Error> {

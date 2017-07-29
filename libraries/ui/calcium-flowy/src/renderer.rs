@@ -1,7 +1,7 @@
 use std::sync::{Arc};
 use std::collections::{HashMap};
 
-use cgmath::{Vector2, Vector4};
+use cgmath::{Vector2, Vector4, Point2};
 use rusttype::gpu_cache::{Cache};
 use rusttype::{Font, Scale};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
@@ -225,12 +225,12 @@ fn generate_text_batch<R: Renderer>(
             // Push this glyph into this draw batch
             batch.rectangle(DrawRectangle {
                 destination: Rectangle {
-                    min: Vector2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
-                    max: Vector2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
+                    min: Point2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
+                    max: Point2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
                 },
                 texture_source: Some(Rectangle {
-                    min: Vector2::new(uv_rect.min.x, uv_rect.min.y),
-                    max: Vector2::new(uv_rect.max.x, uv_rect.max.y),
+                    min: Point2::new(uv_rect.min.x, uv_rect.min.y),
+                    max: Point2::new(uv_rect.max.x, uv_rect.max.y),
                 }),
                 color: text_color,
             });

@@ -1,16 +1,16 @@
 extern crate cgmath;
 
-use cgmath::{Vector2, BaseNum};
+use cgmath::{Vector2, Point2, BaseNum};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Rectangle<T> {
-    pub min: Vector2<T>,
-    pub max: Vector2<T>,
+    pub min: Point2<T>,
+    pub max: Point2<T>,
 }
 
 impl<S: BaseNum> Rectangle<S> {
     /// Creates a new rectangle.
-    pub fn new(min: Vector2<S>, max: Vector2<S>) -> Self {
+    pub fn new(min: Point2<S>, max: Point2<S>) -> Self {
         Rectangle {
             min,
             max,
@@ -18,25 +18,25 @@ impl<S: BaseNum> Rectangle<S> {
     }
 
     /// Creates a new rectangle from a start coordinate and a size.
-    pub fn start_size(min: Vector2<S>, size: Vector2<S>) -> Self {
+    pub fn start_size(min: Point2<S>, size: Vector2<S>) -> Self {
         Self::new(min, min + size)
     }
 
-    /// Returns a new vector with the start's X and the end's Y.
-    pub fn min_max(&self) -> Vector2<S> {
-        Vector2::new(self.min.x, self.max.y)
+    /// Returns a new point with the start's X and the end's Y.
+    pub fn min_max(&self) -> Point2<S> {
+        Point2::new(self.min.x, self.max.y)
     }
 
-    /// Returns a new vector with the end's X and the start's Y.
-    pub fn max_min(&self) -> Vector2<S> {
-        Vector2::new(self.max.x, self.min.y)
+    /// Returns a new point with the end's X and the start's Y.
+    pub fn max_min(&self) -> Point2<S> {
+        Point2::new(self.max.x, self.min.y)
     }
 
     pub fn size(&self) -> Vector2<S> {
         self.max - self.min
     }
 
-    pub fn contains(&self, value: Vector2<S>) -> bool {
+    pub fn contains(&self, value: Point2<S>) -> bool {
         value.x >= self.min.x && value.y >= self.min.y &&
         value.x < self.max.x && value.y < self.max.y
     }

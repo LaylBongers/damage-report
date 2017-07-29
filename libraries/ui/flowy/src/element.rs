@@ -1,4 +1,4 @@
-use cgmath::{Vector2, Zero};
+use cgmath::{Vector2, Point2};
 use screenmath::{Rectangle, Lrtb};
 use rusttype::{Point, GlyphId, Rect, point, Font};
 use glyphlayout::{self, AlignH, AlignV};
@@ -92,7 +92,7 @@ impl Element {
     pub fn update_layout(
         &mut self,
         parent_container: &Rectangle<f32>, parent_padding: &Lrtb,
-        flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
+        flow_cursor: &mut Point2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
         fonts: &Vec<Font>,
     ) {
         self.update_positioning(
@@ -107,7 +107,7 @@ impl Element {
     fn update_positioning(
         &mut self,
         parent_container: &Rectangle<f32>, parent_padding: &Lrtb,
-        flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
+        flow_cursor: &mut Point2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
     ) {
         let style = &self.style;
 
@@ -120,7 +120,7 @@ impl Element {
             &Position::Flow => flow_direction.position(*flow_cursor, size),
             &Position::Relative(position, dock_h, dock_v) => {
                 // Calculate the position based on our size, the container, and the docking
-                Vector2::new(
+                parent_container.min + Vector2::new(
                     dock_h.relative_position(
                         position.x, size.x,
                         parent_size.x - parent_padding.left - parent_padding.right
@@ -129,7 +129,7 @@ impl Element {
                         position.y, size.y,
                         parent_size.y - parent_padding.top - parent_padding.bottom
                     ),
-                ) + parent_container.min + parent_padding.left_top()
+                ) + parent_padding.left_top()
             },
         };
 
@@ -173,7 +173,7 @@ pub struct Positioning {
 impl Positioning {
     pub fn new() -> Self {
         Positioning {
-            container: Rectangle::new(Vector2::zero(), Vector2::zero()),
+            container: Rectangle::new(Point2::new(0.0, 0.0), Point2::new(0.0, 0.0)),
         }
     }
 }
@@ -204,7 +204,7 @@ impl ElementText {
             glyphs: None,
 
             cache_stale: true,
-            cache_rect: Rectangle::new(Vector2::new(0.0, 0.0), Vector2::new(0.0, 0.0)),
+            cache_rect: Rectangle::new(Point2::new(0.0, 0.0), Point2::new(0.0, 0.0)),
         }
     }
 

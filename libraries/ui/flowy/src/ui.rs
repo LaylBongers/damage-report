@@ -1,5 +1,5 @@
 use screenmath::{Rectangle, Lrtb};
-use cgmath::{Vector2, Zero};
+use cgmath::{Vector2, Point2};
 use input::{Input, Motion, Button, MouseButton, Key};
 use rusttype::{Font};
 
@@ -13,7 +13,7 @@ pub struct Ui {
     pub elements: Elements,
     pub fonts: Vec<Font<'static>>,
 
-    cursor_position: Vector2<f32>,
+    cursor_position: Point2<f32>,
     cursor_active_element: Option<ElementId>,
     text_active_element: Option<ElementId>,
 
@@ -29,7 +29,7 @@ impl Ui {
             elements: Elements::new(),
             fonts: Vec::new(),
 
-            cursor_position: Vector2::new(0.0, 0.0),
+            cursor_position: Point2::new(0.0, 0.0),
             cursor_active_element: None,
             text_active_element: None,
 
@@ -62,7 +62,7 @@ impl Ui {
                 self.cursor_state = false;
             },
             Input::Move(Motion::MouseCursor(x, y)) =>
-                self.cursor_position = Vector2::new(x, y).cast(),
+                self.cursor_position = Point2::new(x, y).cast(),
             Input::Text(ref text) => {
                 // We received text, so pass it to the element
                 if let Some(el_text) = el_text {
@@ -160,15 +160,15 @@ impl Ui {
         // Start off the calculation at the root
         self.update_element_layout(
             root_id,
-            &Rectangle::new(Vector2::zero(), viewport_size), &Lrtb::uniform(0.0),
-            &mut Vector2::new(0.0, 0.0), &mut 0.0, FlowDirection::Right,
+            &Rectangle::start_size(Point2::new(0.0, 0.0), viewport_size), &Lrtb::uniform(0.0),
+            &mut Point2::new(0.0, 0.0), &mut 0.0, FlowDirection::Right,
         );
     }
 
     fn update_element_layout(
         &mut self, element_id: ElementId,
         parent_container: &Rectangle<f32>, parent_padding: &Lrtb,
-        flow_cursor: &mut Vector2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
+        flow_cursor: &mut Point2<f32>, flow_margin: &mut f32, flow_direction: FlowDirection,
     ) {
         let our_container;
         let our_padding;

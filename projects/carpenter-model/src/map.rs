@@ -1,4 +1,5 @@
-use cgmath::{Vector3};
+use cgmath::{Vector3, Point3};
+use collision::{Plane};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Map {
@@ -15,26 +16,26 @@ impl Map {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Brush {
-    pub vertices: Vec<Vector3<f32>>,
+    pub vertices: Vec<Point3<f32>>,
     pub faces: Vec<Face>,
 }
 
 impl Brush {
-    pub fn cube() -> Self {
+    pub fn cube(position: Point3<f32>) -> Self {
         // Laid out as a front and back plane, in CCW ordering, seen from the side of the faces
         let vertices = vec!(
             // Front-bottom
-            Vector3::new(-1.0, -1.0, 1.0), // 0
-            Vector3::new(1.0, -1.0, 1.0), // 1
+            position + Vector3::new(-1.0, -1.0, 1.0), // 0
+            position + Vector3::new(1.0, -1.0, 1.0), // 1
             // Front-top
-            Vector3::new(1.0, 1.0, 1.0), // 2
-            Vector3::new(-1.0, 1.0, 1.0), // 3
+            position + Vector3::new(1.0, 1.0, 1.0), // 2
+            position + Vector3::new(-1.0, 1.0, 1.0), // 3
             // Back-bottom
-            Vector3::new(1.0, -1.0, -1.0), // 4
-            Vector3::new(-1.0, -1.0, -1.0), // 5
+            position + Vector3::new(1.0, -1.0, -1.0), // 4
+            position + Vector3::new(-1.0, -1.0, -1.0), // 5
             // Back-top
-            Vector3::new(-1.0, 1.0, -1.0), // 6
-            Vector3::new(1.0, 1.0, -1.0), // 7
+            position + Vector3::new(-1.0, 1.0, -1.0), // 6
+            position + Vector3::new(1.0, 1.0, -1.0), // 7
         );
 
         let faces = vec!(
@@ -76,5 +77,14 @@ impl Face {
         let v = brush.vertices[self.indices[2]] - brush.vertices[self.indices[0]];
 
         u.cross(v)
+    }
+
+    // TODO: Extend to create multiple planes with bounding data for every triangle
+    pub fn plane(&self, brush: &Brush) -> Plane<f32> {
+        Plane::from_points(
+            brush.vertices[self.indices[0]],
+            brush.vertices[self.indices[1]],
+            brush.vertices[self.indices[2]],
+        ).unwrap()
     }
 }

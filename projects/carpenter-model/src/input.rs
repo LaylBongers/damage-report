@@ -1,3 +1,4 @@
+use cgmath::{Vector2};
 use pinput::{Input, Button, MouseButton, Motion, Key};
 
 pub struct InputModel {
@@ -11,6 +12,7 @@ pub struct InputModel {
     pub backward: ButtonModel,
     pub right: ButtonModel,
 
+    pub cursor_pixel_position: Vector2<f32>,
     pub cursor_over_ui: bool,
 
     frame: FrameInput,
@@ -27,6 +29,7 @@ impl InputModel {
             backward: ButtonModel::new(Button::Keyboard(Key::S)),
             right: ButtonModel::new(Button::Keyboard(Key::D)),
 
+            cursor_pixel_position: Vector2::new(0.0, 0.0),
             cursor_over_ui: false,
 
             frame: FrameInput::new(),
@@ -57,6 +60,9 @@ impl InputModel {
         self.right.handle_event(event);
 
         match *event {
+            Input::Move(Motion::MouseCursor(x, y)) => {
+                self.cursor_pixel_position = Vector2::new(x as f32, y as f32);
+            },
             Input::Move(Motion::MouseRelative(x, y)) => {
                 self.frame.mouse_x += x as f32;
                 self.frame.mouse_y += y as f32;

@@ -20,8 +20,9 @@ slog-async = "2"
 slog-term = "2"
 ttf-noto-sans = "0.1.1"
 palette = "0.2"
-home = "0.3.0"
+home = "0.3"
 rusttype = "0.2"
+collision = "0.10"
 carpenter-model = {path = "../carpenter-model"}
 
 # If you want optimizations in dev while keeping debug symbols, use these

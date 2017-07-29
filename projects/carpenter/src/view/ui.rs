@@ -1,4 +1,4 @@
-use cgmath::{Vector2};
+use cgmath::{Vector2, Point3};
 use input::{Input};
 use palette::pixel::{Srgb};
 use rusttype::{FontCollection};
@@ -90,7 +90,7 @@ impl<R: Renderer> UiView<R> {
         }
 
         if self.ui.elements[self.new_brush_id].clicked() {
-            editor.new_brush();
+            editor.new_brush(Point3::new(0.0, 0.0, 0.0));
         }
 
         if let Some(mut save_dialog) = self.save_dialog.take() {

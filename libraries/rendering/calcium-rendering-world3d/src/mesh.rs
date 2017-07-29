@@ -3,7 +3,7 @@ use std::sync::{Arc};
 use std::collections::{HashMap};
 use std::hash::{Hash, Hasher};
 
-use cgmath::{Vector2, Vector3};
+use cgmath::{Vector3, Point2, Point3};
 
 use calcium_rendering::{Renderer};
 use {World3DRenderer};
@@ -29,8 +29,8 @@ pub trait MeshRaw<R: Renderer> {
 
 #[derive(Clone, PartialEq)]
 pub struct Vertex {
-    pub position: Vector3<f32>,
-    pub uv: Vector2<f32>,
+    pub position: Point3<f32>,
+    pub uv: Point2<f32>,
     pub normal: Vector3<f32>,
 }
 
