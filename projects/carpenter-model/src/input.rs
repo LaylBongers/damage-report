@@ -7,6 +7,9 @@ pub struct InputModel {
     /// Generally the right mouse button
     pub camera_move: ButtonModel,
 
+    /// Generally the shift modifier
+    pub add_to_selection: ButtonModel,
+
     pub forward: ButtonModel,
     pub left: ButtonModel,
     pub backward: ButtonModel,
@@ -23,6 +26,8 @@ impl InputModel {
         InputModel {
             primary_action: ButtonModel::new(Button::Mouse(MouseButton::Left)),
             camera_move: ButtonModel::new(Button::Mouse(MouseButton::Right)),
+
+            add_to_selection: ButtonModel::new(Button::Keyboard(Key::LShift)),
 
             forward: ButtonModel::new(Button::Keyboard(Key::W)),
             left: ButtonModel::new(Button::Keyboard(Key::A)),
@@ -43,6 +48,7 @@ impl InputModel {
     pub fn new_frame(&mut self) {
         self.primary_action.pressed = false;
         self.camera_move.pressed = false;
+        self.add_to_selection.pressed = false;
         self.forward.pressed = false;
         self.left.pressed = false;
         self.backward.pressed = false;
@@ -54,6 +60,7 @@ impl InputModel {
     pub fn handle_event(&mut self, event: &Input) {
         self.primary_action.handle_event(event);
         self.camera_move.handle_event(event);
+        self.add_to_selection.handle_event(event);
         self.forward.handle_event(event);
         self.left.handle_event(event);
         self.backward.handle_event(event);

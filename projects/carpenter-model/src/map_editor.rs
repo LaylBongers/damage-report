@@ -11,6 +11,7 @@ pub struct MapEditor {
     event_bus: Bus<MapEditorEvent>,
     autosave: Option<Autosave>,
     map: Map,
+    selected_brushes: Vec<usize>,
 }
 
 impl MapEditor {
@@ -19,6 +20,7 @@ impl MapEditor {
             event_bus: Bus::new(),
             autosave: None,
             map: Map::new(),
+            selected_brushes: Vec::new(),
         }
     }
 
@@ -37,6 +39,16 @@ impl MapEditor {
     pub fn new_brush(&mut self, position: Point3<f32>) {
         self.map.brushes.push(Brush::cube(position));
         self.event_bus.broadcast(&MapEditorEvent::NewBrush(self.map.brushes.len() - 1));
+    }
+
+    pub fn deselect_all(&mut self) {
+        self.selected_brushes.clear()
+    }
+
+    pub fn select(&mut self, index: usize) {
+        if !self.selected_brushes.iter().any(|v| *v == index) {
+            self.selected_brushes.push(index);
+        }
     }
 
     pub fn update(&mut self, delta: f32, log: &Logger) -> Result<(), Error> {

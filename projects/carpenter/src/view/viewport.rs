@@ -155,12 +155,13 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
             }
         }
 
-        if let Some((brush_index, distance2)) = closest {
-            info!(log, "Selecting brush {} at distance squared {}", brush_index, distance2);
-            // TODO: If we found a hit, tell the map editor model that we want it selected
-        } else {
-            info!(log, "Deselecting all");
-            // TODO: If we found no hit, tell the map editor model that we want nothing selected
+        if input.add_to_selection.state != ButtonState::Pressed {
+            editor.deselect_all();
+        }
+
+        if let Some((brush_index, _)) = closest {
+            info!(log, "Selecting brush {}", brush_index);
+            editor.select(brush_index);
         }
     }
 
