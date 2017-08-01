@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-cgmath = "0.14.1"
+cgmath = "0.14"
 calcium = {path = "../calcium"}
 calcium-game = {path = "../calcium-game"}
 calcium-rendering = {path = "../calcium-rendering"}
