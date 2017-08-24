@@ -22,7 +22,7 @@ pub struct VulkanoSimple2DRenderer {
     samplers: Samplers,
 
     matrix_pool: CpuBufferPool<simple2d_vs::ty::MatrixData>,
-    mode_pool: CpuBufferPool<simple2d_fs::ty::ModeData>,
+    mode_buffers: Vec<Arc<CpuAccessibleBuffer<simple2d_fs::ty::ModeData>>>,
 
     pub vs: simple2d_vs::Shader,
     pub fs: simple2d_fs::Shader,
@@ -44,18 +44,25 @@ impl VulkanoSimple2DRenderer {
 
         // Set up the CPU buffer pools we'll use to upload various data
         let matrix_pool = CpuBufferPool::new(
-            renderer.device().clone(), BufferUsage::all(),
+            renderer.device().clone(), BufferUsage::uniform_buffer(),
         );
-        let mode_pool = CpuBufferPool::new(
-            renderer.device().clone(), BufferUsage::all(),
-        );
+
+        // Create pre-made mode buffers that can be re-used
+        let mut mode_buffers = Vec::new();
+        for mode_id in 0..4 {
+            let buffer = CpuAccessibleBuffer::from_data(
+                renderer.device().clone(), BufferUsage::uniform_buffer(),
+                simple2d_fs::ty::ModeData { mode: mode_id }
+            ).unwrap();
+            mode_buffers.push(buffer);
+        }
 
         Ok(VulkanoSimple2DRenderer {
             dummy_texture,
             samplers,
 
             matrix_pool,
-            mode_pool,
+            mode_buffers,
 
             vs, fs,
         })
@@ -94,8 +101,8 @@ impl VulkanoSimple2DRenderer {
                 (2, texture.raw.image(), self.samplers.sampler_for_mode(sample_mode)),
         };
 
-        // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
-        let mode_data_buffer = self.mode_pool.next(simple2d_fs::ty::ModeData { mode: mode_id });
+        // Get a buffer containing the mode data
+        let mode_data_buffer = self.mode_buffers[mode_id].clone();
 
         // Create the uniform data set to send over
         // TODO: Wait for vulkano to add
@@ -103,7 +110,7 @@ impl VulkanoSimple2DRenderer {
             PersistentDescriptorSet::start(render_target.raw.pipeline().clone(), 0)
                 .add_buffer(matrix_data_buffer.clone()).unwrap()
                 .add_sampled_image(image.clone(), sampler.clone()).unwrap()
-                .add_buffer(mode_data_buffer.clone()).unwrap()
+                .add_buffer(mode_data_buffer).unwrap()
                 .build().unwrap()
         );
 
