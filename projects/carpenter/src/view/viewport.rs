@@ -2,7 +2,7 @@ use slog::{Logger};
 use cgmath::prelude::*;
 use cgmath::{Point2, Point3, Vector2, Vector3, Quaternion, Rad, Euler};
 use window::{AdvancedWindow};
-use collision::{Ray3};
+use collision::{Ray3, Plane};
 
 use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh};
@@ -240,20 +240,27 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
                 let vertex = brush.vertices[*index];
                 let indices_start = vertices.len() as u32;
 
+                // We estimate UVs based on world coordinates and the plane normal, in future the
+                // user should be able to specify these
+                let origin = Point3::new(0.0, 0.0, 0.0);
+                let plane = Plane::new(normal, 0.0);
+                let axes = create_axes_for_plane(&plane);
+                let uv_scale = 1.0;
+
                 vertices.push(Vertex {
                     position: fan_anchor,
                     normal,
-                    uv: Point2::new(0.0, 0.0),
+                    uv: project_3d_to_2d(fan_anchor, axes, origin) * uv_scale,
                 });
                 vertices.push(Vertex {
                     position: last_vertex,
                     normal,
-                    uv: Point2::new(0.0, 0.0),
+                    uv: project_3d_to_2d(last_vertex, axes, origin) * uv_scale,
                 });
                 vertices.push(Vertex {
                     position: vertex,
                     normal,
-                    uv: Point2::new(0.0, 0.0),
+                    uv: project_3d_to_2d(vertex, axes, origin) * uv_scale,
                 });
                 // TODO: We can re-use indices here on the same face
                 indices.push(indices_start);
@@ -288,4 +295,32 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
             Euler::new(Rad::full_turn() * self.camera_pitch, Rad::zero(), Rad::zero()).into();
         yaw * pitch
     }
+}
+
+// TODO: This is copied in multiple places to find points on a brush plane, libraryify that functionality
+fn create_axes_for_plane(plane: &Plane<f32>) -> (Vector3<f32>, Vector3<f32>) {
+    // Figure out if we should use an up vector to get a perpendicular or a X+1, it needs to be not
+    // a parallel.
+    let up = Vector3::new(0.0, 1.0, 0.0);
+    let right = Vector3::new(1.0, 1.0, 0.0);
+    let perp_seed = if plane.n.y > 0.9 || plane.n.y < -0.9 { right } else { up };
+
+    // Now use that seed vector to create an perpendicular, then use that to create another
+    let x_axis = plane.n.cross(perp_seed).normalize();
+    let y_axis = plane.n.cross(x_axis).normalize();
+
+    (x_axis, y_axis)
+}
+
+// TODO: This is copied in multiple places to find points on a brush plane, libraryify that functionality
+fn project_3d_to_2d(
+    point: Point3<f32>, axes: (Vector3<f32>, Vector3<f32>), origin: Point3<f32>
+) -> Point2<f32> {
+    let relative_point = point - origin;
+
+    //let separation = plane.n.dot(intersection_relative);
+    let x = axes.0.dot(relative_point);
+    let y = axes.1.dot(relative_point);
+
+    Point2::new(x, y)
 }

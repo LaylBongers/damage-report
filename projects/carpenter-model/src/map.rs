@@ -164,21 +164,23 @@ pub struct PlaneIntersection {
     pub distance2: f32,
 }
 
+// TODO: This is copied in multiple places to find points on a brush plane, libraryify that functionality
 /// Constructs arbitrary axes for a plane, used for 2D bounds checking
 fn create_axes_for_plane(plane: &Plane<f32>) -> (Vector3<f32>, Vector3<f32>) {
     // Figure out if we should use an up vector to get a perpendicular or a X+1, it needs to be not
     // a parallel.
     let up = Vector3::new(0.0, 1.0, 0.0);
     let right = Vector3::new(1.0, 0.0, 0.0);
-    let perp_seed = if plane.n == up { right } else { up };
+    let perp_seed = if plane.n.y > 0.9 || plane.n.y < -0.9 { right } else { up };
 
     // Now use that seed vector to create an perpendicular, then use that to create another
-    let x_axis = plane.n.cross(perp_seed);
-    let y_axis = plane.n.cross(x_axis);
+    let x_axis = plane.n.cross(perp_seed).normalize();
+    let y_axis = plane.n.cross(x_axis).normalize();
 
     (x_axis, y_axis)
 }
 
+// TODO: This is copied in multiple places to find points on a brush plane, libraryify that functionality
 fn project_3d_to_2d(
     point: Point3<f32>, axes: (Vector3<f32>, Vector3<f32>), origin: Point3<f32>
 ) -> Point2<f32> {
