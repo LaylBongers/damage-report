@@ -245,7 +245,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
                 let origin = Point3::new(0.0, 0.0, 0.0);
                 let plane = Plane::new(normal, 0.0);
                 let axes = create_axes_for_plane(&plane);
-                let uv_scale = 1.0;
+                let uv_scale = 0.5;
 
                 vertices.push(Vertex {
                     position: fan_anchor,
