@@ -5,6 +5,7 @@ use glyphlayout::{self, AlignH, AlignV};
 
 use style::{Style, FlowDirection, Position, SideH, SideV};
 
+/// The primitive UI element all UI widgets are built up from.
 pub struct Element {
     // TODO: Use this value to check against stale index IDs
     pub(crate) inner_id: i32,
@@ -39,6 +40,7 @@ impl Element {
         }
     }
 
+    /// Builder-style helper wrapper around set_text.
     pub fn with_text<S: Into<String>>(text: S, style: Style) -> Self {
         let mut element = Self::new(style);
         element.set_text(text);
@@ -53,23 +55,33 @@ impl Element {
         self.cursor_state
     }
 
+    /// Return strue if the mouse cursor is currently hovering over this element.
     pub fn hovering(&self) -> bool {
         self.cursor_state == ElementCursorState::Hovering
     }
 
+    /// Returns true if this element is currently being held with the left mouse button.
     pub fn held(&self) -> bool {
         self.cursor_state == ElementCursorState::Held
     }
 
+    /// Returns true if this element was clicked in the last UI frame.
     pub fn clicked(&self) -> bool {
         self.clicked
     }
 
+    /// Returns true if this element is currently focused. Relevant for elements that can be
+    /// 'focused', meaning they can be selected for input. Elements can be tabbed between to be
+    /// focused, buttons can be clicked with enter while focused, text fields can receive text
+    /// input only while focused.
+    ///
+    /// TODO: Tabbing between elements is not yet implemented, only clicking on text fields
+    /// currently focuses them.
     pub fn focused(&self) -> bool {
         self.focused
     }
 
-    /// Retrieves the text from the inner text structure, or returns an empty string.
+    /// Retrieves the text from the inner text data, or returns an empty string.
     pub fn text(&self) -> &str {
         if let Some(ref element_text) = self.text {
             element_text.text()
@@ -78,6 +90,7 @@ impl Element {
         }
     }
 
+    /// Sets the text content of this element.
     pub fn set_text<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
 

@@ -1,6 +1,6 @@
 use cgmath::prelude::*;
 use cgmath::{Vector3, Point3, Point2};
-use collision::{Plane, Ray3, Intersect};
+use collision::{Plane, Ray3, Continuous};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Map {
@@ -86,7 +86,7 @@ impl Face {
         for (triangle, plane) in values {
             // TODO: Check that the triangle is facing the ray before doing a ray hit
 
-            if let Some(intersection) = (plane, ray).intersection() {
+            if let Some(intersection) = plane.intersection(&ray) {
                 let axes = create_axes_for_plane(&plane);
                 let origin = Point3::from_vec(plane.n * plane.d);
 

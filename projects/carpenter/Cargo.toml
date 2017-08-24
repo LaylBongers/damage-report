@@ -11,7 +11,7 @@ calcium-rendering-world3d = {path = "../../libraries/rendering/calcium-rendering
 calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d", "world3d"]}
 calcium-flowy = {path = "../../libraries/ui/calcium-flowy"}
 flowy = {path = "../../libraries/ui/flowy"}
-cgmath = "0.14"
+cgmath = "0.15"
 nuklear-rust = "0.3.2"
 pistoncore-window = "0.27"
 pistoncore-input = "0.18"
@@ -22,7 +22,8 @@ ttf-noto-sans = "0.1.1"
 palette = "0.2"
 home = "0.3"
 rusttype = "0.2"
-collision = "0.10"
+#collision = "0.10" TODO: Remove the git dependency when it's on crates.io
+collision = {git = "https://github.com/kvark/collision-rs.git"}
 carpenter-model = {path = "../carpenter-model"}
 
 # If you want optimizations in dev while keeping debug symbols, use these

@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-cgmath = "0.14"
+cgmath = "0.15"
 gfx = "0.16"
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-simple2d = {path = "../calcium-rendering-simple2d"}

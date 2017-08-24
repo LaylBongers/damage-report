@@ -105,7 +105,7 @@ impl GeometryRenderer {
         culling_sphere.center.x += entity.position.x;
         culling_sphere.center.y += entity.position.y;
         culling_sphere.center.z += entity.position.z;
-        if culling_frustum.contains(culling_sphere) == Relation::Out {
+        if culling_frustum.contains(&culling_sphere) == Relation::Out {
             // It's not visible, so don't make any attempt at rendering it
             return command_buffer;
         }

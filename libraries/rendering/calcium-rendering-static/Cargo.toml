@@ -12,7 +12,7 @@ world3d = ["calcium-rendering-world3d", "calcium-rendering-world3d-vulkano"]
 simple2d = ["calcium-rendering-simple2d", "calcium-rendering-simple2d-gfx", "calcium-rendering-simple2d-vulkano"]
 
 [dependencies]
-cgmath = "0.14"
+cgmath = "0.15"
 slog = "2"
 slog-stdlog = "3"
 pistoncore-input = "0.18"

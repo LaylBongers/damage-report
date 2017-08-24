@@ -6,6 +6,7 @@ use {Element};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ElementId(pub usize);
 
+/// A collection of UI elements with parent-child connections.
 pub struct Elements {
     elements: Vec<Option<Element>>,
     child_connections: Vec<(ElementId, Vec<ElementId>)>, // Parent, then children
