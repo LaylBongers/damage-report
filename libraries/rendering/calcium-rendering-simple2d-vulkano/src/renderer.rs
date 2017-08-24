@@ -6,7 +6,9 @@ use vulkano::pipeline::viewport::{Viewport};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
+use vulkano::buffer::cpu_pool::{CpuBufferPool, CpuBufferPoolSubbuffer};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
+use vulkano::memory::pool::{StdMemoryPool};
 
 use calcium_rendering::{Renderer, Texture, Error, CalciumErrorMappable, WindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
@@ -18,6 +20,9 @@ use {VkVertex, VulkanoSimple2DRenderTargetRaw};
 pub struct VulkanoSimple2DRenderer {
     dummy_texture: Arc<Texture<VulkanoRenderer>>,
     samplers: Samplers,
+
+    matrix_pool: CpuBufferPool<simple2d_vs::ty::MatrixData>,
+    mode_pool: CpuBufferPool<simple2d_fs::ty::ModeData>,
 
     pub vs: simple2d_vs::Shader,
     pub fs: simple2d_fs::Shader,
@@ -37,9 +42,20 @@ impl VulkanoSimple2DRenderer {
 
         let samplers = Samplers::new(renderer)?;
 
+        // Set up the CPU buffer pools we'll use to upload various data
+        let matrix_pool = CpuBufferPool::new(
+            renderer.device().clone(), BufferUsage::all(),
+        );
+        let mode_pool = CpuBufferPool::new(
+            renderer.device().clone(), BufferUsage::all(),
+        );
+
         Ok(VulkanoSimple2DRenderer {
             dummy_texture,
             samplers,
+
+            matrix_pool,
+            mode_pool,
 
             vs, fs,
         })
@@ -49,7 +65,7 @@ impl VulkanoSimple2DRenderer {
         &mut self, batch: &RenderBatch<VulkanoRenderer>, builder: AutoCommandBufferBuilder,
         size: Vector2<u32>, renderer: &VulkanoRenderer,
         render_target: &mut Simple2DRenderTarget<VulkanoRenderer, VulkanoSimple2DRenderer>,
-        matrix_data_buffer: &Arc<CpuAccessibleBuffer<simple2d_vs::ty::MatrixData>>,
+        matrix_data_buffer: &Arc<CpuBufferPoolSubbuffer<simple2d_vs::ty::MatrixData, Arc<StdMemoryPool>>>,
     ) -> AutoCommandBufferBuilder {
         // Create a big mesh of all the rectangles we got told to draw this batch
         let mut vertices = Vec::new();
@@ -79,10 +95,7 @@ impl VulkanoSimple2DRenderer {
         };
 
         // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
-        let mode_data_buffer = CpuAccessibleBuffer::<simple2d_fs::ty::ModeData>::from_data(
-            renderer.device().clone(), BufferUsage::all(),
-            simple2d_fs::ty::ModeData { mode: mode_id },
-        ).unwrap();
+        let mode_data_buffer = self.mode_pool.next(simple2d_fs::ty::ModeData { mode: mode_id });
 
         // Create the uniform data set to send over
         // TODO: Wait for vulkano to add
@@ -140,12 +153,11 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
 
         // Create a buffer for the matrix data to be sent over in
         let total_matrix_raw = proj.into();
-        let matrix_data_buffer = CpuAccessibleBuffer::<simple2d_vs::ty::MatrixData>::from_data(
-            renderer.device().clone(), BufferUsage::all(),
+        let matrix_data_buffer = Arc::new(self.matrix_pool.next(
             simple2d_vs::ty::MatrixData {
                 total: total_matrix_raw,
             }
-        ).unwrap();
+        ));
 
         // Start the command buffer, this will contain the draw commands
         let mut command_buffer_builder = {
