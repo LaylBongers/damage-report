@@ -5,7 +5,7 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
 cgmath = "0.15"
-vulkano = "0.5"
+vulkano = "0.6"
 slog = "2"
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-simple2d = {path = "../calcium-rendering-simple2d"}

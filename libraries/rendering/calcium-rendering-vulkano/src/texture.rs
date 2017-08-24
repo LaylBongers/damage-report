@@ -35,7 +35,6 @@ impl VulkanoTextureRaw {
             buffer,
             Dimensions::Dim2d { width: size.x, height: size.y },
             format,
-            Some(renderer.graphics_queue().family()),
             renderer.graphics_queue().clone(),
         ).map_platform_err()?;
 
@@ -74,8 +73,7 @@ impl TextureRaw<VulkanoRenderer> for VulkanoTextureRaw {
 
             // TODO: Use staging buffer instead
             CpuAccessibleBuffer::<[u8]>::from_iter(
-                renderer.device().clone(), BufferUsage::all(),
-                Some(renderer.graphics_queue().family()), image_data_iter
+                renderer.device().clone(), BufferUsage::all(), image_data_iter
             ).unwrap()
         };
 
@@ -97,8 +95,7 @@ impl TextureRaw<VulkanoRenderer> for VulkanoTextureRaw {
 
             // TODO: Use staging buffer instead
             CpuAccessibleBuffer::<[u8]>::from_iter(
-                renderer.device().clone(), BufferUsage::all(),
-                Some(renderer.graphics_queue().family()), image_data_iter
+                renderer.device().clone(), BufferUsage::all(), image_data_iter
             ).unwrap()
         };
 

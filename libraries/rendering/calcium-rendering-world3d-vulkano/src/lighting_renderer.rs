@@ -79,7 +79,6 @@ impl LightingRenderer {
         ];
         let sst_buffer = CpuAccessibleBuffer::<[ScreenSizeTriVertex]>::from_iter(
             renderer.device().clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue().family()),
             sst_vertices.into_iter()
         ).unwrap();
 
@@ -111,7 +110,6 @@ impl LightingRenderer {
         //  needs this data to actually calculate the light for every pixel.
         let light_data_buffer = CpuAccessibleBuffer::<lighting_fs::ty::LightData>::from_data(
             renderer.device().clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue().family()),
             lighting_fs::ty::LightData {
                 _dummy0: Default::default(),
                 _dummy1: Default::default(),

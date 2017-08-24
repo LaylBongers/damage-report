@@ -120,7 +120,6 @@ impl GeometryRenderer {
         //  buffer's data (update_buffer)
         let matrix_data_buffer = CpuAccessibleBuffer::<gbuffer_vs::ty::MatrixData>::from_data(
             renderer.device().clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue().family()),
             gbuffer_vs::ty::MatrixData {
                 total: total_matrix_raw,
                 model: model_matrix_raw,

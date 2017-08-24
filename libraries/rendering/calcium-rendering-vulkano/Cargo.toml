@@ -7,5 +7,5 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 cgmath = "0.15"
 image = "0.15"
 slog = "2"
-vulkano = "0.5"
+vulkano = "0.6"
 calcium-rendering = {path = "../calcium-rendering"}

@@ -63,9 +63,7 @@ impl VulkanoSimple2DRenderer {
 
         // Create the final vertex buffer that we'll send over to the GPU for rendering
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
-            renderer.device().clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue().family()),
-            vertices.into_iter()
+            renderer.device().clone(), BufferUsage::all(), vertices.into_iter()
         ).unwrap();
 
         // Get the mode ID this batch has and a texture to render
@@ -83,7 +81,6 @@ impl VulkanoSimple2DRenderer {
         // Create a buffer containing the mode data TODO: Avoid re-creating buffers every frame
         let mode_data_buffer = CpuAccessibleBuffer::<simple2d_fs::ty::ModeData>::from_data(
             renderer.device().clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue().family()),
             simple2d_fs::ty::ModeData { mode: mode_id },
         ).unwrap();
 
@@ -145,7 +142,6 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
         let total_matrix_raw = proj.into();
         let matrix_data_buffer = CpuAccessibleBuffer::<simple2d_vs::ty::MatrixData>::from_data(
             renderer.device().clone(), BufferUsage::all(),
-            Some(renderer.graphics_queue().family()),
             simple2d_vs::ty::MatrixData {
                 total: total_matrix_raw,
             }
