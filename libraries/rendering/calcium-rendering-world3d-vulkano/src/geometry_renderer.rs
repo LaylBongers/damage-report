@@ -17,14 +17,14 @@ use calcium_rendering_world3d::{Camera, RenderWorld, Entity, World3DRenderTarget
 use {VulkanoWorld3DRenderer};
 
 pub struct GeometryRenderer {
-    linear_sampler: Arc<Sampler>,
+    sampler: Arc<Sampler>,
 }
 
 impl GeometryRenderer {
     pub fn new(
         renderer: &VulkanoRenderer,
     ) -> Result<Self, Error> {
-        let linear_sampler = Sampler::new(
+        let sampler = Sampler::new(
             renderer.device().clone(),
             Filter::Linear,
             Filter::Linear,
@@ -32,11 +32,14 @@ impl GeometryRenderer {
             SamplerAddressMode::Repeat,
             SamplerAddressMode::Repeat,
             SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
+            0.0,
+            // TODO: Detect anisitropic filtering support instead of just using it
+            2.0,
+            0.0, 0.0
         ).map_platform_err()?;
 
         Ok(GeometryRenderer {
-            linear_sampler,
+            sampler,
         })
     }
 
@@ -135,16 +138,19 @@ impl GeometryRenderer {
             )
             .add_buffer(matrix_data_buffer.clone()).unwrap()
             .add_sampled_image(
-                material.base_color.raw.image().clone(), self.linear_sampler.clone()
+                material.base_color.raw.image().clone(), self.sampler.clone()
             ).unwrap()
             .add_sampled_image(
-                material.normal_map.raw.image().clone(), self.linear_sampler.clone()
+                material.normal_map.raw.image().clone(), self.sampler.clone()
             ).unwrap()
             .add_sampled_image(
-                material.metallic_map.raw.image().clone(), self.linear_sampler.clone()
+                material.metallic_map.raw.image().clone(), self.sampler.clone()
             ).unwrap()
             .add_sampled_image(
-                material.roughness_map.raw.image().clone(), self.linear_sampler.clone()
+                material.roughness_map.raw.image().clone(), self.sampler.clone()
+            ).unwrap()
+            .add_sampled_image(
+                material.ambient_occlusion_map.raw.image().clone(), self.sampler.clone()
             ).unwrap()
             .build().unwrap()
         );

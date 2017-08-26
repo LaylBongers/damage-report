@@ -29,6 +29,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
 
         render_world.ambient_light = Vector3::new(0.05, 0.05, 0.05);
         render_world.directional_light = Vector3::new(1.0, 1.0, 1.0);
+        render_world.directional_direction = Vector3::new(1.0, 1.0, 1.0).normalize();
 
         let material = Material {
             base_color: Texture::from_file(
@@ -42,6 +43,9 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
             )?,
             roughness_map: Texture::from_file(
                 renderer, "./assets/texture_roughness.png", TextureFormat::LinearRed
+            )?,
+            ambient_occlusion_map: Texture::from_file(
+                renderer, "./assets/texture_ambientOcclusion.png", TextureFormat::LinearRed
             )?,
         };
 

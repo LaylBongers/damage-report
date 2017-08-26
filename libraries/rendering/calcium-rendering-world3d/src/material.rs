@@ -7,6 +7,7 @@ pub struct Material<R: Renderer> {
     pub normal_map: Arc<Texture<R>>,
     pub metallic_map: Arc<Texture<R>>,
     pub roughness_map: Arc<Texture<R>>,
+    pub ambient_occlusion_map: Arc<Texture<R>>,
 }
 
 impl<R: Renderer> Clone for Material<R> {
@@ -16,6 +17,7 @@ impl<R: Renderer> Clone for Material<R> {
             normal_map: self.normal_map.clone(),
             metallic_map: self.metallic_map.clone(),
             roughness_map: self.roughness_map.clone(),
+            ambient_occlusion_map: self.ambient_occlusion_map.clone(),
         }
     }
 }

@@ -143,6 +143,9 @@ impl LightingRenderer {
             .add_sampled_image(
                 geometry_buffer.metallic_attachment.clone(), self.sampler.clone()
             ).unwrap()
+            .add_sampled_image(
+                geometry_buffer.ambient_occlusion_attachment.clone(), self.sampler.clone()
+            ).unwrap()
             .add_buffer(light_data_buffer.clone()).unwrap()
             .build().unwrap()
         );

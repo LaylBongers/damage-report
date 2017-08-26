@@ -17,7 +17,8 @@ layout(set = 0, binding = 1) uniform sampler2D u_gbuffer_base_color;
 layout(set = 0, binding = 2) uniform sampler2D u_gbuffer_normal;
 layout(set = 0, binding = 3) uniform sampler2D u_gbuffer_roughness;
 layout(set = 0, binding = 4) uniform sampler2D u_gbuffer_metallic;
-layout(set = 0, binding = 5) uniform LightData {
+layout(set = 0, binding = 5) uniform sampler2D u_gbuffer_ambient_occlusion;
+layout(set = 0, binding = 6) uniform LightData {
     vec3 camera_position;
 
     vec3 ambient_color;
@@ -126,28 +127,27 @@ vec3 calculate_light(
     // Calculate the Cook-Torrance BRDF
     // TODO: Rename various values to better reflect what they are and
     //  comment what exactly this process is better
-    // 0.001 is added at the end to prevent a divide by zero crash, for
-    //  weird spooky border cases
+    // 0.0001 is used as minimum to prevent a divide by zero crash, for weird
+    //  spooky border cases
     vec3 nominator = NDF * G * reflection_ratio;
-    float denominator = 4 * max(dot(normal, camera_direction), 0.0) * max(dot(normal, light_direction), 0.0) + 0.001;
+    float denominator = 4
+        * max(dot(normal, camera_direction), 0.0001)
+        * max(dot(normal, light_direction), 0.0001);
     vec3 specular = nominator / denominator;
 
     // Calculate the light's contribution to the reflectance equation
-    // TODO: Needs the same treatment as the code above here does
+    // TODO: Needs the same documentation treatment as the code above here does
     vec3 kS = reflection_ratio;
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metallic;
 
     // Finally add all the light values together and apply it to the base_color
-    // TODO: Needs the same treatment as the code above here does
+    // TODO: Needs the same documentation treatment as the code above here does
     float NdotL = max(dot(normal, light_direction), 0.0);
     return (kD * base_color / PI + specular) * radiance * NdotL;
 }
 
 void main() {
-    // TODO: Allow these values to be specified
-    const float ao = 1.0;
-
     // Retrieve the data for this pixel
     vec3 position = texture(u_gbuffer_position, f_uv).rgb;
     vec4 base_color_full = texture(u_gbuffer_base_color, f_uv);
@@ -155,6 +155,7 @@ void main() {
     vec3 normal = texture(u_gbuffer_normal, f_uv).rgb;
     float metallic = texture(u_gbuffer_metallic, f_uv).r;
     float roughness = texture(u_gbuffer_roughness, f_uv).r;
+    float ao = texture(u_gbuffer_ambient_occlusion, f_uv).r;
 
     // Discard this fragment if there isn't actually any data there
     // TODO: Because this is a shader, early bail optimization doesn't work.

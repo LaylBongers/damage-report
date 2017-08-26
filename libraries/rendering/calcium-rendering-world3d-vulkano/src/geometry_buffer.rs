@@ -20,6 +20,7 @@ pub struct GeometryBuffer {
     pub normal_attachment: Arc<AttachmentImage<format::R16G16B16A16Sfloat>>,
     pub metallic_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     pub roughness_attachment: Arc<AttachmentImage<format::R8Unorm>>,
+    pub ambient_occlusion_attachment: Arc<AttachmentImage<format::R8Unorm>>,
     pub depth_attachment: Arc<AttachmentImage<format::D32Sfloat_S8Uint>>,
 
     pub render_pass: Arc<RenderPassAbstract + Send + Sync>,
@@ -58,6 +59,10 @@ impl GeometryBuffer {
             format::R8Unorm, attach_usage
         ).unwrap();
         let roughness_attachment = AttachmentImage::with_usage(
+            renderer.device().clone(), viewport.size.cast().into(),
+            format::R8Unorm, attach_usage
+        ).unwrap();
+        let ambient_occlusion_attachment = AttachmentImage::with_usage(
             renderer.device().clone(), viewport.size.cast().into(),
             format::R8Unorm, attach_usage
         ).unwrap();
@@ -104,6 +109,12 @@ impl GeometryBuffer {
                     format: Format::R8Unorm,
                     samples: 1,
                 },
+                ambient_occlusion: {
+                    load: Clear,
+                    store: Store,
+                    format: Format::R8Unorm,
+                    samples: 1,
+                },
                 depth: {
                     load: Clear,
                     store: DontCare,
@@ -112,7 +123,7 @@ impl GeometryBuffer {
                 }
             },
             pass: {
-                color: [position, base_color, normal, metallic, roughness],
+                color: [position, base_color, normal, metallic, roughness, ambient_occlusion],
                 depth_stencil: {depth}
             }
         ).unwrap());
@@ -125,6 +136,7 @@ impl GeometryBuffer {
             .add(normal_attachment.clone()).unwrap()
             .add(metallic_attachment.clone()).unwrap()
             .add(roughness_attachment.clone()).unwrap()
+            .add(ambient_occlusion_attachment.clone()).unwrap()
             .add(depth_attachment.clone()).unwrap()
             .build().unwrap()
         ) as Arc<FramebufferAbstract + Send + Sync>;
@@ -135,6 +147,7 @@ impl GeometryBuffer {
             normal_attachment,
             metallic_attachment,
             roughness_attachment,
+            ambient_occlusion_attachment,
             depth_attachment,
 
             render_pass,

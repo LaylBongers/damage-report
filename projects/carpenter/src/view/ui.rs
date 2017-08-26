@@ -91,6 +91,8 @@ impl<R: Renderer> UiView<R> {
 
         if self.ui.elements[self.new_brush_id].clicked() {
             editor.new_brush(Point3::new(0.0, 0.0, 0.0));
+            editor.new_brush(Point3::new(3.0, 0.0, 0.0));
+            editor.new_brush(Point3::new(0.0, 0.0, 5.0));
         }
 
         if let Some(mut save_dialog) = self.save_dialog.take() {

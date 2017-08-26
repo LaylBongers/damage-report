@@ -31,7 +31,7 @@ impl VulkanoRenderer {
         //  types will belong to
         debug!(log, "Creating vulkan instance");
         let instance = {
-            // Tell it we need at least the extensions vulkano-win needs
+            // Tell it we need at least the extensions the window needs
             Instance::new(None, &required_extensions, None)
                 .map_platform_err()?
         };
@@ -66,9 +66,18 @@ impl VulkanoRenderer {
                 .. DeviceExtensions::none()
             };
 
+            // Check the features we need are supported
+            // TODO: Create a system for optional extensions so we can detect features
+            let features = physical.supported_features();
+            if !features.sampler_anisotropy {
+                return Err(Error::Unsupported(
+                    "Anisotropic filtering not supported by platform".into()
+                ))
+            }
+
             // Create the actual device
             Device::new(
-                physical, physical.supported_features(), &device_ext,
+                physical, features, &device_ext,
                 // Pass which queues we want, we want one single graphics queue, the priority
                 //  doesn't really matter to us since there's only one
                 [(graphics_queue_family, 0.5)].iter().cloned()
