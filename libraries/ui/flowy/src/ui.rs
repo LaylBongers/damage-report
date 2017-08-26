@@ -6,9 +6,12 @@ use rusttype::{Font};
 use style::{Size, FlowDirection};
 use {ElementCursorState, ElementMode, Elements, ElementId};
 
+/// Represents a font by index in the font list.
+// TODO: Make this more of an opaque type, it should just be an arbitrary font reference.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FontId(pub usize);
 
+/// The base UI type. Contains the elements, fonts, and the current input state of the UI.
 pub struct Ui {
     pub elements: Elements,
     pub fonts: Vec<Font<'static>>,

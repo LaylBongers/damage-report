@@ -5,6 +5,7 @@ use screenmath::{Lrtb};
 use style::{Style, Size, Position, SideH, SideV, SizeValue, color_highlight, color_active};
 use {Element, ElementId, Ui, ElementMode};
 
+/// A ribbon toolbar container. Useful as an alternative for traditional toolbars.
 pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
     let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
     let ribbon_style = Style {
@@ -26,6 +27,7 @@ pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
     ribbon_buttons_id
 }
 
+/// A clickable button that can be used inside a ribbon.
 pub fn ribbon_buton(label: &str, parent: ElementId, ui: &mut Ui) -> ElementId {
     let ribbon_color = Srgb::new(0.18, 0.20, 0.21).into();
     let button_color = Srgb::new(0.53, 0.54, 0.52).into();

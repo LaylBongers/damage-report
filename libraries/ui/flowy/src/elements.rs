@@ -3,6 +3,7 @@ use std::ops::{Index, IndexMut};
 use style::{Style};
 use {Element};
 
+/// A reference to an element that can be used to store its identity without taking ownership.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ElementId(pub usize);
 

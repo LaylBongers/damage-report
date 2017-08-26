@@ -4,6 +4,7 @@ use screenmath::{Lrtb};
 use style::{Style, Size, SideH, SideV, color_highlight, color_active};
 use {Ui, Element, ElementId, ElementMode};
 
+/// A clickable button.
 pub fn button(label: &str, parent_id: ElementId, ui: &mut Ui) -> ElementId {
     let button_color = Srgb::new(0.53, 0.54, 0.52).into();
     let button_style = Style {

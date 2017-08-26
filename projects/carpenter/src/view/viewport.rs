@@ -96,9 +96,10 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
     ) {
         // Create a viewport that doesn't overlap the UI
         // TODO: Query viewport height offset from the UI's ribbon size
+        let offset = Vector2::new(0.0, 104.0);
         let mut viewport = Viewport::new(
-            Vector2::new(0.0, 108.0),
-            window_renderer.size().cast() - Vector2::new(0.0, 108.0),
+            offset,
+            window_renderer.size().cast() - offset,
         );
 
         // Fix invalid viewports, they won't be visible but at least they won't crash

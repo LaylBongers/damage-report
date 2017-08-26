@@ -103,6 +103,7 @@ impl<R: Renderer> UiView<R> {
                 editor.set_save_target(target.clone());
             }
 
+            // If it hasn't been closed yet, keep it
             if !save_dialog.closed() {
                 self.save_dialog = Some(save_dialog);
             }

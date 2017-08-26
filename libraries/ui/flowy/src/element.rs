@@ -168,6 +168,7 @@ impl Element {
     }
 }
 
+/// The type of input an element takes.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ElementMode {
     /// Does not respond to mouse input.
@@ -178,6 +179,7 @@ pub enum ElementMode {
     TextField,
 }
 
+/// Cached layout positioning data for an element.
 #[derive(Debug)]
 pub struct Positioning {
     pub container: Rectangle<f32>,
@@ -191,6 +193,7 @@ impl Positioning {
     }
 }
 
+/// The current cursor input state of an element.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ElementCursorState {
     None,

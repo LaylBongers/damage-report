@@ -1,3 +1,5 @@
+//! Types related to the visual look of elements.
+
 use cgmath::{Vector2, Point2};
 
 mod color;

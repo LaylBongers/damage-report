@@ -8,6 +8,7 @@ use widget;
 use style::{Style, Size, Position, SideH, SideV, SizeValue, FlowDirection, color_active};
 use {Ui, Element, ElementId, ElementMode};
 
+/// A dialog window that allows the user to select a file path.
 pub struct FileDialog {
     shade_id: ElementId,
     directory_textfield_id: ElementId,
@@ -21,6 +22,7 @@ pub struct FileDialog {
 }
 
 impl FileDialog {
+    /// Creates a new file dialog widget and opens it.
     pub fn new(directory: PathBuf, parent_id: ElementId, ui: &mut Ui) -> Self {
         // Transparent shade that blocks off the background, making this a modal dialog
         let mut shade = Element::new(Style {
@@ -105,18 +107,22 @@ impl FileDialog {
         }
     }
 
+    /// Returns true if this file dialog has been closed.
     pub fn closed(&self) -> bool {
         self.closed
     }
 
+    /// Returns true if this file dialog has a submitted path.
     pub fn submitted(&self) -> bool {
         self.submitted
     }
 
+    /// Returns the path that has been selected.
     pub fn selected_path(&self) -> &PathBuf {
         &self.path
     }
 
+    /// Updates this file dialog's state, checks updates on internal widgets.
     pub fn update(&mut self, ui: &mut Ui) {
         if self.closed { return }
 
@@ -141,6 +147,7 @@ impl FileDialog {
         }
     }
 
+    /// Closes this file dialog.
     pub fn close(&mut self, ui: &mut Ui) {
         ui.elements.remove(self.shade_id);
         self.closed = true;
