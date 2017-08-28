@@ -28,8 +28,8 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         let mut render_world = RenderWorld::new();
 
         render_world.ambient_light = Vector3::new(0.05, 0.05, 0.05);
-        render_world.directional_light = Vector3::new(1.0, 1.0, 1.0);
-        render_world.directional_direction = Vector3::new(1.0, 1.0, 1.0).normalize();
+        render_world.directional_light = Vector3::new(1.0, 1.0, 1.0) * 2.5;
+        render_world.directional_direction = Vector3::new(1.0, 2.0, 1.5).normalize();
 
         let material = Material {
             base_color: Texture::from_file(
