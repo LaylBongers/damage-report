@@ -5,6 +5,11 @@ extern crate calcium_rendering_static;
 extern crate cgmath;
 extern crate input;
 extern crate window;
+extern crate flowy;
+extern crate calcium_flowy;
+extern crate palette;
+extern crate ttf_noto_sans;
+extern crate rusttype;
 #[macro_use]
 extern crate slog;
 extern crate slog_async;

@@ -8,7 +8,12 @@ calcium-game = {path = "../../libraries/mechanics/calcium-game"}
 calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
 calcium-rendering-simple2d = {path = "../../libraries/rendering/calcium-rendering-simple2d"}
 calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d"]}
-cgmath = "0.14"
+calcium-flowy = {path = "../../libraries/ui/calcium-flowy"}
+flowy = {path = "../../libraries/ui/flowy"}
+palette = "0.2"
+rusttype = "0.2"
+ttf-noto-sans = "0.1.1"
+cgmath = "0.15"
 pistoncore-input = "0.18"
 pistoncore-window = "0.27"
 slog = "2"
