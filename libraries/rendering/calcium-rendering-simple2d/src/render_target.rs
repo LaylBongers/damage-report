@@ -7,6 +7,9 @@ pub struct Simple2DRenderTarget<R: Renderer, SR: Simple2DRenderer<R>> {
 
 impl<R: Renderer, SR: Simple2DRenderer<R>> Simple2DRenderTarget<R, SR> {
     pub fn new(
+        // TODO: This is needed because the vulkano backend needs a different renderpass when clear
+        // is enabled or disabled. Find a way to avoid having to create an expensive render target
+        // just to decide if it should clear or not.
         should_clear: bool,
         renderer: &R, window_renderer: &R::WindowRenderer,
         simple2d_renderer: &SR,

@@ -5,7 +5,7 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
 slog = "2"
-pistoncore-input = "0.18"
+pistoncore-input = "0.19"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"

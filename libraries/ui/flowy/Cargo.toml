@@ -6,7 +6,7 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 [dependencies]
 cgmath = "0.15"
 palette = "0.2"
-pistoncore-input = "0.18"
+pistoncore-input = "0.19"
 rusttype = "0.2"
 glyphlayout = {path = "../glyphlayout"}
 screenmath = {path = "../screenmath"}

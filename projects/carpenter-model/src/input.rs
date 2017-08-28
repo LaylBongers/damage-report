@@ -1,5 +1,5 @@
 use cgmath::{Vector2};
-use pinput::{Input, Button, MouseButton, Motion, Key};
+use pinput::{Input, Button, MouseButton, Motion, Key, ButtonState, ButtonArgs};
 
 pub struct InputModel {
     /// Generally the left mouse button
@@ -104,7 +104,7 @@ impl ButtonModel {
     pub fn new(button: Button) -> Self {
         ButtonModel {
             button,
-            state: ButtonState::Released,
+            state: ButtonState::Release,
             pressed: false,
             released: false,
         }
@@ -112,25 +112,13 @@ impl ButtonModel {
 
     pub fn handle_event(&mut self, event: &Input) {
         match *event {
-            Input::Press(button) => {
+            Input::Button(ButtonArgs {state, button, scancode: _scancode}) => {
                 if button == self.button {
-                    self.state = ButtonState::Pressed;
+                    self.state = state;
                     self.pressed = true;
                 }
-            },
-            Input::Release(button) => {
-                if button == self.button {
-                    self.state = ButtonState::Released;
-                    self.released = true;
-                }
-            },
+            }
             _ => {},
         }
     }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum ButtonState {
-    Pressed,
-    Released,
 }

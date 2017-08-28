@@ -12,8 +12,8 @@ calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-
 calcium-flowy = {path = "../../libraries/ui/calcium-flowy"}
 flowy = {path = "../../libraries/ui/flowy"}
 cgmath = "0.15"
-pistoncore-window = "0.27"
-pistoncore-input = "0.18"
+pistoncore-window = "0.28"
+pistoncore-input = "0.19"
 slog = "2"
 slog-async = "2"
 slog-term = "2"

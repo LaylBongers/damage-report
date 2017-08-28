@@ -1,6 +1,6 @@
 use screenmath::{Rectangle, Lrtb};
 use cgmath::{Vector2, Point2};
-use input::{Input, Motion, Button, MouseButton, Key};
+use input::{Input, Motion, Button, MouseButton, Key, ButtonState, ButtonArgs};
 use rusttype::{Font};
 
 use style::{Size, FlowDirection};
@@ -54,15 +54,29 @@ impl Ui {
             .and_then(|element| element.text.as_mut());
 
         match *event {
-            Input::Press(Button::Mouse(MouseButton::Left)) => {
-                self.cursor_pressed = true;
-                self.cursor_released = false;
-                self.cursor_state = true;
-            },
-            Input::Release(Button::Mouse(MouseButton::Left)) => {
-                self.cursor_pressed = false;
-                self.cursor_released = true;
-                self.cursor_state = false;
+            Input::Button(ButtonArgs {state, button, scancode: _scancode}) => {
+                match button {
+                    Button::Mouse(MouseButton::Left) => {
+                        if state == ButtonState::Press {
+                            self.cursor_pressed = true;
+                            self.cursor_released = false;
+                            self.cursor_state = true;
+                        } else {
+                            self.cursor_pressed = false;
+                            self.cursor_released = true;
+                            self.cursor_state = false;
+                        }
+                    },
+                    Button::Keyboard(Key::Backspace) => {
+                        if state == ButtonState::Press {
+                            // We received a backspace, remove text from the element
+                            if let Some(el_text) = el_text {
+                                el_text.text_mut().pop();
+                            }
+                        }
+                    },
+                    _ => (),
+                }
             },
             Input::Move(Motion::MouseCursor(x, y)) =>
                 self.cursor_position = Point2::new(x, y).cast(),
@@ -70,12 +84,6 @@ impl Ui {
                 // We received text, so pass it to the element
                 if let Some(el_text) = el_text {
                     el_text.text_mut().push_str(text);
-                }
-            },
-            Input::Press(Button::Keyboard(Key::Backspace)) => {
-                // We received a backspace, remove text from the element
-                if let Some(el_text) = el_text {
-                    el_text.text_mut().pop();
                 }
             },
             _ => {}

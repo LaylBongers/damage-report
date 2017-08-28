@@ -28,6 +28,6 @@ calcium-rendering = "0.1"
 calcium-rendering-simple2d = "0.1"
 calcium-rendering-static = {version = "0.1", features = ["simple2d"]}
 cgmath = "0.15"
-pistoncore-input = "0.18"
-pistoncore-window = "0.27"
+pistoncore-input = "0.19"
+pistoncore-window = "0.28"
 ```

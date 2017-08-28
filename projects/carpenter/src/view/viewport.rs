@@ -2,13 +2,14 @@ use slog::{Logger};
 use cgmath::prelude::*;
 use cgmath::{Point2, Point3, Vector2, Vector3, Quaternion, Rad, Euler};
 use window::{AdvancedWindow};
+use input::{ButtonState};
 use collision::{Ray3, Plane};
 
 use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh};
 
 use carpenter_model::map::{Brush};
-use carpenter_model::input::{InputModel, ButtonState};
+use carpenter_model::input::{InputModel};
 use carpenter_model::{MapEditor, MapEditorEvent, BusReader};
 
 pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
@@ -160,7 +161,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
             }
         }
 
-        if input.add_to_selection.state != ButtonState::Pressed {
+        if input.add_to_selection.state != ButtonState::Press {
             editor.deselect_all();
         }
 
@@ -173,7 +174,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
     fn update_camera<W: AdvancedWindow>(
         &mut self, delta: f32, input: &InputModel, window: &mut W
     ) {
-        if input.camera_move.state == ButtonState::Released {
+        if input.camera_move.state == ButtonState::Release {
             window.set_capture_cursor(false);
             self.move_button_started_over_ui = false;
 
@@ -210,10 +211,10 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
 
         // Calculate the current total WASD axes input
         let mut axes: Vector2<f32> = Vector2::zero();
-        if input.forward.state == ButtonState::Pressed { axes.y += 1.0; }
-        if input.backward.state == ButtonState::Pressed { axes.y -= 1.0; }
-        if input.left.state == ButtonState::Pressed { axes.x -= 1.0; }
-        if input.right.state == ButtonState::Pressed { axes.x += 1.0; }
+        if input.forward.state == ButtonState::Press { axes.y += 1.0; }
+        if input.backward.state == ButtonState::Press { axes.y -= 1.0; }
+        if input.left.state == ButtonState::Press { axes.x -= 1.0; }
+        if input.right.state == ButtonState::Press { axes.x += 1.0; }
         if axes == Vector2::zero() {
             return;
         }

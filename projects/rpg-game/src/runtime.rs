@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use cgmath::{Vector2, Point2};
-use input::{Input, Button, Key};
+use input::{Input, Button, Key, ButtonState, ButtonArgs};
 use window::{Window, WindowSettings};
 use slog::{Logger};
 use std::sync::Arc;
@@ -163,27 +163,25 @@ impl Runtime for StaticRuntime {
                 init.handle_event(&event, &mut renderer, &mut window, &mut window_renderer);
 
                 match event {
-                    Input::Press(Button::Keyboard(Key::A)) =>
-                        left_pressed = true,
-                    Input::Release(Button::Keyboard(Key::A)) =>
-                        left_pressed = false,
-                    Input::Press(Button::Keyboard(Key::D)) =>
-                        right_pressed = true,
-                    Input::Release(Button::Keyboard(Key::D)) =>
-                        right_pressed = false,
-                    Input::Press(Button::Keyboard(Key::W)) =>
-                        up_pressed = true,
-                    Input::Release(Button::Keyboard(Key::W)) =>
-                        up_pressed = false,
-                    Input::Press(Button::Keyboard(Key::S)) =>
-                        down_pressed = true,
-                    Input::Release(Button::Keyboard(Key::S)) =>
-                        down_pressed = false,
-                    Input::Press(Button::Keyboard(Key::Tab)) =>
-                        tab_pressed = true,
-                    Input::Release(Button::Keyboard(Key::Tab)) =>
-                        tab_pressed = false,
-                    _ => {}
+                    Input::Button(ButtonArgs {state, button, scancode: _scancode}) => {
+                        let press = state == ButtonState::Press;
+                        match button {
+                            Button::Keyboard(Key::A) =>
+                                left_pressed = press,
+                            Button::Keyboard(Key::D) =>
+                                right_pressed = press,
+                            Button::Keyboard(Key::W) =>
+                                up_pressed = press,
+                            Button::Keyboard(Key::S) =>
+                                down_pressed = press,
+
+                            Button::Keyboard(Key::Tab) =>
+                                tab_pressed = press,
+
+                            _ => {},
+                        }
+                    },
+                    _ => {},
                 }
             }
 
