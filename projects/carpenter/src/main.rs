@@ -6,7 +6,6 @@ extern crate calcium_rendering_static;
 extern crate calcium_flowy;
 extern crate flowy;
 extern crate cgmath;
-extern crate nuklear_rust;
 extern crate window;
 extern crate input;
 #[macro_use]

@@ -13,7 +13,6 @@ dependencies = [
  "collision 0.10.2 (git+https://github.com/kvark/collision-rs.git)",
  "flowy 0.1.0",
  "home 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "nuklear-rust 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "palette 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-input 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-window 0.27.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -786,26 +785,6 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "odds 0.2.25 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "nuklear-rust"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "gcc 0.3.53 (registry+https://github.com/rust-lang/crates.io-index)",
- "libc 0.2.29 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "nuklear-sys 1.33.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "nuklear-sys"
-version = "1.33.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "gcc 0.3.53 (registry+https://github.com/rust-lang/crates.io-index)",
- "libc 0.2.29 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1641,8 +1620,6 @@ dependencies = [
 "checksum memmap 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "69253224aa10070855ea8fe9dbe94a03fc2b1d7930bb340c9e586a7513716fea"
 "checksum metal-rs 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "c815c07d2b6dbe5af8b67785ac1905af33e5156288c1bfb772f8e18fe613675d"
 "checksum nodrop 0.1.9 (registry+https://github.com/rust-lang/crates.io-index)" = "52cd74cd09beba596430cc6e3091b74007169a56246e1262f0ba451ea95117b2"
-"checksum nuklear-rust 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "672e532a36518fff94a6cdc2c07793565ecd0966c9b09fe408c148766211cf10"
-"checksum nuklear-sys 1.33.2 (registry+https://github.com/rust-lang/crates.io-index)" = "efe959e90e0254df508cdf2131fc1d5e31e9f5dc4e2e6901bd58ca9291b3c869"
 "checksum num 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "a311b77ebdc5dd4cf6449d81e4135d9f0e3b153839ac90e648a8ef538f923525"
 "checksum num-bigint 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "8fd0f8dbb4c0960998958a796281d88c16fbe68d87b1baa6f31e2979e81fd0bd"
 "checksum num-complex 0.1.40 (registry+https://github.com/rust-lang/crates.io-index)" = "503e668405c5492d67cf662a81e05be40efe2e6bcf10f7794a07bd9865e704e6"
