@@ -6,7 +6,8 @@ use slog::{Logger};
 use std::sync::Arc;
 
 use calcium_game::{LoopTimer};
-use calcium_rendering::{Error, WindowRenderer, Texture, TextureFormat};
+use calcium_rendering::{Error, WindowRenderer};
+use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, SampleMode, Simple2DRenderTarget};
 use calcium_rendering_static::{Runtime, Initializer};
 use calcium_rendering::Renderer;
@@ -126,12 +127,12 @@ impl Runtime for StaticRuntime {
         }
 
         // Units data
-        let friendly_texture = Texture::from_file(
-            &mut renderer, "./assets/friendly.png", TextureFormat::Srgb,
-        )?;
-        let selection_texture = Texture::from_file(
-            &mut renderer, "./assets/selection.png", TextureFormat::Srgb,
-        )?;
+        let friendly_texture = Texture::new()
+            .from_file("./assets/friendly.png")
+            .build(&mut renderer)?;
+        let selection_texture = Texture::new()
+            .from_file("./assets/selection.png")
+            .build(&mut renderer)?;
 
         /* can just let it infer the type apparently */
         let mut players_units: Vec<FriendlyUnit<I::Renderer>> = Vec::new();
