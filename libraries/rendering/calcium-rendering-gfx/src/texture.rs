@@ -7,7 +7,8 @@ use gfx::texture::{Kind, Size, AaMode};
 use gfx::format::{Rgba8, Srgba8};
 use gfx::handle::{ShaderResourceView};
 
-use calcium_rendering::{TextureRaw, TextureFormat, Error, CalciumErrorMappable};
+use calcium_rendering::{Error, CalciumErrorMappable};
+use calcium_rendering::texture::{TextureRaw, TextureBuilder, TextureSource, TextureStoreFormat};
 
 use {GfxRenderer};
 
@@ -15,10 +16,9 @@ pub struct GfxTextureRaw<D: Device + 'static> {
     pub view: ShaderResourceView<D::Resources, [f32; 4]>,
 }
 
-impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    TextureRaw<GfxRenderer<D, F>> for GfxTextureRaw<D> {
-    fn from_file(
-        renderer: &mut GfxRenderer<D, F>, path: PathBuf, format: TextureFormat,
+impl<D: Device + 'static> GfxTextureRaw<D> {
+    fn from_path<F: Factory<D::Resources> + 'static>(
+        path: &PathBuf, builder: &TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>
     ) -> Result<Self, Error> {
         info!(renderer.log,
             "Loading texture from file"; "path" => path.display().to_string()
@@ -35,13 +35,14 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
 
         // Load in the texture
         let kind = Kind::D2(width as Size, height as Size, AaMode::Single);
-        let (_, view) = match format {
-            TextureFormat::Srgb =>
+        let (_, view) = match builder.store_format {
+            TextureStoreFormat::Srgb =>
                 renderer.factory.create_texture_immutable_u8::<Srgba8>(kind, &[&img]),
-            TextureFormat::Linear =>
+            TextureStoreFormat::Linear =>
                 renderer.factory.create_texture_immutable_u8::<Rgba8>(kind, &[&img]),
-            TextureFormat::LinearRed =>
-                unimplemented!(),
+            TextureStoreFormat::SingleChannel =>
+                // TODO: Just show a warning and fall back to multi-channel linear
+                panic!("GFX backend does not support converting multi-channel to greyscale"),
         }.map_platform_err()?;
 
         Ok(GfxTextureRaw {
@@ -49,20 +50,26 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         })
     }
 
-    fn from_raw_greyscale(
-        renderer: &mut GfxRenderer<D, F>, data: &[u8], size: Vector2<u32>,
+    fn from_greyscale_bytes<F: Factory<D::Resources> + 'static>(
+        bytes: &[u8], size: Vector2<u32>,
+        builder: &TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>,
     ) -> Result<Self, Error> {
         info!(renderer.log,
             "Loading texture from greyscale data"; "width" => size.x, "height" => size.y
         );
 
+        // TODO: Support these other options
+        if builder.store_format != TextureStoreFormat::SingleChannel {
+            panic!("GFX backend does not support converting greyscale to multi-channel");
+        }
+
         // Create image data in RGBA format rather than the R format we got
         // TODO: Avoid this step using the following advice:
         //  "create an Upload type buffer, map it, fill it up, then issue copy_buffer_to_texture"
-        let mut rgba = vec![4; data.len() * 4];
-        for i in 0..data.len() {
+        let mut rgba = vec![4; bytes.len() * 4];
+        for i in 0..bytes.len() {
             unsafe {
-                *rgba.get_unchecked_mut(i*4 + 0) = data[i];
+                *rgba.get_unchecked_mut(i*4 + 0) = bytes[i];
                 *rgba.get_unchecked_mut(i*4 + 1) = 0;
                 *rgba.get_unchecked_mut(i*4 + 2) = 0;
                 *rgba.get_unchecked_mut(i*4 + 3) = 1;
@@ -77,5 +84,21 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         Ok(GfxTextureRaw {
             view
         })
+    }
+}
+
+impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
+    TextureRaw<GfxRenderer<D, F>> for GfxTextureRaw<D> {
+
+    fn new(
+        builder: TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>
+    ) -> Result<Self, Error> {
+        match builder.source {
+            TextureSource::File(ref path) =>
+                Self::from_path(path, &builder, renderer),
+            TextureSource::GreyscaleBytes { bytes, size } => {
+                Self::from_greyscale_bytes(bytes, size, &builder, renderer)
+            },
+        }
     }
 }

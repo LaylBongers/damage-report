@@ -3,7 +3,8 @@ use std::sync::{Arc};
 use cgmath::{Vector4, Point2};
 use screenmath::{Rectangle};
 
-use calcium_rendering::{Renderer, Texture};
+use calcium_rendering::{Renderer};
+use calcium_rendering::texture::{Texture};
 
 /// A render batch that can be drawn by a renderer. Represents the equivalent of a single drawcall.
 pub struct RenderBatch<R: Renderer> {

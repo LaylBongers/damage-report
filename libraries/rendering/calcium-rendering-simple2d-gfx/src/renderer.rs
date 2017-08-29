@@ -7,7 +7,8 @@ use gfx::pso::{PipelineState};
 use gfx::traits::{FactoryExt};
 use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
-use calcium_rendering::{Error, Texture};
+use calcium_rendering::{Error};
+use calcium_rendering::texture::{Texture};
 use calcium_rendering_gfx::{GfxRenderer, GfxFrame, ColorFormat, GfxWindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode, Simple2DRenderTarget};
 
@@ -58,9 +59,10 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
             pipe::new()
         ).unwrap();
 
-        let dummy_texture = Texture::from_raw_greyscale(
-            renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
-        )?;
+        let dummy_texture = Texture::new()
+            .from_greyscale_bytes(&vec![255u8; 8*8], Vector2::new(8, 8))
+            .as_single_channel()
+            .build(renderer)?;
 
         // Create pre-made buffers for the shader modes
         let mut mode_buffers = Vec::new();

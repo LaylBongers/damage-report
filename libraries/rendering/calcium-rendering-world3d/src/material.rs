@@ -1,6 +1,7 @@
 use std::sync::{Arc};
 
-use calcium_rendering::{Renderer, Texture};
+use calcium_rendering::{Renderer};
+use calcium_rendering::texture::{Texture};
 
 pub struct Material<R: Renderer> {
     pub base_color: Arc<Texture<R>>,

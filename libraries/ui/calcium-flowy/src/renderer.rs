@@ -5,7 +5,8 @@ use cgmath::{Vector2, Vector4, Point2};
 use rusttype::gpu_cache::{Cache};
 use rusttype::{Font, Scale};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
-use calcium_rendering::{Renderer, Texture, Error};
+use calcium_rendering::{Renderer, Error};
+use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
 
 use flowy::style::{Style};
@@ -22,9 +23,11 @@ impl<R: Renderer> FlowyRenderer<R> {
     pub fn new(renderer: &mut R) -> Result<Self, Error> {
         let glyph_cache = Cache::new(512, 512, 0.1, 0.1);
         let glyph_image = GrayImage::from_raw(512, 512, vec![0u8; 512*512]).unwrap();
-        let glyph_texture = Texture::from_raw_greyscale(
-            renderer, &vec![0u8; 8*8], Vector2::new(8, 8)
-        )?; // We will never use this initial texture, so just use something cheap
+        let glyph_texture = Texture::new()
+            // We will never use this initial texture, so just use something cheap
+            .from_greyscale_bytes(&vec![0u8; 8*8], Vector2::new(8, 8))
+            .as_single_channel()
+            .build(renderer)?;
 
         Ok(FlowyRenderer {
             glyph_cache,
@@ -209,9 +212,10 @@ fn generate_text_batch<R: Renderer>(
     if changed {
         // Upload the glyphs into a texture
         // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
-        *glyph_texture = Texture::from_raw_greyscale(
-            renderer, &glyph_image, Vector2::new(512, 512)
-        )?;
+        *glyph_texture = Texture::new()
+            .from_greyscale_bytes(&glyph_image, Vector2::new(512, 512))
+            .as_single_channel()
+            .build(renderer)?;
     }
 
     // Set the texture in the render batch

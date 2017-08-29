@@ -10,7 +10,8 @@ use vulkano::buffer::cpu_pool::{CpuBufferPool, CpuBufferPoolSubbuffer};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::memory::pool::{StdMemoryPool};
 
-use calcium_rendering::{Renderer, Texture, Error, CalciumErrorMappable, WindowRenderer};
+use calcium_rendering::{Renderer, Error, CalciumErrorMappable, WindowRenderer};
+use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoFrame, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
@@ -31,9 +32,10 @@ pub struct VulkanoSimple2DRenderer {
 impl VulkanoSimple2DRenderer {
     pub fn new(renderer: &mut VulkanoRenderer) -> Result<Self, Error> {
         info!(renderer.log(), "Creating simple2d renderer");
-        let dummy_texture = Texture::from_raw_greyscale(
-            renderer, &vec![255u8; 8*8], Vector2::new(8, 8)
-        )?;
+        let dummy_texture = Texture::new()
+            .from_greyscale_bytes(&vec![255u8; 8*8], Vector2::new(8, 8))
+            .as_single_channel()
+            .build(renderer)?;
 
         // Load in the shaders
         debug!(renderer.log(), "Creating simple2d shaders");

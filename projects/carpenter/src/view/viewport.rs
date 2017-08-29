@@ -5,7 +5,8 @@ use window::{AdvancedWindow};
 use input::{ButtonState};
 use collision::{Ray3, Plane};
 
-use calcium_rendering::{Error, Renderer, Texture, TextureFormat, Viewport, WindowRenderer};
+use calcium_rendering::{Error, Renderer, Viewport, WindowRenderer};
+use calcium_rendering::texture::{Texture};
 use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh};
 
 use carpenter_model::map::{Brush};
@@ -33,21 +34,25 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         render_world.directional_direction = Vector3::new(1.0, 2.0, 1.5).normalize();
 
         let material = Material {
-            base_color: Texture::from_file(
-                renderer, "./assets/texture.png", TextureFormat::Srgb
-            )?,
-            normal_map: Texture::from_file(
-                renderer, "./assets/texture_normal.png", TextureFormat::Linear
-            )?,
-            metallic_map: Texture::from_file(
-                renderer, "./assets/texture_metallic.png", TextureFormat::LinearRed
-            )?,
-            roughness_map: Texture::from_file(
-                renderer, "./assets/texture_roughness.png", TextureFormat::LinearRed
-            )?,
-            ambient_occlusion_map: Texture::from_file(
-                renderer, "./assets/texture_ambientOcclusion.png", TextureFormat::LinearRed
-            )?,
+            base_color: Texture::new()
+                .from_file("./assets/texture.png")
+                .build(renderer)?,
+            normal_map: Texture::new()
+                .from_file("./assets/texture_normal.png")
+                .as_linear()
+                .build(renderer)?,
+            metallic_map: Texture::new()
+                .from_file("./assets/texture_metallic.png")
+                .as_single_channel()
+                .build(renderer)?,
+            roughness_map: Texture::new()
+                .from_file("./assets/texture_roughness.png")
+                .as_single_channel()
+                .build(renderer)?,
+            ambient_occlusion_map: Texture::new()
+                .from_file("./assets/texture_ambientOcclusion.png")
+                .as_single_channel()
+                .build(renderer)?,
         };
 
         let last_viewport = Viewport::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0));
