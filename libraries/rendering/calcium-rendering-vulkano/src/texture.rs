@@ -11,7 +11,7 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBuffer};
 
 use calcium_rendering::{CalciumErrorMappable, Error, Renderer};
-use calcium_rendering::texture::{TextureSource, TextureRaw, TextureBuilder, TextureStoreFormat};
+use calcium_rendering::texture::{TextureSource, TextureRaw, TextureBuilder, TextureStoreFormat, SampleMode};
 use {VulkanoRenderer};
 
 pub struct VulkanoTextureRaw {
@@ -109,10 +109,15 @@ impl VulkanoTextureRaw {
         renderer.queue_command_buffer_future(future);
 
         // Create a sampler for this texture based on our mipmapping data (if any)
+        let filter = if builder.sample_mode == SampleMode::Linear {
+            Filter::Linear
+        } else {
+            Filter::Nearest
+        };
         let sampler = Sampler::new(
             renderer.device().clone(),
-            Filter::Linear,
-            Filter::Linear,
+            filter,
+            filter,
             MipmapMode::Linear,
             SamplerAddressMode::Repeat,
             SamplerAddressMode::Repeat,

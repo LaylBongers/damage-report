@@ -8,12 +8,13 @@ use gfx::format::{Rgba8, Srgba8};
 use gfx::handle::{ShaderResourceView};
 
 use calcium_rendering::{Error, CalciumErrorMappable};
-use calcium_rendering::texture::{TextureRaw, TextureBuilder, TextureSource, TextureStoreFormat};
+use calcium_rendering::texture::{TextureRaw, TextureBuilder, TextureSource, TextureStoreFormat, SampleMode};
 
 use {GfxRenderer};
 
 pub struct GfxTextureRaw<D: Device + 'static> {
     pub view: ShaderResourceView<D::Resources, [f32; 4]>,
+    pub sample_mode: SampleMode,
 }
 
 impl<D: Device + 'static> GfxTextureRaw<D> {
@@ -46,7 +47,8 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
         }.map_platform_err()?;
 
         Ok(GfxTextureRaw {
-            view
+            view,
+            sample_mode: builder.sample_mode,
         })
     }
 
@@ -82,7 +84,8 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
             .map_platform_err()?;
 
         Ok(GfxTextureRaw {
-            view
+            view,
+            sample_mode: builder.sample_mode,
         })
     }
 }

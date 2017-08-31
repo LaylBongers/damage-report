@@ -15,6 +15,9 @@ pub struct TextureBuilder<'a, R: Renderer> {
     /// If set to true, mipmaps will be generated and used for this texture.
     pub generate_mipmaps: bool,
 
+    /// How this texture should be sampled, mipmapping will be applied on top of this if applicable.
+    pub sample_mode: SampleMode,
+
     _r: ::std::marker::PhantomData<R>,
 }
 
@@ -29,6 +32,7 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
             },
             store_format: TextureStoreFormat::Srgb,
             generate_mipmaps: false,
+            sample_mode: SampleMode::Linear,
             _r: ::std::marker::PhantomData,
         }
     }
@@ -73,6 +77,19 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
         self.generate_mipmaps = true;
         self
     }
+
+    pub fn with_sample_mode(mut self, value: SampleMode) -> Self {
+        self.sample_mode = value;
+        self
+    }
+
+    pub fn with_linear_sampling(self) -> Self {
+        self.with_sample_mode(SampleMode::Linear)
+    }
+
+    pub fn with_nearest_sampling(self) -> Self {
+        self.with_sample_mode(SampleMode::Nearest)
+    }
 }
 
 pub enum TextureSource<'a> {
@@ -81,7 +98,7 @@ pub enum TextureSource<'a> {
     GreyscaleBytes { bytes: &'a [u8], size: Vector2<u32> },
 }
 
-#[derive(Clone, Copy, PartialEq, Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TextureStoreFormat {
     /// Interprets the texture as being in sRGB color space. This should be used for color data.
     /// The texture's pixels will be gamma converted to linear values in the pixel shaders.
@@ -109,4 +126,10 @@ impl<R: Renderer> Texture<R> {
 
 pub trait TextureRaw<R: Renderer>: Sized {
     fn new(builder: TextureBuilder<R>, renderer: &mut R) -> Result<Self, Error>;
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SampleMode {
+    Linear,
+    Nearest,
 }

@@ -8,9 +8,9 @@ use gfx::traits::{FactoryExt};
 use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
 use calcium_rendering::{Error};
-use calcium_rendering::texture::{Texture};
+use calcium_rendering::texture::{Texture, SampleMode};
 use calcium_rendering_gfx::{GfxRenderer, GfxFrame, ColorFormat, GfxWindowRenderer};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, SampleMode, Simple2DRenderTarget};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, Simple2DRenderTarget};
 
 use {GfxSimple2DRenderTargetRaw};
 
@@ -95,10 +95,10 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
         })
     }
 
-    fn sampler_for_mode(&self, sample_mode: &SampleMode) -> &Sampler<D::Resources> {
+    fn sampler_for_mode(&self, sample_mode: SampleMode) -> &Sampler<D::Resources> {
         match sample_mode {
-            &SampleMode::Linear => &self.linear_sampler,
-            &SampleMode::Nearest => &self.nearest_sampler,
+            SampleMode::Linear => &self.linear_sampler,
+            SampleMode::Nearest => &self.nearest_sampler,
         }
     }
 }
@@ -153,10 +153,10 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
             let (mode_id, texture, sampler) = match &batch.mode {
                 &ShaderMode::Color =>
                     (0, &self.dummy_texture, &self.linear_sampler),
-                &ShaderMode::Texture(ref texture, ref sample_mode) =>
-                    (1, texture, self.sampler_for_mode(sample_mode)),
-                &ShaderMode::Mask(ref texture, ref sample_mode) =>
-                    (2, texture, self.sampler_for_mode(sample_mode)),
+                &ShaderMode::Texture(ref texture) =>
+                    (1, texture, self.sampler_for_mode(texture.raw.sample_mode)),
+                &ShaderMode::Mask(ref texture) =>
+                    (2, texture, self.sampler_for_mode(texture.raw.sample_mode)),
             };
 
             // Get the matching buffer for this shader mode

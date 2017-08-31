@@ -8,7 +8,7 @@ use std::sync::Arc;
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, SampleMode, Simple2DRenderTarget};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget};
 use calcium_rendering_static::{Runtime, Initializer};
 use calcium_rendering::Renderer;
 
@@ -59,7 +59,7 @@ impl <R: Renderer> FriendlyUnit<R> {
     pub fn render(&mut self, batches: &mut Vec<RenderBatch<R>>) {
         //let mut batches = Vec::new();
         let mut normaltexture = RenderBatch::new(
-            ShaderMode::Texture(self.tex.clone(), SampleMode::Nearest)
+            ShaderMode::Texture(self.tex.clone())
         );
         normaltexture.rectangle(DrawRectangle::new(
             // position is centered in the texture
@@ -69,7 +69,7 @@ impl <R: Renderer> FriendlyUnit<R> {
 
         if self.selected {
             let mut selectiontexture = RenderBatch::new(
-                ShaderMode::Texture(self.selecttex.clone(), SampleMode::Nearest)
+                ShaderMode::Texture(self.selecttex.clone())
             );
             selectiontexture.rectangle(DrawRectangle::new(
                 Rectangle::new(self.position + -self.size, self.position + self.size)
@@ -129,9 +129,11 @@ impl Runtime for StaticRuntime {
         // Units data
         let friendly_texture = Texture::new()
             .from_file("./assets/friendly.png")
+            .with_nearest_sampling()
             .build(&mut renderer)?;
         let selection_texture = Texture::new()
             .from_file("./assets/selection.png")
+            .with_nearest_sampling()
             .build(&mut renderer)?;
 
         /* can just let it infer the type apparently */

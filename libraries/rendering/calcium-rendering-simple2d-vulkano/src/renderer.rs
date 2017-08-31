@@ -7,12 +7,11 @@ use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::buffer::cpu_pool::{CpuBufferPool, CpuBufferPoolSubbuffer};
-use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::memory::pool::{StdMemoryPool};
 
-use calcium_rendering::{Renderer, Error, CalciumErrorMappable, WindowRenderer};
+use calcium_rendering::{Renderer, Error, WindowRenderer};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode, SampleMode};
+use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoFrame, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
@@ -20,7 +19,6 @@ use {VkVertex, VulkanoSimple2DRenderTargetRaw};
 
 pub struct VulkanoSimple2DRenderer {
     dummy_texture: Arc<Texture<VulkanoRenderer>>,
-    samplers: Samplers,
 
     matrix_pool: CpuBufferPool<simple2d_vs::ty::MatrixData>,
     mode_buffers: Vec<Arc<CpuAccessibleBuffer<simple2d_fs::ty::ModeData>>>,
@@ -42,8 +40,6 @@ impl VulkanoSimple2DRenderer {
         let vs = simple2d_vs::Shader::load(renderer.device().clone()).unwrap();
         let fs = simple2d_fs::Shader::load(renderer.device().clone()).unwrap();
 
-        let samplers = Samplers::new(renderer)?;
-
         // Set up the CPU buffer pools we'll use to upload various data
         let matrix_pool = CpuBufferPool::new(
             renderer.device().clone(), BufferUsage::uniform_buffer(),
@@ -61,7 +57,6 @@ impl VulkanoSimple2DRenderer {
 
         Ok(VulkanoSimple2DRenderer {
             dummy_texture,
-            samplers,
 
             matrix_pool,
             mode_buffers,
@@ -96,11 +91,11 @@ impl VulkanoSimple2DRenderer {
         // TODO: Make use of the sample mode
         let (mode_id, image, sampler) = match &batch.mode {
             &ShaderMode::Color =>
-                (0, self.dummy_texture.raw.image(), &self.samplers.linear_sampler),
-            &ShaderMode::Texture(ref texture, ref sample_mode) =>
-                (1, texture.raw.image(), self.samplers.sampler_for_mode(sample_mode)),
-            &ShaderMode::Mask(ref texture, ref sample_mode) =>
-                (2, texture.raw.image(), self.samplers.sampler_for_mode(sample_mode)),
+                (0, self.dummy_texture.raw.image(), self.dummy_texture.raw.sampler()),
+            &ShaderMode::Texture(ref texture) =>
+                (1, texture.raw.image(), texture.raw.sampler()),
+            &ShaderMode::Mask(ref texture) =>
+                (2, texture.raw.image(), texture.raw.sampler()),
         };
 
         // Get a buffer containing the mode data
@@ -200,48 +195,5 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
             .unwrap()
         );
         frame.future = Some(future);
-    }
-}
-
-struct Samplers {
-    linear_sampler: Arc<Sampler>,
-    nearest_sampler: Arc<Sampler>,
-}
-
-impl Samplers {
-    fn new(renderer: &VulkanoRenderer) -> Result<Self, Error> {
-        // Set up the samplers for the sampling modes
-        let linear_sampler = Sampler::new(
-            renderer.device().clone(),
-            Filter::Linear,
-            Filter::Linear,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
-        ).map_platform_err()?;
-        let nearest_sampler = Sampler::new(
-            renderer.device().clone(),
-            Filter::Nearest,
-            Filter::Nearest,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0, 1.0, 0.0, 0.0
-        ).map_platform_err()?;
-
-        Ok(Samplers {
-            linear_sampler,
-            nearest_sampler,
-        })
-    }
-
-    fn sampler_for_mode(&self, sample_mode: &SampleMode) -> &Arc<Sampler> {
-        match sample_mode {
-            &SampleMode::Linear => &self.linear_sampler,
-            &SampleMode::Nearest => &self.nearest_sampler,
-        }
     }
 }

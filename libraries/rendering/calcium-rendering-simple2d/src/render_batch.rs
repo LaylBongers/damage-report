@@ -73,27 +73,19 @@ pub enum ShaderMode<R: Renderer> {
     /// Uses only the vertices' colors.
     Color,
     /// Multiplies a texture sampled using the vertices' uvs by the vertices' color.
-    Texture(Arc<Texture<R>>, SampleMode),
+    Texture(Arc<Texture<R>>),
     /// Uses the vertices' color's RGB and the texture's Alpha.
-    Mask(Arc<Texture<R>>, SampleMode),
+    Mask(Arc<Texture<R>>),
 }
 
 impl<R: Renderer> Clone for ShaderMode<R> {
     fn clone(&self) -> Self {
         match *self {
             ShaderMode::Color => ShaderMode::Color,
-            ShaderMode::Texture(ref t, s) => ShaderMode::Texture(t.clone(), s),
-            ShaderMode::Mask(ref t, s) => ShaderMode::Mask(t.clone(), s),
+            ShaderMode::Texture(ref t) => ShaderMode::Texture(t.clone()),
+            ShaderMode::Mask(ref t) => ShaderMode::Mask(t.clone()),
         }
     }
-}
-
-/// TODO: This type should be changed to a Sampler resource that should be exposed and implemented
-///  at the level of calcium-renderer.
-#[derive(Clone, Copy)]
-pub enum SampleMode {
-    Linear,
-    Nearest,
 }
 
 /// A vertex that can be used to draw on screen.

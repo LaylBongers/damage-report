@@ -7,7 +7,7 @@ use rusttype::{Font, Scale};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Error};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, SampleMode, Rectangle};
+use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 
 use flowy::style::{Style};
 use flowy::{Ui, ElementId, ElementCursorState, Element, ElementText};
@@ -27,6 +27,7 @@ impl<R: Renderer> FlowyRenderer<R> {
             // We will never use this initial texture, so just use something cheap
             .from_greyscale_bytes(&vec![0u8; 8*8], Vector2::new(8, 8))
             .as_single_channel()
+            .with_nearest_sampling()
             .build(renderer)?;
 
         Ok(FlowyRenderer {
@@ -56,7 +57,7 @@ impl<R: Renderer> FlowyRenderer<R> {
         //  next frame, but it should clean up some stale textures.
         // TODO: Add something to Texture that just overwrites its data.
         for entry in &mut self.text_cache {
-            entry.1.mode = ShaderMode::Mask(self.glyph_texture.clone(), SampleMode::Nearest);
+            entry.1.mode = ShaderMode::Mask(self.glyph_texture.clone());
         }
 
         Ok(batcher.finish())
@@ -215,11 +216,12 @@ fn generate_text_batch<R: Renderer>(
         *glyph_texture = Texture::new()
             .from_greyscale_bytes(&glyph_image, Vector2::new(512, 512))
             .as_single_channel()
+            .with_nearest_sampling()
             .build(renderer)?;
     }
 
     // Set the texture in the render batch
-    let mut batch = RenderBatch::new(ShaderMode::Mask(glyph_texture.clone(), SampleMode::Nearest));
+    let mut batch = RenderBatch::new(ShaderMode::Mask(glyph_texture.clone()));
 
     // Actually render the text
     let c = style.text_color;
