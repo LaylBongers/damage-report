@@ -12,6 +12,9 @@ pub struct TextureBuilder<'a, R: Renderer> {
     /// Defines how the texture should be stored internally. Defaults to Srgb.
     pub store_format: TextureStoreFormat,
 
+    /// If set to true, mipmaps will be generated and used for this texture.
+    pub generate_mipmaps: bool,
+
     _r: ::std::marker::PhantomData<R>,
 }
 
@@ -25,6 +28,7 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
                 size: Vector2::new(1, 1),
             },
             store_format: TextureStoreFormat::Srgb,
+            generate_mipmaps: false,
             _r: ::std::marker::PhantomData,
         }
     }
@@ -63,6 +67,11 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
 
     pub fn as_single_channel(self) -> Self {
         self.with_store_format(TextureStoreFormat::SingleChannel)
+    }
+
+    pub fn generate_mipmaps(mut self) -> Self {
+        self.generate_mipmaps = true;
+        self
     }
 }
 

@@ -5,11 +5,10 @@ use collision::{Frustum, Relation};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
-use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::pipeline::viewport::{Viewport as ViewportVk};
 
-use calcium_rendering::{Error, CalciumErrorMappable, Viewport};
+use calcium_rendering::{Error, Viewport};
 use calcium_rendering_vulkano::{VulkanoRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity, World3DRenderTarget};
@@ -17,30 +16,13 @@ use calcium_rendering_world3d::{Camera, RenderWorld, Entity, World3DRenderTarget
 use {VulkanoWorld3DRenderer};
 
 pub struct GeometryRenderer {
-    sampler: Arc<Sampler>,
 }
 
 impl GeometryRenderer {
     pub fn new(
-        renderer: &VulkanoRenderer,
+        _renderer: &VulkanoRenderer,
     ) -> Result<Self, Error> {
-        let sampler = Sampler::new(
-            renderer.device().clone(),
-            Filter::Linear,
-            Filter::Linear,
-            MipmapMode::Nearest,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            SamplerAddressMode::Repeat,
-            0.0,
-            // TODO: Detect anisitropic filtering support instead of just using it
-            2.0,
-            0.0, 0.0
-        ).map_platform_err()?;
-
-        Ok(GeometryRenderer {
-            sampler,
-        })
+        Ok(GeometryRenderer {})
     }
 
     pub fn build_command_buffer(
@@ -138,19 +120,24 @@ impl GeometryRenderer {
             )
             .add_buffer(matrix_data_buffer.clone()).unwrap()
             .add_sampled_image(
-                material.base_color.raw.image().clone(), self.sampler.clone()
+                material.base_color.raw.image().clone(),
+                material.base_color.raw.sampler().clone()
             ).unwrap()
             .add_sampled_image(
-                material.normal_map.raw.image().clone(), self.sampler.clone()
+                material.normal_map.raw.image().clone(),
+                material.normal_map.raw.sampler().clone()
             ).unwrap()
             .add_sampled_image(
-                material.metallic_map.raw.image().clone(), self.sampler.clone()
+                material.metallic_map.raw.image().clone(),
+                material.metallic_map.raw.sampler().clone()
             ).unwrap()
             .add_sampled_image(
-                material.roughness_map.raw.image().clone(), self.sampler.clone()
+                material.roughness_map.raw.image().clone(),
+                material.roughness_map.raw.sampler().clone()
             ).unwrap()
             .add_sampled_image(
-                material.ambient_occlusion_map.raw.image().clone(), self.sampler.clone()
+                material.ambient_occlusion_map.raw.image().clone(),
+                material.ambient_occlusion_map.raw.sampler().clone()
             ).unwrap()
             .build().unwrap()
         );

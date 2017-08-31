@@ -17,8 +17,7 @@ pub struct VulkanoRenderer {
     device: Arc<Device>,
     graphics_queue: Arc<Queue>,
 
-    // Queued up things we need to submit as part of command buffers
-    queued_image_copies: Vec<CommandBufferExecFuture<NowFuture, AutoCommandBuffer>>,
+    queued_cb_futures: Vec<CommandBufferExecFuture<NowFuture, AutoCommandBuffer>>,
 }
 
 impl VulkanoRenderer {
@@ -94,7 +93,7 @@ impl VulkanoRenderer {
             device,
             graphics_queue,
 
-            queued_image_copies: Vec::new(),
+            queued_cb_futures: Vec::new(),
         })
     }
 
@@ -110,24 +109,24 @@ impl VulkanoRenderer {
         &self.graphics_queue
     }
 
-    pub fn queue_image_copy(
+    pub fn queue_command_buffer_future(
         &mut self,
-        command_buffer_exec: CommandBufferExecFuture<NowFuture, AutoCommandBuffer>,
+        future: CommandBufferExecFuture<NowFuture, AutoCommandBuffer>,
     ) {
-        self.queued_image_copies.push(command_buffer_exec);
+        self.queued_cb_futures.push(future);
     }
 
     pub fn submit_queued_commands(
         &mut self, mut future: Box<GpuFuture + Send + Sync>
     ) -> Box<GpuFuture + Send + Sync> {
         // If we don't have anything to upload, we don't need to alter the future at all
-        if self.queued_image_copies.len() == 0 {
+        if self.queued_cb_futures.len() == 0 {
             return future;
         }
 
-        // Join together the upload futures
+        // Join together any queued futures futures
         // TODO: Add functionality for concurrent or non-blocking uploading of textures
-        while let Some(val) = self.queued_image_copies.pop() {
+        while let Some(val) = self.queued_cb_futures.pop() {
             future = Box::new(future.join(val));
         }
 

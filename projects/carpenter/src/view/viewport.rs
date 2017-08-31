@@ -36,22 +36,27 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         let material = Material {
             base_color: Texture::new()
                 .from_file("./assets/texture.png")
+                .generate_mipmaps()
                 .build(renderer)?,
             normal_map: Texture::new()
                 .from_file("./assets/texture_normal.png")
                 .as_linear()
+                .generate_mipmaps()
                 .build(renderer)?,
             metallic_map: Texture::new()
                 .from_file("./assets/texture_metallic.png")
                 .as_single_channel()
+                .generate_mipmaps()
                 .build(renderer)?,
             roughness_map: Texture::new()
                 .from_file("./assets/texture_roughness.png")
                 .as_single_channel()
+                .generate_mipmaps()
                 .build(renderer)?,
             ambient_occlusion_map: Texture::new()
                 .from_file("./assets/texture_ambientOcclusion.png")
                 .as_single_channel()
+                .generate_mipmaps()
                 .build(renderer)?,
         };
 
