@@ -12,7 +12,7 @@ use {Ui, Element, ElementId, ElementBehavior};
 pub struct FileDialog {
     shade_id: ElementId,
     directory_textfield_id: ElementId,
-    filename_textfield_id: ElementId,
+    file_name_textfield_id: ElementId,
     cancel_button_id: ElementId,
     submit_button_id: ElementId,
 
@@ -31,7 +31,7 @@ impl FileDialog {
             background_color: Some(Srgb::with_alpha(0.0, 0.0, 0.0, 0.5).into()),
             .. Style::new()
         });
-        shade.behavior = ElementBehavior::Clickable;
+        shade.set_behavior(ElementBehavior::Clickable);
         let shade_id = ui.elements.add_child(shade, parent_id);
 
         // Build up the actual dialog itself
@@ -69,18 +69,22 @@ impl FileDialog {
         };
 
         // Add the directory field
-        ui.elements.add_child(Element::with_text("Directory", label_style.clone()), dialog_id);
-        let mut directory_textfield = Element::with_text(
-            directory.to_str().unwrap(), textfield_style.clone()
-        );
-        directory_textfield.behavior = ElementBehavior::TextField;
+        let mut directory_label = Element::new(label_style.clone());
+        directory_label.set_text("Directory");
+        ui.elements.add_child(directory_label, dialog_id);
+        let mut directory_textfield = Element::new(textfield_style.clone());
+        directory_textfield.set_text(directory.to_str().unwrap());
+        directory_textfield.set_behavior(ElementBehavior::TextField);
         let directory_textfield_id = ui.elements.add_child(directory_textfield, dialog_id);
 
         // Add the file field
-        ui.elements.add_child(Element::with_text("File Name", label_style.clone()), dialog_id);
-        let mut filename_textfield = Element::with_text("my_map.carpenter", textfield_style.clone());
-        filename_textfield.behavior = ElementBehavior::TextField;
-        let filename_textfield_id = ui.elements.add_child(filename_textfield, dialog_id);
+        let mut file_name_label = Element::new(label_style.clone());
+        file_name_label.set_text("File Name");
+        ui.elements.add_child(file_name_label, dialog_id);
+        let mut file_name_textfield = Element::new(textfield_style.clone());
+        file_name_textfield.set_text("my_map.carpenter");
+        file_name_textfield.set_behavior(ElementBehavior::TextField);
+        let file_name_textfield_id = ui.elements.add_child(file_name_textfield, dialog_id);
 
         // Create the submit and cancel buttons
         let buttons = Element::new(Style {
@@ -97,7 +101,7 @@ impl FileDialog {
         FileDialog {
             shade_id,
             directory_textfield_id,
-            filename_textfield_id,
+            file_name_textfield_id,
             cancel_button_id,
             submit_button_id,
 
@@ -134,10 +138,10 @@ impl FileDialog {
         if ui.elements[self.submit_button_id].clicked() {
             {
                 let directory_str = ui.elements[self.directory_textfield_id].text();
-                let filename_str = ui.elements[self.filename_textfield_id].text();
+                let file_name_str = ui.elements[self.file_name_textfield_id].text();
 
                 let mut path = PathBuf::from(directory_str);
-                path.push(filename_str);
+                path.push(file_name_str);
                 self.path = path;
             }
 

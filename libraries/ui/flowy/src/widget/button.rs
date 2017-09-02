@@ -23,6 +23,6 @@ pub fn button(label: &str, parent_id: ElementId, ui: &mut Ui) -> ElementId {
 
     let mut submit_button = Element::new(button_style.clone());
     submit_button.set_text(label);
-    submit_button.behavior = ElementBehavior::Clickable;
+    submit_button.set_behavior(ElementBehavior::Clickable);
     ui.elements.add_child(submit_button, parent_id)
 }

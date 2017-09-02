@@ -10,9 +10,9 @@ pub struct Element {
     // TODO: Use this value to check against stale index IDs
     pub(crate) inner_id: i32,
 
-    pub style: Style,
-    pub behavior: ElementBehavior,
-    pub text: Option<ElementText>,
+    style: Style,
+    behavior: ElementBehavior,
+    text_internal: Option<ElementText>,
 
     // Cache data
     pub(crate) positioning: Positioning,
@@ -30,7 +30,7 @@ impl Element {
 
             style,
             behavior: ElementBehavior::Passive,
-            text: None,
+            text_internal: None,
 
             positioning: Positioning::new(),
 
@@ -38,13 +38,6 @@ impl Element {
             clicked: false,
             focused: false,
         }
-    }
-
-    /// Builder-style helper wrapper around set_text.
-    pub fn with_text<S: Into<String>>(text: S, style: Style) -> Self {
-        let mut element = Self::new(style);
-        element.set_text(text);
-        element
     }
 
     pub fn style(&self) -> &Style {
@@ -55,12 +48,30 @@ impl Element {
         &mut self.style
     }
 
+    pub fn set_style(&mut self, value: Style) {
+        self.style = value;
+    }
+
     pub fn behavior(&self) -> &ElementBehavior {
         &self.behavior
     }
 
     pub fn behavior_mut(&mut self) -> &mut ElementBehavior {
         &mut self.behavior
+    }
+
+    pub fn set_behavior(&mut self, value: ElementBehavior) {
+        self.behavior = value;
+    }
+
+    /// Gets the internal text structure, which contains caching data.
+    pub fn text_internal(&self) -> &Option<ElementText> {
+        &self.text_internal
+    }
+
+    /// Gets the internal text structure, which contains caching data.
+    pub fn text_internal_mut(&mut self) -> &mut Option<ElementText> {
+        &mut self.text_internal
     }
 
     pub fn positioning(&self) -> &Positioning {
@@ -99,7 +110,7 @@ impl Element {
 
     /// Retrieves the text from the inner text data, or returns an empty string.
     pub fn text(&self) -> &str {
-        if let Some(ref element_text) = self.text {
+        if let Some(ref element_text) = self.text_internal {
             element_text.text()
         } else {
             ""
@@ -110,12 +121,12 @@ impl Element {
     pub fn set_text<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
 
-        if let Some(ref mut element_text) = self.text {
+        if let Some(ref mut element_text) = self.text_internal {
             element_text.set_text(text);
             return;
         }
 
-        self.text = Some(ElementText::new(text));
+        self.text_internal = Some(ElementText::new(text));
     }
 
     pub fn update_layout(
@@ -128,7 +139,7 @@ impl Element {
             parent_container, parent_padding, flow_cursor, flow_margin, flow_direction
         );
 
-        if let Some(ref mut text) = self.text {
+        if let Some(ref mut text) = self.text_internal {
             text.update_glyphs(&self.positioning.container, &self.style, fonts);
         }
     }

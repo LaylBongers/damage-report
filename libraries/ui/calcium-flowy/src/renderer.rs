@@ -9,8 +9,7 @@ use calcium_rendering::{Renderer, Error};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 
-use flowy::style::{Style};
-use flowy::{Ui, ElementId, ElementCursorState, Element, ElementText};
+use flowy::{Ui, ElementId, ElementCursorState, Element};
 
 pub struct FlowyRenderer<R: Renderer> {
     glyph_cache: Cache,
@@ -88,7 +87,7 @@ impl<R: Renderer> FlowyRenderer<R> {
 }
 
 fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
-    let style = &element.style;
+    let style = element.style();
 
     // If this element is focused, its color should be overwritten with active_color
     let color = if element.focused() {
@@ -126,8 +125,8 @@ fn draw_element_text<R: Renderer>(
     // TODO: Glyph positioning should be done during layouting in Ui and cached for future frames,
     //  so text height can be used for automatic layouting as well.
 
-    if element.text.is_some() {
-        let font = fonts.get(element.style.text_font.0).expect("Unable to find font on element");
+    if element.text_internal().is_some() {
+        let font = fonts.get(element.style().text_font.0).expect("Unable to find font on element");
         batcher.next_batch(retrieve_or_create_batch(
             id, element, font,
             glyph_cache, glyph_image, glyph_texture,
@@ -148,23 +147,26 @@ fn retrieve_or_create_batch<R: Renderer>(
     text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
     let container = element.positioning().container.clone();
-    let text = element.text.as_mut().unwrap();
-    let style = &element.style;
 
-    if !text.cache_stale && text.cache_rect == container {
-        if let Some(cached_batch) = text_cache.get(&id) {
-            return Ok(cached_batch.clone())
+    // First try to retrieve cached data
+    {
+        let text = element.text_internal().as_ref().unwrap();
+        if !text.cache_stale && text.cache_rect == container {
+            if let Some(cached_batch) = text_cache.get(&id) {
+                return Ok(cached_batch.clone())
+            }
         }
     }
 
     // Couldn't find something in the cache, generate a new batch
     let batch = generate_text_batch(
-        text, style, font,
+        element, font,
         glyph_cache, glyph_image, glyph_texture,
         renderer,
     )?;
 
     // Store the batch and mark on the element what its data is
+    let text = element.text_internal_mut().as_mut().unwrap();
     text_cache.insert(id, batch.clone());
     text.cache_stale = false;
     text.cache_rect = container.clone();
@@ -172,19 +174,19 @@ fn retrieve_or_create_batch<R: Renderer>(
 }
 
 fn generate_text_batch<R: Renderer>(
-    text: &ElementText, style: &Style, font: &Font,
+    element: &mut Element, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
     renderer: &mut R,
 ) -> Result<RenderBatch<R>, Error> {
     // If the text size is too small, we can't render anything
-    if style.text_size <= 0.5 {
+    if element.style().text_size <= 0.5 {
         return Ok(RenderBatch::new(ShaderMode::Color))
     }
 
     // Translate the cached glyphs back into regular glyphs
-    let scale = Scale::uniform(style.text_size);
+    let scale = Scale::uniform(element.style().text_size);
     let mut glyphs = Vec::new();
-    for cached_glyph in text.cached_glyphs().unwrap() {
+    for cached_glyph in element.text_internal_mut().as_mut().unwrap().cached_glyphs().unwrap() {
         let glyph = font.glyph(cached_glyph.0).unwrap();
         glyphs.push(glyph.scaled(scale).positioned(cached_glyph.1));
     }
@@ -224,7 +226,7 @@ fn generate_text_batch<R: Renderer>(
     let mut batch = RenderBatch::new(ShaderMode::Mask(glyph_texture.clone()));
 
     // Actually render the text
-    let c = style.text_color;
+    let c = element.style().text_color;
     let text_color = Vector4::new(c.red, c.green, c.blue, c.alpha);
     for glyph in glyphs.iter() {
         if let Ok(Some((uv_rect, screen_rect))) = glyph_cache.rect_for(0, glyph) {

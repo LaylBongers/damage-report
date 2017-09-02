@@ -51,7 +51,7 @@ impl Ui {
         let elements = &mut self.elements;
         let el_text = self.text_active_element
             .and_then(|id| elements.get_mut(id))
-            .and_then(|element| element.text.as_mut());
+            .and_then(|element| element.text_internal_mut().as_mut());
 
         match *event {
             Input::Button(ButtonArgs {state, button, scancode: _scancode}) => {
@@ -116,7 +116,7 @@ impl Ui {
             for id in 0..all_elements.len() {
                 if let Some(ref element) = all_elements[id] {
                     // Make sure this element actually captures mouse input
-                    if element.behavior == ElementBehavior::Passive {
+                    if *element.behavior() == ElementBehavior::Passive {
                         continue;
                     }
 
@@ -147,7 +147,7 @@ impl Ui {
 
                 // If the element clicked on was a text field, set it as the active text element so
                 // it can be rendered focused and receive input
-                if element.behavior == ElementBehavior::TextField {
+                if *element.behavior() == ElementBehavior::TextField {
                     element.focused = true;
                     self.text_active_element = Some(id);
                 }
@@ -164,7 +164,7 @@ impl Ui {
 
         // Lock the root to match the viewport
         {
-            let style = &mut self.elements[root_id].style;
+            let style = self.elements[root_id].style_mut();
             style.size = Size::units(viewport_size.x, viewport_size.y);
         }
 
@@ -197,9 +197,9 @@ impl Ui {
 
             // Calculate the flow data needed by the children based on this element's flow data
             our_container = element.positioning.container.clone();
-            our_padding = element.style.padding.clone();
-            child_flow_direction = element.style.flow_direction;
-            child_flow_margin = element.style.padding.left;
+            our_padding = element.style().padding.clone();
+            child_flow_direction = element.style().flow_direction;
+            child_flow_margin = element.style().padding.left;
             child_flow_cursor = child_flow_direction.flow_start(&our_container);
         }
 
