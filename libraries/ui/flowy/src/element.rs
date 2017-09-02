@@ -12,10 +12,10 @@ pub struct Element {
 
     style: Style,
     behavior: ElementBehavior,
-    text_internal: Option<ElementText>,
 
     // Cache data
-    pub(crate) positioning: Positioning,
+    text_internal: Option<ElementText>,
+    positioning: Positioning,
 
     // Input state
     pub(crate) cursor_state: ElementCursorState,
@@ -24,14 +24,15 @@ pub struct Element {
 }
 
 impl Element {
+    /// Creates a new element with the given style.
     pub fn new(style: Style) -> Self {
         Element {
             inner_id: -1,
 
             style,
             behavior: ElementBehavior::Passive,
-            text_internal: None,
 
+            text_internal: None,
             positioning: Positioning::new(),
 
             cursor_state: ElementCursorState::None,
@@ -40,28 +41,55 @@ impl Element {
         }
     }
 
+    /// Gets the style, which defines how the element looks on screen.
     pub fn style(&self) -> &Style {
         &self.style
     }
 
+    /// Gets the style as mutable.
     pub fn style_mut(&mut self) -> &mut Style {
         &mut self.style
     }
 
+    /// Sets the style.
     pub fn set_style(&mut self, value: Style) {
         self.style = value;
     }
 
+    /// Gets the behavior, which defines how the element responds to input.
     pub fn behavior(&self) -> &ElementBehavior {
         &self.behavior
     }
 
+    /// Gets the behavior as mutable.
     pub fn behavior_mut(&mut self) -> &mut ElementBehavior {
         &mut self.behavior
     }
 
+    /// Sets the behavior.
     pub fn set_behavior(&mut self, value: ElementBehavior) {
         self.behavior = value;
+    }
+
+    /// Retrieves the text from the internal text data, or returns an empty string.
+    pub fn text(&self) -> &str {
+        if let Some(ref element_text) = self.text_internal {
+            element_text.text()
+        } else {
+            ""
+        }
+    }
+
+    /// Sets the text content of this element.
+    pub fn set_text<S: Into<String>>(&mut self, text: S) {
+        let text = text.into();
+
+        if let Some(ref mut element_text) = self.text_internal {
+            element_text.set_text(text);
+            return;
+        }
+
+        self.text_internal = Some(ElementText::new(text));
     }
 
     /// Gets the internal text structure, which contains caching data.
@@ -69,13 +97,17 @@ impl Element {
         &self.text_internal
     }
 
-    /// Gets the internal text structure, which contains caching data.
+    /// Gets the internal text structure as mutable, which contains caching data.
     pub fn text_internal_mut(&mut self) -> &mut Option<ElementText> {
         &mut self.text_internal
     }
 
     pub fn positioning(&self) -> &Positioning {
         &self.positioning
+    }
+
+    pub fn positioning_mut(&mut self) -> &mut Positioning {
+        &mut self.positioning
     }
 
     pub fn cursor_state(&self) -> ElementCursorState {
@@ -106,27 +138,6 @@ impl Element {
     /// currently focuses them.
     pub fn focused(&self) -> bool {
         self.focused
-    }
-
-    /// Retrieves the text from the inner text data, or returns an empty string.
-    pub fn text(&self) -> &str {
-        if let Some(ref element_text) = self.text_internal {
-            element_text.text()
-        } else {
-            ""
-        }
-    }
-
-    /// Sets the text content of this element.
-    pub fn set_text<S: Into<String>>(&mut self, text: S) {
-        let text = text.into();
-
-        if let Some(ref mut element_text) = self.text_internal {
-            element_text.set_text(text);
-            return;
-        }
-
-        self.text_internal = Some(ElementText::new(text));
     }
 
     pub fn update_layout(

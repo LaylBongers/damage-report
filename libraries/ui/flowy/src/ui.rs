@@ -122,7 +122,7 @@ impl Ui {
 
                     // Check if the mouse is over this and if so set it to hovering
                     // TODO: Make use of a layering value calculated during calculate_positioning
-                    if element.positioning.container.contains(self.cursor_position) {
+                    if element.positioning().container.contains(self.cursor_position) {
                         // Remember this element so we can update it later if it's indeed on top
                         self.cursor_active_element = Some(ElementId(id));
                     }
@@ -196,7 +196,7 @@ impl Ui {
             );
 
             // Calculate the flow data needed by the children based on this element's flow data
-            our_container = element.positioning.container.clone();
+            our_container = element.positioning_mut().container.clone();
             our_padding = element.style().padding.clone();
             child_flow_direction = element.style().flow_direction;
             child_flow_margin = element.style().padding.left;
