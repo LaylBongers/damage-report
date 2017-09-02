@@ -3,7 +3,7 @@ use palette::pixel::{Srgb};
 use screenmath::{Lrtb};
 
 use style::{Style, Size, Position, SideH, SideV, SizeValue, color_highlight, color_active};
-use {Element, ElementId, Ui, ElementMode};
+use {Element, ElementId, Ui, ElementBehavior};
 
 /// A ribbon toolbar container. Useful as an alternative for traditional toolbars.
 pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
@@ -14,7 +14,7 @@ pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
         .. Style::new()
     };
     let mut ribbon = Element::new(ribbon_style.clone());
-    ribbon.mode = ElementMode::Clickable;
+    ribbon.behavior = ElementBehavior::Clickable;
     let ribbon_id = ui.elements.add_child(ribbon, parent);
 
     let ribbon_buttons = Element::new(Style {
@@ -54,7 +54,7 @@ pub fn ribbon_buton(label: &str, parent: ElementId, ui: &mut Ui) -> ElementId {
     };
 
     let mut button = Element::new(button_style.clone());
-    button.mode = ElementMode::Clickable;
+    button.behavior = ElementBehavior::Clickable;
     let button_id = ui.elements.add_child(button, parent);
 
     let button_image = Element::new(button_image_style.clone());

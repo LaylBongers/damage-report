@@ -11,7 +11,7 @@ pub struct Element {
     pub(crate) inner_id: i32,
 
     pub style: Style,
-    pub mode: ElementMode,
+    pub behavior: ElementBehavior,
     pub text: Option<ElementText>,
 
     // Cache data
@@ -29,7 +29,7 @@ impl Element {
             inner_id: -1,
 
             style,
-            mode: ElementMode::Passive,
+            behavior: ElementBehavior::Passive,
             text: None,
 
             positioning: Positioning::new(),
@@ -45,6 +45,22 @@ impl Element {
         let mut element = Self::new(style);
         element.set_text(text);
         element
+    }
+
+    pub fn style(&self) -> &Style {
+        &self.style
+    }
+
+    pub fn style_mut(&mut self) -> &mut Style {
+        &mut self.style
+    }
+
+    pub fn behavior(&self) -> &ElementBehavior {
+        &self.behavior
+    }
+
+    pub fn behavior_mut(&mut self) -> &mut ElementBehavior {
+        &mut self.behavior
     }
 
     pub fn positioning(&self) -> &Positioning {
@@ -170,7 +186,7 @@ impl Element {
 
 /// The type of input an element takes.
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ElementMode {
+pub enum ElementBehavior {
     /// Does not respond to mouse input.
     Passive,
     /// Blocks mouse input, detects click events, uses hover and active styling.

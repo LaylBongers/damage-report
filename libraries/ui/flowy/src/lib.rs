@@ -12,7 +12,7 @@ mod element;
 mod elements;
 mod ui;
 
-pub use element::{Element, ElementCursorState, ElementMode, Positioning, ElementText};
+pub use element::{Element, ElementCursorState, ElementBehavior, Positioning, ElementText};
 pub use elements::{Elements, ElementId};
 pub use ui::{Ui, FontId};
 

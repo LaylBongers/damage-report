@@ -4,7 +4,7 @@ use input::{Input, Motion, Button, MouseButton, Key, ButtonState, ButtonArgs};
 use rusttype::{Font};
 
 use style::{Size, FlowDirection};
-use {ElementCursorState, ElementMode, Elements, ElementId};
+use {ElementCursorState, ElementBehavior, Elements, ElementId};
 
 /// Represents a font by index in the font list.
 // TODO: Make this more of an opaque type, it should just be an arbitrary font reference.
@@ -116,7 +116,7 @@ impl Ui {
             for id in 0..all_elements.len() {
                 if let Some(ref element) = all_elements[id] {
                     // Make sure this element actually captures mouse input
-                    if element.mode == ElementMode::Passive {
+                    if element.behavior == ElementBehavior::Passive {
                         continue;
                     }
 
@@ -147,7 +147,7 @@ impl Ui {
 
                 // If the element clicked on was a text field, set it as the active text element so
                 // it can be rendered focused and receive input
-                if element.mode == ElementMode::TextField {
+                if element.behavior == ElementBehavior::TextField {
                     element.focused = true;
                     self.text_active_element = Some(id);
                 }

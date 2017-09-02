@@ -2,7 +2,7 @@ use palette::pixel::{Srgb};
 use screenmath::{Lrtb};
 
 use style::{Style, Size, SideH, SideV, color_highlight, color_active};
-use {Ui, Element, ElementId, ElementMode};
+use {Ui, Element, ElementId, ElementBehavior};
 
 /// A clickable button.
 pub fn button(label: &str, parent_id: ElementId, ui: &mut Ui) -> ElementId {
@@ -23,6 +23,6 @@ pub fn button(label: &str, parent_id: ElementId, ui: &mut Ui) -> ElementId {
 
     let mut submit_button = Element::new(button_style.clone());
     submit_button.set_text(label);
-    submit_button.mode = ElementMode::Clickable;
+    submit_button.behavior = ElementBehavior::Clickable;
     ui.elements.add_child(submit_button, parent_id)
 }

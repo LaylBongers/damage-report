@@ -7,9 +7,9 @@ use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
 use calcium_flowy::{FlowyRenderer};
-use flowy::{Ui, Element, ElementId, widget};
+use flowy::{Ui, Element, ElementId};
 use flowy::style::{Style, Position, Size, SideH, SideV};
-use flowy::widget::{FileDialog};
+use flowy::widget::{self, FileDialog/*, ProgressBar*/};
 
 use carpenter_model::{MapEditor};
 

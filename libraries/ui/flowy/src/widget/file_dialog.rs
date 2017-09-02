@@ -6,7 +6,7 @@ use screenmath::{Lrtb};
 
 use widget;
 use style::{Style, Size, Position, SideH, SideV, SizeValue, FlowDirection, color_active};
-use {Ui, Element, ElementId, ElementMode};
+use {Ui, Element, ElementId, ElementBehavior};
 
 /// A dialog window that allows the user to select a file path.
 pub struct FileDialog {
@@ -31,7 +31,7 @@ impl FileDialog {
             background_color: Some(Srgb::with_alpha(0.0, 0.0, 0.0, 0.5).into()),
             .. Style::new()
         });
-        shade.mode = ElementMode::Clickable;
+        shade.behavior = ElementBehavior::Clickable;
         let shade_id = ui.elements.add_child(shade, parent_id);
 
         // Build up the actual dialog itself
@@ -73,13 +73,13 @@ impl FileDialog {
         let mut directory_textfield = Element::with_text(
             directory.to_str().unwrap(), textfield_style.clone()
         );
-        directory_textfield.mode = ElementMode::TextField;
+        directory_textfield.behavior = ElementBehavior::TextField;
         let directory_textfield_id = ui.elements.add_child(directory_textfield, dialog_id);
 
         // Add the file field
         ui.elements.add_child(Element::with_text("File Name", label_style.clone()), dialog_id);
         let mut filename_textfield = Element::with_text("my_map.carpenter", textfield_style.clone());
-        filename_textfield.mode = ElementMode::TextField;
+        filename_textfield.behavior = ElementBehavior::TextField;
         let filename_textfield_id = ui.elements.add_child(filename_textfield, dialog_id);
 
         // Create the submit and cancel buttons
