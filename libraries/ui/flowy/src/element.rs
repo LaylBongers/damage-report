@@ -256,7 +256,7 @@ pub struct ElementText {
     glyphs: Option<Vec<(GlyphId, Point<f32>)>>,
 
     // This is stuff for the renderer to touch
-    // TODO: Investigate if this is still used
+    // TODO: Investigate if this is still used and if so how it's used
     pub cache_stale: bool,
     // TODO: Previously the renderer would use this rect to know when to reposition glyphs, but the
     // new layout glyphs system doesn't use it, make sure it moves glyphs when needed.

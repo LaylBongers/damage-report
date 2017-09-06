@@ -8,7 +8,7 @@ cgmath = "0.15"
 #collision = "0.10" TODO: Remove the git dependency when it's on crates.io
 collision = {git = "https://github.com/kvark/collision-rs.git"}
 slog = "2"
-vulkano = "0.6"
+vulkano = "0.6.2"
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
 calcium-rendering-vulkano-shaders = {path = "../calcium-rendering-vulkano-shaders"}

@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
-vulkano = "0.6"
+vulkano = "0.6.2"
 
 [build-dependencies]
 vulkano-shaders = "0.6"

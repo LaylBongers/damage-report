@@ -30,7 +30,3 @@ carpenter-model = {path = "../carpenter-model"}
 opt-level = 1
 #opt-level = 2
 #opt-level = 3
-
-# TODO: Remove this once the fix is published
-[replace]
-"vulkano:0.6.1" = { git = "https://github.com/vulkano-rs/vulkano.git" }
