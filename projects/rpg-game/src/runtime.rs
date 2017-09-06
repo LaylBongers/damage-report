@@ -76,9 +76,12 @@ impl <R: Renderer> FriendlyUnit<R> {
             ));
             batches.push(selectiontexture);
         }
-
-
-
+    }
+    pub fn get_position(&mut self) -> Point2<f32> {
+        self.position
+    }
+    pub fn get_name(&mut self) -> &String {
+        &self.name
     }
 }
 
@@ -102,6 +105,9 @@ impl Runtime for StaticRuntime {
         let mut simple2d_render_target = Simple2DRenderTarget::new(
             true, &renderer, &window_renderer, &simple2d_renderer
         );
+        let mut simple2d_render_target_ui = Simple2DRenderTarget::new(
+            false, &renderer, &window_renderer, &simple2d_renderer
+        );
 
         let mut ui_renderer = FlowyRenderer::new(&mut renderer)?;
         let mut ui = Ui::new();
@@ -113,7 +119,7 @@ impl Runtime for StaticRuntime {
         ui.fonts.push(font);
 
         let mut fps = Element::new(Style {
-            position: Position::Relative(Vector2::new(0.0, 0.0), SideH::Right, SideV::Top),
+            position: Position::Relative(Point2::new(0.0, 0.0), SideH::Right, SideV::Top),
             size: Size::units(120.0, 14.0),
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
             text_size: 14.0,
@@ -190,6 +196,12 @@ impl Runtime for StaticRuntime {
 
             let pinput = PlayerInput {w: up_pressed, a: left_pressed, s: down_pressed, d: right_pressed, tab: tab_pressed};
 
+            {
+                let fpso = &mut ui.elements[fps_id];
+                fpso.style_mut().position = Position::Relative(players_units[selected_unit].get_position(), SideH::Left, SideV::Top);
+                fpso.set_text(players_units[selected_unit].get_name().clone());
+            }
+
 // TODO: kill this
             tabrelease -= delta;
             if tabrelease <= 0.0 && tab_pressed {
@@ -222,13 +234,14 @@ impl Runtime for StaticRuntime {
             )?;
 
             simple2d_renderer.render(
-                &ui_batches, &mut simple2d_render_target,
-                &mut renderer, &mut window_renderer, &mut frame
-            );
-            simple2d_renderer.render(
                 &batches, &mut simple2d_render_target,
                 &mut renderer, &mut window_renderer, &mut frame
             );
+            simple2d_renderer.render(
+                &ui_batches, &mut simple2d_render_target_ui,
+                &mut renderer, &mut window_renderer, &mut frame
+            );
+
             window_renderer.finish_frame(&mut renderer, frame);
             window.swap_buffers();
         }
