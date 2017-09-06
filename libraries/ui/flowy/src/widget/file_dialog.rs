@@ -1,6 +1,6 @@
 use std::path::{PathBuf};
 
-use cgmath::{Vector2, Zero};
+use cgmath::{Point2};
 use palette::pixel::{Srgb};
 use screenmath::{Lrtb};
 
@@ -26,7 +26,7 @@ impl FileDialog {
     pub fn new(directory: PathBuf, parent_id: ElementId, ui: &mut Ui) -> Self {
         // Transparent shade that blocks off the background, making this a modal dialog
         let mut shade = Element::new(Style {
-            position: Position::Relative(Vector2::zero(), SideH::Left, SideV::Top),
+            position: Position::Relative(Point2::new(0.0, 0.0), SideH::Left, SideV::Top),
             size: Size::scale(1.0, 1.0),
             background_color: Some(Srgb::with_alpha(0.0, 0.0, 0.0, 0.5).into()),
             .. Style::new()
@@ -36,7 +36,7 @@ impl FileDialog {
 
         // Build up the actual dialog itself
         let dialog = Element::new(Style {
-            position: Position::Relative(Vector2::zero(), SideH::Center, SideV::Center),
+            position: Position::Relative(Point2::new(0.0, 0.0), SideH::Center, SideV::Center),
             size: Size::units(480.0, 240.0),
             padding: Lrtb::uniform(6.0),
             flow_direction: FlowDirection::Down,
@@ -89,7 +89,7 @@ impl FileDialog {
         // Create the submit and cancel buttons
         let buttons = Element::new(Style {
             // This position should counter-act the buttons' margins
-            position: Position::Relative(Vector2::new(6.0, 6.0), SideH::Right, SideV::Bottom),
+            position: Position::Relative(Point2::new(6.0, 6.0), SideH::Right, SideV::Bottom),
             // Button sizes + margins TODO: Auto-Size
             size: Size::units(90.0*2.0 + 6.0*3.0, 24.0 + 6.0*2.0),
             .. Style::new()

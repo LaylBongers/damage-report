@@ -1,4 +1,4 @@
-use cgmath::{Vector2, Point3};
+use cgmath::{Point2, Point3};
 use input::{Input};
 use palette::pixel::{Srgb};
 use rusttype::{FontCollection};
@@ -48,7 +48,7 @@ impl<R: Renderer> UiView<R> {
 
         // Add a FPS label
         let fps = Element::new(Style {
-            position: Position::Relative(Vector2::new(0.0, 0.0), SideH::Right, SideV::Top),
+            position: Position::Relative(Point2::new(0.0, 0.0), SideH::Right, SideV::Top),
             size: Size::units(120.0, 14.0),
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
             text_size: 14.0,

@@ -1,4 +1,4 @@
-use cgmath::{Vector2};
+use cgmath::{Point2};
 use palette::pixel::{Srgb};
 use screenmath::{Lrtb};
 
@@ -18,7 +18,7 @@ pub fn ribbon(parent: ElementId, ui: &mut Ui) -> ElementId {
     let ribbon_id = ui.elements.add_child(ribbon, parent);
 
     let ribbon_buttons = Element::new(Style {
-        position: Position::Relative(Vector2::new(0.0, 24.0), SideH::Left, SideV::Top),
+        position: Position::Relative(Point2::new(0.0, 24.0), SideH::Left, SideV::Top),
         size: Size::new(SizeValue::Scale(1.0), SizeValue::Units(84.0)),
         .. Style::new()
     });
@@ -46,7 +46,7 @@ pub fn ribbon_buton(label: &str, parent: ElementId, ui: &mut Ui) -> ElementId {
     };
     let button_text_style = Style {
         size: Size::units(60.0, 14.0),
-        position: Position::Relative(Vector2::new(0.0, 0.0), SideH::Left, SideV::Bottom),
+        position: Position::Relative(Point2::new(0.0, 0.0), SideH::Left, SideV::Bottom),
         text_size: 14.0,
         text_color: Srgb::new(1.0, 1.0, 1.0).into(),
         text_align: (SideH::Center, SideV::Top),

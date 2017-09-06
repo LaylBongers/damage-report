@@ -1,11 +1,11 @@
-use cgmath::{Vector2};
+use cgmath::{Point2};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Position {
     /// Positions the element using previous elements.
     Flow,
     /// Positions the element using a position relative to the parent.
-    Relative(Vector2<f32>, SideH, SideV),
+    Relative(Point2<f32>, SideH, SideV),
 }
 
 impl Position {
