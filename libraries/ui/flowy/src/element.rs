@@ -199,10 +199,21 @@ impl Element {
             *flow_margin = style.margin.right;
         }
 
-        // Store the calculated data
-        self.positioning = Positioning {
+        let positioning = Positioning {
             container: Rectangle::start_size(position, size),
         };
+
+        // Check if the positioning is different, if it is we need to invalidate the text
+        // TODO: Re-position glyphs instead
+        if self.positioning != positioning {
+            if let Some(ref mut text) = self.text_internal {
+                text.glyphs = None;
+                text.cache_stale = true;
+            }
+        }
+
+        // Store the calculated data
+        self.positioning = positioning;
     }
 }
 
@@ -218,7 +229,7 @@ pub enum ElementBehavior {
 }
 
 /// Cached layout positioning data for an element.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Positioning {
     pub container: Rectangle<f32>,
 }
@@ -245,6 +256,7 @@ pub struct ElementText {
     glyphs: Option<Vec<(GlyphId, Point<f32>)>>,
 
     // This is stuff for the renderer to touch
+    // TODO: Investigate if this is still used
     pub cache_stale: bool,
     // TODO: Previously the renderer would use this rect to know when to reposition glyphs, but the
     // new layout glyphs system doesn't use it, make sure it moves glyphs when needed.
