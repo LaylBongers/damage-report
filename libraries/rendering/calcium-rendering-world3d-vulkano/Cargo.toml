@@ -5,8 +5,7 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
 cgmath = "0.15"
-#collision = "0.10" TODO: Remove the git dependency when it's on crates.io
-collision = {git = "https://github.com/kvark/collision-rs.git"}
+collision = "0.11"
 slog = "2"
 vulkano = "0.6.2"
 calcium-rendering = {path = "../calcium-rendering"}

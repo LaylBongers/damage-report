@@ -10,5 +10,4 @@ serde = "1"
 serde_derive = "1"
 serde_json = "1"
 cgmath = { version = "0.15", features = ["serde"] }
-#collision = "0.10" TODO: Remove the git dependency when it's on crates.io
-collision = {git = "https://github.com/kvark/collision-rs.git"}
+collision = "0.11"
