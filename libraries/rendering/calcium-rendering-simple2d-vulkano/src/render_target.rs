@@ -5,6 +5,7 @@ use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::framebuffer::{Subpass, RenderPassAbstract, Framebuffer, FramebufferAbstract};
 use vulkano::format::{ClearValue};
 use vulkano::image::swapchain::{SwapchainImage};
+use vulkano::descriptor::descriptor_set::{FixedSizeDescriptorSetsPool};
 
 use calcium_rendering::{Renderer};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
@@ -15,6 +16,7 @@ use {VkVertex, VulkanoSimple2DRenderer};
 pub struct VulkanoSimple2DRenderTargetRaw {
     render_pass: Arc<RenderPassAbstract + Send + Sync>,
     pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    set_pool: FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
     should_clear: bool,
 
@@ -24,6 +26,12 @@ pub struct VulkanoSimple2DRenderTargetRaw {
 impl VulkanoSimple2DRenderTargetRaw {
     pub fn pipeline(&self) -> &Arc<GraphicsPipelineAbstract + Send + Sync> {
         &self.pipeline
+    }
+
+    pub fn set_pool_mut(
+        &mut self
+    ) -> &mut FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>> {
+        &mut self.set_pool
     }
 
     pub fn framebuffer_for(
@@ -114,6 +122,12 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
             .build(renderer.device().clone()).unwrap()
         ) as Arc<GraphicsPipeline<SingleBufferDefinition<VkVertex>, _, _>>;
 
+        // Create specialized set pools for more efficient rendering
+        let set_pool = FixedSizeDescriptorSetsPool::new(
+            pipeline.clone() as Arc<GraphicsPipelineAbstract + Send + Sync>,
+            0
+        );
+
         // Create the swapchain framebuffers for this render pass
         let framebuffers = create_framebuffers(
             window_renderer.swapchain.images(),
@@ -124,6 +138,7 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
         VulkanoSimple2DRenderTargetRaw {
             render_pass,
             pipeline,
+            set_pool,
             framebuffers,
             should_clear,
             framebuffers_images_id,

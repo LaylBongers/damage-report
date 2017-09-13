@@ -4,7 +4,6 @@ use cgmath::{self, Vector2};
 use vulkano::sync::{GpuFuture};
 use vulkano::pipeline::viewport::{Viewport};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
-use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::buffer::cpu_pool::{CpuBufferPool, CpuBufferPoolSubbuffer};
 use vulkano::memory::pool::{StdMemoryPool};
@@ -102,13 +101,11 @@ impl VulkanoSimple2DRenderer {
         let mode_data_buffer = self.mode_buffers[mode_id].clone();
 
         // Create the uniform data set to send over
-        // TODO: Wait for vulkano to add
-        let set = Arc::new(
-            PersistentDescriptorSet::start(render_target.raw.pipeline().clone(), 0)
-                .add_buffer(matrix_data_buffer.clone()).unwrap()
-                .add_sampled_image(image.clone(), sampler.clone()).unwrap()
-                .add_buffer(mode_data_buffer).unwrap()
-                .build().unwrap()
+        let set = Arc::new(render_target.raw.set_pool_mut().next()
+            .add_buffer(matrix_data_buffer.clone()).unwrap()
+            .add_sampled_image(image.clone(), sampler.clone()).unwrap()
+            .add_buffer(mode_data_buffer).unwrap()
+            .build().unwrap()
         );
 
         // Add the draw command to the command buffer
