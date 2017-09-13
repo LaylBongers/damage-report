@@ -1,4 +1,5 @@
 use std::sync::{Arc};
+use std::cmp::{min, max};
 
 use cgmath::{Vector2};
 use vulkano::device::{Queue};
@@ -79,12 +80,26 @@ impl WindowSwapchain {
         self.images_id
     }
 
-    pub fn resize(&mut self, size: Vector2<u32>) {
+    /// Resizes the swapchain, returns the actual size it was resized to which may be different
+    /// from the requested size.
+    pub fn resize(
+        &mut self, mut size: Vector2<u32>, renderer: &VulkanoRenderer, surface: &Arc<Surface>,
+    ) -> Vector2<u32> {
+        // Limit to the size the surface's capabilities allow
+        let caps = surface.capabilities(renderer.device().physical_device()).unwrap();
+        size.x = max(size.x, caps.min_image_extent[0]);
+        size.y = max(size.y, caps.min_image_extent[1]);
+        size.x = min(size.x, caps.max_image_extent[0]);
+        size.y = min(size.y, caps.max_image_extent[1]);
+
+        // Perform the actual resize
         let (swapchain, images) = self.swapchain.recreate_with_dimension(size.into()).unwrap();
         self.swapchain = swapchain;
         self.images = images;
 
         self.images_id += 1;
+
+        size
     }
 
     pub fn cleanup_finished_frames(&mut self) {

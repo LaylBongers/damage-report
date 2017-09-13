@@ -35,10 +35,9 @@ impl VulkanoWindowRenderer {
 
     pub fn queue_resize(&mut self, size: Vector2<u32>) {
         // Limit to at least 1x1 in size, we crash otherwise.
-        let size = Vector2::new(
-            if size.x > 0 {size.x} else {1},
-            if size.y > 0 {size.y} else {1},
-        );
+        if size.x <= 0 || size.y <= 0 {
+            return
+        }
 
         // We can be spammed with resize events many times in the same frame, so defer changing the
         //  swapchain.
@@ -52,12 +51,13 @@ impl VulkanoWindowRenderer {
 }
 
 impl WindowRenderer<VulkanoRenderer> for VulkanoWindowRenderer {
-    fn start_frame(&mut self, _renderer: &mut VulkanoRenderer) -> VulkanoFrame {
+    fn start_frame(&mut self, renderer: &mut VulkanoRenderer) -> VulkanoFrame {
         self.swapchain.cleanup_finished_frames();
 
         // Before we render, see if we need to execute a queued resize
         if self.queued_resize {
-            self.swapchain.resize(self.size);
+            // Overwrite the size with the actual size we were changed to
+            self.size = self.swapchain.resize(self.size, renderer, &self.surface);
             self.queued_resize = false;
         }
 
