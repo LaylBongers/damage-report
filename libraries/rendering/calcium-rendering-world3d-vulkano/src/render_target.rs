@@ -7,6 +7,7 @@ use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::depth_stencil::{DepthStencil, Compare};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
 use vulkano::image::swapchain::{SwapchainImage};
+use vulkano::descriptor::descriptor_set::{FixedSizeDescriptorSetsPool};
 
 use calcium_rendering::{Renderer, Viewport, WindowRenderer};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
@@ -26,6 +27,8 @@ pub struct VulkanoWorld3DRenderTargetRaw {
     window_framebuffers_images_id: usize,
 
     viewport: Viewport,
+
+    pub geometry_set_pool: FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>>,
 }
 
 impl VulkanoWorld3DRenderTargetRaw {
@@ -107,6 +110,9 @@ impl World3DRenderTargetRaw<VulkanoRenderer, VulkanoWorld3DRenderer> for Vulkano
         );
         let window_framebuffers_images_id = window_renderer.swapchain.images_id();
 
+        // Create specialized set pools for more efficient rendering
+        let geometry_set_pool = FixedSizeDescriptorSetsPool::new(geometry_pipeline.clone(), 0);
+
         VulkanoWorld3DRenderTargetRaw {
             geometry_buffer,
             geometry_pipeline,
@@ -117,6 +123,8 @@ impl World3DRenderTargetRaw<VulkanoRenderer, VulkanoWorld3DRenderer> for Vulkano
             window_framebuffers_images_id,
 
             viewport,
+
+            geometry_set_pool,
         }
     }
 }

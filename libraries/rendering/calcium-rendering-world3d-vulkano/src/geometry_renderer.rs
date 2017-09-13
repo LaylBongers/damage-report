@@ -5,7 +5,6 @@ use collision::{Frustum, Relation};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
-use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::pipeline::viewport::{Viewport as ViewportVk};
 
 use calcium_rendering::{Error, Viewport};
@@ -22,13 +21,13 @@ impl GeometryRenderer {
     pub fn new(
         _renderer: &VulkanoRenderer,
     ) -> Result<Self, Error> {
-        Ok(GeometryRenderer {})
+        Ok(GeometryRenderer { })
     }
 
     pub fn build_command_buffer(
         &self,
         world: &RenderWorld<VulkanoRenderer, VulkanoWorld3DRenderer>, camera: &Camera,
-        rendertarget: &World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
+        rendertarget: &mut World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
         renderer: &mut VulkanoRenderer,
         viewport: &Viewport,
     ) -> AutoCommandBufferBuilder {
@@ -80,7 +79,7 @@ impl GeometryRenderer {
     fn render_entity(
         &self,
         entity: &Entity<VulkanoRenderer, VulkanoWorld3DRenderer>,
-        rendertarget: &World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
+        rendertarget: &mut World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
         renderer: &mut VulkanoRenderer,
         projection_view: &Matrix4<f32>, culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,
@@ -113,12 +112,8 @@ impl GeometryRenderer {
         ).unwrap();
 
         // Create the final uniforms set
-        // TODO: Figure out if there's any performance problems with creating sets every frame, and
-        //  if so how to solve that problem.
         let material = &entity.material;
-        let set = Arc::new(PersistentDescriptorSet::start(
-                rendertarget.raw.geometry_pipeline.clone(), 0
-            )
+        let set = Arc::new(rendertarget.raw.geometry_set_pool.next()
             .add_buffer(matrix_data_buffer.clone()).unwrap()
             .add_sampled_image(
                 material.base_color.raw.image().clone(),
