@@ -46,6 +46,7 @@ impl GeometryRenderer {
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
+            ClearValue::Float([0.0, 0.0, 0.0, 1.0]),
             ClearValue::Depth(0.0)
         );
         command_buffer_builder = command_buffer_builder.begin_render_pass(
