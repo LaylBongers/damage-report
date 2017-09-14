@@ -151,12 +151,12 @@ impl TextureRaw<VulkanoRenderer> for VulkanoTextureRaw {
         let (buffer, size) = match builder.source {
             TextureSource::File(ref path) =>
                 buffer_and_size_from_path(path, &builder, renderer)?,
-            TextureSource::GreyscaleBytes { bytes, size } => {
+            TextureSource::GreyscaleBytes { ref bytes, size } => {
                 // TODO: Make this just a warning and support conversion
                 if builder.store_format != TextureStoreFormat::SingleChannel {
                     panic!("Vulkano backend does not support converting greyscale to multi-channel")
                 }
-                (buffer_from_greyscale_bytes(bytes, size, renderer)?, size)
+                (buffer_from_greyscale_bytes(bytes.as_ref(), size, renderer)?, size)
             },
         };
 

@@ -7,7 +7,7 @@ use collision::{Ray3, Plane};
 
 use calcium_rendering::{Error, Renderer, Viewport, WindowRenderer};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh};
+use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh, Model};
 
 use carpenter_model::map::{Brush};
 use carpenter_model::input::{InputModel};
@@ -59,6 +59,14 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
                 .generate_mipmaps()
                 .build(renderer)?,
         };
+
+        let model = Model::load(renderer, "./assets/human.obj", 1.0);
+        render_world.add_entity(Entity {
+            // TODO: Change this to Point3
+            position: Vector3::new(0.0, 0.0, 0.0),
+            mesh: model.meshes[0].clone(),
+            material: material.clone(),
+        });
 
         let last_viewport = Viewport::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0));
 

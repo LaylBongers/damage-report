@@ -27,7 +27,7 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
 
         TextureBuilder {
             source: TextureSource::GreyscaleBytes {
-                bytes: &BLACK_TEXTURE_1PX,
+                bytes: BLACK_TEXTURE_1PX.into(),
                 size: Vector2::new(1, 1),
             },
             store_format: TextureStoreFormat::Srgb,
@@ -48,9 +48,11 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
         self
     }
 
-    pub fn from_greyscale_bytes(mut self, bytes: &'a [u8], size: Vector2<u32>) -> Self {
+    pub fn from_greyscale_bytes<B: Into<TextureBytes<'a>>>(
+        mut self, bytes: B, size: Vector2<u32>
+    ) -> Self {
         self.source = TextureSource::GreyscaleBytes {
-            bytes,
+            bytes: bytes.into(),
             size,
         };
         self
@@ -95,7 +97,33 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
 pub enum TextureSource<'a> {
     File(PathBuf),
     // TODO: Add color bytes
-    GreyscaleBytes { bytes: &'a [u8], size: Vector2<u32> },
+    GreyscaleBytes { bytes: TextureBytes<'a>, size: Vector2<u32> },
+}
+
+pub enum TextureBytes<'a> {
+    Borrowed(&'a [u8]),
+    Owned(Vec<u8>),
+}
+
+impl<'a> AsRef<[u8]> for TextureBytes<'a> {
+    fn as_ref(&self) -> &[u8] {
+        match *self {
+            TextureBytes::Borrowed(bytes) => bytes,
+            TextureBytes::Owned(ref bytes) => &bytes,
+        }
+    }
+}
+
+impl<'a> From<&'a [u8]> for TextureBytes<'a> {
+    fn from(bytes: &'a [u8]) -> Self {
+        TextureBytes::Borrowed(bytes)
+    }
+}
+
+impl From<Vec<u8>> for TextureBytes<'static> {
+    fn from(bytes: Vec<u8>) -> Self {
+        TextureBytes::Owned(bytes)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

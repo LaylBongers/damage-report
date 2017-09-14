@@ -25,6 +25,7 @@ impl WindowController {
         // View
         let mut window_view = WindowView::new(log, init, &mut editor)?;
 
+        info!(log, "Starting Application loop");
         while !window_view.should_close() {
             let delta = timer.tick();
 
@@ -35,7 +36,6 @@ impl WindowController {
             window_view.update(delta, &mut editor, &mut input, log);
             window_view.render()?;
         }
-
         info!(log, "Application has been closed normally");
 
         // If we had a normal close, force a save

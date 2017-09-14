@@ -21,12 +21,12 @@ pub struct FlowyRenderer<R: Renderer> {
 impl<R: Renderer> FlowyRenderer<R> {
     pub fn new(renderer: &mut R) -> Result<Self, Error> {
         // TODO: This can go down to 0.1 again instead of 0.5 when the texture is overwritten
-        // instead of replaced. 
+        // instead of replaced.
         let glyph_cache = Cache::new(512, 512, 0.5, 0.5);
         let glyph_image = GrayImage::from_raw(512, 512, vec![0u8; 512*512]).unwrap();
         let glyph_texture = Texture::new()
             // We will never use this initial texture, so just use something cheap
-            .from_greyscale_bytes(&vec![0u8; 8*8], Vector2::new(8, 8))
+            .from_greyscale_bytes(vec![0u8; 8*8], Vector2::new(8, 8))
             .as_single_channel()
             .with_nearest_sampling()
             .build(renderer)?;
@@ -218,7 +218,7 @@ fn generate_text_batch<R: Renderer>(
         // Upload the glyphs into a texture
         // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
         *glyph_texture = Texture::new()
-            .from_greyscale_bytes(&glyph_image, Vector2::new(512, 512))
+            .from_greyscale_bytes(glyph_image.as_ref(), Vector2::new(512, 512))
             .as_single_channel()
             .with_nearest_sampling()
             .build(renderer)?;

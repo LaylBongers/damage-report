@@ -99,8 +99,8 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         match builder.source {
             TextureSource::File(ref path) =>
                 Self::from_path(path, &builder, renderer),
-            TextureSource::GreyscaleBytes { bytes, size } => {
-                Self::from_greyscale_bytes(bytes, size, &builder, renderer)
+            TextureSource::GreyscaleBytes { ref bytes, size } => {
+                Self::from_greyscale_bytes(bytes.as_ref(), size, &builder, renderer)
             },
         }
     }

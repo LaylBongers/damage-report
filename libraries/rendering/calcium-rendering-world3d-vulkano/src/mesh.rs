@@ -44,7 +44,7 @@ impl MeshRaw<VulkanoRenderer> for VulkanoMeshRaw {
         ).unwrap();
         let index_buffer = CpuAccessibleBuffer::from_iter(
             renderer.device().clone(), BufferUsage::all(),
-            indices.iter().map(|v| *v)
+            indices.into_iter()
         ).unwrap();
 
         debug!(renderer.log(), "Created new mesh";

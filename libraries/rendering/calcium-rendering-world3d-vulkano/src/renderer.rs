@@ -52,6 +52,10 @@ impl World3DRenderer<VulkanoRenderer> for VulkanoWorld3DRenderer {
 
         world3d_rendertarget.raw.resize_framebuffers(renderer, window_renderer, viewport);
 
+        // Give the renderer an opportunity to insert any commands it had queued up, this is used
+        //  to copy textures for example. This always has to be done right before a render pass.
+        let future = renderer.submit_queued_commands(frame.future.take().unwrap());
+
         // Build up the command buffers that contain all the rendering commands, telling the driver
         //  to actually render triangles to buffers. No actual rendering is done here, we just
         //  prepare the render passes and drawcalls.
@@ -68,7 +72,7 @@ impl World3DRenderer<VulkanoRenderer> for VulkanoWorld3DRenderer {
         // TODO: This can be done with a single render pass with subpasses, right now I've just
         //  implemented it with separate submitted command buffers because I understand it better
         //  than subpasses at the moment.
-        let future = frame.future.take().unwrap()
+        let future = future
             .then_execute(renderer.graphics_queue().clone(), geometry_command_buffer)
             .unwrap();
         let future = future
