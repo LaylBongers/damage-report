@@ -115,7 +115,7 @@ impl ButtonModel {
             Input::Button(ButtonArgs {state, button, scancode: _scancode}) => {
                 if button == self.button {
                     self.state = state;
-                    self.pressed = true;
+                    self.pressed = state == ButtonState::Press;
                 }
             }
             _ => {},

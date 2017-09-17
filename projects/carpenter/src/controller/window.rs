@@ -16,10 +16,10 @@ impl WindowController {
     }
 
     pub fn run_loop<I: Initializer>(&mut self, log: &Logger, init: &I) -> Result<(), Error> {
-        let mut input = InputModel::new();
         let mut timer = LoopTimer::start();
 
-        // Model
+        // Models
+        let mut input = InputModel::new();
         let mut editor = MapEditor::new();
 
         // View
