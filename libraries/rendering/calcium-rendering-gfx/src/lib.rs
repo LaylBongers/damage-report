@@ -10,7 +10,7 @@ mod texture;
 mod window_renderer;
 
 pub use renderer::{GfxRenderer};
-pub use texture::{GfxTextureRaw};
+pub use texture::{GfxTextureRaw, GenericView};
 pub use window_renderer::{GfxWindowRenderer, GfxFrame};
 
 pub type ColorFormat = ::gfx::format::Rgba8;
