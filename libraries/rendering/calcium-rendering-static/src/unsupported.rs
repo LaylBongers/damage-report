@@ -34,7 +34,6 @@ mod world3d {
         }
     }
 
-
     pub struct UnsupportedMeshRaw;
 
     impl<R: Renderer> MeshRaw<R> for UnsupportedMeshRaw {

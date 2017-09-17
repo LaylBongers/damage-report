@@ -26,9 +26,10 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
         const BLACK_TEXTURE_1PX: &[u8] = &[0];
 
         TextureBuilder {
-            source: TextureSource::GreyscaleBytes {
+            source: TextureSource::Bytes {
                 bytes: BLACK_TEXTURE_1PX.into(),
                 size: Vector2::new(1, 1),
+                color: false,
             },
             store_format: TextureStoreFormat::Srgb,
             generate_mipmaps: false,
@@ -48,12 +49,13 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
         self
     }
 
-    pub fn from_greyscale_bytes<B: Into<TextureBytes<'a>>>(
-        mut self, bytes: B, size: Vector2<u32>
+    pub fn from_bytes<B: Into<TextureBytes<'a>>>(
+        mut self, bytes: B, size: Vector2<u32>, color: bool,
     ) -> Self {
-        self.source = TextureSource::GreyscaleBytes {
+        self.source = TextureSource::Bytes {
             bytes: bytes.into(),
             size,
+            color,
         };
         self
     }
@@ -96,8 +98,7 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
 
 pub enum TextureSource<'a> {
     File(PathBuf),
-    // TODO: Add color bytes
-    GreyscaleBytes { bytes: TextureBytes<'a>, size: Vector2<u32> },
+    Bytes { bytes: TextureBytes<'a>, size: Vector2<u32>, color: bool },
 }
 
 pub enum TextureBytes<'a> {

@@ -1,13 +1,14 @@
 use std::sync::{Arc};
 
-use cgmath::{Matrix4};
+use cgmath::{Matrix4, Vector2};
 use collision::{Frustum, Relation};
 use vulkano::format::{ClearValue};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::pipeline::viewport::{Viewport as ViewportVk};
 
-use calcium_rendering::{Error, Viewport};
+use calcium_rendering::{Error, Viewport, Renderer};
+use calcium_rendering::texture::{Texture};
 use calcium_rendering_vulkano::{VulkanoRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity, World3DRenderTarget};
@@ -15,13 +16,38 @@ use calcium_rendering_world3d::{Camera, RenderWorld, Entity, World3DRenderTarget
 use {VulkanoWorld3DRenderer};
 
 pub struct GeometryRenderer {
+    default_black: Arc<Texture<VulkanoRenderer>>,
+    default_white: Arc<Texture<VulkanoRenderer>>,
+    default_normal: Arc<Texture<VulkanoRenderer>>,
 }
 
 impl GeometryRenderer {
     pub fn new(
-        _renderer: &VulkanoRenderer,
+        renderer: &mut VulkanoRenderer,
     ) -> Result<Self, Error> {
-        Ok(GeometryRenderer { })
+        const BLACK_TEXTURE_1PX: &[u8] = &[0];
+        const WHITE_TEXTURE_1PX: &[u8] = &[255u8];
+        const NORMAL_TEXTURE_1PX: &[u8] = &[126u8, 126u8, 126u8, 255u8];
+
+        info!(renderer.log(), "Creating default material textures");
+        let default_black = Texture::new()
+            .from_bytes(BLACK_TEXTURE_1PX, Vector2::new(1, 1), false)
+            .as_single_channel()
+            .build(renderer)?;
+        let default_white = Texture::new()
+            .from_bytes(WHITE_TEXTURE_1PX, Vector2::new(1, 1), false)
+            .as_single_channel()
+            .build(renderer)?;
+        let default_normal = Texture::new()
+            .from_bytes(NORMAL_TEXTURE_1PX, Vector2::new(1, 1), true)
+            .as_linear()
+            .build(renderer)?;
+
+        Ok(GeometryRenderer {
+            default_black,
+            default_white,
+            default_normal,
+        })
     }
 
     pub fn build_command_buffer(
@@ -113,27 +139,30 @@ impl GeometryRenderer {
 
         // Create the final uniforms set
         let material = &entity.material;
+        let base_color = material.base_color.as_ref().unwrap_or(&self.default_white);
+        let normal_map = material.normal_map.as_ref().unwrap_or(&self.default_normal);
+        let metallic_map = material.metallic_map.as_ref().unwrap_or(&self.default_black);
+        let roughness_map = material.roughness_map.as_ref().unwrap_or(&self.default_white);
+        let ambient_occlusion_map = material.ambient_occlusion_map
+            .as_ref().unwrap_or(&self.default_white);
+
         let set = Arc::new(rendertarget.raw.geometry_set_pool.next()
             .add_buffer(matrix_data_buffer.clone()).unwrap()
             .add_sampled_image(
-                material.base_color.raw.image().clone(),
-                material.base_color.raw.sampler().clone()
+                base_color.raw.image().clone(), base_color.raw.sampler().clone()
             ).unwrap()
             .add_sampled_image(
-                material.normal_map.raw.image().clone(),
-                material.normal_map.raw.sampler().clone()
+                normal_map.raw.image().clone(), normal_map.raw.sampler().clone()
             ).unwrap()
             .add_sampled_image(
-                material.metallic_map.raw.image().clone(),
-                material.metallic_map.raw.sampler().clone()
+                metallic_map.raw.image().clone(), metallic_map.raw.sampler().clone()
             ).unwrap()
             .add_sampled_image(
-                material.roughness_map.raw.image().clone(),
-                material.roughness_map.raw.sampler().clone()
+                roughness_map.raw.image().clone(), roughness_map.raw.sampler().clone()
             ).unwrap()
             .add_sampled_image(
-                material.ambient_occlusion_map.raw.image().clone(),
-                material.ambient_occlusion_map.raw.sampler().clone()
+                ambient_occlusion_map.raw.image().clone(),
+                ambient_occlusion_map.raw.sampler().clone()
             ).unwrap()
             .build().unwrap()
         );

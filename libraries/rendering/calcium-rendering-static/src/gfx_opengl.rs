@@ -84,7 +84,7 @@ impl Initializer for GfxOpenGlInitializer {
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
         &self,
-        _renderer: &GfxRenderer<Device, Factory>,
+        _renderer: &mut GfxRenderer<Device, Factory>,
     ) -> Result<UnsupportedWorld3DRenderer, Error> {
         Err(Error::Unsupported("world3d is not supported on this backend".to_string()))
     }

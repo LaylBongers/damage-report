@@ -60,7 +60,7 @@ pub trait Initializer {
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
         &self,
-        renderer: &Self::Renderer,
+        renderer: &mut Self::Renderer,
     ) -> Result<
         Self::World3DRenderer,
         Error

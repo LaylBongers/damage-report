@@ -16,7 +16,7 @@ pub struct VulkanoWorld3DRenderer {
 
 impl VulkanoWorld3DRenderer {
     pub fn new(
-        renderer: &VulkanoRenderer,
+        renderer: &mut VulkanoRenderer,
     ) -> Result<Self, Error> {
         info!(renderer.log(), "Initializing world renderer");
 

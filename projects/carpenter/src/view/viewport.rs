@@ -33,32 +33,36 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
         render_world.directional_light = Vector3::new(1.0, 1.0, 1.0) * 2.5;
         render_world.directional_direction = Vector3::new(1.0, 2.0, 1.5).normalize();
 
-        let material = Material {
-            base_color: Texture::new()
+        let material = Material::new()
+            .with_base_color(Texture::new()
                 .from_file("./assets/texture.png")
                 .generate_mipmaps()
-                .build(renderer)?,
-            normal_map: Texture::new()
+                .build(renderer)?
+            )
+            .with_normal_map(Texture::new()
                 .from_file("./assets/texture_normal.png")
                 .as_linear()
                 .generate_mipmaps()
-                .build(renderer)?,
-            metallic_map: Texture::new()
+                .build(renderer)?
+            )
+            .with_metallic_map(Texture::new()
                 .from_file("./assets/texture_metallic.png")
                 .as_single_channel()
                 .generate_mipmaps()
-                .build(renderer)?,
-            roughness_map: Texture::new()
+                .build(renderer)?
+            )
+            .with_roughness_map(Texture::new()
                 .from_file("./assets/texture_roughness.png")
                 .as_single_channel()
                 .generate_mipmaps()
-                .build(renderer)?,
-            ambient_occlusion_map: Texture::new()
+                .build(renderer)?
+            )
+            .with_ambient_occlusion_map(Texture::new()
                 .from_file("./assets/texture_ambientOcclusion.png")
                 .as_single_channel()
                 .generate_mipmaps()
-                .build(renderer)?,
-        };
+                .build(renderer)?
+            );
 
         let model = Model::load(renderer, "./assets/human.obj", 1.0);
         render_world.add_entity(Entity {

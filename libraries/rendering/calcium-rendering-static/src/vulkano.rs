@@ -72,7 +72,7 @@ impl Initializer for VulkanoInitializer {
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
         &self,
-        renderer: &VulkanoRenderer,
+        renderer: &mut VulkanoRenderer,
     ) -> Result<VulkanoWorld3DRenderer, Error> {
         VulkanoWorld3DRenderer::new(renderer)
     }

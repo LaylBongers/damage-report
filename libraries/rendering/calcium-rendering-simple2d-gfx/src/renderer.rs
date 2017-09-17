@@ -60,7 +60,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
         ).unwrap();
 
         let dummy_texture = Texture::new()
-            .from_greyscale_bytes(vec![255u8; 8*8], Vector2::new(8, 8))
+            .from_bytes(vec![255u8; 8*8], Vector2::new(8, 8), false)
             .as_single_channel()
             .build(renderer)?;
 

@@ -52,8 +52,8 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
         })
     }
 
-    fn from_greyscale_bytes<F: Factory<D::Resources> + 'static>(
-        bytes: &[u8], size: Vector2<u32>,
+    fn from_bytes<F: Factory<D::Resources> + 'static>(
+        bytes: &[u8], size: Vector2<u32>, color: bool,
         builder: &TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>,
     ) -> Result<Self, Error> {
         info!(renderer.log,
@@ -61,7 +61,10 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
         );
 
         // TODO: Support these other options
-        if builder.store_format != TextureStoreFormat::SingleChannel {
+        if !color && builder.store_format != TextureStoreFormat::SingleChannel {
+            panic!("GFX backend does not support converting greyscale to multi-channel");
+        }
+        if color && builder.store_format == TextureStoreFormat::SingleChannel {
             panic!("GFX backend does not support converting greyscale to multi-channel");
         }
 
@@ -99,8 +102,8 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         match builder.source {
             TextureSource::File(ref path) =>
                 Self::from_path(path, &builder, renderer),
-            TextureSource::GreyscaleBytes { ref bytes, size } => {
-                Self::from_greyscale_bytes(bytes.as_ref(), size, &builder, renderer)
+            TextureSource::Bytes { ref bytes, size, color } => {
+                Self::from_bytes(bytes.as_ref(), size, color, &builder, renderer)
             },
         }
     }

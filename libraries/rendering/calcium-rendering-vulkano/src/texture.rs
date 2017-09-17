@@ -151,12 +151,15 @@ impl TextureRaw<VulkanoRenderer> for VulkanoTextureRaw {
         let (buffer, size) = match builder.source {
             TextureSource::File(ref path) =>
                 buffer_and_size_from_path(path, &builder, renderer)?,
-            TextureSource::GreyscaleBytes { ref bytes, size } => {
-                // TODO: Make this just a warning and support conversion
-                if builder.store_format != TextureStoreFormat::SingleChannel {
-                    panic!("Vulkano backend does not support converting greyscale to multi-channel")
+            TextureSource::Bytes { ref bytes, size, color } => {
+                // TODO: Make these just a warnings and support conversion
+                if color && builder.store_format == TextureStoreFormat::SingleChannel {
+                    panic!("Vulkano backend does not support converting color bytes to single-channel, this needs to be added!")
                 }
-                (buffer_from_greyscale_bytes(bytes.as_ref(), size, renderer)?, size)
+                if !color && builder.store_format != TextureStoreFormat::SingleChannel {
+                    panic!("Vulkano backend does not support converting greyscale bytes to color, this needs to be added!")
+                }
+                (buffer_from_bytes(bytes.as_ref(), size, color, renderer)?, size)
             },
         };
 
@@ -195,11 +198,11 @@ fn buffer_and_size_from_path(
     Ok((buffer, size))
 }
 
-fn buffer_from_greyscale_bytes(
-    bytes: &[u8], size: Vector2<u32>, renderer: &mut VulkanoRenderer
+fn buffer_from_bytes(
+    bytes: &[u8], size: Vector2<u32>, color: bool, renderer: &mut VulkanoRenderer
 ) -> Result<Arc<CpuAccessibleBuffer<[u8]>>, Error> {
     info!(renderer.log(),
-        "Loading texture from greyscale data"; "width" => size.x, "height" => size.y
+        "Loading texture from bytes"; "width" => size.x, "height" => size.y, "color" => color
     );
 
     // Load the image data into a buffer
