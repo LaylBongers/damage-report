@@ -5,7 +5,8 @@ use image::{self};
 use gfx::{Device, Factory};
 use gfx::texture::{Kind, Size, AaMode};
 use gfx::format::{Rgba8, Srgba8, R8, Unorm};
-use gfx::handle::{ShaderResourceView};
+use gfx::handle::{ShaderResourceView, RawShaderResourceView};
+use gfx::memory::{Typed};
 
 use calcium_rendering::{Error, CalciumErrorMappable};
 use calcium_rendering::texture::{TextureRaw, TextureBuilder, TextureSource, TextureStoreFormat, SampleMode};
@@ -15,6 +16,15 @@ use {GfxRenderer};
 pub enum GenericView<D: Device + 'static> {
     Rgba8(ShaderResourceView<D::Resources, [f32; 4]>),
     R8(ShaderResourceView<D::Resources, f32>),
+}
+
+impl<D: Device + 'static> GenericView<D> {
+    pub fn raw(&self) -> &RawShaderResourceView<D::Resources> {
+        match *self {
+            GenericView::Rgba8(ref view) => view.raw(),
+            GenericView::R8(ref view) => view.raw(),
+        }
+    }
 }
 
 pub struct GfxTextureRaw<D: Device + 'static> {
@@ -30,36 +40,11 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
             "Loading texture from file"; "path" => path.display().to_string()
         );
 
-        // Load in the image file
-        let img = image::open(path).unwrap().to_rgba();;
+        // Load in the image file TODO: Find ways to avoid this to_rgba conversion
+        let img = image::open(path).unwrap().to_rgba();
         let (width, height) = img.dimensions();
 
-        // TODO: Figure out a way to support single-channel formats, I don't think using the
-        // following in place of Srgba8/Rgba8 will work by itself and I don't currently have time
-        // to test it.
-        //type Sr8 = (R8, Srgb);
-
-        // Load in the texture
-        let kind = Kind::D2(width as Size, height as Size, AaMode::Single);
-        let view = match builder.store_format {
-            TextureStoreFormat::Srgb => GenericView::Rgba8(
-                renderer.factory.create_texture_immutable_u8::<Srgba8>(kind, &[&img])
-                    .map_platform_err()?.1
-            ),
-            TextureStoreFormat::Linear => GenericView::Rgba8(
-                renderer.factory.create_texture_immutable_u8::<Rgba8>(kind, &[&img])
-                    .map_platform_err()?.1
-            ),
-            TextureStoreFormat::SingleChannel =>
-                // TODO: Just show a warning and fall back to multi-channel linear
-                panic!("GFX backend does not support converting multi-channel to greyscale")
-            ,
-        };
-
-        Ok(GfxTextureRaw {
-            view,
-            sample_mode: builder.sample_mode,
-        })
+        Self::from_bytes(&img, Vector2::new(width, height), true, builder, renderer)
     }
 
     fn from_bytes<F: Factory<D::Resources> + 'static>(
@@ -70,14 +55,16 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
             "Loading texture from bytes"; "width" => size.x, "height" => size.y, "color" => color
         );
 
-        // Create image data in RGBA format rather than the R format we got
+        // Convert from the format we have to the format we want
         // TODO: Avoid this step using the following advice:
         //  "create an Upload type buffer, map it, fill it up, then issue copy_buffer_to_texture"
+        let pixels = size.x as usize * size.y as usize;
         let data = if builder.store_format != TextureStoreFormat::SingleChannel {
-            let mut data = vec![4; size.x as usize * size.y as usize * 4];
+            let mut data = vec![4; pixels * 4];
+
             if !color {
                 // Multi-Channel store, Single-Channel source
-                for i in 0..bytes.len() {
+                for i in 0..pixels {
                     unsafe {
                         *data.get_unchecked_mut(i*4 + 0) = bytes[i];
                         *data.get_unchecked_mut(i*4 + 1) = 0;
@@ -87,7 +74,7 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
                 }
             } else {
                 // Multi-Channel store, Multi-Channel source
-                for i in 0..bytes.len() {
+                for i in 0..pixels {
                     unsafe {
                         *data.get_unchecked_mut(i*4 + 0) = bytes[i*4 + 0];
                         *data.get_unchecked_mut(i*4 + 1) = bytes[i*4 + 1];
@@ -98,10 +85,10 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
             }
             data
         } else {
-            let mut data = vec![4; size.x as usize * size.y as usize];
+            let mut data = vec![4; pixels];
             if color { panic!("Currently unsupported conversion from color to greyscale in bytes"); }
 
-            for i in 0..bytes.len() {
+            for i in 0..pixels {
                 unsafe {
                     *data.get_unchecked_mut(i) = bytes[i];
                 }

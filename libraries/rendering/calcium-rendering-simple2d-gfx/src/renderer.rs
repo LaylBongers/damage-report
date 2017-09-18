@@ -1,15 +1,16 @@
 use std::sync::{Arc};
 
 use cgmath::{self, Vector2};
-use gfx::{self, Device, Factory, VertexBuffer, ConstantBuffer, TextureSampler};
+use gfx::{self, Device, Factory, VertexBuffer, ConstantBuffer};
 use gfx::handle::{Sampler, Buffer};
 use gfx::pso::{PipelineState};
+use gfx::pso::resource::{RawShaderResource};
 use gfx::traits::{FactoryExt};
 use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
 use calcium_rendering::{Error};
 use calcium_rendering::texture::{Texture, SampleMode};
-use calcium_rendering_gfx::{GfxRenderer, GfxFrame, ColorFormat, GfxWindowRenderer, GenericView};
+use calcium_rendering_gfx::{GfxRenderer, GfxFrame, ColorFormat, GfxWindowRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, Simple2DRenderTarget};
 
 use {GfxSimple2DRenderTargetRaw};
@@ -29,21 +30,12 @@ gfx_defines!{
         mode: u32 = "u_mode",
     }
 
-    pipeline pipe_color {
+    pipeline pipe {
         vbuf: VertexBuffer<Vertex> = (),
         transform: ConstantBuffer<Transform> = "Transform",
         mode: ConstantBuffer<Mode> = "Mode",
-        texture: TextureSampler<[f32; 4]> = "u_texture",
-        out: gfx::BlendTarget<ColorFormat> = (
-            "Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA
-        ),
-    }
-
-    pipeline pipe_grey {
-        vbuf: VertexBuffer<Vertex> = (),
-        transform: ConstantBuffer<Transform> = "Transform",
-        mode: ConstantBuffer<Mode> = "Mode",
-        texture: TextureSampler<f32> = "u_texture",
+        texture: RawShaderResource = "u_texture",
+        texture_sampler: ::gfx::pso::resource::Sampler = "u_texture",
         out: gfx::BlendTarget<ColorFormat> = (
             "Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA
         ),
@@ -51,8 +43,7 @@ gfx_defines!{
 }
 
 pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + 'static> {
-    pso_color: PipelineState<D::Resources, pipe_color::Meta>,
-    pso_grey: PipelineState<D::Resources, pipe_grey::Meta>,
+    pso: PipelineState<D::Resources, pipe::Meta>,
     dummy_texture: Arc<Texture<GfxRenderer<D, F>>>,
     mode_buffers: Vec<Buffer<D::Resources, Mode>>,
 
@@ -64,15 +55,10 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
     pub fn new(
         renderer: &mut GfxRenderer<D, F>
     ) -> Result<Self, Error> {
-        let pso_color = renderer.factory.create_pipeline_simple(
+        let pso = renderer.factory.create_pipeline_simple(
             include_bytes!("../shaders/simple2d_150_vert.glsl"),
             include_bytes!("../shaders/simple2d_150_frag.glsl"),
-            pipe_color::new()
-        ).unwrap();
-        let pso_grey = renderer.factory.create_pipeline_simple(
-            include_bytes!("../shaders/simple2d_150_vert.glsl"),
-            include_bytes!("../shaders/simple2d_150_frag.glsl"),
-            pipe_grey::new()
+            pipe::new()
         ).unwrap();
 
         let dummy_texture = Texture::new()
@@ -102,7 +88,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
         ));
 
         Ok(GfxSimple2DRenderer {
-            pso_color, pso_grey,
+            pso,
             dummy_texture,
             mode_buffers,
 
@@ -178,35 +164,18 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
             // Get the matching buffer for this shader mode
             let mode_buffer = &self.mode_buffers[mode_id];
 
-            // We render differently based on what kind of texture we have
-            match texture.raw.view {
-                GenericView::Rgba8(ref view) => {
-                    // Gather together all the data we need to render
-                    let data = pipe_color::Data {
-                        vbuf: vertex_buffer,
-                        transform: transform_buffer.clone(),
-                        mode: mode_buffer.clone(),
-                        texture: (view.clone(), sampler.clone()),
-                        out: renderer.color_view.clone(),
-                    };
+            // Gather together all the data we need to render
+            let data = pipe::Data {
+                vbuf: vertex_buffer,
+                transform: transform_buffer.clone(),
+                mode: mode_buffer.clone(),
+                texture: texture.raw.view.raw().clone(),
+                texture_sampler: sampler.clone(),
+                out: renderer.color_view.clone(),
+            };
 
-                    // Finally, add the draw to the encoder
-                    renderer.encoder.draw(&slice, &self.pso_color, &data);
-                },
-                GenericView::R8(ref view) => {
-                    // Gather together all the data we need to render
-                    let data = pipe_grey::Data {
-                        vbuf: vertex_buffer,
-                        transform: transform_buffer.clone(),
-                        mode: mode_buffer.clone(),
-                        texture: (view.clone(), sampler.clone()),
-                        out: renderer.color_view.clone(),
-                    };
-
-                    // Finally, add the draw to the encoder
-                    renderer.encoder.draw(&slice, &self.pso_grey, &data);
-                },
-            }
+            // Finally, add the draw to the encoder
+            renderer.encoder.draw(&slice, &self.pso, &data);
         }
     }
 }
