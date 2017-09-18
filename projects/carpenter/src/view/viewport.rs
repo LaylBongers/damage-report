@@ -64,12 +64,25 @@ impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
                 .build(renderer)?
             );
 
+        // Add a little test model
+        let human_material = Material::new()
+            .with_base_color(Texture::new()
+                .from_file("./assets/human.png")
+                .generate_mipmaps()
+                .build(renderer)?
+            )
+            .with_ambient_occlusion_map(Texture::new()
+                .from_file("./assets/human_ambientOcclusion.png")
+                .as_single_channel()
+                .generate_mipmaps()
+                .build(renderer)?
+            );
         let model = Model::load(renderer, "./assets/human.obj", 1.0);
         render_world.add_entity(Entity {
             // TODO: Change this to Point3
             position: Vector3::new(0.0, 0.0, 0.0),
             mesh: model.meshes[0].clone(),
-            material: material.clone(),
+            material: human_material,
         });
 
         let last_viewport = Viewport::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0));

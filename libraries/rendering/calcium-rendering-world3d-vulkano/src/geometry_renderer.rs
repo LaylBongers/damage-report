@@ -27,7 +27,7 @@ impl GeometryRenderer {
     ) -> Result<Self, Error> {
         const BLACK_TEXTURE_1PX: &[u8] = &[0];
         const WHITE_TEXTURE_1PX: &[u8] = &[255u8];
-        const NORMAL_TEXTURE_1PX: &[u8] = &[126u8, 126u8, 126u8, 255u8];
+        const NORMAL_TEXTURE_1PX: &[u8] = &[126u8, 126u8, 255u8, 255u8];
 
         info!(renderer.log(), "Creating default material textures");
         let default_black = Texture::new()

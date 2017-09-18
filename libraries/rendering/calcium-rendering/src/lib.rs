@@ -2,9 +2,9 @@ extern crate cgmath;
 //#[macro_use]
 extern crate slog;
 
+pub mod texture;
 mod error;
 mod renderer;
-pub mod texture;
 mod viewport;
 mod window_renderer;
 
