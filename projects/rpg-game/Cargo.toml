@@ -10,6 +10,7 @@ calcium-rendering-simple2d = {path = "../../libraries/rendering/calcium-renderin
 calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d"]}
 calcium-flowy = {path = "../../libraries/ui/calcium-flowy"}
 flowy = {path = "../../libraries/ui/flowy"}
+screenmath = {path = "../../libraries/ui/screenmath"}
 palette = "0.2"
 rusttype = "0.2"
 ttf-noto-sans = "0.1.1"
@@ -19,6 +20,7 @@ pistoncore-window = "0.28"
 slog = "2"
 slog-async = "2"
 slog-term = "2"
+tiled = "0.7"
 
 # If you want optimizations in dev while keeping debug symbols, use these
 [profile.dev]

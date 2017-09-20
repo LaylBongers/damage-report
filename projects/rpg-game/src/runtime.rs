@@ -1,9 +1,18 @@
-#![allow(dead_code)]
+//#![allow(dead_code)]
+
+use std::sync::{Arc};
+use std::path::{PathBuf};
+
 use cgmath::{Vector2, Point2};
 use input::{Input, Button, Key, ButtonState, ButtonArgs};
 use window::{Window, WindowSettings};
 use slog::{Logger};
-use std::sync::Arc;
+use calcium_flowy::FlowyRenderer;
+use flowy::{Ui, Element};
+use flowy::style::{Style, Position, Size, SideH, SideV};
+use palette::pixel::{Srgb};
+use rusttype::{FontCollection};
+use tiled;
 
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer};
@@ -11,12 +20,6 @@ use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget};
 use calcium_rendering_static::{Runtime, Initializer};
 use calcium_rendering::Renderer;
-
-use calcium_flowy::FlowyRenderer;
-use flowy::{Ui, Element};
-use flowy::style::{Style, Position, Size, SideH, SideV};
-use palette::pixel::{Srgb};
-use rusttype::{FontCollection};
 
 use model::{Tiles};
 use view::{TilesRenderer};
@@ -59,7 +62,7 @@ impl <R: Renderer> FriendlyUnit<R> {
         let mut normaltexture = RenderBatch::new(
             ShaderMode::Texture(self.tex.clone())
         );
-        normaltexture.rectangle(DrawRectangle::new(
+        normaltexture.push_rectangle(DrawRectangle::new(
             // position is centered in the texture
             Rectangle::new(self.position + -self.size/2.0, self.position + self.size/2.0)
         ));
@@ -69,7 +72,7 @@ impl <R: Renderer> FriendlyUnit<R> {
             let mut selectiontexture = RenderBatch::new(
                 ShaderMode::Texture(self.selecttex.clone())
             );
-            selectiontexture.rectangle(DrawRectangle::new(
+            selectiontexture.push_rectangle(DrawRectangle::new(
                 Rectangle::new(self.position + -self.size, self.position + self.size)
             ));
             batches.push(selectiontexture);
@@ -145,8 +148,10 @@ impl Runtime for StaticRuntime {
             .build(&mut renderer)?;
 
         // Set up the game map's tiles
-        let tiles = Tiles::new();
-        let tiles_renderer = TilesRenderer::new();
+        let map_path = PathBuf::from("./assets/test_map.tmx");
+        let map = tiled::parse_file(&map_path).unwrap();
+        let tiles = Tiles::new(&map);
+        let tiles_renderer = TilesRenderer::new(&map, &map_path, &mut renderer)?;
 
         let mut players_units = Vec::new();
 

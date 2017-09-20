@@ -28,7 +28,7 @@ impl<R: Renderer> RenderBatch<R> {
     }
 
     /// Adds vertices for a rectangle to this render batch.
-    pub fn rectangle(&mut self, rect: DrawRectangle) {
+    pub fn push_rectangle(&mut self, rect: DrawRectangle) {
         let destination_start_end = rect.destination.min_max().cast();
         let destination_end_start = rect.destination.max_min().cast();
         let uvs = rect.texture_source.unwrap_or(
@@ -128,8 +128,6 @@ pub struct DrawRectangle {
     /// Where on screen this rectangle will be drawn.
     pub destination: Rectangle<f32>,
     /// Where in a texture this rectangle should sample from.
-    // TODO: Support other representations than normalized UVs in some way, such as pixels. This
-    //  perhaps should not be implemented on the DrawRectangle.
     pub texture_source: Option<Rectangle<f32>>,
     /// What solid color this rectangle will be drawn with.
     pub color: Vector4<f32>,

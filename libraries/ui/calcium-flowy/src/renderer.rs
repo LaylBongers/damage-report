@@ -110,7 +110,7 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
     // Draw a rect for the background if we've got a color
     if let Some(ref color) = color {
         // Draw the rectangle
-        batcher.current_batch.rectangle(DrawRectangle {
+        batcher.current_batch.push_rectangle(DrawRectangle {
             destination: element.positioning().container.clone(),
             color: Vector4::new(color.red, color.green, color.blue, color.alpha),
             .. DrawRectangle::default()
@@ -233,7 +233,7 @@ fn generate_text_batch<R: Renderer>(
     for glyph in glyphs.iter() {
         if let Ok(Some((uv_rect, screen_rect))) = glyph_cache.rect_for(0, glyph) {
             // Push this glyph into this draw batch
-            batch.rectangle(DrawRectangle {
+            batch.push_rectangle(DrawRectangle {
                 destination: Rectangle {
                     min: Point2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
                     max: Point2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
