@@ -39,7 +39,7 @@ impl<R: Renderer> FlowyRenderer<R> {
         })
     }
 
-    pub fn draw(
+    pub fn render(
         &mut self, ui: &mut Ui, viewport_size: Vector2<f32>, renderer: &mut R,
     ) -> Result<Vec<RenderBatch<R>>, Error> {
         let mut batcher = Batcher::new();
@@ -52,7 +52,7 @@ impl<R: Renderer> FlowyRenderer<R> {
         self.text_cache.retain(|id, _| ui.elements.get(*id).is_some());
 
         // Draw all the elements recursively starting at the root
-        self.draw_element(ui.elements.root_id(), ui, &mut batcher, renderer)?;
+        self.render_element(ui.elements.root_id(), ui, &mut batcher, renderer)?;
 
         // Make sure all cached batches have the same text texture, this will only matter for the
         //  next frame, but it should clean up some stale textures.
@@ -64,14 +64,14 @@ impl<R: Renderer> FlowyRenderer<R> {
         Ok(batcher.finish())
     }
 
-    fn draw_element(
+    fn render_element(
         &mut self, element_id: ElementId, ui: &mut Ui, batcher: &mut Batcher<R>, renderer: &mut R,
     ) -> Result<(), Error> {
         {
             let element = &mut ui.elements[element_id];
 
-            draw_element_box(element, batcher);
-            draw_element_text(
+            render_element_box(element, batcher);
+            render_element_text(
                 &ui.fonts,
                 element_id, element,
                 &mut self.glyph_cache, &mut self.glyph_image, &mut self.glyph_texture,
@@ -81,14 +81,14 @@ impl<R: Renderer> FlowyRenderer<R> {
 
         // Now go through all the children as well
         for child_id in ui.elements.children_of(element_id).clone() {
-            self.draw_element(child_id, ui, batcher, renderer)?;
+            self.render_element(child_id, ui, batcher, renderer)?;
         }
 
         Ok(())
     }
 }
 
-fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
+fn render_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
     let style = element.style();
 
     // If this element is focused, its color should be overwritten with active_color
@@ -118,7 +118,7 @@ fn draw_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
     }
 }
 
-fn draw_element_text<R: Renderer>(
+fn render_element_text<R: Renderer>(
     fonts: &Vec<Font>,
     id: ElementId, element: &mut Element,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,

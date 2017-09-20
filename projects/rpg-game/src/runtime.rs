@@ -231,9 +231,10 @@ impl Runtime for StaticRuntime {
             }
 
             let mut batches = Vec::new();
+            let camera_size = window_renderer.size().cast();
 
             // Render the tiles
-            tiles_renderer.render(&tiles, &mut batches);
+            tiles_renderer.render(&tiles, &mut batches, camera_size);
 
             // Render the player units
             for unit in &mut players_units {
@@ -243,8 +244,8 @@ impl Runtime for StaticRuntime {
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&mut renderer);
 
-            let ui_batches = ui_renderer.draw(
-                &mut ui, window_renderer.size().cast(), &mut renderer
+            let ui_batches = ui_renderer.render(
+                &mut ui, camera_size, &mut renderer
             )?;
 
             simple2d_renderer.render(

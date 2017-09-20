@@ -7,7 +7,7 @@ pub struct Tiles {
 
 impl Tiles {
     pub fn new(map: &Map) -> Self {
-        let size = Vector2::new(map.tile_width, map.tile_height);
+        let size = Vector2::new(map.width, map.height);
 
         // Create tile layers for the layers in the map
         let mut layers = Vec::new();
@@ -32,10 +32,13 @@ pub struct TilesLayer {
 
 impl TilesLayer {
     pub fn new(layer: &Layer, size: Vector2<u32>) -> Self {
-        let mut tiles = Vec::new();
+        assert_eq!(layer.tiles.len(), size.y as usize);
+        assert_eq!(layer.tiles[0].len(), size.x as usize);
 
-        for line in &layer.tiles {
-            for tile in line {
+        let mut tiles = Vec::with_capacity((size.x * size.y) as usize);
+
+        for rows in &layer.tiles {
+            for tile in rows {
                 tiles.push(*tile);
             }
         }

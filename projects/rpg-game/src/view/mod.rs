@@ -59,13 +59,20 @@ impl<R: Renderer> TilesRenderer<R> {
         })
     }
 
-    pub fn render(&self, tiles: &Tiles, batches: &mut Vec<RenderBatch<R>>) {
+    pub fn render(
+        &self, tiles: &Tiles, batches: &mut Vec<RenderBatch<R>>, camera_size: Vector2<f32>
+    ) {
         let mut batch = RenderBatch::new(ShaderMode::Texture(self.tileset_texture.clone()));
+
+        let last_pos = Vector2::new(
+            (camera_size.x / 32.0).ceil(),
+            (camera_size.y / 32.0).ceil(),
+        ).cast();
 
         for layer in tiles.layers() {
             // TODO: Limit tile rendering to only the visible tiles, not just a fixed amount
-            for y in 0..16 {
-                for x in 0..16 {
+            for y in 0..last_pos.y {
+                for x in 0..last_pos.x {
                     let position = Point2::new(x, y).cast();
                     let mut tile = layer.tile(position.cast());
 
