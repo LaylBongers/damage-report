@@ -110,9 +110,6 @@ impl Runtime for StaticRuntime {
         let mut simple2d_render_target = Simple2DRenderTarget::new(
             true, &renderer, &window_renderer, &simple2d_renderer
         );
-        let mut simple2d_render_target_ui = Simple2DRenderTarget::new(
-            false, &renderer, &window_renderer, &simple2d_renderer
-        );
 
         let mut ui_renderer = FlowyRenderer::new(&mut renderer)?;
         let mut ui = Ui::new();
@@ -244,16 +241,12 @@ impl Runtime for StaticRuntime {
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&mut renderer);
 
-            let ui_batches = ui_renderer.render(
-                &mut ui, camera_size, &mut renderer
+            ui_renderer.render(
+                &mut ui, &mut batches, camera_size, &mut renderer
             )?;
 
             simple2d_renderer.render(
                 &batches, &mut simple2d_render_target,
-                &mut renderer, &mut window_renderer, &mut frame
-            );
-            simple2d_renderer.render(
-                &ui_batches, &mut simple2d_render_target_ui,
                 &mut renderer, &mut window_renderer, &mut frame
             );
 

@@ -40,9 +40,11 @@ impl<R: Renderer> FlowyRenderer<R> {
     }
 
     pub fn render(
-        &mut self, ui: &mut Ui, viewport_size: Vector2<f32>, renderer: &mut R,
-    ) -> Result<Vec<RenderBatch<R>>, Error> {
-        let mut batcher = Batcher::new();
+        &mut self,
+        ui: &mut Ui, batches: &mut Vec<RenderBatch<R>>,
+        viewport_size: Vector2<f32>, renderer: &mut R,
+    ) -> Result<(), Error> {
+        let mut batcher = Batcher::new(batches);
 
         // Calculate positioning in the element tree, this needs to be done before rendering so any
         // changes are applied, and so input can use the values for click detection.
@@ -61,7 +63,8 @@ impl<R: Renderer> FlowyRenderer<R> {
             entry.1.mode = ShaderMode::Mask(self.glyph_texture.clone());
         }
 
-        Ok(batcher.finish())
+        batcher.finish();
+        Ok(())
     }
 
     fn render_element(
@@ -250,16 +253,16 @@ fn generate_text_batch<R: Renderer>(
     Ok(batch)
 }
 
-struct Batcher<R: Renderer> {
+struct Batcher<'a, R: Renderer> {
     current_batch: RenderBatch<R>,
-    batches: Vec<RenderBatch<R>>,
+    batches: &'a mut Vec<RenderBatch<R>>,
 }
 
-impl<R: Renderer> Batcher<R> {
-    fn new() -> Self {
+impl<'a, R: Renderer> Batcher<'a, R> {
+    fn new(batches: &'a mut Vec<RenderBatch<R>>) -> Self {
         Batcher {
             current_batch: RenderBatch::new(ShaderMode::Color),
-            batches: Vec::new(),
+            batches,
         }
     }
 
@@ -270,11 +273,9 @@ impl<R: Renderer> Batcher<R> {
         }
     }
 
-    fn finish(mut self) -> Vec<RenderBatch<R>> {
+    fn finish(mut self) {
         if !self.current_batch.empty() {
             self.batches.push(self.current_batch);
         }
-
-        self.batches
     }
 }
