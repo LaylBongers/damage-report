@@ -75,7 +75,7 @@ impl Initializer for GfxOpenGlInitializer {
                 let (new_color, _new_depth) =
                     gfx_window_glutin::new_views::<ColorFormat, DepthFormat>(&window.window);
                 renderer.color_view = new_color;
-                window_renderer.size = Vector2::new(w, h);
+                window_renderer.report_resize(Vector2::new(w, h));
             },
             _ => {},
         }

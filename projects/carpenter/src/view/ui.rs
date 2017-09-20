@@ -116,12 +116,13 @@ impl<R: Renderer> UiView<R> {
         simple2d_renderer: &mut SR,
         simple2d_rendertarget: &mut Simple2DRenderTarget<R, SR>,
     ) -> Result<(), Error> {
-        let ui_batches = self.ui_renderer.draw(
-            &mut self.ui, window_renderer.size().cast(), renderer
+        let mut batches = Vec::new();
+        self.ui_renderer.render(
+            &mut self.ui, &mut batches, window_renderer.size().cast(), renderer
         )?;
 
         simple2d_renderer.render(
-            &ui_batches, simple2d_rendertarget,
+            &batches, simple2d_rendertarget,
             renderer, window_renderer, frame
         );
 

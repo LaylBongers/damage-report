@@ -123,8 +123,8 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
 
         // Create a projection matrix that just matches coordinates to pixels
         let proj = cgmath::ortho(
-            0.0, frame.size.x as f32,
-            frame.size.y as f32, 0.0,
+            0.0, frame.size().x as f32,
+            frame.size().y as f32, 0.0,
             1.0, -1.0
         );
         let transform = Transform {

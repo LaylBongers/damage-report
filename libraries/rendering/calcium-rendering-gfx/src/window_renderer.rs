@@ -6,7 +6,7 @@ use calcium_rendering::{WindowRenderer};
 use {GfxRenderer};
 
 pub struct GfxWindowRenderer {
-    pub size: Vector2<u32>,
+    size: Vector2<u32>,
 }
 
 impl GfxWindowRenderer {
@@ -16,6 +16,10 @@ impl GfxWindowRenderer {
         GfxWindowRenderer {
             size,
         }
+    }
+
+    pub fn report_resize(&mut self, size: Vector2<u32>) {
+        self.size = size;
     }
 }
 
@@ -39,5 +43,11 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
 }
 
 pub struct GfxFrame {
-    pub size: Vector2<u32>,
+    size: Vector2<u32>,
+}
+
+impl GfxFrame {
+    pub fn size(&self) -> Vector2<u32> {
+        self.size
+    }
 }

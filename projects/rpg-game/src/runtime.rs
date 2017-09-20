@@ -240,6 +240,7 @@ impl Runtime for StaticRuntime {
 
             // Perform the rendering itself
             let mut frame = window_renderer.start_frame(&mut renderer);
+            let camera_size = window_renderer.size().cast();
 
             ui_renderer.render(
                 &mut ui, &mut batches, camera_size, &mut renderer
