@@ -15,6 +15,8 @@ extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
 
+mod model;
+mod view;
 mod runtime;
 
 use slog::{Logger, Drain};

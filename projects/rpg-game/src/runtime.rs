@@ -13,16 +13,13 @@ use calcium_rendering_static::{Runtime, Initializer};
 use calcium_rendering::Renderer;
 
 use calcium_flowy::FlowyRenderer;
-use flowy::{Ui, Element, ElementId, widget};
+use flowy::{Ui, Element};
 use flowy::style::{Style, Position, Size, SideH, SideV};
 use palette::pixel::{Srgb};
 use rusttype::{FontCollection};
 
-pub struct StaticRuntime {
-    pub log: Logger,
-}
-
-
+use model::{Tiles};
+use view::{TilesRenderer};
 
 struct FriendlyUnit<R: Renderer> {
     name: String,
@@ -35,6 +32,7 @@ struct FriendlyUnit<R: Renderer> {
 
     tabrel: f32,
 }
+
 impl <R: Renderer> FriendlyUnit<R> {
     pub fn new(name: String, tex: Arc<Texture<R>>, selecttex: Arc<Texture<R>>, position: Point2<f32>, size: Vector2<f32>, speed: f32) -> FriendlyUnit<R> {
         FriendlyUnit {name: name, tex: tex, selecttex: selecttex, position: position, size: size, speed: speed, selected: false, tabrel: 0.0}
@@ -93,6 +91,10 @@ struct PlayerInput {
     pub tab: bool,
 }
 
+pub struct StaticRuntime {
+    pub log: Logger,
+}
+
 impl Runtime for StaticRuntime {
     fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
         info!(self.log, "Loading program");
@@ -118,7 +120,7 @@ impl Runtime for StaticRuntime {
         ).into_font().unwrap();
         ui.fonts.push(font);
 
-        let mut fps = Element::new(Style {
+        let fps = Element::new(Style {
             position: Position::Relative(Point2::new(0.0, 0.0), SideH::Right, SideV::Top),
             size: Size::units(120.0, 14.0),
             text_color: Srgb::new(1.0, 1.0, 1.0).into(),
@@ -142,8 +144,11 @@ impl Runtime for StaticRuntime {
             .with_nearest_sampling()
             .build(&mut renderer)?;
 
-        /* can just let it infer the type apparently */
-        let mut players_units: Vec<FriendlyUnit<I::Renderer>> = Vec::new();
+        // Set up the game map's tiles
+        let tiles = Tiles::new();
+        let tiles_renderer = TilesRenderer::new();
+
+        let mut players_units = Vec::new();
 
         let alfred = FriendlyUnit::new(String::from("Alfred"), friendly_texture.clone(), selection_texture.clone(), Point2::new(200.0,200.0), Vector2::new(32.0,32.0), 256.0 );
         let bertil = FriendlyUnit::new(String::from("Bertil"), friendly_texture.clone(), selection_texture.clone(), Point2::new(300.0,300.0), Vector2::new(32.0,32.0), 256.0 );
@@ -202,7 +207,7 @@ impl Runtime for StaticRuntime {
                 fpso.set_text(players_units[selected_unit].get_name().clone());
             }
 
-// TODO: kill this
+            // TODO: kill this
             tabrelease -= delta;
             if tabrelease <= 0.0 && tab_pressed {
                 if selected_unit == 3 {
@@ -215,15 +220,19 @@ impl Runtime for StaticRuntime {
                 println!("selected unit is now {}", selected_unit);
             }
 
-            for i in 0..players_units.len() {
-                players_units[i].update(delta, i == selected_unit, &pinput);
+            // Update the player units
+            for (i, unit) in players_units.iter_mut().enumerate() {
+                unit.update(delta, i == selected_unit, &pinput);
             }
 
-            // Render a textured square for the player
             let mut batches = Vec::new();
 
-            for i in 0..players_units.len() {
-                players_units[i].render(&mut batches);
+            // Render the tiles
+            tiles_renderer.render(&tiles, &mut batches);
+
+            // Render the player units
+            for unit in &mut players_units {
+                unit.render(&mut batches);
             }
 
             // Perform the rendering itself
