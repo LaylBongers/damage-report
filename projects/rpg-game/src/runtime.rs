@@ -103,7 +103,7 @@ impl Runtime for StaticRuntime {
         info!(self.log, "Loading program");
 
         // Set up everything we need to render
-        let window_settings = WindowSettings::new("Carpenter", [1280, 720]);
+        let window_settings = WindowSettings::new("RPG Game", [1280, 720]);
         let (mut renderer, mut window, mut window_renderer) =
             init.renderer(Some(self.log.clone()), &window_settings)?;
         let mut simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
