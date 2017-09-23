@@ -7,7 +7,7 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 calcium-game = {path = "../../libraries/mechanics/calcium-game"}
 calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
 calcium-rendering-simple2d = {path = "../../libraries/rendering/calcium-rendering-simple2d"}
-calcium-rendering-static = {path = "../../libraries/rendering/calcium-rendering-static", features = ["simple2d"]}
+calcium-rendering-context = {path = "../../libraries/rendering/calcium-rendering-context", features = ["simple2d"]}
 calcium-flowy = {path = "../../libraries/ui/calcium-flowy"}
 flowy = {path = "../../libraries/ui/flowy"}
 palette = "0.2"

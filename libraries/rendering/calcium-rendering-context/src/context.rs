@@ -10,7 +10,7 @@ use calcium_rendering_simple2d::{Simple2DRenderer};
 #[cfg(feature = "world3d")]
 use calcium_rendering_world3d::{World3DRenderer};
 
-pub trait Initializer {
+pub trait Context {
     type Renderer: Renderer;
     type Window: Window + AdvancedWindow;
 

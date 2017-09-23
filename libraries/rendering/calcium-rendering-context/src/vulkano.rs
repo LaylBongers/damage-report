@@ -8,7 +8,7 @@ use winit_window::{self, WinitWindow};
 use calcium_rendering::{Error};
 use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
 
-use {Initializer};
+use {Context};
 
 #[cfg(feature = "world3d")]
 use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer};
@@ -16,9 +16,9 @@ use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer};
 #[cfg(feature = "simple2d")]
 use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DRenderer};
 
-pub struct VulkanoInitializer;
+pub struct VulkanoContext;
 
-impl Initializer for VulkanoInitializer {
+impl Context for VulkanoContext {
     type Renderer = VulkanoRenderer;
     type Window = WinitWindow;
 

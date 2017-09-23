@@ -1,7 +1,7 @@
 extern crate calcium_game;
 extern crate calcium_rendering;
 extern crate calcium_rendering_simple2d;
-extern crate calcium_rendering_static;
+extern crate calcium_rendering_context;
 extern crate cgmath;
 extern crate input;
 extern crate window;
@@ -25,7 +25,7 @@ use slog_async::{Async};
 use slog_term::{CompactFormat, TermDecorator};
 
 use calcium_rendering::{Error};
-use calcium_rendering_static::{Backend};
+use calcium_rendering_context::{Backend};
 
 fn main() {
     // Set up the logger
@@ -53,5 +53,5 @@ fn run_game(log: &Logger) -> Result<(), Error> {
     let backend = Backend::Vulkano;
 
     // Run the game's runtime with the appropriate backends
-    calcium_rendering_static::run_runtime(backend, runtime::StaticRuntime { log: log.clone() })
+    calcium_rendering_context::run_runtime(backend, runtime::StaticRuntime { log: log.clone() })
 }

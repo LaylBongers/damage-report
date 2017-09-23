@@ -17,11 +17,11 @@ use calcium_rendering_simple2d_gfx::{GfxSimple2DRenderer};
 #[cfg(feature = "world3d")]
 use unsupported::{UnsupportedWorld3DRenderer};
 
-use {Initializer};
+use {Context};
 
-pub struct GfxOpenGlInitializer;
+pub struct GfxOpenGlContext;
 
-impl Initializer for GfxOpenGlInitializer {
+impl Context for GfxOpenGlContext {
     type Renderer = GfxRenderer<Device, Factory>;
     type Window = GlutinWindow;
 

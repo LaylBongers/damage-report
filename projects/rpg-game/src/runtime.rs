@@ -18,7 +18,7 @@ use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget, Projection};
-use calcium_rendering_static::{Runtime, Initializer};
+use calcium_rendering_context::{Runtime, Context};
 use calcium_rendering::Renderer;
 
 use model::{Tiles};
@@ -99,14 +99,14 @@ pub struct StaticRuntime {
 }
 
 impl Runtime for StaticRuntime {
-    fn run<I: Initializer>(self, init: I) -> Result<(), Error> {
+    fn run<C: Context>(self, context: C) -> Result<(), Error> {
         info!(self.log, "Loading program");
 
         // Set up everything we need to render
         let window_settings = WindowSettings::new("RPG Game", [1280, 720]);
         let (mut renderer, mut window, mut window_renderer) =
-            init.renderer(Some(self.log.clone()), &window_settings)?;
-        let simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
+            context.renderer(Some(self.log.clone()), &window_settings)?;
+        let simple2d_renderer = context.simple2d_renderer(&mut renderer)?;
         let mut simple2d_render_target = Simple2DRenderTarget::new(
             true, &renderer, &window_renderer, &simple2d_renderer
         );
@@ -176,7 +176,7 @@ impl Runtime for StaticRuntime {
             // Handle input
             while let Some(event) = window.poll_event() {
                 // Let the initializer handle anything needed
-                init.handle_event(&event, &mut renderer, &mut window, &mut window_renderer);
+                context.handle_event(&event, &mut renderer, &mut window, &mut window_renderer);
 
                 match event {
                     Input::Button(ButtonArgs {state, button, scancode: _scancode}) => {

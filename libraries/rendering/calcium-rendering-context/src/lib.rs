@@ -25,14 +25,14 @@ extern crate calcium_rendering_simple2d_gfx;
 #[cfg(feature = "simple2d")]
 extern crate calcium_rendering_simple2d_vulkano;
 
-mod initializer;
+mod context;
 mod runtime;
 mod unsupported;
 
 mod gfx_opengl;
 mod vulkano;
 
-pub use initializer::{Initializer};
+pub use context::{Context};
 pub use runtime::{run_runtime, Runtime};
 
 #[allow(dead_code)]
