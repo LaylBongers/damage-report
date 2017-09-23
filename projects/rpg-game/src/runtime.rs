@@ -17,7 +17,7 @@ use tiled;
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget, Projection, Camera};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget, Projection};
 use calcium_rendering_static::{Runtime, Initializer};
 use calcium_rendering::Renderer;
 
