@@ -17,7 +17,7 @@ use tiled;
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error, WindowRenderer};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget, Projection};
+use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget, Projection, Camera};
 use calcium_rendering_static::{Runtime, Initializer};
 use calcium_rendering::Renderer;
 
@@ -253,11 +253,12 @@ impl Runtime for StaticRuntime {
                     &mut frame, &mut simple2d_render_target,
                     &mut renderer, &mut window_renderer,
                 );
+                //let camera = Camera::new(32.0, Point2::new(0.0, 0.0));
                 pass.render_batches(
-                    &batches, Projection::Pixels, &mut renderer, &mut window_renderer,
+                    &batches, Projection::Pixels/*Projection::Camera(camera)*/, &mut renderer, &mut window_renderer,
                 );
                 pass.render_batches(
-                    &ui_batches, Projection::Pixels, &mut renderer, &mut window_renderer,
+                    &ui_batches,  Projection::Pixels, &mut renderer, &mut window_renderer,
                 );
                 simple2d_renderer.finish_pass(pass, &mut renderer);
             }
