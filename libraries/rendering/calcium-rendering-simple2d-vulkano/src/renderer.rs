@@ -2,7 +2,7 @@ use std::sync::{Arc};
 use std::rc::{Rc};
 use std::cell::{RefCell};
 
-use cgmath::{self, Vector2};
+use cgmath::{Vector2, Matrix4};
 use vulkano::sync::{GpuFuture};
 use vulkano::pipeline::viewport::{Viewport};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, DynamicState};
@@ -140,11 +140,11 @@ impl Simple2DRenderPassRaw<VulkanoRenderer> for VulkanoSimple2DRenderPassRaw {
     ) {
         // Create a projection matrix that just matches coordinates to pixels
         let size = window_renderer.size();
-        let proj = cgmath::ortho(
-            0.0, size.x as f32,
-            0.0, size.y as f32, // Top/Bottom flipped, cgmath expects a different clip space
-            1.0, -1.0
-        );
+        let proj =
+            // OpenGL expectation of clip space is different from Vulkan
+            Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) *
+            // The projection matrix, coming from Projection, is in OpenGL format
+            projection.to_matrix(window_renderer.size());
 
         // Create a buffer for the matrix data to be sent over in
         let total_matrix_raw = proj.into();

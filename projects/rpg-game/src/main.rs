@@ -50,7 +50,7 @@ fn init_logger() -> Logger {
 
 fn run_game(log: &Logger) -> Result<(), Error> {
     // TODO: Read in from configuration and UI
-    let backend = Backend::GfxOpenGl;
+    let backend = Backend::Vulkano;
 
     // Run the game's runtime with the appropriate backends
     calcium_rendering_static::run_runtime(backend, runtime::StaticRuntime { log: log.clone() })

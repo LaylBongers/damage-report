@@ -1,7 +1,7 @@
 use std::sync::{Arc};
 use std::rc::{Rc};
 
-use cgmath::{self, Vector2};
+use cgmath::{Vector2};
 use gfx::{self, Device, Factory, VertexBuffer, ConstantBuffer};
 use gfx::handle::{Sampler, Buffer};
 use gfx::pso::{PipelineState};
@@ -157,11 +157,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         frame: &mut GfxFrame, renderer: &mut GfxRenderer<D, F>, _window_renderer: &mut GfxWindowRenderer,
     ) {
         // Create a projection matrix that just matches coordinates to pixels
-        let proj = cgmath::ortho(
-            0.0, frame.size().x as f32,
-            frame.size().y as f32, 0.0,
-            1.0, -1.0
-        );
+        let proj = projection.to_matrix(frame.size());
         let transform = Transform {
             transform: proj.into()
         };
