@@ -3,10 +3,9 @@ use std::path::{PathBuf};
 
 use calcium_rendering::{Renderer, Error};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle};
+use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 use cgmath::{Vector2, Point2};
 use tiled::{Map};
-use screenmath::{Rectangle};
 
 use model::{Tiles};
 

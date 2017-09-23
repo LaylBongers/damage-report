@@ -1,4 +1,6 @@
 use std::sync::{Arc};
+use std::rc::{Rc};
+use std::cell::{RefCell};
 
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
@@ -14,24 +16,18 @@ use calcium_rendering_simple2d::{Simple2DRenderTargetRaw};
 use {VkVertex, VulkanoSimple2DRenderer};
 
 pub struct VulkanoSimple2DRenderTargetRaw {
+    data: Rc<RefCell<RenderTargetData>>,
+
     render_pass: Arc<RenderPassAbstract + Send + Sync>,
-    pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
-    set_pool: FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
-    should_clear: bool,
+    clear: bool,
 
     framebuffers_images_id: usize,
 }
 
 impl VulkanoSimple2DRenderTargetRaw {
-    pub fn pipeline(&self) -> &Arc<GraphicsPipelineAbstract + Send + Sync> {
-        &self.pipeline
-    }
-
-    pub fn set_pool_mut(
-        &mut self
-    ) -> &mut FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>> {
-        &mut self.set_pool
+    pub fn data(&self) -> &Rc<RefCell<RenderTargetData>> {
+        &self.data
     }
 
     pub fn framebuffer_for(
@@ -52,7 +48,7 @@ impl VulkanoSimple2DRenderTargetRaw {
     }
 
     pub fn clear_values(&self) -> Vec<ClearValue> {
-        if self.should_clear {
+        if self.clear {
             vec!(ClearValue::Float([0.0, 0.0, 0.0, 1.0]))
         } else {
             vec!(ClearValue::None)
@@ -61,16 +57,17 @@ impl VulkanoSimple2DRenderTargetRaw {
 }
 
 impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
-    for VulkanoSimple2DRenderTargetRaw {
+    for VulkanoSimple2DRenderTargetRaw
+{
     fn new(
-        should_clear: bool,
+        clear: bool,
         renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
         simple2d_renderer: &VulkanoSimple2DRenderer,
     ) -> Self {
         // Set up the render pass for 2D rendering depending on the settings for this target
         debug!(renderer.log(), "Creating simple2d render pass");
         #[allow(dead_code)]
-        let render_pass = if should_clear {
+        let render_pass = if clear {
             Arc::new(single_pass_renderpass!(renderer.device().clone(),
                 attachments: {
                     color: {
@@ -136,11 +133,13 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
         let framebuffers_images_id = window_renderer.swapchain.images_id();
 
         VulkanoSimple2DRenderTargetRaw {
+            data: Rc::new(RefCell::new(RenderTargetData {
+                pipeline,
+                set_pool,
+            })),
             render_pass,
-            pipeline,
-            set_pool,
             framebuffers,
-            should_clear,
+            clear,
             framebuffers_images_id,
         }
     }
@@ -156,4 +155,21 @@ fn create_framebuffers(
             .build().unwrap()
         ) as Arc<FramebufferAbstract + Send + Sync>
     }).collect()
+}
+
+pub struct RenderTargetData {
+    pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    set_pool: FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>>,
+}
+
+impl RenderTargetData {
+    pub fn pipeline(&self) -> &Arc<GraphicsPipelineAbstract + Send + Sync> {
+        &self.pipeline
+    }
+
+    pub fn set_pool_mut(
+        &mut self
+    ) -> &mut FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>> {
+        &mut self.set_pool
+    }
 }

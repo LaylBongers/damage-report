@@ -2,7 +2,6 @@ extern crate calcium_game;
 extern crate calcium_rendering;
 extern crate calcium_rendering_simple2d;
 extern crate calcium_rendering_static;
-extern crate screenmath;
 extern crate cgmath;
 extern crate input;
 extern crate window;
