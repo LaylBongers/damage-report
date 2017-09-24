@@ -9,9 +9,10 @@ use gfx::pso::resource::{RawShaderResource};
 use gfx::traits::{FactoryExt};
 use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
-use calcium_rendering::{Error};
+use calcium_rendering::raw::{RawAccess};
 use calcium_rendering::texture::{Texture, SampleMode};
-use calcium_rendering_gfx::{GfxRenderer, GfxFrame, ColorFormat};
+use calcium_rendering::{Error, Frame};
+use calcium_rendering_gfx::{GfxRenderer, ColorFormat};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, Simple2DRenderTarget, Simple2DRenderPassRaw, Simple2DRenderPass, Projection};
 
 use {GfxSimple2DRenderTargetRaw};
@@ -122,7 +123,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
 
     fn start_pass<'a>(
         &self,
-        frame: &'a mut GfxFrame,
+        frame: &'a mut Frame<GfxRenderer<D, F>>,
         render_target: &mut Simple2DRenderTarget<GfxRenderer<D, F>, Self>,
         renderer: &mut GfxRenderer<D, F>,
     ) -> Simple2DRenderPass<'a, GfxRenderer<D, F>, Self> {
@@ -155,10 +156,10 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     fn render_batches(
         &mut self,
         batches: &[RenderBatch<GfxRenderer<D, F>>], projection: Projection,
-        frame: &mut GfxFrame, renderer: &mut GfxRenderer<D, F>,
+        frame: &mut Frame<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>,
     ) {
         // Create a projection matrix that just matches coordinates to pixels
-        let proj = projection.to_matrix(frame.size());
+        let proj = projection.to_matrix(frame.raw().size());
         let transform = Transform {
             transform: proj.into()
         };
@@ -188,9 +189,9 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
                 &ShaderMode::Color =>
                     (0, &self.render_data.dummy_texture, &self.render_data.linear_sampler),
                 &ShaderMode::Texture(ref texture) =>
-                    (1, texture, self.render_data.sampler_for_mode(texture.raw.sample_mode)),
+                    (1, texture, self.render_data.sampler_for_mode(texture.raw().sample_mode)),
                 &ShaderMode::Mask(ref texture) =>
-                    (2, texture, self.render_data.sampler_for_mode(texture.raw.sample_mode)),
+                    (2, texture, self.render_data.sampler_for_mode(texture.raw().sample_mode)),
             };
 
             // Get the matching buffer for this shader mode
@@ -201,7 +202,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
                 vbuf: vertex_buffer,
                 transform: transform_buffer.clone(),
                 mode: mode_buffer.clone(),
-                texture: texture.raw.view.raw().clone(),
+                texture: texture.raw().view.raw().clone(),
                 texture_sampler: sampler.clone(),
                 out: renderer.color_view().clone(),
             };

@@ -3,7 +3,7 @@ use cgmath::{Vector2};
 use gfx::{Device, Factory, Encoder};
 use gfx::handle::{RenderTargetView};
 
-use calcium_rendering::{Renderer};
+use calcium_rendering::{Renderer, Frame};
 
 use {ColorFormat, GfxTextureRaw};
 
@@ -78,7 +78,7 @@ impl<D: Device, F: Factory<D::Resources>> GfxRenderer<D, F> {
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static> Renderer for GfxRenderer<D, F> {
-    type Frame = GfxFrame;
+    type FrameRaw = GfxFrameRaw;
     type TextureRaw = GfxTextureRaw<D>;
 
     fn log(&self) -> &Logger {
@@ -89,24 +89,24 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> Renderer for GfxRe
         self.size
     }
 
-    fn start_frame(&mut self) -> GfxFrame {
+    fn start_frame(&mut self) -> Frame<Self> {
         self.device.cleanup();
 
-        GfxFrame {
+        Frame::raw_new(GfxFrameRaw {
             size: self.size
-        }
+        })
     }
 
-    fn finish_frame(&mut self, _frame: GfxFrame) {
+    fn finish_frame(&mut self, _frame: Frame<Self>) {
         self.encoder.flush(&mut self.device);
     }
 }
 
-pub struct GfxFrame {
+pub struct GfxFrameRaw {
     size: Vector2<u32>,
 }
 
-impl GfxFrame {
+impl GfxFrameRaw {
     pub fn size(&self) -> Vector2<u32> {
         self.size
     }

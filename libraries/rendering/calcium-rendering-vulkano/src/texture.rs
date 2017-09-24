@@ -11,7 +11,8 @@ use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBuffer};
 
 use calcium_rendering::{CalciumErrorMappable, Error, Renderer};
-use calcium_rendering::texture::{TextureSource, TextureRaw, TextureBuilder, TextureStoreFormat, SampleMode};
+use calcium_rendering::raw::{TextureRaw};
+use calcium_rendering::texture::{TextureSource, TextureBuilder, TextureStoreFormat, SampleMode};
 use {VulkanoRenderer};
 
 pub struct VulkanoTextureRaw {

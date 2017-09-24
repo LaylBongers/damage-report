@@ -9,7 +9,8 @@ use gfx::handle::{ShaderResourceView, RawShaderResourceView};
 use gfx::memory::{Typed};
 
 use calcium_rendering::{Error, CalciumErrorMappable, Renderer};
-use calcium_rendering::texture::{TextureRaw, TextureBuilder, TextureSource, TextureStoreFormat, SampleMode};
+use calcium_rendering::raw::{TextureRaw};
+use calcium_rendering::texture::{TextureBuilder, TextureSource, TextureStoreFormat, SampleMode};
 
 use {GfxRenderer};
 

@@ -8,7 +8,7 @@ extern crate calcium_rendering;
 mod renderer;
 mod texture;
 
-pub use renderer::{GfxRenderer, GfxFrame};
+pub use renderer::{GfxRenderer, GfxFrameRaw};
 pub use texture::{GfxTextureRaw, GenericView};
 
 pub type ColorFormat = ::gfx::format::Rgba8;

@@ -8,7 +8,8 @@ use vulkano::sync::{NowFuture, GpuFuture};
 use vulkano::command_buffer::{CommandBufferExecFuture, AutoCommandBuffer};
 use vulkano::swapchain::{Surface};
 
-use calcium_rendering::{Error, Renderer};
+use calcium_rendering::{Error, Renderer, Frame};
+use calcium_rendering::raw::{RawAccess};
 
 use {VulkanoTextureRaw, WindowSwapchain};
 
@@ -160,7 +161,7 @@ impl VulkanoRenderer {
 }
 
 impl Renderer for VulkanoRenderer {
-    type Frame = VulkanoFrame;
+    type FrameRaw = VulkanoFrameRaw;
     type TextureRaw = VulkanoTextureRaw;
 
     fn log(&self) -> &Logger {
@@ -171,7 +172,7 @@ impl Renderer for VulkanoRenderer {
         self.size
     }
 
-    fn start_frame(&mut self) -> VulkanoFrame {
+    fn start_frame(&mut self) -> Frame<Self> {
         self.swapchain.cleanup_finished_frames();
 
         // Before we render, see if we need to execute a queued resize
@@ -186,22 +187,24 @@ impl Renderer for VulkanoRenderer {
         let (image_num, future) = self.swapchain.start_frame();
 
         self.next_frame_id += 1;
-        VulkanoFrame {
+        Frame::raw_new(VulkanoFrameRaw {
             image_num,
             future: Some(future),
             frame_id: self.next_frame_id - 1,
             size: self.size,
-        }
+        })
     }
 
-    fn finish_frame(&mut self, mut frame: VulkanoFrame) {
+    fn finish_frame(&mut self, mut frame: Frame<Self>) {
         self.swapchain.finish_frame(
-            frame.future.take().unwrap(), self.graphics_queue.clone(), frame.image_num
+            frame.raw_mut().future.take().unwrap(),
+            self.graphics_queue.clone(),
+            frame.raw().image_num
         );
     }
 }
 
-pub struct VulkanoFrame {
+pub struct VulkanoFrameRaw {
     pub image_num: usize,
     pub future: Option<Box<GpuFuture + Send + Sync>>,
     pub frame_id: u64,

@@ -1,5 +1,7 @@
 use std::any::{Any};
-use calcium_rendering::{Renderer};
+
+use calcium_rendering::{Renderer, Frame};
+
 use {RenderBatch, Simple2DRenderTarget, Simple2DRenderTargetRaw, Projection};
 
 /// A 2D renderer capable of rendering render batches.
@@ -10,7 +12,7 @@ pub trait Simple2DRenderer<R: Renderer>: Any + Sized {
     /// Starts a rendering pass, using this you can render batches to a frame.
     fn start_pass<'a>(
         &self,
-        frame: &'a mut R::Frame,
+        frame: &'a mut Frame<R>,
         render_target: &'a mut Simple2DRenderTarget<R, Self>,
         renderer: &mut R,
     ) -> Simple2DRenderPass<'a, R, Self>;
@@ -21,12 +23,12 @@ pub trait Simple2DRenderer<R: Renderer>: Any + Sized {
 
 pub struct Simple2DRenderPass<'a, R: Renderer, SR: Simple2DRenderer<R>> {
     raw: SR::RenderPassRaw,
-    frame: &'a mut R::Frame,
+    frame: &'a mut Frame<R>,
     finished: bool,
 }
 
 impl<'a, R: Renderer, SR: Simple2DRenderer<R>> Simple2DRenderPass<'a, R, SR> {
-    pub fn raw_new(raw: SR::RenderPassRaw, frame: &'a mut R::Frame) -> Self {
+    pub fn raw_new(raw: SR::RenderPassRaw, frame: &'a mut Frame<R>) -> Self {
         Simple2DRenderPass {
             raw,
             frame,
@@ -38,7 +40,7 @@ impl<'a, R: Renderer, SR: Simple2DRenderer<R>> Simple2DRenderPass<'a, R, SR> {
         &mut self.raw
     }
 
-    pub fn frame_mut(&mut self) -> &mut R::Frame {
+    pub fn frame_mut(&mut self) -> &mut Frame<R> {
         &mut self.frame
     }
 
@@ -70,6 +72,6 @@ pub trait Simple2DRenderPassRaw<R: Renderer> {
     fn render_batches(
         &mut self,
         batches: &[RenderBatch<R>], projection: Projection,
-        frame: &mut R::Frame, renderer: &mut R,
+        frame: &mut Frame<R>, renderer: &mut R,
     );
 }

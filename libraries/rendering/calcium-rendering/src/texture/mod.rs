@@ -1,6 +1,6 @@
 mod texture;
 
-pub use self::texture::{TextureBuilder, Texture, TextureRaw};
+pub use self::texture::{TextureBuilder, Texture};
 
 use std::path::{PathBuf};
 

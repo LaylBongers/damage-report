@@ -4,6 +4,7 @@ use std::sync::{Arc};
 use cgmath::{Vector2};
 
 use {Renderer, Error};
+use raw::{TextureRaw, RawAccess};
 use texture::{TextureSource, TextureStoreFormat, SampleMode, TextureBytes};
 
 pub struct TextureBuilder<'a, R: Renderer> {
@@ -98,7 +99,7 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
 }
 
 pub struct Texture<R: Renderer> {
-    pub raw: R::TextureRaw
+    raw: R::TextureRaw
 }
 
 impl<R: Renderer> Texture<R> {
@@ -107,6 +108,7 @@ impl<R: Renderer> Texture<R> {
     }
 }
 
-pub trait TextureRaw<R: Renderer>: Sized {
-    fn new(builder: TextureBuilder<R>, renderer: &mut R) -> Result<Self, Error>;
+impl<R: Renderer> RawAccess<R::TextureRaw> for Texture<R> {
+    fn raw(&self) -> &R::TextureRaw { &self.raw }
+    fn raw_mut(&mut self) -> &mut R::TextureRaw { &mut self.raw }
 }

@@ -10,10 +10,11 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::buffer::cpu_pool::{CpuBufferPool, CpuBufferPoolSubbuffer};
 use vulkano::memory::pool::{StdMemoryPool};
 
-use calcium_rendering::{Renderer, Error};
+use calcium_rendering::raw::{RawAccess};
 use calcium_rendering::texture::{Texture};
+use calcium_rendering::{Renderer, Error, Frame};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode, Simple2DRenderPassRaw, Simple2DRenderPass, Projection};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoFrame};
+use calcium_rendering_vulkano::{VulkanoRenderer};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex, VulkanoSimple2DRenderTargetRaw, RenderTargetData};
@@ -77,18 +78,20 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
 
     fn start_pass<'a>(
         &self,
-        frame: &'a mut VulkanoFrame,
+        frame: &'a mut Frame<VulkanoRenderer>,
         render_target: &'a mut Simple2DRenderTarget<VulkanoRenderer, Self>,
         renderer: &mut VulkanoRenderer,
     ) -> Simple2DRenderPass<'a, VulkanoRenderer, Self> {
         // Give the renderer an opportunity to insert any commands it had queued up, this is used
         //  to copy textures for example. This always has to be done right before a render pass.
-        frame.future = Some(renderer.submit_queued_commands(frame.future.take().unwrap()));
+        frame.raw_mut().future = Some(
+            renderer.submit_queued_commands(frame.raw_mut().future.take().unwrap())
+        );
 
         // Start the command buffer, this will contain the draw commands
         let buffer_builder = {
             let clear_values = render_target.raw.clear_values();
-            let framebuffer = render_target.raw.framebuffer_for(frame.image_num, renderer);
+            let framebuffer = render_target.raw.framebuffer_for(frame.raw().image_num, renderer);
 
             AutoCommandBufferBuilder::new(
                     renderer.device().clone(), renderer.graphics_queue().family()
@@ -114,11 +117,11 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
             .build().unwrap();
 
         // Submit the command buffer
-        let future = Box::new(pass.frame_mut().future.take().unwrap()
+        let future = Box::new(pass.frame_mut().raw_mut().future.take().unwrap()
             .then_execute(renderer.graphics_queue().clone(), command_buffer)
             .unwrap()
         );
-        pass.frame_mut().future = Some(future);
+        pass.frame_mut().raw_mut().future = Some(future);
 
         // Make sure the pass doesn't panic
         pass.mark_finished();
@@ -135,7 +138,7 @@ impl Simple2DRenderPassRaw<VulkanoRenderer> for VulkanoSimple2DRenderPassRaw {
     fn render_batches(
         &mut self,
         batches: &[RenderBatch<VulkanoRenderer>], projection: Projection,
-        frame: &mut VulkanoFrame,
+        frame: &mut Frame<VulkanoRenderer>,
         renderer: &mut VulkanoRenderer,
     ) {
         // Create a projection matrix that just matches coordinates to pixels
@@ -143,7 +146,7 @@ impl Simple2DRenderPassRaw<VulkanoRenderer> for VulkanoSimple2DRenderPassRaw {
             // OpenGL expectation of clip space is different from Vulkan
             Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) *
             // The projection matrix, coming from Projection, is in OpenGL format
-            projection.to_matrix(frame.size);
+            projection.to_matrix(frame.raw().size);
 
         // Create a buffer for the matrix data to be sent over in
         let total_matrix_raw = proj.into();
@@ -158,7 +161,7 @@ impl Simple2DRenderPassRaw<VulkanoRenderer> for VulkanoSimple2DRenderPassRaw {
         for batch in batches {
             buffer_builder = self.render_batch(
                 &batch, buffer_builder,
-                frame.size, renderer,
+                frame.raw().size, renderer,
                 &matrix_data_buffer,
             );
         }
@@ -192,12 +195,12 @@ impl VulkanoSimple2DRenderPassRaw {
         // TODO: Make use of the sample mode
         let (mode_id, image, sampler) = match &batch.mode {
             &ShaderMode::Color =>
-                (0, self.renderer_data.dummy_texture.raw.image(),
-                    self.renderer_data.dummy_texture.raw.sampler()),
+                (0, self.renderer_data.dummy_texture.raw().image(),
+                    self.renderer_data.dummy_texture.raw().sampler()),
             &ShaderMode::Texture(ref texture) =>
-                (1, texture.raw.image(), texture.raw.sampler()),
+                (1, texture.raw().image(), texture.raw().sampler()),
             &ShaderMode::Mask(ref texture) =>
-                (2, texture.raw.image(), texture.raw.sampler()),
+                (2, texture.raw().image(), texture.raw().sampler()),
         };
 
         // Get a buffer containing the mode data

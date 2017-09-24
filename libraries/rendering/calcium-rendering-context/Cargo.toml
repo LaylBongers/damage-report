@@ -7,7 +7,7 @@ license = "MIT/Apache-2.0"
 
 [features]
 # This is supposed to have nothing, do not publish this crate if it has anything
-default = ["simple2d"]
+default = []
 world3d = ["calcium-rendering-world3d", "calcium-rendering-world3d-vulkano"]
 simple2d = ["calcium-rendering-simple2d", "calcium-rendering-simple2d-gfx", "calcium-rendering-simple2d-vulkano"]
 
