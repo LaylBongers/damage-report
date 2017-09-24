@@ -9,6 +9,7 @@ extern crate glutin_window;
 extern crate gfx;
 extern crate gfx_window_glutin;
 extern crate gfx_device_gl;
+extern crate vulkano;
 extern crate calcium_rendering;
 extern crate calcium_rendering_gfx;
 extern crate calcium_rendering_vulkano;
@@ -29,8 +30,8 @@ mod context;
 mod runtime;
 mod unsupported;
 
-mod gfx_opengl;
-mod vulkano;
+mod gfx_opengl_context;
+mod vulkano_context;
 
 pub use context::{Context};
 pub use runtime::{run_runtime, Runtime};

@@ -26,19 +26,7 @@ pub trait Context {
     ) ->  Result<(
         Self::Renderer,
         Self::Window,
-        <Self::Renderer as Renderer>::WindowRenderer,
     ), Error>;
-
-    /// Creates additional windows.
-    ///
-    /// Only supported on the following backends:
-    /// - Vulkano
-    /// TODO: Add a system for requesting required features and reject backends that don't have it.
-    fn window(
-        &self,
-        renderer: &Self::Renderer,
-        window_settings: &WindowSettings,
-    ) -> Result<(Self::Window, <Self::Renderer as Renderer>::WindowRenderer), Error>;
 
     /// Handles an event for a window, updating the renderers and window as needed. Using this the
     /// backend can resize its swapchain buffers and make other relevant changes.
@@ -47,7 +35,6 @@ pub trait Context {
         event: &Input,
         renderer: &mut Self::Renderer,
         window: &mut Self::Window,
-        window_renderer: &mut <Self::Renderer as Renderer>::WindowRenderer,
     );
 
     /// Creates a world3d renderer.

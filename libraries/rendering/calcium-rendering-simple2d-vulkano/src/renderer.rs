@@ -10,10 +10,10 @@ use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 use vulkano::buffer::cpu_pool::{CpuBufferPool, CpuBufferPoolSubbuffer};
 use vulkano::memory::pool::{StdMemoryPool};
 
-use calcium_rendering::{Renderer, Error, WindowRenderer};
+use calcium_rendering::{Renderer, Error};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer, RenderBatch, ShaderMode, Simple2DRenderPassRaw, Simple2DRenderPass, Projection};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoFrame, VulkanoWindowRenderer};
+use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex, VulkanoSimple2DRenderTargetRaw, RenderTargetData};
@@ -79,7 +79,7 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
         &self,
         frame: &'a mut VulkanoFrame,
         render_target: &'a mut Simple2DRenderTarget<VulkanoRenderer, Self>,
-        renderer: &mut VulkanoRenderer, window_renderer: &mut VulkanoWindowRenderer,
+        renderer: &mut VulkanoRenderer,
     ) -> Simple2DRenderPass<'a, VulkanoRenderer, Self> {
         // Give the renderer an opportunity to insert any commands it had queued up, this is used
         //  to copy textures for example. This always has to be done right before a render pass.
@@ -88,7 +88,7 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
         // Start the command buffer, this will contain the draw commands
         let buffer_builder = {
             let clear_values = render_target.raw.clear_values();
-            let framebuffer = render_target.raw.framebuffer_for(frame.image_num, window_renderer);
+            let framebuffer = render_target.raw.framebuffer_for(frame.image_num, renderer);
 
             AutoCommandBufferBuilder::new(
                     renderer.device().clone(), renderer.graphics_queue().family()
@@ -135,16 +135,15 @@ impl Simple2DRenderPassRaw<VulkanoRenderer> for VulkanoSimple2DRenderPassRaw {
     fn render_batches(
         &mut self,
         batches: &[RenderBatch<VulkanoRenderer>], projection: Projection,
-        _frame: &mut VulkanoFrame,
-        renderer: &mut VulkanoRenderer, window_renderer: &mut VulkanoWindowRenderer,
+        frame: &mut VulkanoFrame,
+        renderer: &mut VulkanoRenderer,
     ) {
         // Create a projection matrix that just matches coordinates to pixels
-        let size = window_renderer.size();
         let proj =
             // OpenGL expectation of clip space is different from Vulkan
             Matrix4::from_nonuniform_scale(1.0, -1.0, 1.0) *
             // The projection matrix, coming from Projection, is in OpenGL format
-            projection.to_matrix(window_renderer.size());
+            projection.to_matrix(frame.size);
 
         // Create a buffer for the matrix data to be sent over in
         let total_matrix_raw = proj.into();
@@ -159,7 +158,7 @@ impl Simple2DRenderPassRaw<VulkanoRenderer> for VulkanoSimple2DRenderPassRaw {
         for batch in batches {
             buffer_builder = self.render_batch(
                 &batch, buffer_builder,
-                size, renderer,
+                frame.size, renderer,
                 &matrix_data_buffer,
             );
         }

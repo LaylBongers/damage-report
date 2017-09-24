@@ -15,7 +15,7 @@ use rusttype::{FontCollection};
 use tiled;
 
 use calcium_game::{LoopTimer};
-use calcium_rendering::{Error, WindowRenderer};
+use calcium_rendering::{Error};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget, Projection};
 use calcium_rendering_context::{Runtime, Context};
@@ -104,11 +104,11 @@ impl Runtime for StaticRuntime {
 
         // Set up everything we need to render
         let window_settings = WindowSettings::new("RPG Game", [1280, 720]);
-        let (mut renderer, mut window, mut window_renderer) =
+        let (mut renderer, mut window) =
             context.renderer(Some(self.log.clone()), &window_settings)?;
         let simple2d_renderer = context.simple2d_renderer(&mut renderer)?;
         let mut simple2d_render_target = Simple2DRenderTarget::new(
-            true, &renderer, &window_renderer, &simple2d_renderer
+            true, &renderer, &simple2d_renderer
         );
 
         let mut ui_renderer = FlowyRenderer::new(&mut renderer)?;
@@ -176,7 +176,7 @@ impl Runtime for StaticRuntime {
             // Handle input
             while let Some(event) = window.poll_event() {
                 // Let the initializer handle anything needed
-                context.handle_event(&event, &mut renderer, &mut window, &mut window_renderer);
+                context.handle_event(&event, &mut renderer, &mut window);
 
                 match event {
                     Input::Button(ButtonArgs {state, button, scancode: _scancode}) => {
@@ -228,7 +228,7 @@ impl Runtime for StaticRuntime {
             }
 
             let mut batches = Vec::new();
-            let camera_size = window_renderer.size().cast();
+            let camera_size = renderer.size().cast();
 
             // Render the tiles
             tiles_renderer.render(&tiles, &mut batches, camera_size);
@@ -238,32 +238,30 @@ impl Runtime for StaticRuntime {
                 unit.render(&mut batches);
             }
 
-            // Perform the rendering itself
-            let mut frame = window_renderer.start_frame(&mut renderer);
-            let camera_size = window_renderer.size().cast();
-
+            // Render the UI
             let mut ui_batches = Vec::new();
             ui_renderer.render(
                 &mut ui, &mut ui_batches, camera_size, &mut renderer
             )?;
 
             // Finally do the 2D rendering itself
+            let mut frame = renderer.start_frame();
             {
                 let mut pass = simple2d_renderer.start_pass(
                     &mut frame, &mut simple2d_render_target,
-                    &mut renderer, &mut window_renderer,
+                    &mut renderer,
                 );
                 //let camera = Camera::new(32.0, Point2::new(0.0, 0.0));
+                //Projection::Camera(camera)
                 pass.render_batches(
-                    &batches, Projection::Pixels/*Projection::Camera(camera)*/, &mut renderer, &mut window_renderer,
+                    &batches, Projection::Pixels, &mut renderer,
                 );
                 pass.render_batches(
-                    &ui_batches,  Projection::Pixels, &mut renderer, &mut window_renderer,
+                    &ui_batches,  Projection::Pixels, &mut renderer,
                 );
                 simple2d_renderer.finish_pass(pass, &mut renderer);
             }
-
-            window_renderer.finish_frame(&mut renderer, frame);
+            renderer.finish_frame(frame);
             window.swap_buffers();
         }
 

@@ -11,7 +11,7 @@ use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
 use calcium_rendering::{Error};
 use calcium_rendering::texture::{Texture, SampleMode};
-use calcium_rendering_gfx::{GfxRenderer, GfxFrame, ColorFormat, GfxWindowRenderer};
+use calcium_rendering_gfx::{GfxRenderer, GfxFrame, ColorFormat};
 use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, Simple2DRenderTarget, Simple2DRenderPassRaw, Simple2DRenderPass, Projection};
 
 use {GfxSimple2DRenderTargetRaw};
@@ -69,7 +69,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
     pub fn new(
         renderer: &mut GfxRenderer<D, F>
     ) -> Result<Self, Error> {
-        let pso = renderer.factory.create_pipeline_simple(
+        let pso = renderer.factory_mut().create_pipeline_simple(
             include_bytes!("../shaders/simple2d_150_vert.glsl"),
             include_bytes!("../shaders/simple2d_150_frag.glsl"),
             pipe::new()
@@ -86,17 +86,17 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
             let mode = Mode {
                 mode: i
             };
-            let mode_buffer = renderer.factory.create_constant_buffer(1);
-            renderer.encoder.update_buffer(&mode_buffer, &[mode], 0).unwrap();
+            let mode_buffer = renderer.factory_mut().create_constant_buffer(1);
+            renderer.encoder_mut().update_buffer(&mode_buffer, &[mode], 0).unwrap();
             mode_buffers.push(mode_buffer);
         }
 
         // Create the samplers for the two sample modes
-        let linear_sampler = renderer.factory.create_sampler(SamplerInfo::new(
+        let linear_sampler = renderer.factory_mut().create_sampler(SamplerInfo::new(
             FilterMethod::Trilinear,
             WrapMode::Clamp,
         ));
-        let nearest_sampler = renderer.factory.create_sampler(SamplerInfo::new(
+        let nearest_sampler = renderer.factory_mut().create_sampler(SamplerInfo::new(
             FilterMethod::Scale,
             WrapMode::Clamp,
         ));
@@ -124,11 +124,12 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         &self,
         frame: &'a mut GfxFrame,
         render_target: &mut Simple2DRenderTarget<GfxRenderer<D, F>, Self>,
-        renderer: &mut GfxRenderer<D, F>, _window_renderer: &mut GfxWindowRenderer,
+        renderer: &mut GfxRenderer<D, F>,
     ) -> Simple2DRenderPass<'a, GfxRenderer<D, F>, Self> {
         // Clear if we were told to clear
         if render_target.raw.is_clear() {
-            renderer.encoder.clear(&renderer.color_view, [0.0, 0.0, 0.0, 1.0]);
+            let color_view = renderer.color_view().clone();
+            renderer.encoder_mut().clear(&color_view, [0.0, 0.0, 0.0, 1.0]);
         }
 
         Simple2DRenderPass::raw_new(GfxSimple2DRenderPassRaw {
@@ -154,15 +155,15 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
     fn render_batches(
         &mut self,
         batches: &[RenderBatch<GfxRenderer<D, F>>], projection: Projection,
-        frame: &mut GfxFrame, renderer: &mut GfxRenderer<D, F>, _window_renderer: &mut GfxWindowRenderer,
+        frame: &mut GfxFrame, renderer: &mut GfxRenderer<D, F>,
     ) {
         // Create a projection matrix that just matches coordinates to pixels
         let proj = projection.to_matrix(frame.size());
         let transform = Transform {
             transform: proj.into()
         };
-        let transform_buffer = renderer.factory.create_constant_buffer(1);
-        renderer.encoder.update_buffer(&transform_buffer, &[transform], 0).unwrap();
+        let transform_buffer = renderer.factory_mut().create_constant_buffer(1);
+        renderer.encoder_mut().update_buffer(&transform_buffer, &[transform], 0).unwrap();
 
         // Go over all batches
         for batch in batches {
@@ -177,7 +178,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
             }
 
             // Create an actual VBO from it
-            let (vertex_buffer, slice) = renderer.factory.create_vertex_buffer_with_slice(
+            let (vertex_buffer, slice) = renderer.factory_mut().create_vertex_buffer_with_slice(
                 &vertices, ()
             );
 
@@ -202,11 +203,11 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
                 mode: mode_buffer.clone(),
                 texture: texture.raw.view.raw().clone(),
                 texture_sampler: sampler.clone(),
-                out: renderer.color_view.clone(),
+                out: renderer.color_view().clone(),
             };
 
             // Finally, add the draw to the encoder
-            renderer.encoder.draw(&slice, &self.render_data.pso, &data);
+            renderer.encoder_mut().draw(&slice, &self.render_data.pso, &data);
         }
     }
 }

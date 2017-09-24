@@ -8,7 +8,7 @@ use gfx::format::{Rgba8, Srgba8, R8, Unorm};
 use gfx::handle::{ShaderResourceView, RawShaderResourceView};
 use gfx::memory::{Typed};
 
-use calcium_rendering::{Error, CalciumErrorMappable};
+use calcium_rendering::{Error, CalciumErrorMappable, Renderer};
 use calcium_rendering::texture::{TextureRaw, TextureBuilder, TextureSource, TextureStoreFormat, SampleMode};
 
 use {GfxRenderer};
@@ -36,7 +36,7 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
     fn from_path<F: Factory<D::Resources> + 'static>(
         path: &PathBuf, builder: &TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>
     ) -> Result<Self, Error> {
-        info!(renderer.log,
+        info!(renderer.log(),
             "Loading texture from file"; "path" => path.display().to_string()
         );
 
@@ -51,7 +51,7 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
         bytes: &[u8], size: Vector2<u32>, color: bool,
         builder: &TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>,
     ) -> Result<Self, Error> {
-        info!(renderer.log,
+        info!(renderer.log(),
             "Loading texture from bytes"; "width" => size.x, "height" => size.y, "color" => color
         );
 
@@ -104,15 +104,15 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
         let kind = Kind::D2(size.x as Size, size.y as Size, AaMode::Single);
         let view = match builder.store_format {
             TextureStoreFormat::Srgb => GenericView::Rgba8(
-                renderer.factory.create_texture_immutable_u8::<Srgba8>(kind, &[&data])
+                renderer.factory_mut().create_texture_immutable_u8::<Srgba8>(kind, &[&data])
                     .map_platform_err()?.1
                 ),
             TextureStoreFormat::Linear => GenericView::Rgba8(
-                renderer.factory.create_texture_immutable_u8::<Rgba8>(kind, &[&data])
+                renderer.factory_mut().create_texture_immutable_u8::<Rgba8>(kind, &[&data])
                     .map_platform_err()?.1
                 ),
             TextureStoreFormat::SingleChannel => GenericView::R8(
-                renderer.factory.create_texture_immutable_u8::<R8U>(kind, &[&data])
+                renderer.factory_mut().create_texture_immutable_u8::<R8U>(kind, &[&data])
                     .map_platform_err()?.1
                 ),
         };

@@ -1,14 +1,12 @@
 use std::sync::{Arc};
 use std::cmp::{min, max};
 
+use slog::{Logger};
 use cgmath::{Vector2};
-use vulkano::device::{Queue};
+use vulkano::device::{Device, Queue};
 use vulkano::swapchain::{Swapchain, SurfaceTransform, Surface};
 use vulkano::sync::{GpuFuture};
 use vulkano::image::swapchain::{SwapchainImage};
-
-use calcium_rendering::{Renderer};
-use {VulkanoRenderer};
 
 /// A representation of the buffer(s) renderers have to render to to show up on the target.
 pub struct WindowSwapchain {
@@ -23,15 +21,16 @@ pub struct WindowSwapchain {
 
 impl WindowSwapchain {
     pub fn new(
-        renderer: &VulkanoRenderer, surface: &Arc<Surface>, size: Vector2<u32>,
+        log: &Logger,
+        device: &Arc<Device>, graphics_queue: &Arc<Queue>, surface: &Arc<Surface>, size: Vector2<u32>,
     ) -> Self {
         // Now create the swapchain, we need this to actually swap between our back buffer and the
         //  window's front buffer, without it we can't show anything
-        debug!(renderer.log(), "Creating swapchain");
+        debug!(log, "Creating swapchain");
         let (swapchain, images) = {
             // Get what the swap chain we want to create would be capable of, we can't request
             //  anything it can't do
-            let caps = surface.capabilities(renderer.device().physical_device()).unwrap();
+            let caps = surface.capabilities(device.physical_device()).unwrap();
 
             // The swap chain's dimensions need to match the window size
             let dimensions = caps.current_extent.unwrap_or([size.x, size.y]);
@@ -51,20 +50,20 @@ impl WindowSwapchain {
 
             // Finally, actually create the swapchain, with all its color images
             Swapchain::new(
-                renderer.device().clone(), surface.clone(), caps.min_image_count, format,
+                device.clone(), surface.clone(), caps.min_image_count, format,
                 dimensions, 1,
-                caps.supported_usage_flags, renderer.graphics_queue(),
+                caps.supported_usage_flags, graphics_queue,
                 SurfaceTransform::Identity, alpha,
                 present, true, None
             ).unwrap()
         };
-        debug!(renderer.log(), "Created swapchain"; "images" => images.len());
+        debug!(log, "Created swapchain"; "images" => images.len());
 
         WindowSwapchain {
             swapchain,
             images,
 
-            previous_frame: Some(Box::new(::vulkano::sync::now(renderer.device().clone()))),
+            previous_frame: Some(Box::new(::vulkano::sync::now(device.clone()))),
 
             images_id: 0,
         }
@@ -83,10 +82,10 @@ impl WindowSwapchain {
     /// Resizes the swapchain, returns the actual size it was resized to which may be different
     /// from the requested size.
     pub fn resize(
-        &mut self, mut size: Vector2<u32>, renderer: &VulkanoRenderer, surface: &Arc<Surface>,
+        &mut self, mut size: Vector2<u32>, device: &Arc<Device>, surface: &Arc<Surface>,
     ) -> Vector2<u32> {
         // Limit to the size the surface's capabilities allow
-        let caps = surface.capabilities(renderer.device().physical_device()).unwrap();
+        let caps = surface.capabilities(device.physical_device()).unwrap();
         size.x = max(size.x, caps.min_image_extent[0]);
         size.y = max(size.y, caps.min_image_extent[1]);
         size.x = min(size.x, caps.max_image_extent[0]);

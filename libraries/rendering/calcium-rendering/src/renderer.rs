@@ -1,13 +1,19 @@
 use std::any::{Any};
-use texture::{TextureRaw};
+
 use slog::{Logger};
-use {WindowRenderer};
+use cgmath::{Vector2};
+
+use texture::{TextureRaw};
 
 pub trait Renderer: Any + Sized {
-    type WindowRenderer: WindowRenderer<Self> + Any;
     type Frame: Any;
     type TextureRaw: TextureRaw<Self> + Any + Send + Sync;
 
-    // Gets the slog logger associated with this renderer.
+    /// Gets the slog logger associated with this renderer.
     fn log(&self) -> &Logger;
+
+    fn size(&self) -> Vector2<u32>;
+
+    fn start_frame(&mut self) -> Self::Frame;
+    fn finish_frame(&mut self, frame: Self::Frame);
 }

@@ -10,7 +10,7 @@ use vulkano::image::swapchain::{SwapchainImage};
 use vulkano::descriptor::descriptor_set::{FixedSizeDescriptorSetsPool};
 
 use calcium_rendering::{Renderer};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
+use calcium_rendering_vulkano::{VulkanoRenderer};
 use calcium_rendering_simple2d::{Simple2DRenderTargetRaw};
 
 use {VkVertex, VulkanoSimple2DRenderer};
@@ -31,13 +31,13 @@ impl VulkanoSimple2DRenderTargetRaw {
     }
 
     pub fn framebuffer_for(
-        &mut self, image_num: usize, window_renderer: &VulkanoWindowRenderer,
+        &mut self, image_num: usize, renderer: &VulkanoRenderer,
     ) -> &Arc<FramebufferAbstract + Send + Sync> {
         // Check if we should update the framebuffers
-        let current_images_id = window_renderer.swapchain.images_id();
+        let current_images_id = renderer.swapchain.images_id();
         if self.framebuffers_images_id != current_images_id {
             self.framebuffers = create_framebuffers(
-                window_renderer.swapchain.images(),
+                renderer.swapchain.images(),
                 &self.render_pass,
             );
             self.framebuffers_images_id = current_images_id;
@@ -61,7 +61,7 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
 {
     fn new(
         clear: bool,
-        renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
+        renderer: &VulkanoRenderer,
         simple2d_renderer: &VulkanoSimple2DRenderer,
     ) -> Self {
         // Set up the render pass for 2D rendering depending on the settings for this target
@@ -127,10 +127,10 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
 
         // Create the swapchain framebuffers for this render pass
         let framebuffers = create_framebuffers(
-            window_renderer.swapchain.images(),
+            renderer.swapchain.images(),
             &render_pass,
         );
-        let framebuffers_images_id = window_renderer.swapchain.images_id();
+        let framebuffers_images_id = renderer.swapchain.images_id();
 
         VulkanoSimple2DRenderTargetRaw {
             data: Rc::new(RefCell::new(RenderTargetData {

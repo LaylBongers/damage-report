@@ -7,7 +7,7 @@ license = "MIT/Apache-2.0"
 
 [features]
 # This is supposed to have nothing, do not publish this crate if it has anything
-default = []
+default = ["simple2d"]
 world3d = ["calcium-rendering-world3d", "calcium-rendering-world3d-vulkano"]
 simple2d = ["calcium-rendering-simple2d", "calcium-rendering-simple2d-gfx", "calcium-rendering-simple2d-vulkano"]
 
@@ -22,6 +22,7 @@ pistoncore-glutin_window = "0.39"
 gfx = "0.16"
 gfx_window_glutin = "0.17"
 gfx_device_gl = "0.14"
+vulkano = "0.6"
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-gfx = {path = "../calcium-rendering-gfx"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}

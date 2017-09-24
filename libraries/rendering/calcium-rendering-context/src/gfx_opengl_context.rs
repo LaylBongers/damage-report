@@ -9,7 +9,7 @@ use gfx_window_glutin::{self};
 use gfx_device_gl::{Device, Factory};
 
 use calcium_rendering::{Error, CalciumErrorMappable};
-use calcium_rendering_gfx::{GfxRenderer, GfxWindowRenderer, ColorFormat, DepthFormat};
+use calcium_rendering_gfx::{GfxRenderer, ColorFormat, DepthFormat};
 
 #[cfg(feature = "simple2d")]
 use calcium_rendering_simple2d_gfx::{GfxSimple2DRenderer};
@@ -34,7 +34,7 @@ impl Context for GfxOpenGlContext {
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,
     ) -> Result<
-        (GfxRenderer<Device, Factory>, GlutinWindow, GfxWindowRenderer),
+        (GfxRenderer<Device, Factory>, GlutinWindow),
         Error
     > {
         let log = log.unwrap_or(Logger::root(StdLog.fuse(), o!()));
@@ -49,18 +49,9 @@ impl Context for GfxOpenGlContext {
             gfx_window_glutin::init_existing::<ColorFormat, DepthFormat>(&window.window);
         let encoder: Encoder<_, _> = factory.create_command_buffer().into();
 
-        let renderer = GfxRenderer::new(&log, device, factory, encoder, main_color);
-        let window_renderer = GfxWindowRenderer::new(size);
+        let renderer = GfxRenderer::new(&log, device, factory, encoder, main_color, size);
 
-        Ok((renderer, window, window_renderer))
-    }
-
-    fn window(
-        &self,
-        _renderer: &GfxRenderer<Device, Factory>,
-        _window_settings: &WindowSettings,
-    ) -> Result<(GlutinWindow, GfxWindowRenderer), Error> {
-        Err(Error::Unsupported("window() is not supported on this backend".to_string()))
+        Ok((renderer, window))
     }
 
     fn handle_event(
@@ -68,14 +59,13 @@ impl Context for GfxOpenGlContext {
         event: &Input,
         renderer: &mut GfxRenderer<Device, Factory>,
         window: &mut GlutinWindow,
-        window_renderer: &mut GfxWindowRenderer,
     ) {
         match event {
             &Input::Resize(w, h) => {
                 let (new_color, _new_depth) =
                     gfx_window_glutin::new_views::<ColorFormat, DepthFormat>(&window.window);
-                renderer.color_view = new_color;
-                window_renderer.report_resize(Vector2::new(w, h));
+                renderer.set_color_view(new_color);
+                renderer.report_resize(Vector2::new(w, h));
             },
             _ => {},
         }

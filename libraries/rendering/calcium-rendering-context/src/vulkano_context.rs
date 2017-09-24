@@ -4,9 +4,10 @@ use slog_stdlog::{StdLog};
 use window::{WindowSettings};
 use input::{Input};
 use winit_window::{self, WinitWindow};
+use vulkano::instance::{Instance};
 
-use calcium_rendering::{Error};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
+use calcium_rendering::{Error, CalciumErrorMappable};
+use calcium_rendering_vulkano::{VulkanoRenderer};
 
 use {Context};
 
@@ -30,41 +31,42 @@ impl Context for VulkanoContext {
 
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,
-    ) -> Result<(VulkanoRenderer, WinitWindow, VulkanoWindowRenderer), Error> {
+    ) -> Result<(VulkanoRenderer, WinitWindow), Error> {
         let log = log.unwrap_or(Logger::root(StdLog.fuse(), o!()));
 
-        let renderer = VulkanoRenderer::new(&log, winit_window::required_extensions())?;
-        let (window, window_renderer) = self.window(&renderer, window_settings)?;
+        // Start by setting up the vulkano instance, this is a silo of vulkan that all our vulkan
+        //  types will belong to
+        debug!(log, "Creating vulkan instance");
+        let instance = {
+            // Tell it we need at least the extensions the window needs
+            Instance::new(None, &winit_window::required_extensions(), None)
+                .map_platform_err()?
+        };
 
-        Ok((renderer, window, window_renderer))
-    }
-
-    fn window(
-        &self,
-        renderer: &VulkanoRenderer,
-        window_settings: &WindowSettings,
-    ) -> Result<(WinitWindow, VulkanoWindowRenderer), Error> {
+        // Set up the window
         let window = WinitWindow::new_vulkano(
-            renderer.instance().clone(), window_settings,
+            instance.clone(), window_settings,
         );
         let size = window_settings.get_size();
-        let window_renderer = VulkanoWindowRenderer::new(
-            renderer, window.surface.clone(), Vector2::new(size.width, size.height),
-        );
 
-        Ok((window, window_renderer))
+        // Set up the renderer itself
+        let renderer = VulkanoRenderer::new(
+            &log, instance,
+            window.surface.clone(), Vector2::new(size.width, size.height)
+        )?;
+
+        Ok((renderer, window))
     }
 
     fn handle_event(
         &self,
         event: &Input,
-        _renderer: &mut VulkanoRenderer,
+        renderer: &mut VulkanoRenderer,
         _window: &mut WinitWindow,
-        window_renderer: &mut VulkanoWindowRenderer,
     ) {
         match event {
             &Input::Resize(w, h) =>
-                window_renderer.queue_resize(Vector2::new(w, h)),
+                renderer.queue_resize(Vector2::new(w, h)),
             _ => {}
         }
     }

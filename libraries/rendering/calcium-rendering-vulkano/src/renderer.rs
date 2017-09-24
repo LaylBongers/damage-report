@@ -1,14 +1,16 @@
 use std::sync::{Arc};
 
+use cgmath::{Vector2};
 use slog::{Logger};
 use vulkano::device::{DeviceExtensions, Device, Queue};
-use vulkano::instance::{Instance, PhysicalDevice, InstanceExtensions};
+use vulkano::instance::{Instance, PhysicalDevice};
 use vulkano::sync::{NowFuture, GpuFuture};
 use vulkano::command_buffer::{CommandBufferExecFuture, AutoCommandBuffer};
+use vulkano::swapchain::{Surface};
 
-use calcium_rendering::{Error, CalciumErrorMappable, Renderer};
+use calcium_rendering::{Error, Renderer};
 
-use {VulkanoTextureRaw, VulkanoFrame, VulkanoWindowRenderer};
+use {VulkanoTextureRaw, WindowSwapchain};
 
 pub struct VulkanoRenderer {
     log: Logger,
@@ -17,23 +19,21 @@ pub struct VulkanoRenderer {
     device: Arc<Device>,
     graphics_queue: Arc<Queue>,
 
+    size: Vector2<u32>,
+    pub surface: Arc<Surface>,
+    pub swapchain: WindowSwapchain,
+    queued_resize: bool,
+    next_frame_id: u64,
+
     queued_cb_futures: Vec<CommandBufferExecFuture<NowFuture, AutoCommandBuffer>>,
 }
 
 impl VulkanoRenderer {
     pub fn new(
-        log: &Logger, required_extensions: InstanceExtensions,
+        log: &Logger, instance: Arc<Instance>,
+        surface: Arc<Surface>, size: Vector2<u32>,
     ) -> Result<Self, Error> {
         info!(log, "Creating vulkano renderer");
-
-        // Start by setting up the vulkano instance, this is a silo of vulkan that all our vulkan
-        //  types will belong to
-        debug!(log, "Creating vulkan instance");
-        let instance = {
-            // Tell it we need at least the extensions the window needs
-            Instance::new(None, &required_extensions, None)
-                .map_platform_err()?
-        };
 
         // Pick a GPU to use for rendering. We assume first device as the one to render with
         // TODO: Allow user to select in some way, perhaps through config
@@ -86,12 +86,21 @@ impl VulkanoRenderer {
         // Get the graphics queue we requested
         let graphics_queue = queues.next().unwrap();
 
+        // Create the swapchain we'll have to render to to make things actually show up on screen
+        let swapchain = WindowSwapchain::new(log, &device, &graphics_queue, &surface, size);
+
         Ok(VulkanoRenderer {
             log: log.clone(),
 
             instance: instance.clone(),
             device,
             graphics_queue,
+
+            size,
+            surface,
+            swapchain,
+            queued_resize: false,
+            next_frame_id: 0,
 
             queued_cb_futures: Vec::new(),
         })
@@ -132,14 +141,69 @@ impl VulkanoRenderer {
 
         future
     }
+
+    pub fn queue_resize(&mut self, size: Vector2<u32>) {
+        // Limit to at least 1x1 in size, we crash otherwise.
+        if size.x <= 0 || size.y <= 0 {
+            return
+        }
+
+        // We can be spammed with resize events many times in the same frame, so defer changing the
+        //  swapchain.
+        self.queued_resize = true;
+
+        // We do however want to immediately set the size value as it may be used for 2D geometry
+        // location calculations, which would lag behind at least one frame like this if the
+        // calculations are done before start_frame.
+        self.size = size;
+    }
 }
 
 impl Renderer for VulkanoRenderer {
-    type WindowRenderer = VulkanoWindowRenderer;
     type Frame = VulkanoFrame;
     type TextureRaw = VulkanoTextureRaw;
 
     fn log(&self) -> &Logger {
         &self.log
     }
+
+    fn size(&self) -> Vector2<u32> {
+        self.size
+    }
+
+    fn start_frame(&mut self) -> VulkanoFrame {
+        self.swapchain.cleanup_finished_frames();
+
+        // Before we render, see if we need to execute a queued resize
+        if self.queued_resize {
+            // Overwrite the size with the actual size we were changed to
+            self.size = self.swapchain.resize(self.size, &self.device, &self.surface);
+            self.queued_resize = false;
+        }
+
+        // Get the image for this frame, along with a future that will let us queue up the order of
+        //  command buffer submissions.
+        let (image_num, future) = self.swapchain.start_frame();
+
+        self.next_frame_id += 1;
+        VulkanoFrame {
+            image_num,
+            future: Some(future),
+            frame_id: self.next_frame_id - 1,
+            size: self.size,
+        }
+    }
+
+    fn finish_frame(&mut self, mut frame: VulkanoFrame) {
+        self.swapchain.finish_frame(
+            frame.future.take().unwrap(), self.graphics_queue.clone(), frame.image_num
+        );
+    }
+}
+
+pub struct VulkanoFrame {
+    pub image_num: usize,
+    pub future: Option<Box<GpuFuture + Send + Sync>>,
+    pub frame_id: u64,
+    pub size: Vector2<u32>,
 }

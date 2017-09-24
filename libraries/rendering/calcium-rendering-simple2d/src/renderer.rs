@@ -12,7 +12,7 @@ pub trait Simple2DRenderer<R: Renderer>: Any + Sized {
         &self,
         frame: &'a mut R::Frame,
         render_target: &'a mut Simple2DRenderTarget<R, Self>,
-        renderer: &mut R, window_renderer: &mut R::WindowRenderer,
+        renderer: &mut R,
     ) -> Simple2DRenderPass<'a, R, Self>;
 
     /// Finishes the rendering pass.
@@ -46,9 +46,9 @@ impl<'a, R: Renderer, SR: Simple2DRenderer<R>> Simple2DRenderPass<'a, R, SR> {
     pub fn render_batches(
         &mut self,
         batches: &[RenderBatch<R>], projection: Projection,
-        renderer: &mut R, window_renderer: &mut R::WindowRenderer,
+        renderer: &mut R,
     ) {
-        self.raw.render_batches(batches, projection, &mut self.frame, renderer, window_renderer);
+        self.raw.render_batches(batches, projection, &mut self.frame, renderer);
     }
 
     /// Marks this render pass as being finished by the renderer, do not call this yourself!
@@ -70,6 +70,6 @@ pub trait Simple2DRenderPassRaw<R: Renderer> {
     fn render_batches(
         &mut self,
         batches: &[RenderBatch<R>], projection: Projection,
-        frame: &mut R::Frame, renderer: &mut R, window_renderer: &mut R::WindowRenderer,
+        frame: &mut R::Frame, renderer: &mut R,
     );
 }
