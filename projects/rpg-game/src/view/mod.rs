@@ -5,19 +5,19 @@ use calcium_rendering::{Renderer, Error};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 use cgmath::{Vector2, Point2};
-use tiled::{Map};
+use tiled::{Map as TMap};
 
-use model::{Tiles};
+use model::{Map};
 
-pub struct TilesRenderer<R: Renderer> {
+pub struct MapRenderer<R: Renderer> {
     tileset_texture: Arc<Texture<R>>,
     tileset_first_gid: u32,
     tileset_tiles_amount: Vector2<u32>,
     tileset_uv_per_tile: Vector2<f32>,
 }
 
-impl<R: Renderer> TilesRenderer<R> {
-    pub fn new(map: &Map, map_path: &PathBuf, renderer: &mut R) -> Result<Self, Error> {
+impl<R: Renderer> MapRenderer<R> {
+    pub fn new(map: &TMap, map_path: &PathBuf, renderer: &mut R) -> Result<Self, Error> {
         // Load in the map and validate that we can render using it
         if map.tilesets.len() != 1 {
             panic!("Only one tileset per map is supported");
@@ -50,7 +50,7 @@ impl<R: Renderer> TilesRenderer<R> {
             1.0 / tileset_tiles_amount.y as f32
         );
 
-        Ok(TilesRenderer {
+        Ok(MapRenderer {
             tileset_texture: texture,
             tileset_first_gid,
             tileset_tiles_amount,
@@ -59,7 +59,7 @@ impl<R: Renderer> TilesRenderer<R> {
     }
 
     pub fn render(
-        &self, tiles: &Tiles, batches: &mut Vec<RenderBatch<R>>, camera_size: Vector2<f32>
+        &self, map: &Map, batches: &mut Vec<RenderBatch<R>>, camera_size: Vector2<f32>
     ) {
         let mut batch = RenderBatch::new(ShaderMode::Texture(self.tileset_texture.clone()));
 
@@ -68,7 +68,7 @@ impl<R: Renderer> TilesRenderer<R> {
             (camera_size.y / 32.0).ceil(),
         ).cast();
 
-        for layer in tiles.layers() {
+        for layer in map.layers() {
             // TODO: Limit tile rendering to only the visible tiles, not just a fixed amount
             for y in 0..last_pos.y {
                 for x in 0..last_pos.x {

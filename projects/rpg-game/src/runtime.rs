@@ -22,8 +22,8 @@ use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
 use calcium_rendering_context::{Runtime, Context};
 use calcium_rendering::Renderer;
 
-use model::{Tiles};
-use view::{TilesRenderer};
+use model::{Map};
+use view::{MapRenderer};
 
 struct FriendlyUnit<R: Renderer> {
     name: String,
@@ -147,9 +147,9 @@ impl Runtime for StaticRuntime {
 
         // Set up the game map's tiles
         let map_path = PathBuf::from("./assets/test_map.tmx");
-        let map = tiled::parse_file(&map_path).unwrap();
-        let tiles = Tiles::new(&map);
-        let tiles_renderer = TilesRenderer::new(&map, &map_path, &mut renderer)?;
+        let tmap = tiled::parse_file(&map_path).unwrap();
+        let map = Map::new(&tmap, &self.log);
+        let map_renderer = MapRenderer::new(&tmap, &map_path, &mut renderer)?;
 
         let mut players_units = Vec::new();
 
@@ -234,7 +234,7 @@ impl Runtime for StaticRuntime {
             let camera_size = renderer.size().cast();
 
             // Render the tiles
-            tiles_renderer.render(&tiles, &mut world_batches, camera_size);
+            map_renderer.render(&map, &mut world_batches, camera_size);
 
             // Render the player units
             for unit in &mut players_units {
@@ -248,9 +248,7 @@ impl Runtime for StaticRuntime {
 
             // Render the UI
             let mut ui_batches = Vec::new();
-            ui_renderer.render(
-                &mut ui, &mut ui_batches, camera_size, &mut renderer
-            )?;
+            ui_renderer.render(&mut ui, &mut ui_batches, camera_size, &mut renderer)?;
             render_data.render_sets.push(RenderSet::new(Projection::Pixels, ui_batches));
 
             // Finally do the 2D rendering itself
