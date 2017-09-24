@@ -5,7 +5,6 @@ use screenmath::{Rectangle};
 
 use calcium_rendering::{Renderer};
 use calcium_rendering::texture::{Texture};
-
 /// A render batch that can be drawn by a renderer. Represents the equivalent of a single drawcall.
 pub struct RenderBatch<R: Renderer> {
     /// The shader mode in which a render batch will be drawn.

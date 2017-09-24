@@ -17,7 +17,8 @@ use tiled;
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, DrawRectangle, Rectangle, Simple2DRenderTarget, Projection};
+use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, Projection, RenderData, RenderSet};
+use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
 use calcium_rendering_context::{Runtime, Context};
 use calcium_rendering::Renderer;
 
@@ -106,7 +107,7 @@ impl Runtime for StaticRuntime {
         let window_settings = WindowSettings::new("RPG Game", [1280, 720]);
         let (mut renderer, mut window) =
             context.renderer(Some(self.log.clone()), &window_settings)?;
-        let simple2d_renderer = context.simple2d_renderer(&mut renderer)?;
+        let mut simple2d_renderer = context.simple2d_renderer(&mut renderer)?;
         let mut simple2d_render_target = Simple2DRenderTarget::new(
             true, &renderer, &simple2d_renderer
         );
@@ -175,7 +176,7 @@ impl Runtime for StaticRuntime {
 
             // Handle input
             while let Some(event) = window.poll_event() {
-                // Let the initializer handle anything needed
+                // Let the context handle anything needed
                 context.handle_event(&event, &mut renderer, &mut window);
 
                 match event {
@@ -227,40 +228,36 @@ impl Runtime for StaticRuntime {
                 unit.update(delta, i == selected_unit, &pinput);
             }
 
-            let mut batches = Vec::new();
+            // Set up the rendering data we'll need
+            let mut render_data = RenderData::new();
+            let mut world_batches = Vec::new();
             let camera_size = renderer.size().cast();
 
             // Render the tiles
-            tiles_renderer.render(&tiles, &mut batches, camera_size);
+            tiles_renderer.render(&tiles, &mut world_batches, camera_size);
 
             // Render the player units
             for unit in &mut players_units {
-                unit.render(&mut batches);
+                unit.render(&mut world_batches);
             }
+
+            // Submit the world render data
+            //let camera = Camera::new(32.0, Point2::new(0.0, 0.0));
+            //Projection::Camera(camera)
+            render_data.render_sets.push(RenderSet::new(Projection::Pixels, world_batches));
 
             // Render the UI
             let mut ui_batches = Vec::new();
             ui_renderer.render(
                 &mut ui, &mut ui_batches, camera_size, &mut renderer
             )?;
+            render_data.render_sets.push(RenderSet::new(Projection::Pixels, ui_batches));
 
             // Finally do the 2D rendering itself
             let mut frame = renderer.start_frame();
-            {
-                let mut pass = simple2d_renderer.start_pass(
-                    &mut frame, &mut simple2d_render_target,
-                    &mut renderer,
-                );
-                //let camera = Camera::new(32.0, Point2::new(0.0, 0.0));
-                //Projection::Camera(camera)
-                pass.render_batches(
-                    &batches, Projection::Pixels, &mut renderer,
-                );
-                pass.render_batches(
-                    &ui_batches,  Projection::Pixels, &mut renderer,
-                );
-                simple2d_renderer.finish_pass(pass, &mut renderer);
-            }
+            simple2d_renderer.render(
+                &render_data, &mut frame, &mut simple2d_render_target, &mut renderer
+            );
             renderer.finish_frame(frame);
             window.swap_buffers();
         }

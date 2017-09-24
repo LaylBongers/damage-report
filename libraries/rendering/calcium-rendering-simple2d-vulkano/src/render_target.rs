@@ -1,6 +1,4 @@
 use std::sync::{Arc};
-use std::rc::{Rc};
-use std::cell::{RefCell};
 
 use vulkano::pipeline::{GraphicsPipeline, GraphicsPipelineAbstract};
 use vulkano::pipeline::vertex::{SingleBufferDefinition};
@@ -16,18 +14,25 @@ use calcium_rendering_simple2d::{Simple2DRenderTargetRaw};
 use {VkVertex, VulkanoSimple2DRenderer};
 
 pub struct VulkanoSimple2DRenderTargetRaw {
-    data: Rc<RefCell<RenderTargetData>>,
-
     render_pass: Arc<RenderPassAbstract + Send + Sync>,
     framebuffers: Vec<Arc<FramebufferAbstract + Send + Sync>>,
-    clear: bool,
 
+    pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
+    set_pool: FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>>,
+
+    clear: bool,
     framebuffers_images_id: usize,
 }
 
 impl VulkanoSimple2DRenderTargetRaw {
-    pub fn data(&self) -> &Rc<RefCell<RenderTargetData>> {
-        &self.data
+    pub fn pipeline(&self) -> &Arc<GraphicsPipelineAbstract + Send + Sync> {
+        &self.pipeline
+    }
+
+    pub fn set_pool_mut(
+        &mut self
+    ) -> &mut FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>> {
+        &mut self.set_pool
     }
 
     pub fn framebuffer_for(
@@ -133,14 +138,14 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
         let framebuffers_images_id = renderer.swapchain.images_id();
 
         VulkanoSimple2DRenderTargetRaw {
-            data: Rc::new(RefCell::new(RenderTargetData {
-                pipeline,
-                set_pool,
-            })),
             render_pass,
             framebuffers,
-            clear,
+
+            pipeline,
+            set_pool,
+
             framebuffers_images_id,
+            clear,
         }
     }
 }
@@ -155,21 +160,4 @@ fn create_framebuffers(
             .build().unwrap()
         ) as Arc<FramebufferAbstract + Send + Sync>
     }).collect()
-}
-
-pub struct RenderTargetData {
-    pipeline: Arc<GraphicsPipelineAbstract + Send + Sync>,
-    set_pool: FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>>,
-}
-
-impl RenderTargetData {
-    pub fn pipeline(&self) -> &Arc<GraphicsPipelineAbstract + Send + Sync> {
-        &self.pipeline
-    }
-
-    pub fn set_pool_mut(
-        &mut self
-    ) -> &mut FixedSizeDescriptorSetsPool<Arc<GraphicsPipelineAbstract + Send + Sync>> {
-        &mut self.set_pool
-    }
 }

@@ -1,5 +1,4 @@
 use std::sync::{Arc};
-use std::rc::{Rc};
 
 use cgmath::{Vector2};
 use gfx::{self, Device, Factory, VertexBuffer, ConstantBuffer};
@@ -13,7 +12,8 @@ use calcium_rendering::raw::{RawAccess};
 use calcium_rendering::texture::{Texture, SampleMode};
 use calcium_rendering::{Error, Frame};
 use calcium_rendering_gfx::{GfxRenderer, ColorFormat};
-use calcium_rendering_simple2d::{Simple2DRenderer, RenderBatch, ShaderMode, Simple2DRenderTarget, Simple2DRenderPassRaw, Simple2DRenderPass, Projection};
+use calcium_rendering_simple2d::render_data::{ShaderMode, RenderData, RenderSet};
+use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
 
 use {GfxSimple2DRenderTargetRaw};
 
@@ -44,26 +44,13 @@ gfx_defines!{
     }
 }
 
-struct GfxRenderData<D: Device + 'static, F: Factory<D::Resources> + 'static> {
+pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + 'static> {
     pso: PipelineState<D::Resources, pipe::Meta>,
     dummy_texture: Arc<Texture<GfxRenderer<D, F>>>,
     mode_buffers: Vec<Buffer<D::Resources, Mode>>,
 
     linear_sampler: Sampler<D::Resources>,
     nearest_sampler: Sampler<D::Resources>,
-}
-
-impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxRenderData<D, F> {
-    fn sampler_for_mode(&self, sample_mode: SampleMode) -> &Sampler<D::Resources> {
-        match sample_mode {
-            SampleMode::Linear => &self.linear_sampler,
-            SampleMode::Nearest => &self.nearest_sampler,
-        }
-    }
-}
-
-pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + 'static> {
-    render_data: Rc<GfxRenderData<D, F>>,
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRenderer<D, F> {
@@ -103,63 +90,30 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
         ));
 
         Ok(GfxSimple2DRenderer {
-            render_data: Rc::new(GfxRenderData {
-                pso,
-                dummy_texture,
-                mode_buffers,
+            pso,
+            dummy_texture,
+            mode_buffers,
 
-                linear_sampler,
-                nearest_sampler,
-            })
+            linear_sampler,
+            nearest_sampler,
         })
     }
-}
 
-impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Simple2DRenderer<GfxRenderer<D, F>> for GfxSimple2DRenderer<D, F>
-{
-    type RenderTargetRaw = GfxSimple2DRenderTargetRaw;
-    type RenderPassRaw = GfxSimple2DRenderPassRaw<D, F>;
-
-    fn start_pass<'a>(
-        &self,
-        frame: &'a mut Frame<GfxRenderer<D, F>>,
-        render_target: &mut Simple2DRenderTarget<GfxRenderer<D, F>, Self>,
-        renderer: &mut GfxRenderer<D, F>,
-    ) -> Simple2DRenderPass<'a, GfxRenderer<D, F>, Self> {
-        // Clear if we were told to clear
-        if render_target.raw.is_clear() {
-            let color_view = renderer.color_view().clone();
-            renderer.encoder_mut().clear(&color_view, [0.0, 0.0, 0.0, 1.0]);
+    fn sampler_for_mode(&self, sample_mode: SampleMode) -> &Sampler<D::Resources> {
+        match sample_mode {
+            SampleMode::Linear => &self.linear_sampler,
+            SampleMode::Nearest => &self.nearest_sampler,
         }
-
-        Simple2DRenderPass::raw_new(GfxSimple2DRenderPassRaw {
-            render_data: self.render_data.clone()
-        }, frame)
     }
 
-    fn finish_pass<'a>(
-        &self, mut pass: Simple2DRenderPass<'a, GfxRenderer<D, F>, Self>, _renderer: &mut GfxRenderer<D, F>,
-    ) {
-        // Make sure the pass doesn't panic
-        pass.mark_finished();
-    }
-}
-
-pub struct GfxSimple2DRenderPassRaw<D: Device + 'static, F: Factory<D::Resources> + 'static> {
-    render_data: Rc<GfxRenderData<D, F>>,
-}
-
-impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Simple2DRenderPassRaw<GfxRenderer<D, F>> for GfxSimple2DRenderPassRaw<D, F>
-{
-    fn render_batches(
+    fn render_set(
         &mut self,
-        batches: &[RenderBatch<GfxRenderer<D, F>>], projection: Projection,
-        frame: &mut Frame<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>,
+        set: &RenderSet<GfxRenderer<D, F>>,
+        frame: &mut Frame<GfxRenderer<D, F>>,
+        renderer: &mut GfxRenderer<D, F>,
     ) {
         // Create a projection matrix that just matches coordinates to pixels
-        let proj = projection.to_matrix(frame.raw().size());
+        let proj = set.projection.to_matrix(frame.raw().size());
         let transform = Transform {
             transform: proj.into()
         };
@@ -167,7 +121,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
         renderer.encoder_mut().update_buffer(&transform_buffer, &[transform], 0).unwrap();
 
         // Go over all batches
-        for batch in batches {
+        for batch in &set.batches {
             // Create a big mesh of all the rectangles we got told to draw this batch
             let mut vertices = Vec::new();
             for vertex in &batch.vertices {
@@ -187,15 +141,15 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
             // TODO: Figure out a way to avoid having to have a dummy texture
             let (mode_id, texture, sampler) = match &batch.mode {
                 &ShaderMode::Color =>
-                    (0, &self.render_data.dummy_texture, &self.render_data.linear_sampler),
+                    (0, &self.dummy_texture, &self.linear_sampler),
                 &ShaderMode::Texture(ref texture) =>
-                    (1, texture, self.render_data.sampler_for_mode(texture.raw().sample_mode)),
+                    (1, texture, self.sampler_for_mode(texture.raw().sample_mode)),
                 &ShaderMode::Mask(ref texture) =>
-                    (2, texture, self.render_data.sampler_for_mode(texture.raw().sample_mode)),
+                    (2, texture, self.sampler_for_mode(texture.raw().sample_mode)),
             };
 
             // Get the matching buffer for this shader mode
-            let mode_buffer = &self.render_data.mode_buffers[mode_id];
+            let mode_buffer = &self.mode_buffers[mode_id];
 
             // Gather together all the data we need to render
             let data = pipe::Data {
@@ -208,7 +162,31 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
             };
 
             // Finally, add the draw to the encoder
-            renderer.encoder_mut().draw(&slice, &self.render_data.pso, &data);
+            renderer.encoder_mut().draw(&slice, &self.pso, &data);
+        }
+    }
+}
+
+impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
+    Simple2DRenderer<GfxRenderer<D, F>> for GfxSimple2DRenderer<D, F>
+{
+    type RenderTargetRaw = GfxSimple2DRenderTargetRaw;
+
+    fn render(
+        &mut self,
+        data: &RenderData<GfxRenderer<D, F>>,
+        frame: &mut Frame<GfxRenderer<D, F>>,
+        render_target: &mut Simple2DRenderTarget<GfxRenderer<D, F>, Self>,
+        renderer: &mut GfxRenderer<D, F>,
+    ) {
+        // Clear if we were told to clear
+        if render_target.raw.is_clear() {
+            let color_view = renderer.color_view().clone();
+            renderer.encoder_mut().clear(&color_view, [0.0, 0.0, 0.0, 1.0]);
+        }
+
+        for set in &data.render_sets {
+            self.render_set(set, frame, renderer);
         }
     }
 }

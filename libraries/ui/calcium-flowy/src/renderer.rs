@@ -7,7 +7,7 @@ use rusttype::{Font, Scale};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Error};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
+use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 
 use flowy::{Ui, ElementId, ElementCursorState, Element};
 
