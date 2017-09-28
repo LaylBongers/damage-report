@@ -6,7 +6,7 @@ use vulkano::format::{self, Format};
 use vulkano::framebuffer::{Framebuffer, FramebufferAbstract, RenderPassAbstract};
 
 use calcium_rendering::{Renderer, Viewport};
-use calcium_rendering_vulkano::{VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoRendererRaw};
 
 pub struct GeometryBuffer {
     // TODO: This can be changed to R16G16B16A16Sfloat if lighting its positions are relative to
@@ -29,7 +29,7 @@ pub struct GeometryBuffer {
 
 impl GeometryBuffer {
     pub fn new(
-        renderer: &VulkanoRenderer,
+        renderer: &VulkanoRendererRaw,
         viewport: &Viewport,
     ) -> Self {
         info!(renderer.log(), "Creating g-buffer");

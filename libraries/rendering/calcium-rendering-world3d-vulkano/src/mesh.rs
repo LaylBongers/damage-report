@@ -6,7 +6,7 @@ use slog::{Logger};
 use vulkano::buffer::{CpuAccessibleBuffer, BufferUsage};
 
 use calcium_rendering::{Renderer};
-use calcium_rendering_vulkano::{VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoRendererRaw};
 use calcium_rendering_world3d::{Vertex, MeshRaw};
 
 pub struct VulkanoMeshRaw {
@@ -15,9 +15,9 @@ pub struct VulkanoMeshRaw {
     pub culling_sphere: Sphere<f32>,
 }
 
-impl MeshRaw<VulkanoRenderer> for VulkanoMeshRaw {
+impl MeshRaw<VulkanoRendererRaw> for VulkanoMeshRaw {
     fn new(
-        renderer: &VulkanoRenderer, vertices: Vec<Vertex>, indices: Vec<u32>,
+        renderer: &VulkanoRendererRaw, vertices: Vec<Vertex>, indices: Vec<u32>,
     ) -> VulkanoMeshRaw {
         let indices_len = indices.len();
 

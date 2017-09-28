@@ -3,7 +3,7 @@ use std::sync::{Arc};
 use calcium_rendering::{Renderer};
 use calcium_rendering::texture::{Texture};
 
-pub struct Material<R: Renderer> {
+pub struct Material<R: RendererRaw> {
     pub base_color: Option<Arc<Texture<R>>>,
     pub normal_map: Option<Arc<Texture<R>>>,
     pub metallic_map: Option<Arc<Texture<R>>>,
@@ -11,7 +11,7 @@ pub struct Material<R: Renderer> {
     pub ambient_occlusion_map: Option<Arc<Texture<R>>>,
 }
 
-impl<R: Renderer> Material<R> {
+impl<R: RendererRaw> Material<R> {
     pub fn new() -> Self {
         Material {
             base_color: None,
@@ -48,7 +48,7 @@ impl<R: Renderer> Material<R> {
     }
 }
 
-impl<R: Renderer> Clone for Material<R> {
+impl<R: RendererRaw> Clone for Material<R> {
     fn clone(&self) -> Self {
         Material {
             base_color: self.base_color.clone(),

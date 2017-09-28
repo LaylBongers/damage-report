@@ -9,10 +9,10 @@ use gfx::handle::{ShaderResourceView, RawShaderResourceView};
 use gfx::memory::{Typed};
 
 use calcium_rendering::{Error, CalciumErrorMappable, Renderer};
-use calcium_rendering::raw::{TextureRaw};
+use calcium_rendering::raw::{TextureRaw, RawAccess};
 use calcium_rendering::texture::{TextureBuilder, TextureSource, TextureStoreFormat, SampleMode};
 
-use {GfxRenderer};
+use {GfxRendererRaw};
 
 pub enum GenericView<D: Device + 'static> {
     Rgba8(ShaderResourceView<D::Resources, [f32; 4]>),
@@ -35,7 +35,8 @@ pub struct GfxTextureRaw<D: Device + 'static> {
 
 impl<D: Device + 'static> GfxTextureRaw<D> {
     fn from_path<F: Factory<D::Resources> + 'static>(
-        path: &PathBuf, builder: &TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>
+        path: &PathBuf, builder: &TextureBuilder<GfxRendererRaw<D, F>>,
+        renderer: &mut Renderer<GfxRendererRaw<D, F>>
     ) -> Result<Self, Error> {
         info!(renderer.log(),
             "Loading texture from file"; "path" => path.display().to_string()
@@ -50,7 +51,8 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
 
     fn from_bytes<F: Factory<D::Resources> + 'static>(
         bytes: &[u8], size: Vector2<u32>, color: bool,
-        builder: &TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>,
+        builder: &TextureBuilder<GfxRendererRaw<D, F>>,
+        renderer: &mut Renderer<GfxRendererRaw<D, F>>,
     ) -> Result<Self, Error> {
         info!(renderer.log(),
             "Loading texture from bytes"; "width" => size.x, "height" => size.y, "color" => color
@@ -105,15 +107,15 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
         let kind = Kind::D2(size.x as Size, size.y as Size, AaMode::Single);
         let view = match builder.store_format {
             TextureStoreFormat::Srgb => GenericView::Rgba8(
-                renderer.factory_mut().create_texture_immutable_u8::<Srgba8>(kind, &[&data])
+                renderer.raw_mut().factory_mut().create_texture_immutable_u8::<Srgba8>(kind, &[&data])
                     .map_platform_err()?.1
                 ),
             TextureStoreFormat::Linear => GenericView::Rgba8(
-                renderer.factory_mut().create_texture_immutable_u8::<Rgba8>(kind, &[&data])
+                renderer.raw_mut().factory_mut().create_texture_immutable_u8::<Rgba8>(kind, &[&data])
                     .map_platform_err()?.1
                 ),
             TextureStoreFormat::SingleChannel => GenericView::R8(
-                renderer.factory_mut().create_texture_immutable_u8::<R8U>(kind, &[&data])
+                renderer.raw_mut().factory_mut().create_texture_immutable_u8::<R8U>(kind, &[&data])
                     .map_platform_err()?.1
                 ),
         };
@@ -126,10 +128,11 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    TextureRaw<GfxRenderer<D, F>> for GfxTextureRaw<D> {
+    TextureRaw<GfxRendererRaw<D, F>> for GfxTextureRaw<D> {
 
     fn new(
-        builder: TextureBuilder<GfxRenderer<D, F>>, renderer: &mut GfxRenderer<D, F>
+        builder: TextureBuilder<GfxRendererRaw<D, F>>,
+        renderer: &mut Renderer<GfxRendererRaw<D, F>>,
     ) -> Result<Self, Error> {
         match builder.source {
             TextureSource::File(ref path) =>

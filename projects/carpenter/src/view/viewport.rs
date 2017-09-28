@@ -13,7 +13,7 @@ use carpenter_model::map::{Brush};
 use carpenter_model::input::{InputModel};
 use carpenter_model::{MapEditor, MapEditorEvent, BusReader};
 
-pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
+pub struct ViewportView<R: RendererRaw, WR: World3DRenderer<R>> {
     render_world: RenderWorld<R, WR>,
     material: Material<R>,
     last_viewport: Viewport,
@@ -25,7 +25,7 @@ pub struct ViewportView<R: Renderer, WR: World3DRenderer<R>> {
     camera_yaw: f32,
 }
 
-impl<R: Renderer, WR: World3DRenderer<R>> ViewportView<R, WR> {
+impl<R: RendererRaw, WR: World3DRenderer<R>> ViewportView<R, WR> {
     pub fn new(renderer: &mut R, editor: &mut MapEditor) -> Result<Self, Error> {
         let mut render_world = RenderWorld::new();
 

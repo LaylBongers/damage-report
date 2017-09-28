@@ -5,7 +5,7 @@ use calcium_rendering::{Renderer};
 
 use {Material, World3DRenderer, Mesh};
 
-pub struct RenderWorld<R: Renderer, WR: World3DRenderer<R>> {
+pub struct RenderWorld<R: RendererRaw, WR: World3DRenderer<R>> {
     entities: Vec<Option<Entity<R, WR>>>,
     lights: Vec<Light>,
 
@@ -14,7 +14,7 @@ pub struct RenderWorld<R: Renderer, WR: World3DRenderer<R>> {
     pub directional_direction: Vector3<f32>,
 }
 
-impl<R: Renderer, WR: World3DRenderer<R>> RenderWorld<R, WR> {
+impl<R: RendererRaw, WR: World3DRenderer<R>> RenderWorld<R, WR> {
     pub fn new() -> Self {
         RenderWorld {
             entities: Vec::new(),
@@ -65,7 +65,7 @@ pub struct EntityId(usize);
 #[derive(Copy, Clone)]
 pub struct LightId(usize);
 
-pub struct Entity<R: Renderer, WR: World3DRenderer<R>> {
+pub struct Entity<R: RendererRaw, WR: World3DRenderer<R>> {
     pub position: Vector3<f32>,
     pub mesh: Arc<Mesh<R, WR>>,
     pub material: Material<R>,

@@ -10,7 +10,7 @@ use vulkano::image::swapchain::{SwapchainImage};
 use vulkano::descriptor::descriptor_set::{FixedSizeDescriptorSetsPool};
 
 use calcium_rendering::{Renderer, Viewport, WindowRenderer};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer};
+use calcium_rendering_vulkano::{VulkanoRendererRaw, VulkanoWindowRenderer};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs, gbuffer_fs, lighting_vs, lighting_fs};
 use calcium_rendering_world3d::{World3DRenderTargetRaw};
 
@@ -40,7 +40,7 @@ impl VulkanoWorld3DRenderTargetRaw {
     }
 
     pub fn resize_framebuffers(
-        &mut self, renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
+        &mut self, renderer: &VulkanoRendererRaw, window_renderer: &VulkanoWindowRenderer,
         viewport: &Viewport,
     ) {
         // We only need to update the gbuffer if the viewport got updated
@@ -64,10 +64,10 @@ impl VulkanoWorld3DRenderTargetRaw {
     }
 }
 
-impl World3DRenderTargetRaw<VulkanoRenderer, VulkanoWorld3DRenderer> for VulkanoWorld3DRenderTargetRaw {
+impl World3DRenderTargetRaw<VulkanoRendererRaw, VulkanoWorld3DRenderer> for VulkanoWorld3DRenderTargetRaw {
     fn new(
         _should_clear: bool,
-        renderer: &VulkanoRenderer, window_renderer: &VulkanoWindowRenderer,
+        renderer: &VulkanoRendererRaw, window_renderer: &VulkanoWindowRenderer,
         _world3d_renderer: &VulkanoWorld3DRenderer,
     ) -> Self {
         // TODO: Implement should_clear
@@ -130,7 +130,7 @@ impl World3DRenderTargetRaw<VulkanoRenderer, VulkanoWorld3DRenderer> for Vulkano
 }
 
 fn load_geometry_pipeline(
-    log: &Logger, renderer: &VulkanoRenderer,
+    log: &Logger, renderer: &VulkanoRendererRaw,
     gbuffer_render_pass: Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders
@@ -165,7 +165,7 @@ fn load_geometry_pipeline(
 }
 
 fn load_lighting_pipeline(
-    renderer: &VulkanoRenderer,
+    renderer: &VulkanoRendererRaw,
     window_render_pass: &Arc<RenderPassAbstract + Send + Sync>,
 ) -> Arc<GraphicsPipelineAbstract + Send + Sync> {
     // Load in the shaders

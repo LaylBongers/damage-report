@@ -10,7 +10,7 @@ mod renderer;
 mod texture;
 mod window_swapchain;
 
-pub use renderer::{VulkanoRenderer, VulkanoFrameRaw};
+pub use renderer::{VulkanoRendererRaw, VulkanoFrameRaw};
 pub use texture::{VulkanoTextureRaw};
 pub use window_swapchain::{WindowSwapchain};
 

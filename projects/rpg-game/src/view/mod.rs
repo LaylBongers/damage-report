@@ -1,23 +1,24 @@
 use std::sync::{Arc};
 use std::path::{PathBuf};
 
-use calcium_rendering::{Renderer, Error};
+use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
+use calcium_rendering::{Renderer, Error};
 use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 use cgmath::{Vector2, Point2};
 use tiled::{Map as TMap};
 
 use model::{Map};
 
-pub struct MapRenderer<R: Renderer> {
+pub struct MapRenderer<R: RendererRaw> {
     tileset_texture: Arc<Texture<R>>,
     tileset_first_gid: u32,
     tileset_tiles_amount: Vector2<u32>,
     tileset_uv_per_tile: Vector2<f32>,
 }
 
-impl<R: Renderer> MapRenderer<R> {
-    pub fn new(map: &TMap, map_path: &PathBuf, renderer: &mut R) -> Result<Self, Error> {
+impl<R: RendererRaw> MapRenderer<R> {
+    pub fn new(map: &TMap, map_path: &PathBuf, renderer: &mut Renderer<R>) -> Result<Self, Error> {
         // Load in the map and validate that we can render using it
         if map.tilesets.len() != 1 {
             panic!("Only one tileset per map is supported");

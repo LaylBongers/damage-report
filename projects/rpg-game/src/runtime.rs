@@ -20,12 +20,12 @@ use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, Projection, RenderData, RenderSet};
 use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
 use calcium_rendering_context::{Runtime, Context};
-use calcium_rendering::Renderer;
+use calcium_rendering::raw::{RendererRaw};
 
 use model::{Map};
 use view::{MapRenderer};
 
-struct FriendlyUnit<R: Renderer> {
+struct FriendlyUnit<R: RendererRaw> {
     name: String,
     tex: Arc<Texture<R>>,
     selecttex: Arc<Texture<R>>,
@@ -37,7 +37,7 @@ struct FriendlyUnit<R: Renderer> {
     tabrel: f32,
 }
 
-impl <R: Renderer> FriendlyUnit<R> {
+impl <R: RendererRaw> FriendlyUnit<R> {
     pub fn new(name: String, tex: Arc<Texture<R>>, selecttex: Arc<Texture<R>>, position: Point2<f32>, size: Vector2<f32>, speed: f32) -> FriendlyUnit<R> {
         FriendlyUnit {name: name, tex: tex, selecttex: selecttex, position: position, size: size, speed: speed, selected: false, tabrel: 0.0}
     }

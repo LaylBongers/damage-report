@@ -6,20 +6,21 @@ use rusttype::gpu_cache::{Cache};
 use rusttype::{Font, Scale};
 use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Error};
+use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 
 use flowy::{Ui, ElementId, ElementCursorState, Element};
 
-pub struct FlowyRenderer<R: Renderer> {
+pub struct FlowyRenderer<R: RendererRaw> {
     glyph_cache: Cache,
     glyph_image: GrayImage,
     glyph_texture: Arc<Texture<R>>,
     text_cache: HashMap<ElementId, RenderBatch<R>>,
 }
 
-impl<R: Renderer> FlowyRenderer<R> {
-    pub fn new(renderer: &mut R) -> Result<Self, Error> {
+impl<R: RendererRaw> FlowyRenderer<R> {
+    pub fn new(renderer: &mut Renderer<R>) -> Result<Self, Error> {
         // TODO: This can go down to 0.1 again instead of 0.5 when the texture is overwritten
         // instead of replaced.
         let glyph_cache = Cache::new(512, 512, 0.5, 0.5);
@@ -42,7 +43,8 @@ impl<R: Renderer> FlowyRenderer<R> {
     pub fn render(
         &mut self,
         ui: &mut Ui, batches: &mut Vec<RenderBatch<R>>,
-        viewport_size: Vector2<f32>, renderer: &mut R,
+        viewport_size: Vector2<f32>,
+        renderer: &mut Renderer<R>,
     ) -> Result<(), Error> {
         let mut batcher = Batcher::new(batches);
 
@@ -68,7 +70,8 @@ impl<R: Renderer> FlowyRenderer<R> {
     }
 
     fn render_element(
-        &mut self, element_id: ElementId, ui: &mut Ui, batcher: &mut Batcher<R>, renderer: &mut R,
+        &mut self, element_id: ElementId, ui: &mut Ui, batcher: &mut Batcher<R>,
+        renderer: &mut Renderer<R>,
     ) -> Result<(), Error> {
         {
             let element = &mut ui.elements[element_id];
@@ -91,7 +94,7 @@ impl<R: Renderer> FlowyRenderer<R> {
     }
 }
 
-fn render_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) {
+fn render_element_box<R: RendererRaw>(element: &Element, batcher: &mut Batcher<R>) {
     let style = element.style();
 
     // If this element is focused, its color should be overwritten with active_color
@@ -121,11 +124,12 @@ fn render_element_box<R: Renderer>(element: &Element, batcher: &mut Batcher<R>) 
     }
 }
 
-fn render_element_text<R: Renderer>(
+fn render_element_text<R: RendererRaw>(
     fonts: &Vec<Font>,
     id: ElementId, element: &mut Element,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
-    batcher: &mut Batcher<R>, text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut R,
+    batcher: &mut Batcher<R>, text_cache: &mut HashMap<ElementId, RenderBatch<R>>,
+    renderer: &mut Renderer<R>,
 ) -> Result<(), Error> {
     // TODO: Glyph positioning should be done during layouting in Ui and cached for future frames,
     //  so text height can be used for automatic layouting as well.
@@ -146,10 +150,10 @@ fn render_element_text<R: Renderer>(
     Ok(())
 }
 
-fn retrieve_or_create_batch<R: Renderer>(
+fn retrieve_or_create_batch<R: RendererRaw>(
     id: ElementId, element: &mut Element, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
-    text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut R,
+    text_cache: &mut HashMap<ElementId, RenderBatch<R>>, renderer: &mut Renderer<R>,
 ) -> Result<RenderBatch<R>, Error> {
     let container = element.positioning().container.clone();
 
@@ -178,10 +182,10 @@ fn retrieve_or_create_batch<R: Renderer>(
     Ok(batch)
 }
 
-fn generate_text_batch<R: Renderer>(
+fn generate_text_batch<R: RendererRaw>(
     element: &mut Element, font: &Font,
     glyph_cache: &mut Cache, glyph_image: &mut GrayImage, glyph_texture: &mut Arc<Texture<R>>,
-    renderer: &mut R,
+    renderer: &mut Renderer<R>,
 ) -> Result<RenderBatch<R>, Error> {
     // If the text size is too small, we can't render anything
     if element.style().text_size <= 0.5 {
@@ -217,6 +221,9 @@ fn generate_text_batch<R: Renderer>(
 
     // If the image has actually changed, update the texture. This is done afterwards because
     //  the cache_queued callback may be called multiple times
+    // TODO: Move this to the end of creating the render batch so it's only done once, this is
+    // more complex than just simply copy-paste, as the batch already has the wrong texture so the
+    // batch needs to be generated later or its texture needs to be replaced.
     if changed {
         // Upload the glyphs into a texture
         // TODO: Check if we need to convert from sRGB to Linear, calcium takes Linear here
@@ -253,12 +260,12 @@ fn generate_text_batch<R: Renderer>(
     Ok(batch)
 }
 
-struct Batcher<'a, R: Renderer> {
+struct Batcher<'a, R: RendererRaw> {
     current_batch: RenderBatch<R>,
     batches: &'a mut Vec<RenderBatch<R>>,
 }
 
-impl<'a, R: Renderer> Batcher<'a, R> {
+impl<'a, R: RendererRaw> Batcher<'a, R> {
     fn new(batches: &'a mut Vec<RenderBatch<R>>) -> Self {
         Batcher {
             current_batch: RenderBatch::new(ShaderMode::Color),

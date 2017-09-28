@@ -10,7 +10,7 @@ use carpenter_model::{MapEditor};
 
 use view::{ViewportView, UiView};
 
-pub struct WindowView<W: Window, R: Renderer, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>> {
+pub struct WindowView<W: Window, R: RendererRaw, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>> {
     window: W,
     renderer: R,
     window_renderer: R::WindowRenderer,
@@ -25,7 +25,7 @@ pub struct WindowView<W: Window, R: Renderer, SR: Simple2DRenderer<R>, WR: World
     ui: UiView<R>,
 }
 
-impl<W: Window + AdvancedWindow, R: Renderer, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>>
+impl<W: Window + AdvancedWindow, R: RendererRaw, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>>
     WindowView<W, R, SR, WR> {
     pub fn new<I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRenderer=SR>>(
         log: &Logger,

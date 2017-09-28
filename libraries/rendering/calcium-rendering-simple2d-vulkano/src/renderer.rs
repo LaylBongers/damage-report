@@ -13,13 +13,13 @@ use calcium_rendering::texture::{Texture};
 use calcium_rendering::{Renderer, Error, Frame};
 use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, RenderData, RenderSet};
 use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
-use calcium_rendering_vulkano::{VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoRendererRaw};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex, VulkanoSimple2DRenderTargetRaw};
 
 pub struct VulkanoSimple2DRenderer {
-    dummy_texture: Arc<Texture<VulkanoRenderer>>,
+    dummy_texture: Arc<Texture<VulkanoRendererRaw>>,
 
     matrix_pool: CpuBufferPool<simple2d_vs::ty::MatrixData>,
     mode_buffers: Vec<Arc<CpuAccessibleBuffer<simple2d_fs::ty::ModeData>>>,
@@ -29,7 +29,7 @@ pub struct VulkanoSimple2DRenderer {
 }
 
 impl VulkanoSimple2DRenderer {
-    pub fn new(renderer: &mut VulkanoRenderer) -> Result<Self, Error> {
+    pub fn new(renderer: &mut Renderer<VulkanoRendererRaw>) -> Result<Self, Error> {
         info!(renderer.log(), "Creating simple2d renderer");
         let dummy_texture = Texture::new()
             .from_bytes(vec![255u8; 8*8], Vector2::new(8, 8), false)
@@ -38,19 +38,19 @@ impl VulkanoSimple2DRenderer {
 
         // Load in the shaders
         debug!(renderer.log(), "Creating simple2d shaders");
-        let vs = simple2d_vs::Shader::load(renderer.device().clone()).unwrap();
-        let fs = simple2d_fs::Shader::load(renderer.device().clone()).unwrap();
+        let vs = simple2d_vs::Shader::load(renderer.raw().device().clone()).unwrap();
+        let fs = simple2d_fs::Shader::load(renderer.raw().device().clone()).unwrap();
 
         // Set up the CPU buffer pools we'll use to upload various data
         let matrix_pool = CpuBufferPool::new(
-            renderer.device().clone(), BufferUsage::uniform_buffer(),
+            renderer.raw().device().clone(), BufferUsage::uniform_buffer(),
         );
 
         // Create pre-made mode buffers that can be re-used
         let mut mode_buffers = Vec::new();
         for mode_id in 0..4 {
             let buffer = CpuAccessibleBuffer::from_data(
-                renderer.device().clone(), BufferUsage::uniform_buffer(),
+                renderer.raw().device().clone(), BufferUsage::uniform_buffer(),
                 simple2d_fs::ty::ModeData { mode: mode_id }
             ).unwrap();
             mode_buffers.push(buffer);
@@ -68,10 +68,10 @@ impl VulkanoSimple2DRenderer {
 
     fn render_set(
         &mut self,
-        set: &RenderSet<VulkanoRenderer>, mut buffer_builder: AutoCommandBufferBuilder,
-        frame: &Frame<VulkanoRenderer>,
-        renderer: &VulkanoRenderer,
-        render_target: &mut Simple2DRenderTarget<VulkanoRenderer, VulkanoSimple2DRenderer>,
+        set: &RenderSet<VulkanoRendererRaw>, mut buffer_builder: AutoCommandBufferBuilder,
+        frame: &Frame<VulkanoRendererRaw>,
+        renderer: &Renderer<VulkanoRendererRaw>,
+        render_target: &mut Simple2DRenderTarget<VulkanoRendererRaw, VulkanoSimple2DRenderer>,
     ) -> AutoCommandBufferBuilder {
         // Create a projection matrix that just matches coordinates to pixels
         let proj =
@@ -102,10 +102,10 @@ impl VulkanoSimple2DRenderer {
 
     fn render_batch(
         &mut self,
-        batch: &RenderBatch<VulkanoRenderer>, builder: AutoCommandBufferBuilder,
+        batch: &RenderBatch<VulkanoRendererRaw>, builder: AutoCommandBufferBuilder,
         size: Vector2<u32>,
-        renderer: &VulkanoRenderer,
-        render_target: &mut Simple2DRenderTarget<VulkanoRenderer, VulkanoSimple2DRenderer>,
+        renderer: &Renderer<VulkanoRendererRaw>,
+        render_target: &mut Simple2DRenderTarget<VulkanoRendererRaw, VulkanoSimple2DRenderer>,
         matrix_data_buffer: &Arc<CpuBufferPoolSubbuffer<simple2d_vs::ty::MatrixData, Arc<StdMemoryPool>>>,
     ) -> AutoCommandBufferBuilder {
         // Create a big mesh of all the rectangles we got told to draw this batch
@@ -120,7 +120,7 @@ impl VulkanoSimple2DRenderer {
 
         // Create the final vertex buffer that we'll send over to the GPU for rendering
         let vertex_buffer = CpuAccessibleBuffer::from_iter(
-            renderer.device().clone(), BufferUsage::all(), vertices.into_iter()
+            renderer.raw().device().clone(), BufferUsage::all(), vertices.into_iter()
         ).unwrap();
 
         // Get the mode ID this batch has and a texture to render
@@ -169,19 +169,19 @@ impl VulkanoSimple2DRenderer {
     }
 }
 
-impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
+impl Simple2DRenderer<VulkanoRendererRaw> for VulkanoSimple2DRenderer {
     type RenderTargetRaw = VulkanoSimple2DRenderTargetRaw;
 
     fn render(
         &mut self,
-        data: &RenderData<VulkanoRenderer>,
-        frame: &mut Frame<VulkanoRenderer>,
-        render_target: &mut Simple2DRenderTarget<VulkanoRenderer, Self>,
-        renderer: &mut VulkanoRenderer,
+        data: &RenderData<VulkanoRendererRaw>,
+        frame: &mut Frame<VulkanoRendererRaw>,
+        render_target: &mut Simple2DRenderTarget<VulkanoRendererRaw, Self>,
+        renderer: &mut Renderer<VulkanoRendererRaw>,
     ) {
         // Give the renderer an opportunity to insert any commands it had queued up, this is used
         //  to copy textures for example. This always has to be done right before a render pass.
-        let future = renderer.submit_queued_commands(frame.raw_mut().future.take().unwrap());
+        let future = renderer.raw_mut().submit_queued_commands(frame.raw_mut().future.take().unwrap());
 
         // Start the command buffer, this will contain the draw commands
         let mut buffer_builder = {
@@ -189,7 +189,7 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
             let framebuffer = render_target.raw.framebuffer_for(frame.raw().image_num, renderer);
 
             AutoCommandBufferBuilder::new(
-                    renderer.device().clone(), renderer.graphics_queue().family()
+                    renderer.raw().device().clone(), renderer.raw().graphics_queue().family()
                 ).unwrap()
                 .begin_render_pass(framebuffer.clone(), false, clear_values).unwrap()
         };
@@ -206,7 +206,7 @@ impl Simple2DRenderer<VulkanoRenderer> for VulkanoSimple2DRenderer {
 
         // Submit the command buffer
         let future = Box::new(future
-            .then_execute(renderer.graphics_queue().clone(), command_buffer)
+            .then_execute(renderer.raw().graphics_queue().clone(), command_buffer)
             .unwrap()
         );
         frame.raw_mut().future = Some(future);

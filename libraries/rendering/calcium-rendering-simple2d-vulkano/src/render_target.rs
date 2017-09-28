@@ -8,7 +8,8 @@ use vulkano::image::swapchain::{SwapchainImage};
 use vulkano::descriptor::descriptor_set::{FixedSizeDescriptorSetsPool};
 
 use calcium_rendering::{Renderer};
-use calcium_rendering_vulkano::{VulkanoRenderer};
+use calcium_rendering::raw::{RawAccess};
+use calcium_rendering_vulkano::{VulkanoRendererRaw};
 use calcium_rendering_simple2d::{Simple2DRenderTargetRaw};
 
 use {VkVertex, VulkanoSimple2DRenderer};
@@ -36,13 +37,13 @@ impl VulkanoSimple2DRenderTargetRaw {
     }
 
     pub fn framebuffer_for(
-        &mut self, image_num: usize, renderer: &VulkanoRenderer,
+        &mut self, image_num: usize, renderer: &Renderer<VulkanoRendererRaw>,
     ) -> &Arc<FramebufferAbstract + Send + Sync> {
         // Check if we should update the framebuffers
-        let current_images_id = renderer.swapchain.images_id();
+        let current_images_id = renderer.raw().swapchain.images_id();
         if self.framebuffers_images_id != current_images_id {
             self.framebuffers = create_framebuffers(
-                renderer.swapchain.images(),
+                renderer.raw().swapchain.images(),
                 &self.render_pass,
             );
             self.framebuffers_images_id = current_images_id;
@@ -61,19 +62,19 @@ impl VulkanoSimple2DRenderTargetRaw {
     }
 }
 
-impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
+impl Simple2DRenderTargetRaw<VulkanoRendererRaw, VulkanoSimple2DRenderer>
     for VulkanoSimple2DRenderTargetRaw
 {
     fn new(
         clear: bool,
-        renderer: &VulkanoRenderer,
+        renderer: &Renderer<VulkanoRendererRaw>,
         simple2d_renderer: &VulkanoSimple2DRenderer,
     ) -> Self {
         // Set up the render pass for 2D rendering depending on the settings for this target
         debug!(renderer.log(), "Creating simple2d render pass");
         #[allow(dead_code)]
         let render_pass = if clear {
-            Arc::new(single_pass_renderpass!(renderer.device().clone(),
+            Arc::new(single_pass_renderpass!(renderer.raw().device().clone(),
                 attachments: {
                     color: {
                         load: Clear,
@@ -89,7 +90,7 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
                 }
             ).unwrap()) as Arc<RenderPassAbstract + Send + Sync>
         } else {
-            Arc::new(single_pass_renderpass!(renderer.device().clone(),
+            Arc::new(single_pass_renderpass!(renderer.raw().device().clone(),
                 attachments: {
                     color: {
                         load: Load,
@@ -121,7 +122,7 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
             .cull_mode_disabled()
 
             .render_pass(Subpass::from(render_pass.clone(), 0).unwrap())
-            .build(renderer.device().clone()).unwrap()
+            .build(renderer.raw().device().clone()).unwrap()
         ) as Arc<GraphicsPipeline<SingleBufferDefinition<VkVertex>, _, _>>;
 
         // Create specialized set pools for more efficient rendering
@@ -132,10 +133,10 @@ impl Simple2DRenderTargetRaw<VulkanoRenderer, VulkanoSimple2DRenderer>
 
         // Create the swapchain framebuffers for this render pass
         let framebuffers = create_framebuffers(
-            renderer.swapchain.images(),
+            renderer.raw().swapchain.images(),
             &render_pass,
         );
-        let framebuffers_images_id = renderer.swapchain.images_id();
+        let framebuffers_images_id = renderer.raw().swapchain.images_id();
 
         VulkanoSimple2DRenderTargetRaw {
             render_pass,

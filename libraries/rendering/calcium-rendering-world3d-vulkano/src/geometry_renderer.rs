@@ -9,21 +9,21 @@ use vulkano::pipeline::viewport::{Viewport as ViewportVk};
 
 use calcium_rendering::{Error, Viewport, Renderer};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_vulkano::{VulkanoRenderer};
+use calcium_rendering_vulkano::{VulkanoRendererRaw};
 use calcium_rendering_vulkano_shaders::{gbuffer_vs};
 use calcium_rendering_world3d::{Camera, RenderWorld, Entity, World3DRenderTarget};
 
 use {VulkanoWorld3DRenderer};
 
 pub struct GeometryRenderer {
-    default_black: Arc<Texture<VulkanoRenderer>>,
-    default_white: Arc<Texture<VulkanoRenderer>>,
-    default_normal: Arc<Texture<VulkanoRenderer>>,
+    default_black: Arc<Texture<VulkanoRendererRaw>>,
+    default_white: Arc<Texture<VulkanoRendererRaw>>,
+    default_normal: Arc<Texture<VulkanoRendererRaw>>,
 }
 
 impl GeometryRenderer {
     pub fn new(
-        renderer: &mut VulkanoRenderer,
+        renderer: &mut VulkanoRendererRaw,
     ) -> Result<Self, Error> {
         const BLACK_TEXTURE_1PX: &[u8] = &[0];
         const WHITE_TEXTURE_1PX: &[u8] = &[255u8];
@@ -52,9 +52,9 @@ impl GeometryRenderer {
 
     pub fn build_command_buffer(
         &self,
-        world: &RenderWorld<VulkanoRenderer, VulkanoWorld3DRenderer>, camera: &Camera,
-        rendertarget: &mut World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
-        renderer: &mut VulkanoRenderer,
+        world: &RenderWorld<VulkanoRendererRaw, VulkanoWorld3DRenderer>, camera: &Camera,
+        rendertarget: &mut World3DRenderTarget<VulkanoRendererRaw, VulkanoWorld3DRenderer>,
+        renderer: &mut VulkanoRendererRaw,
         viewport: &Viewport,
     ) -> AutoCommandBufferBuilder {
         let mut command_buffer_builder = AutoCommandBufferBuilder::new(
@@ -104,9 +104,9 @@ impl GeometryRenderer {
 
     fn render_entity(
         &self,
-        entity: &Entity<VulkanoRenderer, VulkanoWorld3DRenderer>,
-        rendertarget: &mut World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
-        renderer: &mut VulkanoRenderer,
+        entity: &Entity<VulkanoRendererRaw, VulkanoWorld3DRenderer>,
+        rendertarget: &mut World3DRenderTarget<VulkanoRendererRaw, VulkanoWorld3DRenderer>,
+        renderer: &mut VulkanoRendererRaw,
         projection_view: &Matrix4<f32>, culling_frustum: &Frustum<f32>,
         command_buffer: AutoCommandBufferBuilder,
         viewport: &Viewport,

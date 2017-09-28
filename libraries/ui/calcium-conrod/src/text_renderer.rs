@@ -13,13 +13,13 @@ use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectang
 
 use util;
 
-pub struct TextRenderer<R: Renderer> {
+pub struct TextRenderer<R: RendererRaw> {
     glyph_cache: GlyphCache,
     glyph_image: GrayImage,
     glyph_texture: Arc<Texture<R>>,
 }
 
-impl<R: Renderer> TextRenderer<R> {
+impl<R: RendererRaw> TextRenderer<R> {
     pub fn new(renderer: &mut R) -> Result<Self, Error> {
         let glyph_cache = GlyphCache::new(1024, 1024, 0.1, 0.1);
         let glyph_image = GrayImage::from_raw(1024, 1024, vec![0u8; 1024*1024]).unwrap();

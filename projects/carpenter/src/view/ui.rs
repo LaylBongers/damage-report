@@ -13,7 +13,7 @@ use flowy::widget::{self, FileDialog/*, ProgressBar*/};
 
 use carpenter_model::{MapEditor};
 
-pub struct UiView<R: Renderer> {
+pub struct UiView<R: RendererRaw> {
     ui_renderer: FlowyRenderer<R>,
 
     ui: Ui,
@@ -25,7 +25,7 @@ pub struct UiView<R: Renderer> {
     average_delta: AverageDelta,
 }
 
-impl<R: Renderer> UiView<R> {
+impl<R: RendererRaw> UiView<R> {
     pub fn new(renderer: &mut R) -> Result<Self, Error> {
         let ui_renderer = FlowyRenderer::new(renderer)?;
 

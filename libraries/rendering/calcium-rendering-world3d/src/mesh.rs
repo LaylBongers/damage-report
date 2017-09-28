@@ -8,11 +8,11 @@ use cgmath::{Vector3, Point2, Point3};
 use calcium_rendering::{Renderer};
 use {World3DRenderer};
 
-pub struct Mesh<R: Renderer, WR: World3DRenderer<R>> {
+pub struct Mesh<R: RendererRaw, WR: World3DRenderer<R>> {
     pub raw: WR::MeshRaw,
 }
 
-impl<R: Renderer, WR: World3DRenderer<R>> Mesh<R, WR> {
+impl<R: RendererRaw, WR: World3DRenderer<R>> Mesh<R, WR> {
     pub fn new(
         renderer: &R, vertices: Vec<Vertex>, indices: Vec<u32>,
     ) -> Arc<Self> {
@@ -21,7 +21,7 @@ impl<R: Renderer, WR: World3DRenderer<R>> Mesh<R, WR> {
     }
 }
 
-pub trait MeshRaw<R: Renderer> {
+pub trait MeshRaw<R: RendererRaw> {
     fn new(
         renderer: &R, vertices: Vec<Vertex>, indices: Vec<u32>,
     ) -> Self;

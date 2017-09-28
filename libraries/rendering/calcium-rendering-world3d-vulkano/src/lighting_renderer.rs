@@ -8,7 +8,7 @@ use vulkano::descriptor::descriptor_set::{PersistentDescriptorSet};
 use vulkano::pipeline::viewport::{Viewport as VkViewport};
 
 use calcium_rendering::{Viewport};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoFrame};
+use calcium_rendering_vulkano::{VulkanoRendererRaw, VulkanoFrame};
 use calcium_rendering_vulkano_shaders::{lighting_fs};
 use calcium_rendering_world3d::{Camera, RenderWorld, World3DRenderTarget};
 
@@ -20,7 +20,7 @@ pub struct LightingRenderer {
 
 impl LightingRenderer {
     pub fn new(
-        renderer: &VulkanoRenderer,
+        renderer: &VulkanoRendererRaw,
     ) -> Self {
         // Create a sampler that we'll use to sample the gbuffer images, this will map 1:1, so just
         //  use nearest. TODO: Because it's 1:1 we can move the gbuffer-lighting steps to subpasses
@@ -42,9 +42,9 @@ impl LightingRenderer {
 
     pub fn build_command_buffer(
         &mut self,
-        world: &RenderWorld<VulkanoRenderer, VulkanoWorld3DRenderer>, camera: &Camera,
-        rendertarget: &mut World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
-        renderer: &mut VulkanoRenderer,
+        world: &RenderWorld<VulkanoRendererRaw, VulkanoWorld3DRenderer>, camera: &Camera,
+        rendertarget: &mut World3DRenderTarget<VulkanoRendererRaw, VulkanoWorld3DRenderer>,
+        renderer: &mut VulkanoRendererRaw,
         frame: &VulkanoFrame,
         viewport: &Viewport,
     ) -> AutoCommandBufferBuilder {

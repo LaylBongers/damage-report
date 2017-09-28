@@ -5,7 +5,7 @@ mod world3d {
 
     pub struct UnsupportedWorld3DRenderer;
 
-    impl<R: Renderer> World3DRenderer<R> for UnsupportedWorld3DRenderer {
+    impl<R: RendererRaw> World3DRenderer<R> for UnsupportedWorld3DRenderer {
         type RenderTargetRaw = UnsupportedWorld3DRenderTargetRaw;
         type MeshRaw = UnsupportedMeshRaw;
 
@@ -22,7 +22,7 @@ mod world3d {
 
     pub struct UnsupportedWorld3DRenderTargetRaw;
 
-    impl<R: Renderer> World3DRenderTargetRaw<R, UnsupportedWorld3DRenderer>
+    impl<R: RendererRaw> World3DRenderTargetRaw<R, UnsupportedWorld3DRenderer>
         for UnsupportedWorld3DRenderTargetRaw {
         fn new(
             _should_clear: bool,
@@ -36,7 +36,7 @@ mod world3d {
 
     pub struct UnsupportedMeshRaw;
 
-    impl<R: Renderer> MeshRaw<R> for UnsupportedMeshRaw {
+    impl<R: RendererRaw> MeshRaw<R> for UnsupportedMeshRaw {
         fn new(
             _renderer: &R, _vertices: Vec<Vertex>, _indices: Vec<u32>,
         ) -> Self {

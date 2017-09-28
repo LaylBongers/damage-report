@@ -10,8 +10,8 @@ use gfx::texture::{SamplerInfo, FilterMethod, WrapMode};
 
 use calcium_rendering::raw::{RawAccess};
 use calcium_rendering::texture::{Texture, SampleMode};
-use calcium_rendering::{Error, Frame};
-use calcium_rendering_gfx::{GfxRenderer, ColorFormat};
+use calcium_rendering::{Error, Frame, Renderer};
+use calcium_rendering_gfx::{GfxRendererRaw, ColorFormat};
 use calcium_rendering_simple2d::render_data::{ShaderMode, RenderData, RenderSet};
 use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
 
@@ -46,7 +46,7 @@ gfx_defines!{
 
 pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + 'static> {
     pso: PipelineState<D::Resources, pipe::Meta>,
-    dummy_texture: Arc<Texture<GfxRenderer<D, F>>>,
+    dummy_texture: Arc<Texture<GfxRendererRaw<D, F>>>,
     mode_buffers: Vec<Buffer<D::Resources, Mode>>,
 
     linear_sampler: Sampler<D::Resources>,
@@ -55,9 +55,9 @@ pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + '
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRenderer<D, F> {
     pub fn new(
-        renderer: &mut GfxRenderer<D, F>
+        renderer: &mut Renderer<GfxRendererRaw<D, F>>
     ) -> Result<Self, Error> {
-        let pso = renderer.factory_mut().create_pipeline_simple(
+        let pso = renderer.raw_mut().factory_mut().create_pipeline_simple(
             include_bytes!("../shaders/simple2d_150_vert.glsl"),
             include_bytes!("../shaders/simple2d_150_frag.glsl"),
             pipe::new()
@@ -74,17 +74,17 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
             let mode = Mode {
                 mode: i
             };
-            let mode_buffer = renderer.factory_mut().create_constant_buffer(1);
-            renderer.encoder_mut().update_buffer(&mode_buffer, &[mode], 0).unwrap();
+            let mode_buffer = renderer.raw_mut().factory_mut().create_constant_buffer(1);
+            renderer.raw_mut().encoder_mut().update_buffer(&mode_buffer, &[mode], 0).unwrap();
             mode_buffers.push(mode_buffer);
         }
 
         // Create the samplers for the two sample modes
-        let linear_sampler = renderer.factory_mut().create_sampler(SamplerInfo::new(
+        let linear_sampler = renderer.raw_mut().factory_mut().create_sampler(SamplerInfo::new(
             FilterMethod::Trilinear,
             WrapMode::Clamp,
         ));
-        let nearest_sampler = renderer.factory_mut().create_sampler(SamplerInfo::new(
+        let nearest_sampler = renderer.raw_mut().factory_mut().create_sampler(SamplerInfo::new(
             FilterMethod::Scale,
             WrapMode::Clamp,
         ));
@@ -108,17 +108,17 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
 
     fn render_set(
         &mut self,
-        set: &RenderSet<GfxRenderer<D, F>>,
-        frame: &mut Frame<GfxRenderer<D, F>>,
-        renderer: &mut GfxRenderer<D, F>,
+        set: &RenderSet<GfxRendererRaw<D, F>>,
+        frame: &mut Frame<GfxRendererRaw<D, F>>,
+        renderer: &mut Renderer<GfxRendererRaw<D, F>>,
     ) {
         // Create a projection matrix that just matches coordinates to pixels
         let proj = set.projection.to_matrix(frame.raw().size());
         let transform = Transform {
             transform: proj.into()
         };
-        let transform_buffer = renderer.factory_mut().create_constant_buffer(1);
-        renderer.encoder_mut().update_buffer(&transform_buffer, &[transform], 0).unwrap();
+        let transform_buffer = renderer.raw_mut().factory_mut().create_constant_buffer(1);
+        renderer.raw_mut().encoder_mut().update_buffer(&transform_buffer, &[transform], 0).unwrap();
 
         // Go over all batches
         for batch in &set.batches {
@@ -133,9 +133,10 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
             }
 
             // Create an actual VBO from it
-            let (vertex_buffer, slice) = renderer.factory_mut().create_vertex_buffer_with_slice(
-                &vertices, ()
-            );
+            let (vertex_buffer, slice) = renderer.raw_mut().factory_mut()
+                .create_vertex_buffer_with_slice(
+                    &vertices, ()
+                );
 
             // Get the mode ID this batch has and a texture to render
             // TODO: Figure out a way to avoid having to have a dummy texture
@@ -158,31 +159,31 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
                 mode: mode_buffer.clone(),
                 texture: texture.raw().view.raw().clone(),
                 texture_sampler: sampler.clone(),
-                out: renderer.color_view().clone(),
+                out: renderer.raw().color_view().clone(),
             };
 
             // Finally, add the draw to the encoder
-            renderer.encoder_mut().draw(&slice, &self.pso, &data);
+            renderer.raw_mut().encoder_mut().draw(&slice, &self.pso, &data);
         }
     }
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Simple2DRenderer<GfxRenderer<D, F>> for GfxSimple2DRenderer<D, F>
+    Simple2DRenderer<GfxRendererRaw<D, F>> for GfxSimple2DRenderer<D, F>
 {
     type RenderTargetRaw = GfxSimple2DRenderTargetRaw;
 
     fn render(
         &mut self,
-        data: &RenderData<GfxRenderer<D, F>>,
-        frame: &mut Frame<GfxRenderer<D, F>>,
-        render_target: &mut Simple2DRenderTarget<GfxRenderer<D, F>, Self>,
-        renderer: &mut GfxRenderer<D, F>,
+        data: &RenderData<GfxRendererRaw<D, F>>,
+        frame: &mut Frame<GfxRendererRaw<D, F>>,
+        render_target: &mut Simple2DRenderTarget<GfxRendererRaw<D, F>, Self>,
+        renderer: &mut Renderer<GfxRendererRaw<D, F>>,
     ) {
         // Clear if we were told to clear
         if render_target.raw.is_clear() {
-            let color_view = renderer.color_view().clone();
-            renderer.encoder_mut().clear(&color_view, [0.0, 0.0, 0.0, 1.0]);
+            let color_view = renderer.raw().color_view().clone();
+            renderer.raw_mut().encoder_mut().clear(&color_view, [0.0, 0.0, 0.0, 1.0]);
         }
 
         for set in &data.render_sets {

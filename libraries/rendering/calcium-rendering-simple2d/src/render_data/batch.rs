@@ -3,17 +3,18 @@ use std::sync::{Arc};
 use cgmath::{Vector4, Point2};
 use screenmath::{Rectangle};
 
-use calcium_rendering::{Renderer};
+use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
+
 /// A render batch that can be drawn by a renderer. Represents the equivalent of a single drawcall.
-pub struct RenderBatch<R: Renderer> {
+pub struct RenderBatch<R: RendererRaw> {
     /// The shader mode in which a render batch will be drawn.
     pub mode: ShaderMode<R>,
     /// The vertices that will be drawn.
     pub vertices: Vec<DrawVertex>,
 }
 
-impl<R: Renderer> RenderBatch<R> {
+impl<R: RendererRaw> RenderBatch<R> {
     pub fn new(mode: ShaderMode<R>) -> Self {
         RenderBatch {
             mode,
@@ -49,7 +50,7 @@ impl<R: Renderer> RenderBatch<R> {
     }
 }
 
-impl<R: Renderer> Default for RenderBatch<R> {
+impl<R: RendererRaw> Default for RenderBatch<R> {
     fn default() -> Self {
         RenderBatch {
             mode: ShaderMode::Color,
@@ -58,7 +59,7 @@ impl<R: Renderer> Default for RenderBatch<R> {
     }
 }
 
-impl<R: Renderer> Clone for RenderBatch<R> {
+impl<R: RendererRaw> Clone for RenderBatch<R> {
     fn clone(&self) -> Self {
         RenderBatch {
             mode: self.mode.clone(),
@@ -68,7 +69,7 @@ impl<R: Renderer> Clone for RenderBatch<R> {
 }
 
 /// Defines how the renderer should draw vertices.
-pub enum ShaderMode<R: Renderer> {
+pub enum ShaderMode<R: RendererRaw> {
     /// Uses only the vertices' colors.
     Color,
     /// Multiplies a texture sampled using the vertices' uvs by the vertices' color.
@@ -77,7 +78,7 @@ pub enum ShaderMode<R: Renderer> {
     Mask(Arc<Texture<R>>),
 }
 
-impl<R: Renderer> Clone for ShaderMode<R> {
+impl<R: RendererRaw> Clone for ShaderMode<R> {
     fn clone(&self) -> Self {
         match *self {
             ShaderMode::Color => ShaderMode::Color,

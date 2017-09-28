@@ -12,11 +12,11 @@ use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle, DrawVert
 use text_renderer::{TextRenderer};
 use util;
 
-pub struct ConrodRenderer<R: Renderer> {
+pub struct ConrodRenderer<R: RendererRaw> {
     text_renderer: TextRenderer<R>,
 }
 
-impl<R: Renderer> ConrodRenderer<R> {
+impl<R: RendererRaw> ConrodRenderer<R> {
     pub fn new(renderer: &mut R) -> Result<Self, Error> {
         info!(renderer.log(), "Creating conrod renderer");
 

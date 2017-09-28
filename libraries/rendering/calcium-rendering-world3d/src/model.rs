@@ -11,11 +11,11 @@ use calcium_rendering::{Renderer};
 use mesh::{self, Mesh, Vertex};
 use {World3DRenderer};
 
-pub struct Model<R: Renderer, WR: World3DRenderer<R>> {
+pub struct Model<R: RendererRaw, WR: World3DRenderer<R>> {
     pub meshes: Vec<Arc<Mesh<R, WR>>>,
 }
 
-impl<R: Renderer, WR: World3DRenderer<R>> Model<R, WR> {
+impl<R: RendererRaw, WR: World3DRenderer<R>> Model<R, WR> {
     pub fn load<P: AsRef<Path>>(
         renderer: &R, path: P, scale: f32
     ) -> Self {

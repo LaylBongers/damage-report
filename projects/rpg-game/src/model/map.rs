@@ -23,18 +23,20 @@ impl Map {
         let mut objects = Vec::new();
         for object_group in &map.object_groups {
             for object in &object_group.objects {
+                // We need to get the width and height of the object, because some objects have
+                // surface area, rather than just being a sprite at a point
+                let (width, height) = match object.shape {
+                    ObjectShape::Rect { width, height } => (width, height),
+                    _ => {
+                        warn!(log, "Object found in map with non-rect object shape, not supported");
+                        continue
+                    }
+                };
+
                 // The type defines what we should do with it
                 match object.obj_type.as_str() {
                     // Blank should be just collision, easy to quickly place
                     "" => {
-                        let (width, height) = match object.shape {
-                            ObjectShape::Rect { width, height } => (width, height),
-                            _ => {
-                                warn!(log, "Object found in map with non-rect object shape, not supported");
-                                continue
-                            }
-                        };
-
                         objects.push(Object::new(
                             Point2::new(object.x, object.y),
                             Vector2::new(width, height),

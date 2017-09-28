@@ -10,10 +10,10 @@ use vulkano::image::immutable::{ImmutableImage};
 use vulkano::sampler::{Sampler, Filter, MipmapMode, SamplerAddressMode};
 use vulkano::command_buffer::{AutoCommandBufferBuilder, CommandBuffer};
 
-use calcium_rendering::{CalciumErrorMappable, Error, Renderer};
-use calcium_rendering::raw::{TextureRaw};
+use calcium_rendering::raw::{TextureRaw, RawAccess};
 use calcium_rendering::texture::{TextureSource, TextureBuilder, TextureStoreFormat, SampleMode};
-use {VulkanoRenderer};
+use {VulkanoRendererRaw};
+use calcium_rendering::{CalciumErrorMappable, Error, Renderer};
 
 pub struct VulkanoTextureRaw {
     image: Arc<ImmutableImage<Format>>,
@@ -24,8 +24,8 @@ impl VulkanoTextureRaw {
     fn from_buffer(
         buffer: Arc<CpuAccessibleBuffer<[u8]>>,
         size: Vector2<u32>,
-        builder: TextureBuilder<VulkanoRenderer>,
-        renderer: &mut VulkanoRenderer,
+        builder: TextureBuilder<VulkanoRendererRaw>,
+        renderer: &mut Renderer<VulkanoRendererRaw>,
     ) -> Result<Self, Error> {
         // Get the correct format for the srgb parameter we got passed
         let format = match builder.store_format {
@@ -46,7 +46,7 @@ impl VulkanoTextureRaw {
         // Create the image itself with an initializer
         let dimensions = Dimensions::Dim2d { width: size.x, height: size.y };
         let (image, initializer) = ImmutableImage::uninitialized(
-            renderer.device().clone(),
+            renderer.raw().device().clone(),
             dimensions,
             format,
             mipmaps_count,
@@ -56,13 +56,13 @@ impl VulkanoTextureRaw {
             },
             // TODO: Switch between layouts while generating mipmaps then switch to ShaderReadOnlyOptimal
             ImageLayout::ShaderReadOnlyOptimal,
-            renderer.device().active_queue_families(),
+            renderer.raw().device().active_queue_families(),
         ).map_platform_err()?;
         let initializer = Arc::new(initializer);
 
         // Copy over the base image
         let mut cbb = AutoCommandBufferBuilder::new(
-                renderer.device().clone(), renderer.graphics_queue().family()
+                renderer.raw().device().clone(), renderer.raw().graphics_queue().family()
             ).map_platform_err()?
             .copy_buffer_to_image_dimensions(
                 buffer, initializer.clone(),
@@ -103,11 +103,11 @@ impl VulkanoTextureRaw {
         }
 
         // Submit all those copy and blit commands to be done before the next frame
-        let future = match cbb.build().unwrap().execute(renderer.graphics_queue().clone()) {
+        let future = match cbb.build().unwrap().execute(renderer.raw().graphics_queue().clone()) {
             Ok(f) => f,
             Err(_) => unreachable!(),
         };
-        renderer.queue_command_buffer_future(future);
+        renderer.raw_mut().queue_command_buffer_future(future);
 
         // Create a sampler for this texture based on our mipmapping data (if any)
         let filter = if builder.sample_mode == SampleMode::Linear {
@@ -116,7 +116,7 @@ impl VulkanoTextureRaw {
             Filter::Nearest
         };
         let sampler = Sampler::new(
-            renderer.device().clone(),
+            renderer.raw().device().clone(),
             filter,
             filter,
             MipmapMode::Linear,
@@ -145,9 +145,9 @@ impl VulkanoTextureRaw {
     }
 }
 
-impl TextureRaw<VulkanoRenderer> for VulkanoTextureRaw {
+impl TextureRaw<VulkanoRendererRaw> for VulkanoTextureRaw {
     fn new(
-        builder: TextureBuilder<VulkanoRenderer>, renderer: &mut VulkanoRenderer
+        builder: TextureBuilder<VulkanoRendererRaw>, renderer: &mut Renderer<VulkanoRendererRaw>
     ) -> Result<Self, Error> {
         let (buffer, size) = match builder.source {
             TextureSource::File(ref path) =>
@@ -171,7 +171,8 @@ impl TextureRaw<VulkanoRenderer> for VulkanoTextureRaw {
 }
 
 fn buffer_and_size_from_path(
-    path: &PathBuf, builder: &TextureBuilder<VulkanoRenderer>, renderer: &mut VulkanoRenderer
+    path: &PathBuf, builder: &TextureBuilder<VulkanoRendererRaw>,
+    renderer: &mut Renderer<VulkanoRendererRaw>
 ) -> Result<(Arc<CpuAccessibleBuffer<[u8]>>, Vector2<u32>), Error> {
     info!(renderer.log(),
         "Loading texture from file"; "path" => path.display().to_string()
@@ -192,7 +193,7 @@ fn buffer_and_size_from_path(
 
         // TODO: Use staging buffer instead
         CpuAccessibleBuffer::<[u8]>::from_iter(
-            renderer.device().clone(), BufferUsage::all(), image_data_iter
+            renderer.raw().device().clone(), BufferUsage::all(), image_data_iter
         ).unwrap()
     };
 
@@ -200,7 +201,7 @@ fn buffer_and_size_from_path(
 }
 
 fn buffer_from_bytes(
-    bytes: &[u8], size: Vector2<u32>, color: bool, renderer: &mut VulkanoRenderer
+    bytes: &[u8], size: Vector2<u32>, color: bool, renderer: &mut Renderer<VulkanoRendererRaw>
 ) -> Result<Arc<CpuAccessibleBuffer<[u8]>>, Error> {
     info!(renderer.log(),
         "Loading texture from bytes"; "width" => size.x, "height" => size.y, "color" => color
@@ -212,7 +213,7 @@ fn buffer_from_bytes(
 
         // TODO: Use staging buffer instead
         CpuAccessibleBuffer::<[u8]>::from_iter(
-            renderer.device().clone(), BufferUsage::all(), image_data_iter
+            renderer.raw().device().clone(), BufferUsage::all(), image_data_iter
         ).unwrap()
     };
 

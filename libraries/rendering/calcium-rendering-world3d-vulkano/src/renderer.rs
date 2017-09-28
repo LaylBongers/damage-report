@@ -1,7 +1,7 @@
 use vulkano::sync::{GpuFuture};
 
 use calcium_rendering::{Error, Renderer, Viewport};
-use calcium_rendering_vulkano::{VulkanoRenderer, VulkanoWindowRenderer, VulkanoFrame};
+use calcium_rendering_vulkano::{VulkanoRendererRaw, VulkanoWindowRenderer, VulkanoFrame};
 use calcium_rendering_world3d::{World3DRenderer, RenderWorld, Camera, World3DRenderTarget};
 
 use geometry_renderer::{GeometryRenderer};
@@ -16,7 +16,7 @@ pub struct VulkanoWorld3DRenderer {
 
 impl VulkanoWorld3DRenderer {
     pub fn new(
-        renderer: &mut VulkanoRenderer,
+        renderer: &mut VulkanoRendererRaw,
     ) -> Result<Self, Error> {
         info!(renderer.log(), "Initializing world renderer");
 
@@ -30,16 +30,16 @@ impl VulkanoWorld3DRenderer {
     }
 }
 
-impl World3DRenderer<VulkanoRenderer> for VulkanoWorld3DRenderer {
+impl World3DRenderer<VulkanoRendererRaw> for VulkanoWorld3DRenderer {
     type RenderTargetRaw = VulkanoWorld3DRenderTargetRaw;
     type MeshRaw = VulkanoMeshRaw;
 
     fn render(
         &mut self,
-        world: &RenderWorld<VulkanoRenderer, VulkanoWorld3DRenderer>, camera: &Camera,
-        world3d_rendertarget: &mut World3DRenderTarget<VulkanoRenderer, VulkanoWorld3DRenderer>,
+        world: &RenderWorld<VulkanoRendererRaw, VulkanoWorld3DRenderer>, camera: &Camera,
+        world3d_rendertarget: &mut World3DRenderTarget<VulkanoRendererRaw, VulkanoWorld3DRenderer>,
         viewport: &Viewport,
-        renderer: &mut VulkanoRenderer, window_renderer: &mut VulkanoWindowRenderer,
+        renderer: &mut VulkanoRendererRaw, window_renderer: &mut VulkanoWindowRenderer,
         frame: &mut VulkanoFrame,
     ) {
         // This is a deferred renderer, so what we will do is first build up the "geometry buffer",

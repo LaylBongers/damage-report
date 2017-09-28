@@ -3,11 +3,11 @@ use std::sync::{Arc};
 
 use cgmath::{Vector2};
 
-use {Renderer, Error};
-use raw::{TextureRaw, RawAccess};
+use {Error, Renderer};
+use raw::{TextureRaw, RawAccess, RendererRaw};
 use texture::{TextureSource, TextureStoreFormat, SampleMode, TextureBytes};
 
-pub struct TextureBuilder<'a, R: Renderer> {
+pub struct TextureBuilder<'a, R: RendererRaw> {
     /// Where to get the pixel data for this texture from. Defaults to a 1px black texture.
     pub source: TextureSource<'a>,
 
@@ -23,7 +23,7 @@ pub struct TextureBuilder<'a, R: Renderer> {
     _r: ::std::marker::PhantomData<R>,
 }
 
-impl<'a, R: Renderer> TextureBuilder<'a, R> {
+impl<'a, R: RendererRaw> TextureBuilder<'a, R> {
     fn new() -> Self {
         const BLACK_TEXTURE_1PX: &[u8] = &[0];
 
@@ -40,7 +40,7 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
         }
     }
 
-    pub fn build(self, renderer: &mut R) -> Result<Arc<Texture<R>>, Error> {
+    pub fn build(self, renderer: &mut Renderer<R>) -> Result<Arc<Texture<R>>, Error> {
         let raw = R::TextureRaw::new(self, renderer)?;
         Ok(Arc::new(Texture { raw }))
     }
@@ -98,17 +98,17 @@ impl<'a, R: Renderer> TextureBuilder<'a, R> {
     }
 }
 
-pub struct Texture<R: Renderer> {
+pub struct Texture<R: RendererRaw> {
     raw: R::TextureRaw
 }
 
-impl<R: Renderer> Texture<R> {
+impl<R: RendererRaw> Texture<R> {
     pub fn new() -> TextureBuilder<'static, R> {
         TextureBuilder::new()
     }
 }
 
-impl<R: Renderer> RawAccess<R::TextureRaw> for Texture<R> {
+impl<R: RendererRaw> RawAccess<R::TextureRaw> for Texture<R> {
     fn raw(&self) -> &R::TextureRaw { &self.raw }
     fn raw_mut(&mut self) -> &mut R::TextureRaw { &mut self.raw }
 }

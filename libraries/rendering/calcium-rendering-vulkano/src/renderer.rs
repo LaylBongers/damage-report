@@ -8,14 +8,12 @@ use vulkano::sync::{NowFuture, GpuFuture};
 use vulkano::command_buffer::{CommandBufferExecFuture, AutoCommandBuffer};
 use vulkano::swapchain::{Surface};
 
-use calcium_rendering::{Error, Renderer, Frame};
-use calcium_rendering::raw::{RawAccess};
+use calcium_rendering::raw::{RawAccess, RendererRaw};
+use calcium_rendering::{Error, Frame};
 
 use {VulkanoTextureRaw, WindowSwapchain};
 
-pub struct VulkanoRenderer {
-    log: Logger,
-
+pub struct VulkanoRendererRaw {
     instance: Arc<Instance>,
     device: Arc<Device>,
     graphics_queue: Arc<Queue>,
@@ -29,7 +27,7 @@ pub struct VulkanoRenderer {
     queued_cb_futures: Vec<CommandBufferExecFuture<NowFuture, AutoCommandBuffer>>,
 }
 
-impl VulkanoRenderer {
+impl VulkanoRendererRaw {
     pub fn new(
         log: &Logger, instance: Arc<Instance>,
         surface: Arc<Surface>, size: Vector2<u32>,
@@ -90,9 +88,7 @@ impl VulkanoRenderer {
         // Create the swapchain we'll have to render to to make things actually show up on screen
         let swapchain = WindowSwapchain::new(log, &device, &graphics_queue, &surface, size);
 
-        Ok(VulkanoRenderer {
-            log: log.clone(),
-
+        Ok(VulkanoRendererRaw {
             instance: instance.clone(),
             device,
             graphics_queue,
@@ -160,13 +156,9 @@ impl VulkanoRenderer {
     }
 }
 
-impl Renderer for VulkanoRenderer {
+impl RendererRaw for VulkanoRendererRaw {
     type FrameRaw = VulkanoFrameRaw;
     type TextureRaw = VulkanoTextureRaw;
-
-    fn log(&self) -> &Logger {
-        &self.log
-    }
 
     fn size(&self) -> Vector2<u32> {
         self.size

@@ -8,8 +8,9 @@ use gfx::{Encoder};
 use gfx_window_glutin::{self};
 use gfx_device_gl::{Device, Factory};
 
-use calcium_rendering::{Error, CalciumErrorMappable};
-use calcium_rendering_gfx::{GfxRenderer, ColorFormat, DepthFormat};
+use calcium_rendering::raw::{RawAccess};
+use calcium_rendering::{Renderer, Error, CalciumErrorMappable};
+use calcium_rendering_gfx::{GfxRendererRaw, ColorFormat, DepthFormat};
 
 #[cfg(feature = "simple2d")]
 use calcium_rendering_simple2d_gfx::{GfxSimple2DRenderer};
@@ -22,7 +23,7 @@ use {Context};
 pub struct GfxOpenGlContext;
 
 impl Context for GfxOpenGlContext {
-    type Renderer = GfxRenderer<Device, Factory>;
+    type RendererRaw = GfxRendererRaw<Device, Factory>;
     type Window = GlutinWindow;
 
     #[cfg(feature = "simple2d")]
@@ -34,7 +35,7 @@ impl Context for GfxOpenGlContext {
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,
     ) -> Result<
-        (GfxRenderer<Device, Factory>, GlutinWindow),
+        (Renderer<GfxRendererRaw<Device, Factory>>, GlutinWindow),
         Error
     > {
         let log = log.unwrap_or(Logger::root(StdLog.fuse(), o!()));
@@ -49,23 +50,23 @@ impl Context for GfxOpenGlContext {
             gfx_window_glutin::init_existing::<ColorFormat, DepthFormat>(&window.window);
         let encoder: Encoder<_, _> = factory.create_command_buffer().into();
 
-        let renderer = GfxRenderer::new(&log, device, factory, encoder, main_color, size);
+        let renderer_raw = GfxRendererRaw::new(&log, device, factory, encoder, main_color, size);
 
-        Ok((renderer, window))
+        Ok((Renderer::raw_new(renderer_raw, log.clone()), window))
     }
 
     fn handle_event(
         &self,
         event: &Input,
-        renderer: &mut GfxRenderer<Device, Factory>,
+        renderer: &mut Renderer<GfxRendererRaw<Device, Factory>>,
         window: &mut GlutinWindow,
     ) {
         match event {
             &Input::Resize(w, h) => {
                 let (new_color, _new_depth) =
                     gfx_window_glutin::new_views::<ColorFormat, DepthFormat>(&window.window);
-                renderer.set_color_view(new_color);
-                renderer.report_resize(Vector2::new(w, h));
+                renderer.raw_mut().set_color_view(new_color);
+                renderer.raw_mut().report_resize(Vector2::new(w, h));
             },
             _ => {},
         }
@@ -74,7 +75,7 @@ impl Context for GfxOpenGlContext {
     #[cfg(feature = "world3d")]
     fn world3d_renderer(
         &self,
-        _renderer: &mut GfxRenderer<Device, Factory>,
+        _renderer: &mut Renderer<GfxRendererRaw<Device, Factory>>,
     ) -> Result<UnsupportedWorld3DRenderer, Error> {
         Err(Error::Unsupported("world3d is not supported on this backend".to_string()))
     }
@@ -82,7 +83,7 @@ impl Context for GfxOpenGlContext {
     #[cfg(feature = "simple2d")]
     fn simple2d_renderer(
         &self,
-        renderer: &mut GfxRenderer<Device, Factory>,
+        renderer: &mut Renderer<GfxRendererRaw<Device, Factory>>,
     ) -> Result<GfxSimple2DRenderer<Device, Factory>, Error> {
         GfxSimple2DRenderer::new(renderer)
     }

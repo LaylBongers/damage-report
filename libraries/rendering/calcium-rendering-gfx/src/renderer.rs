@@ -3,13 +3,12 @@ use cgmath::{Vector2};
 use gfx::{Device, Factory, Encoder};
 use gfx::handle::{RenderTargetView};
 
-use calcium_rendering::{Renderer, Frame};
+use calcium_rendering::raw::{RendererRaw};
+use calcium_rendering::{Frame};
 
 use {ColorFormat, GfxTextureRaw};
 
-pub struct GfxRenderer<D: Device, F: Factory<D::Resources>> {
-    log: Logger,
-
+pub struct GfxRendererRaw<D: Device, F: Factory<D::Resources>> {
     device: D,
     factory: F,
     encoder: Encoder<D::Resources, D::CommandBuffer>,
@@ -18,7 +17,7 @@ pub struct GfxRenderer<D: Device, F: Factory<D::Resources>> {
     size: Vector2<u32>,
 }
 
-impl<D: Device, F: Factory<D::Resources>> GfxRenderer<D, F> {
+impl<D: Device, F: Factory<D::Resources>> GfxRendererRaw<D, F> {
     pub fn new(
         log: &Logger,
         device: D, factory: F, encoder: Encoder<D::Resources, D::CommandBuffer>,
@@ -28,9 +27,7 @@ impl<D: Device, F: Factory<D::Resources>> GfxRenderer<D, F> {
     ) -> Self {
         info!(log, "Creating gfx renderer");
 
-        GfxRenderer {
-            log: log.clone(),
-
+        GfxRendererRaw {
             device,
             factory,
             encoder,
@@ -77,13 +74,9 @@ impl<D: Device, F: Factory<D::Resources>> GfxRenderer<D, F> {
     }
 }
 
-impl<D: Device + 'static, F: Factory<D::Resources> + 'static> Renderer for GfxRenderer<D, F> {
+impl<D: Device + 'static, F: Factory<D::Resources> + 'static> RendererRaw for GfxRendererRaw<D, F> {
     type FrameRaw = GfxFrameRaw;
     type TextureRaw = GfxTextureRaw<D>;
-
-    fn log(&self) -> &Logger {
-        &self.log
-    }
 
     fn size(&self) -> Vector2<u32> {
         self.size
