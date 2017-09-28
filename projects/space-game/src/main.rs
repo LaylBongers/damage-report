@@ -2,6 +2,7 @@ extern crate calcium_game;
 extern crate calcium_rendering;
 extern crate calcium_rendering_2d;
 extern crate calcium_rendering_context;
+extern crate cgmath;
 extern crate input;
 extern crate window;
 #[macro_use]
@@ -9,6 +10,7 @@ extern crate slog;
 extern crate slog_async;
 extern crate slog_term;
 
+mod view;
 mod runtime;
 
 use slog::{Logger, Drain};

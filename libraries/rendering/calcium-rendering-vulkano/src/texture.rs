@@ -18,6 +18,7 @@ use calcium_rendering::{CalciumErrorMappable, Error, Renderer};
 pub struct VulkanoTextureRaw {
     image: Arc<ImmutableImage<Format>>,
     sampler: Arc<Sampler>,
+    size: Vector2<u32>,
 }
 
 impl VulkanoTextureRaw {
@@ -133,6 +134,7 @@ impl VulkanoTextureRaw {
         Ok(VulkanoTextureRaw {
             image,
             sampler,
+            size,
         })
     }
 
@@ -167,6 +169,10 @@ impl TextureRaw<VulkanoRendererRaw> for VulkanoTextureRaw {
         Self::from_buffer(
             buffer, size, builder, renderer
         )
+    }
+
+    fn size(&self) -> Vector2<u32> {
+        self.size
     }
 }
 

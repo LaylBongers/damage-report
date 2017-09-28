@@ -40,11 +40,6 @@ impl<'a, R: RendererRaw> TextureBuilder<'a, R> {
         }
     }
 
-    pub fn build(self, renderer: &mut Renderer<R>) -> Result<Arc<Texture<R>>, Error> {
-        let raw = R::TextureRaw::new(self, renderer)?;
-        Ok(Arc::new(Texture { raw }))
-    }
-
     pub fn from_file<P: Into<PathBuf>>(mut self, path: P) -> Self {
         let path = path.into();
         self.source = TextureSource::File(path);
@@ -96,6 +91,11 @@ impl<'a, R: RendererRaw> TextureBuilder<'a, R> {
     pub fn with_nearest_sampling(self) -> Self {
         self.with_sample_mode(SampleMode::Nearest)
     }
+
+    pub fn build(self, renderer: &mut Renderer<R>) -> Result<Arc<Texture<R>>, Error> {
+        let raw = R::TextureRaw::new(self, renderer)?;
+        Ok(Arc::new(Texture { raw }))
+    }
 }
 
 pub struct Texture<R: RendererRaw> {
@@ -105,6 +105,10 @@ pub struct Texture<R: RendererRaw> {
 impl<R: RendererRaw> Texture<R> {
     pub fn new() -> TextureBuilder<'static, R> {
         TextureBuilder::new()
+    }
+
+    pub fn size(&self) -> Vector2<u32> {
+        self.raw.size()
     }
 }
 

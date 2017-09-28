@@ -8,6 +8,7 @@ calcium-game = {path = "../../libraries/mechanics/calcium-game"}
 calcium-rendering = {path = "../../libraries/rendering/calcium-rendering"}
 calcium-rendering-2d = {path = "../../libraries/rendering/calcium-rendering-2d"}
 calcium-rendering-context = {path = "../../libraries/rendering/calcium-rendering-context", features = ["2d"]}
+cgmath = "0.15"
 pistoncore-input = "0.19"
 pistoncore-window = "0.28"
 slog = "2"

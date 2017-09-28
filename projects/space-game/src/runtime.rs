@@ -8,6 +8,8 @@ use calcium_rendering_2d::{Renderer2DTarget};
 use calcium_rendering_context::{Context, Runtime};
 use calcium_game::{LoopTimer};
 
+use view::{BackgroundView};
+
 pub struct StaticRuntime {
     pub log: Logger,
 }
@@ -17,13 +19,16 @@ impl Runtime for StaticRuntime {
         info!(self.log, "Loading program");
 
         // Set up everything we need to render
-        let window_settings = WindowSettings::new("RPG Game", [1280, 720]);
+        let window_settings = WindowSettings::new("Space Game", [1280, 720]);
         let (mut renderer, mut window) =
             context.renderer(Some(self.log.clone()), &window_settings)?;
         let mut simple2d_renderer = context.simple2d_renderer(&mut renderer)?;
         let mut simple2d_render_target = Renderer2DTarget::new(
             true, &renderer, &simple2d_renderer
         );
+
+        // Set up views
+        let background_view = BackgroundView::new(&mut renderer)?;
 
         let mut right_pressed = false;
 
@@ -53,6 +58,8 @@ impl Runtime for StaticRuntime {
 
             // Set up the rendering data we'll need
             let mut render_data = RenderData::new();
+
+            background_view.render(&mut render_data, &mut renderer);
 
             // Finally do the 2D rendering itself
             let mut frame = renderer.start_frame();

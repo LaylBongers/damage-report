@@ -24,4 +24,5 @@ pub trait RendererRaw: Any + Sized {
 
 pub trait TextureRaw<R: RendererRaw>: Sized {
     fn new(builder: TextureBuilder<R>, renderer: &mut Renderer<R>) -> Result<Self, Error>;
+    fn size(&self) -> Vector2<u32>;
 }

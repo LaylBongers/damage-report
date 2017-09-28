@@ -4,8 +4,9 @@ version = "0.1.0"
 dependencies = [
  "calcium-game 0.1.0",
  "calcium-rendering 0.1.0",
- "calcium-rendering-context 0.1.0",
  "calcium-rendering-2d 0.1.0",
+ "calcium-rendering-context 0.1.0",
+ "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-input 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pistoncore-window 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.12 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -70,14 +71,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "calcium-rendering-2d"
+version = "0.1.0"
+dependencies = [
+ "calcium-rendering 0.1.0",
+ "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "screenmath 0.1.0",
+]
+
+[[package]]
+name = "calcium-rendering-2d-gfx"
+version = "0.1.0"
+dependencies = [
+ "calcium-rendering 0.1.0",
+ "calcium-rendering-2d 0.1.0",
+ "calcium-rendering-gfx 0.1.0",
+ "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gfx 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "calcium-rendering-2d-vulkano"
+version = "0.1.0"
+dependencies = [
+ "calcium-rendering 0.1.0",
+ "calcium-rendering-2d 0.1.0",
+ "calcium-rendering-vulkano 0.1.0",
+ "calcium-rendering-vulkano-shaders 0.1.0",
+ "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog 2.0.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "vulkano 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "calcium-rendering-context"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
- "calcium-rendering-gfx 0.1.0",
  "calcium-rendering-2d 0.1.0",
  "calcium-rendering-2d-gfx 0.1.0",
  "calcium-rendering-2d-vulkano 0.1.0",
+ "calcium-rendering-gfx 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
  "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -101,39 +135,6 @@ dependencies = [
  "gfx 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.12 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "calcium-rendering-2d"
-version = "0.1.0"
-dependencies = [
- "calcium-rendering 0.1.0",
- "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "screenmath 0.1.0",
-]
-
-[[package]]
-name = "calcium-rendering-2d-gfx"
-version = "0.1.0"
-dependencies = [
- "calcium-rendering 0.1.0",
- "calcium-rendering-gfx 0.1.0",
- "calcium-rendering-2d 0.1.0",
- "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "gfx 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "calcium-rendering-2d-vulkano"
-version = "0.1.0"
-dependencies = [
- "calcium-rendering 0.1.0",
- "calcium-rendering-2d 0.1.0",
- "calcium-rendering-vulkano 0.1.0",
- "calcium-rendering-vulkano-shaders 0.1.0",
- "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "slog 2.0.12 (registry+https://github.com/rust-lang/crates.io-index)",
- "vulkano 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

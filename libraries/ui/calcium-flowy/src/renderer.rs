@@ -21,9 +21,9 @@ pub struct FlowyRenderer<R: RendererRaw> {
 
 impl<R: RendererRaw> FlowyRenderer<R> {
     pub fn new(renderer: &mut Renderer<R>) -> Result<Self, Error> {
-        // TODO: This can go down to 0.1 again instead of 0.5 when the texture is overwritten
+        // TODO: This can go down to 0.1 again instead of 1.0 when the texture is overwritten
         // instead of replaced.
-        let glyph_cache = Cache::new(512, 512, 0.5, 0.5);
+        let glyph_cache = Cache::new(512, 512, 1.0, 1.0);
         let glyph_image = GrayImage::from_raw(512, 512, vec![0u8; 512*512]).unwrap();
         let glyph_texture = Texture::new()
             // We will never use this initial texture, so just use something cheap

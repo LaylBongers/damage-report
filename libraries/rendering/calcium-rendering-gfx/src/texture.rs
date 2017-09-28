@@ -31,6 +31,7 @@ impl<D: Device + 'static> GenericView<D> {
 pub struct GfxTextureRaw<D: Device + 'static> {
     pub view: GenericView<D>,
     pub sample_mode: SampleMode,
+    size: Vector2<u32>,
 }
 
 impl<D: Device + 'static> GfxTextureRaw<D> {
@@ -123,6 +124,7 @@ impl<D: Device + 'static> GfxTextureRaw<D> {
         Ok(GfxTextureRaw {
             view,
             sample_mode: builder.sample_mode,
+            size,
         })
     }
 }
@@ -141,5 +143,9 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
                 Self::from_bytes(bytes.as_ref(), size, color, &builder, renderer)
             },
         }
+    }
+
+    fn size(&self) -> Vector2<u32> {
+        self.size
     }
 }
