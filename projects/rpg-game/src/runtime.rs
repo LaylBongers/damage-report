@@ -18,7 +18,8 @@ use calcium_game::{LoopTimer};
 use calcium_rendering::{Error};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, Projection, RenderData, RenderSet};
-use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
+use calcium_rendering_simple2d::raw::{Simple2DRendererRaw};
+use calcium_rendering_simple2d::{Simple2DRenderTarget};
 use calcium_rendering_context::{Runtime, Context};
 use calcium_rendering::raw::{RendererRaw};
 

@@ -16,7 +16,7 @@ use {Context};
 use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer};
 
 #[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DRenderer};
+use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DRendererRaw};
 
 pub struct VulkanoContext;
 
@@ -28,7 +28,7 @@ impl Context for VulkanoContext {
     type World3DRenderer = VulkanoWorld3DRenderer;
 
     #[cfg(feature = "simple2d")]
-    type Simple2DRenderer = VulkanoSimple2DRenderer;
+    type Simple2DRendererRaw = VulkanoSimple2DRendererRaw;
 
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,
@@ -84,7 +84,7 @@ impl Context for VulkanoContext {
     fn simple2d_renderer(
         &self,
         renderer: &mut Renderer<VulkanoRendererRaw>,
-    ) -> Result<VulkanoSimple2DRenderer, Error> {
-        VulkanoSimple2DRenderer::new(renderer)
+    ) -> Result<VulkanoSimple2DRendererRaw, Error> {
+        VulkanoSimple2DRendererRaw::new(renderer)
     }
 }

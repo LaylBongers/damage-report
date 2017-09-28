@@ -6,7 +6,7 @@ use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::{Error, Renderer};
 
 #[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d::{Simple2DRenderer};
+use calcium_rendering_simple2d::raw::{Simple2DRendererRaw};
 
 #[cfg(feature = "world3d")]
 use calcium_rendering_world3d::{World3DRenderer};
@@ -16,7 +16,7 @@ pub trait Context {
     type Window: Window + AdvancedWindow;
 
     #[cfg(feature = "simple2d")]
-    type Simple2DRenderer: Simple2DRenderer<Self::RendererRaw>;
+    type Simple2DRendererRaw: Simple2DRendererRaw<Self::RendererRaw>;
 
     #[cfg(feature = "world3d")]
     type World3DRenderer: World3DRenderer<Self::RendererRaw>;
@@ -59,7 +59,7 @@ pub trait Context {
         &self,
         renderer: &mut Renderer<Self::RendererRaw>,
     ) -> Result<
-        Self::Simple2DRenderer,
+        Self::Simple2DRendererRaw,
         Error
     >;
 }

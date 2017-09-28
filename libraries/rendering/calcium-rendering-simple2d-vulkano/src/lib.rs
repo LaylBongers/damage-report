@@ -13,5 +13,5 @@ mod renderer;
 mod vertex;
 
 pub use render_target::{VulkanoSimple2DRenderTargetRaw};
-pub use renderer::{VulkanoSimple2DRenderer};
+pub use renderer::{VulkanoSimple2DRendererRaw};
 pub use vertex::{VkVertex};

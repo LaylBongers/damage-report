@@ -10,9 +10,9 @@ use vulkano::descriptor::descriptor_set::{FixedSizeDescriptorSetsPool};
 use calcium_rendering::{Renderer};
 use calcium_rendering::raw::{RawAccess};
 use calcium_rendering_vulkano::{VulkanoRendererRaw};
-use calcium_rendering_simple2d::{Simple2DRenderTargetRaw};
+use calcium_rendering_simple2d::raw::{Simple2DRenderTargetRaw};
 
-use {VkVertex, VulkanoSimple2DRenderer};
+use {VkVertex, VulkanoSimple2DRendererRaw};
 
 pub struct VulkanoSimple2DRenderTargetRaw {
     render_pass: Arc<RenderPassAbstract + Send + Sync>,
@@ -62,13 +62,13 @@ impl VulkanoSimple2DRenderTargetRaw {
     }
 }
 
-impl Simple2DRenderTargetRaw<VulkanoRendererRaw, VulkanoSimple2DRenderer>
+impl Simple2DRenderTargetRaw<VulkanoRendererRaw, VulkanoSimple2DRendererRaw>
     for VulkanoSimple2DRenderTargetRaw
 {
     fn new(
         clear: bool,
         renderer: &Renderer<VulkanoRendererRaw>,
-        simple2d_renderer: &VulkanoSimple2DRenderer,
+        simple2d_renderer: &VulkanoSimple2DRendererRaw,
     ) -> Self {
         // Set up the render pass for 2D rendering depending on the settings for this target
         debug!(renderer.log(), "Creating simple2d render pass");

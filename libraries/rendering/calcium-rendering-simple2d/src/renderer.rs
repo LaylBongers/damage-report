@@ -1,21 +1,44 @@
-use std::any::{Any};
-
-use calcium_rendering::raw::{RendererRaw};
+use calcium_rendering::raw::{RawAccess, RendererRaw};
 use calcium_rendering::{Renderer, Frame};
 
-use {Simple2DRenderTarget, Simple2DRenderTargetRaw};
+use raw::{Simple2DRendererRaw};
 use render_data::{RenderData};
+use {Simple2DRenderTarget};
 
 /// A 2D renderer capable of rendering render batches.
-pub trait Simple2DRenderer<R: RendererRaw>: Any + Sized {
-    type RenderTargetRaw: Simple2DRenderTargetRaw<R, Self> + Any;
+pub struct Simple2DRenderer<R: RendererRaw, SR: Simple2DRendererRaw<R>> {
+    raw: SR,
+    _r: ::std::marker::PhantomData<R>,
+}
 
-    /// Renders a set of render data.
-    fn render(
+impl<R: RendererRaw, SR: Simple2DRendererRaw<R>> Simple2DRenderer<R, SR> {
+    pub fn raw_new(raw: SR) -> Self {
+        Simple2DRenderer {
+            raw,
+            _r: Default::default(),
+        }
+    }
+
+    /// Renders a collection of rendering data.
+    pub fn render(
         &mut self,
         data: &RenderData<R>,
         frame: &mut Frame<R>,
-        render_target: &mut Simple2DRenderTarget<R, Self>,
+        render_target: &mut Simple2DRenderTarget<R, SR>,
         renderer: &mut Renderer<R>,
-    );
+    ) {
+        self.raw.render(
+            data,
+            frame,
+            render_target,
+            renderer,
+        );
+    }
+}
+
+impl<R: RendererRaw, SR: Simple2DRendererRaw<R>> RawAccess<SR>
+    for Simple2DRenderer<R, SR>
+{
+    fn raw(&self) -> &SR { &self.raw }
+    fn raw_mut(&mut self) -> &mut SR { &mut self.raw }
 }

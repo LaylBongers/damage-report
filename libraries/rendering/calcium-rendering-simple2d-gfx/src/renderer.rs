@@ -13,7 +13,8 @@ use calcium_rendering::texture::{Texture, SampleMode};
 use calcium_rendering::{Error, Frame, Renderer};
 use calcium_rendering_gfx::{GfxRendererRaw, ColorFormat};
 use calcium_rendering_simple2d::render_data::{ShaderMode, RenderData, RenderSet};
-use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
+use calcium_rendering_simple2d::raw::{Simple2DRendererRaw};
+use calcium_rendering_simple2d::{Simple2DRenderTarget};
 
 use {GfxSimple2DRenderTargetRaw};
 
@@ -44,7 +45,7 @@ gfx_defines!{
     }
 }
 
-pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + 'static> {
+pub struct GfxSimple2DRendererRaw<D: Device + 'static, F: Factory<D::Resources> + 'static> {
     pso: PipelineState<D::Resources, pipe::Meta>,
     dummy_texture: Arc<Texture<GfxRendererRaw<D, F>>>,
     mode_buffers: Vec<Buffer<D::Resources, Mode>>,
@@ -53,7 +54,7 @@ pub struct GfxSimple2DRenderer<D: Device + 'static, F: Factory<D::Resources> + '
     nearest_sampler: Sampler<D::Resources>,
 }
 
-impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRenderer<D, F> {
+impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendererRaw<D, F> {
     pub fn new(
         renderer: &mut Renderer<GfxRendererRaw<D, F>>
     ) -> Result<Self, Error> {
@@ -89,7 +90,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
             WrapMode::Clamp,
         ));
 
-        Ok(GfxSimple2DRenderer {
+        Ok(GfxSimple2DRendererRaw {
             pso,
             dummy_texture,
             mode_buffers,
@@ -169,7 +170,7 @@ impl<D: Device + 'static, F: Factory<D::Resources> + 'static> GfxSimple2DRendere
 }
 
 impl<D: Device + 'static, F: Factory<D::Resources> + 'static>
-    Simple2DRenderer<GfxRendererRaw<D, F>> for GfxSimple2DRenderer<D, F>
+    Simple2DRendererRaw<GfxRendererRaw<D, F>> for GfxSimple2DRendererRaw<D, F>
 {
     type RenderTargetRaw = GfxSimple2DRenderTargetRaw;
 

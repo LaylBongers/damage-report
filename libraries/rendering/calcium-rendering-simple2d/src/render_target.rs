@@ -1,13 +1,13 @@
 use calcium_rendering::{Renderer};
 use calcium_rendering::raw::{RawAccess, RendererRaw};
 
-use {Simple2DRenderer};
+use raw::{Simple2DRendererRaw, Simple2DRenderTargetRaw};
 
-pub struct Simple2DRenderTarget<R: RendererRaw, SR: Simple2DRenderer<R>> {
+pub struct Simple2DRenderTarget<R: RendererRaw, SR: Simple2DRendererRaw<R>> {
     pub raw: SR::RenderTargetRaw,
 }
 
-impl<R: RendererRaw, SR: Simple2DRenderer<R>> Simple2DRenderTarget<R, SR> {
+impl<R: RendererRaw, SR: Simple2DRendererRaw<R>> Simple2DRenderTarget<R, SR> {
     pub fn new(
         clear: bool,
         renderer: &Renderer<R>,
@@ -24,17 +24,9 @@ impl<R: RendererRaw, SR: Simple2DRenderer<R>> Simple2DRenderTarget<R, SR> {
     }
 }
 
-impl<R: RendererRaw, SR: Simple2DRenderer<R>> RawAccess<SR::RenderTargetRaw>
+impl<R: RendererRaw, SR: Simple2DRendererRaw<R>> RawAccess<SR::RenderTargetRaw>
     for Simple2DRenderTarget<R, SR>
 {
     fn raw(&self) -> &SR::RenderTargetRaw { &self.raw }
     fn raw_mut(&mut self) -> &mut SR::RenderTargetRaw { &mut self.raw }
-}
-
-pub trait Simple2DRenderTargetRaw<R: RendererRaw, SR: Simple2DRenderer<R>> {
-    fn new(
-        clear: bool,
-        renderer: &Renderer<R>,
-        simple2d_renderer: &SR,
-    ) -> Self;
 }

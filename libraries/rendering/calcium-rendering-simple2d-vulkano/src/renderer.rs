@@ -12,13 +12,14 @@ use calcium_rendering::raw::{RawAccess};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering::{Renderer, Error, Frame};
 use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, RenderData, RenderSet};
-use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRenderer};
+use calcium_rendering_simple2d::raw::{Simple2DRendererRaw};
+use calcium_rendering_simple2d::{Simple2DRenderTarget};
 use calcium_rendering_vulkano::{VulkanoRendererRaw};
 use calcium_rendering_vulkano_shaders::{simple2d_vs, simple2d_fs};
 
 use {VkVertex, VulkanoSimple2DRenderTargetRaw};
 
-pub struct VulkanoSimple2DRenderer {
+pub struct VulkanoSimple2DRendererRaw {
     dummy_texture: Arc<Texture<VulkanoRendererRaw>>,
 
     matrix_pool: CpuBufferPool<simple2d_vs::ty::MatrixData>,
@@ -28,7 +29,7 @@ pub struct VulkanoSimple2DRenderer {
     pub fs: simple2d_fs::Shader,
 }
 
-impl VulkanoSimple2DRenderer {
+impl VulkanoSimple2DRendererRaw {
     pub fn new(renderer: &mut Renderer<VulkanoRendererRaw>) -> Result<Self, Error> {
         info!(renderer.log(), "Creating simple2d renderer");
         let dummy_texture = Texture::new()
@@ -56,7 +57,7 @@ impl VulkanoSimple2DRenderer {
             mode_buffers.push(buffer);
         }
 
-        Ok(VulkanoSimple2DRenderer {
+        Ok(VulkanoSimple2DRendererRaw {
             dummy_texture,
 
             matrix_pool,
@@ -71,7 +72,7 @@ impl VulkanoSimple2DRenderer {
         set: &RenderSet<VulkanoRendererRaw>, mut buffer_builder: AutoCommandBufferBuilder,
         frame: &Frame<VulkanoRendererRaw>,
         renderer: &Renderer<VulkanoRendererRaw>,
-        render_target: &mut Simple2DRenderTarget<VulkanoRendererRaw, VulkanoSimple2DRenderer>,
+        render_target: &mut Simple2DRenderTarget<VulkanoRendererRaw, VulkanoSimple2DRendererRaw>,
     ) -> AutoCommandBufferBuilder {
         // Create a projection matrix that just matches coordinates to pixels
         let proj =
@@ -105,7 +106,7 @@ impl VulkanoSimple2DRenderer {
         batch: &RenderBatch<VulkanoRendererRaw>, builder: AutoCommandBufferBuilder,
         size: Vector2<u32>,
         renderer: &Renderer<VulkanoRendererRaw>,
-        render_target: &mut Simple2DRenderTarget<VulkanoRendererRaw, VulkanoSimple2DRenderer>,
+        render_target: &mut Simple2DRenderTarget<VulkanoRendererRaw, VulkanoSimple2DRendererRaw>,
         matrix_data_buffer: &Arc<CpuBufferPoolSubbuffer<simple2d_vs::ty::MatrixData, Arc<StdMemoryPool>>>,
     ) -> AutoCommandBufferBuilder {
         // Create a big mesh of all the rectangles we got told to draw this batch
@@ -169,7 +170,7 @@ impl VulkanoSimple2DRenderer {
     }
 }
 
-impl Simple2DRenderer<VulkanoRendererRaw> for VulkanoSimple2DRenderer {
+impl Simple2DRendererRaw<VulkanoRendererRaw> for VulkanoSimple2DRendererRaw {
     type RenderTargetRaw = VulkanoSimple2DRenderTargetRaw;
 
     fn render(

@@ -9,4 +9,4 @@ mod render_target;
 mod renderer;
 
 pub use render_target::{GfxSimple2DRenderTargetRaw};
-pub use renderer::{GfxSimple2DRenderer};
+pub use renderer::{GfxSimple2DRendererRaw};

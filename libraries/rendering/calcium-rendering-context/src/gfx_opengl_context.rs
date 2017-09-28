@@ -13,7 +13,7 @@ use calcium_rendering::{Renderer, Error, CalciumErrorMappable};
 use calcium_rendering_gfx::{GfxRendererRaw, ColorFormat, DepthFormat};
 
 #[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d_gfx::{GfxSimple2DRenderer};
+use calcium_rendering_simple2d_gfx::{GfxSimple2DRendererRaw};
 
 #[cfg(feature = "world3d")]
 use unsupported::{UnsupportedWorld3DRenderer};
@@ -27,7 +27,7 @@ impl Context for GfxOpenGlContext {
     type Window = GlutinWindow;
 
     #[cfg(feature = "simple2d")]
-    type Simple2DRenderer = GfxSimple2DRenderer<Device, Factory>;
+    type Simple2DRendererRaw = GfxSimple2DRendererRaw<Device, Factory>;
 
     #[cfg(feature = "world3d")]
     type World3DRenderer = UnsupportedWorld3DRenderer;
@@ -84,7 +84,7 @@ impl Context for GfxOpenGlContext {
     fn simple2d_renderer(
         &self,
         renderer: &mut Renderer<GfxRendererRaw<Device, Factory>>,
-    ) -> Result<GfxSimple2DRenderer<Device, Factory>, Error> {
-        GfxSimple2DRenderer::new(renderer)
+    ) -> Result<GfxSimple2DRendererRaw<Device, Factory>, Error> {
+        GfxSimple2DRendererRaw::new(renderer)
     }
 }

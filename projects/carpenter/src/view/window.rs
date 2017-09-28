@@ -1,5 +1,5 @@
 use calcium_rendering::{Renderer, Error, WindowRenderer};
-use calcium_rendering_simple2d::{Simple2DRenderer, Simple2DRenderTarget};
+use calcium_rendering_simple2d::{Simple2DRendererRaw, Simple2DRenderTarget};
 use calcium_rendering_world3d::{World3DRenderer, World3DRenderTarget};
 use calcium_rendering_static::{Initializer};
 use window::{Window, AdvancedWindow, WindowSettings};
@@ -10,7 +10,7 @@ use carpenter_model::{MapEditor};
 
 use view::{ViewportView, UiView};
 
-pub struct WindowView<W: Window, R: RendererRaw, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>> {
+pub struct WindowView<W: Window, R: RendererRaw, SR: Simple2DRendererRaw<R>, WR: World3DRenderer<R>> {
     window: W,
     renderer: R,
     window_renderer: R::WindowRenderer,
@@ -25,9 +25,9 @@ pub struct WindowView<W: Window, R: RendererRaw, SR: Simple2DRenderer<R>, WR: Wo
     ui: UiView<R>,
 }
 
-impl<W: Window + AdvancedWindow, R: RendererRaw, SR: Simple2DRenderer<R>, WR: World3DRenderer<R>>
+impl<W: Window + AdvancedWindow, R: RendererRaw, SR: Simple2DRendererRaw<R>, WR: World3DRenderer<R>>
     WindowView<W, R, SR, WR> {
-    pub fn new<I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRenderer=SR>>(
+    pub fn new<I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRendererRaw=SR>>(
         log: &Logger,
         init: &I,
         editor: &mut MapEditor,
@@ -71,7 +71,7 @@ impl<W: Window + AdvancedWindow, R: RendererRaw, SR: Simple2DRenderer<R>, WR: Wo
     }
 
     pub fn handle_events<
-        I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRenderer=SR>
+        I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRendererRaw=SR>
     >(
         &mut self, init: &I, input: &mut InputModel
     ) {

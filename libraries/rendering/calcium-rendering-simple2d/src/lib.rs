@@ -7,5 +7,5 @@ pub mod render_data;
 mod render_target;
 mod renderer;
 
-pub use render_target::{Simple2DRenderTarget, Simple2DRenderTargetRaw};
+pub use render_target::{Simple2DRenderTarget};
 pub use renderer::{Simple2DRenderer};
