@@ -14,17 +14,17 @@ extern crate calcium_rendering;
 extern crate calcium_rendering_gfx;
 extern crate calcium_rendering_vulkano;
 
-#[cfg(feature = "world3d")]
-extern crate calcium_rendering_world3d;
-#[cfg(feature = "world3d")]
-extern crate calcium_rendering_world3d_vulkano;
+#[cfg(feature = "3d")]
+extern crate calcium_rendering_3d;
+#[cfg(feature = "3d")]
+extern crate calcium_rendering_3d_vulkano;
 
-#[cfg(feature = "simple2d")]
-extern crate calcium_rendering_simple2d;
-#[cfg(feature = "simple2d")]
-extern crate calcium_rendering_simple2d_gfx;
-#[cfg(feature = "simple2d")]
-extern crate calcium_rendering_simple2d_vulkano;
+#[cfg(feature = "2d")]
+extern crate calcium_rendering_2d;
+#[cfg(feature = "2d")]
+extern crate calcium_rendering_2d_gfx;
+#[cfg(feature = "2d")]
+extern crate calcium_rendering_2d_vulkano;
 
 mod context;
 mod runtime;

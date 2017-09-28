@@ -1,9 +1,0 @@
-[package]
-name = "calcium-rendering-simple2d"
-version = "0.1.0"
-authors = ["Layl <LaylConway@users.noreply.github.com>"]
-
-[dependencies]
-cgmath = "0.15"
-calcium-rendering = {path = "../calcium-rendering"}
-screenmath = {path = "../../ui/screenmath"}

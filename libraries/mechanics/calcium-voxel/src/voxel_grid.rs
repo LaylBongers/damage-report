@@ -1,6 +1,6 @@
 use cgmath::{Vector3, Vector2};
 
-use calcium_rendering_world3d::mesh::{Vertex};
+use calcium_rendering_3d::mesh::{Vertex};
 
 pub struct VoxelGrid {
     size: Vector3<i32>,

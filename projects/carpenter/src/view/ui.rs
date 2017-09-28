@@ -5,7 +5,7 @@ use rusttype::{FontCollection};
 
 use calcium_game::{AverageDelta, delta_to_fps};
 use calcium_rendering::{Renderer, WindowRenderer, Error};
-use calcium_rendering_simple2d::{Simple2DRenderTarget, Simple2DRendererRaw};
+use calcium_rendering_2d::{Renderer2DTarget, Renderer2DRaw};
 use calcium_flowy::{FlowyRenderer};
 use flowy::{Ui, Element, ElementId};
 use flowy::style::{Style, Position, Size, SideH, SideV};
@@ -110,11 +110,11 @@ impl<R: RendererRaw> UiView<R> {
         }
     }
 
-    pub fn render<SR: Simple2DRendererRaw<R>>(
+    pub fn render<SR: Renderer2DRaw<R>>(
         &mut self, frame: &mut R::Frame,
         renderer: &mut R, window_renderer: &mut R::WindowRenderer,
         simple2d_renderer: &mut SR,
-        simple2d_rendertarget: &mut Simple2DRenderTarget<R, SR>,
+        simple2d_rendertarget: &mut Renderer2DTarget<R, SR>,
     ) -> Result<(), Error> {
         let mut batches = Vec::new();
         self.ui_renderer.render(

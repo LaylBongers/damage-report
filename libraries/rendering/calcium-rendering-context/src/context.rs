@@ -5,20 +5,22 @@ use input::{Input};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::{Error, Renderer};
 
-#[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d::raw::{Simple2DRendererRaw};
+#[cfg(feature = "2d")]
+use calcium_rendering_2d::raw::{Renderer2DRaw};
+#[cfg(feature = "2d")]
+use calcium_rendering_2d::{Renderer2D};
 
-#[cfg(feature = "world3d")]
-use calcium_rendering_world3d::{World3DRenderer};
+#[cfg(feature = "3d")]
+use calcium_rendering_3d::{World3DRenderer};
 
 pub trait Context {
     type RendererRaw: RendererRaw;
     type Window: Window + AdvancedWindow;
 
-    #[cfg(feature = "simple2d")]
-    type Simple2DRendererRaw: Simple2DRendererRaw<Self::RendererRaw>;
+    #[cfg(feature = "2d")]
+    type Renderer2DRaw: Renderer2DRaw<Self::RendererRaw>;
 
-    #[cfg(feature = "world3d")]
+    #[cfg(feature = "3d")]
     type World3DRenderer: World3DRenderer<Self::RendererRaw>;
 
     /// Creates a new renderer with an initial window.
@@ -45,7 +47,7 @@ pub trait Context {
     /// TODO: Add a system for requesting required features and reject backends that don't have it.
     /// TODO: Remove WindowRenderer from this initialization, World3DRenderer should create a new
     ///  thing specific to a single window.
-    #[cfg(feature = "world3d")]
+    #[cfg(feature = "3d")]
     fn world3d_renderer(
         &self,
         renderer: &mut Renderer<Self::Renderer>,
@@ -54,12 +56,12 @@ pub trait Context {
         Error
     >;
 
-    #[cfg(feature = "simple2d")]
+    #[cfg(feature = "2d")]
     fn simple2d_renderer(
         &self,
         renderer: &mut Renderer<Self::RendererRaw>,
     ) -> Result<
-        Self::Simple2DRendererRaw,
+        Renderer2D<Self::RendererRaw, Self::Renderer2DRaw>,
         Error
     >;
 }

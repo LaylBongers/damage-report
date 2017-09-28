@@ -1,6 +1,6 @@
 use calcium_rendering::{Renderer, Error, WindowRenderer};
-use calcium_rendering_simple2d::{Simple2DRendererRaw, Simple2DRenderTarget};
-use calcium_rendering_world3d::{World3DRenderer, World3DRenderTarget};
+use calcium_rendering_2d::{Renderer2DRaw, Renderer2DTarget};
+use calcium_rendering_3d::{World3DRenderer, World3DRenderTarget};
 use calcium_rendering_static::{Initializer};
 use window::{Window, AdvancedWindow, WindowSettings};
 use slog::{Logger};
@@ -10,13 +10,13 @@ use carpenter_model::{MapEditor};
 
 use view::{ViewportView, UiView};
 
-pub struct WindowView<W: Window, R: RendererRaw, SR: Simple2DRendererRaw<R>, WR: World3DRenderer<R>> {
+pub struct WindowView<W: Window, R: RendererRaw, SR: Renderer2DRaw<R>, WR: World3DRenderer<R>> {
     window: W,
     renderer: R,
     window_renderer: R::WindowRenderer,
 
     simple2d_renderer: SR,
-    simple2d_rendertarget: Simple2DRenderTarget<R, SR>,
+    simple2d_rendertarget: Renderer2DTarget<R, SR>,
 
     world3d_renderer: WR,
     world3d_rendertarget: World3DRenderTarget<R, WR>,
@@ -25,9 +25,9 @@ pub struct WindowView<W: Window, R: RendererRaw, SR: Simple2DRendererRaw<R>, WR:
     ui: UiView<R>,
 }
 
-impl<W: Window + AdvancedWindow, R: RendererRaw, SR: Simple2DRendererRaw<R>, WR: World3DRenderer<R>>
+impl<W: Window + AdvancedWindow, R: RendererRaw, SR: Renderer2DRaw<R>, WR: World3DRenderer<R>>
     WindowView<W, R, SR, WR> {
-    pub fn new<I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRendererRaw=SR>>(
+    pub fn new<I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Renderer2DRaw=SR>>(
         log: &Logger,
         init: &I,
         editor: &mut MapEditor,
@@ -38,7 +38,7 @@ impl<W: Window + AdvancedWindow, R: RendererRaw, SR: Simple2DRendererRaw<R>, WR:
             init.renderer(Some(log.clone()), &window_settings)?;
 
         let simple2d_renderer = init.simple2d_renderer(&mut renderer)?;
-        let simple2d_rendertarget = Simple2DRenderTarget::new(
+        let simple2d_rendertarget = Renderer2DTarget::new(
             false, &renderer, &window_renderer, &simple2d_renderer
         );
 
@@ -71,7 +71,7 @@ impl<W: Window + AdvancedWindow, R: RendererRaw, SR: Simple2DRendererRaw<R>, WR:
     }
 
     pub fn handle_events<
-        I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Simple2DRendererRaw=SR>
+        I: Initializer<Window=W, Renderer=R, World3DRenderer=WR, Renderer2DRaw=SR>
     >(
         &mut self, init: &I, input: &mut InputModel
     ) {

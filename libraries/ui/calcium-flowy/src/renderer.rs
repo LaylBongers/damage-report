@@ -8,7 +8,7 @@ use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Error};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
+use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
 
 use flowy::{Ui, ElementId, ElementCursorState, Element};
 

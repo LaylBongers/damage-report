@@ -1,5 +1,5 @@
 extern crate calcium_rendering;
-extern crate calcium_rendering_simple2d;
+extern crate calcium_rendering_2d;
 extern crate flowy;
 extern crate image;
 extern crate rusttype;

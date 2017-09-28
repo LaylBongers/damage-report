@@ -5,4 +5,4 @@ authors = ["Layl <LaylConway@users.noreply.github.com>"]
 
 [dependencies]
 cgmath = "0.15"
-calcium-rendering-world3d = {path = "../calcium-rendering-world3d"}
+calcium-rendering-3d = {path = "../calcium-rendering-3d"}

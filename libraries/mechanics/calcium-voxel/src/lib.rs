@@ -1,5 +1,5 @@
 extern crate cgmath;
-extern crate calcium_rendering_world3d;
+extern crate calcium_rendering_3d;
 
 mod paged_voxels_view;
 mod paged_voxels;

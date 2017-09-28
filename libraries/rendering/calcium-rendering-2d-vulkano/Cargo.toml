@@ -1,0 +1,13 @@
+[package]
+name = "calcium-rendering-2d-vulkano"
+version = "0.1.0"
+authors = ["Layl <LaylConway@users.noreply.github.com>"]
+
+[dependencies]
+cgmath = "0.15"
+vulkano = "0.6.2"
+slog = "2"
+calcium-rendering = {path = "../calcium-rendering"}
+calcium-rendering-2d = {path = "../calcium-rendering-2d"}
+calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
+calcium-rendering-vulkano-shaders = {path = "../calcium-rendering-vulkano-shaders"}

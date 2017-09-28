@@ -7,7 +7,7 @@ use collision::{Ray3, Plane};
 
 use calcium_rendering::{Error, Renderer, Viewport, WindowRenderer};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_world3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh, Model};
+use calcium_rendering_3d::{RenderWorld, Camera, World3DRenderer, Entity, Material, World3DRenderTarget, Vertex, Mesh, Model};
 
 use carpenter_model::map::{Brush};
 use carpenter_model::input::{InputModel};

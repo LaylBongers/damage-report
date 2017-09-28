@@ -12,10 +12,12 @@ use calcium_rendering::raw::{RawAccess};
 use calcium_rendering::{Renderer, Error, CalciumErrorMappable};
 use calcium_rendering_gfx::{GfxRendererRaw, ColorFormat, DepthFormat};
 
-#[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d_gfx::{GfxSimple2DRendererRaw};
+#[cfg(feature = "2d")]
+use calcium_rendering_2d::{Renderer2D};
+#[cfg(feature = "2d")]
+use calcium_rendering_2d_gfx::{GfxRenderer2DRaw};
 
-#[cfg(feature = "world3d")]
+#[cfg(feature = "3d")]
 use unsupported::{UnsupportedWorld3DRenderer};
 
 use {Context};
@@ -26,10 +28,10 @@ impl Context for GfxOpenGlContext {
     type RendererRaw = GfxRendererRaw<Device, Factory>;
     type Window = GlutinWindow;
 
-    #[cfg(feature = "simple2d")]
-    type Simple2DRendererRaw = GfxSimple2DRendererRaw<Device, Factory>;
+    #[cfg(feature = "2d")]
+    type Renderer2DRaw = GfxRenderer2DRaw<Device, Factory>;
 
-    #[cfg(feature = "world3d")]
+    #[cfg(feature = "3d")]
     type World3DRenderer = UnsupportedWorld3DRenderer;
 
     fn renderer(
@@ -72,7 +74,7 @@ impl Context for GfxOpenGlContext {
         }
     }
 
-    #[cfg(feature = "world3d")]
+    #[cfg(feature = "3d")]
     fn world3d_renderer(
         &self,
         _renderer: &mut Renderer<GfxRendererRaw<Device, Factory>>,
@@ -80,11 +82,18 @@ impl Context for GfxOpenGlContext {
         Err(Error::Unsupported("world3d is not supported on this backend".to_string()))
     }
 
-    #[cfg(feature = "simple2d")]
+    #[cfg(feature = "2d")]
     fn simple2d_renderer(
         &self,
         renderer: &mut Renderer<GfxRendererRaw<Device, Factory>>,
-    ) -> Result<GfxSimple2DRendererRaw<Device, Factory>, Error> {
-        GfxSimple2DRendererRaw::new(renderer)
+    ) -> Result<
+        Renderer2D<
+            GfxRendererRaw<Device, Factory>,
+            GfxRenderer2DRaw<Device, Factory>
+        >,
+        Error
+    > {
+        let renderer_raw = GfxRenderer2DRaw::new(renderer)?;
+        Ok(Renderer2D::raw_new(renderer_raw))
     }
 }

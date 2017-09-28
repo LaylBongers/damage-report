@@ -12,11 +12,13 @@ use calcium_rendering_vulkano::{VulkanoRendererRaw};
 
 use {Context};
 
-#[cfg(feature = "world3d")]
-use calcium_rendering_world3d_vulkano::{VulkanoWorld3DRenderer};
+#[cfg(feature = "2d")]
+use calcium_rendering_2d::{Renderer2D};
+#[cfg(feature = "2d")]
+use calcium_rendering_2d_vulkano::{VulkanoRenderer2DRaw};
 
-#[cfg(feature = "simple2d")]
-use calcium_rendering_simple2d_vulkano::{VulkanoSimple2DRendererRaw};
+#[cfg(feature = "3d")]
+use calcium_rendering_3d_vulkano::{VulkanoWorld3DRenderer};
 
 pub struct VulkanoContext;
 
@@ -24,11 +26,11 @@ impl Context for VulkanoContext {
     type RendererRaw = VulkanoRendererRaw;
     type Window = WinitWindow;
 
-    #[cfg(feature = "world3d")]
+    #[cfg(feature = "3d")]
     type World3DRenderer = VulkanoWorld3DRenderer;
 
-    #[cfg(feature = "simple2d")]
-    type Simple2DRendererRaw = VulkanoSimple2DRendererRaw;
+    #[cfg(feature = "2d")]
+    type Renderer2DRaw = VulkanoRenderer2DRaw;
 
     fn renderer(
         &self, log: Option<Logger>, window_settings: &WindowSettings,
@@ -72,7 +74,7 @@ impl Context for VulkanoContext {
         }
     }
 
-    #[cfg(feature = "world3d")]
+    #[cfg(feature = "3d")]
     fn world3d_renderer(
         &self,
         renderer: &mut Renderer<VulkanoRendererRaw>,
@@ -80,11 +82,12 @@ impl Context for VulkanoContext {
         VulkanoWorld3DRenderer::new(renderer)
     }
 
-    #[cfg(feature = "simple2d")]
+    #[cfg(feature = "2d")]
     fn simple2d_renderer(
         &self,
         renderer: &mut Renderer<VulkanoRendererRaw>,
-    ) -> Result<VulkanoSimple2DRendererRaw, Error> {
-        VulkanoSimple2DRendererRaw::new(renderer)
+    ) -> Result<Renderer2D<VulkanoRendererRaw, VulkanoRenderer2DRaw>, Error> {
+        let renderer_raw = VulkanoRenderer2DRaw::new(renderer)?;
+        Ok(Renderer2D::raw_new(renderer_raw))
     }
 }

@@ -17,9 +17,8 @@ use tiled;
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_simple2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, Projection, RenderData, RenderSet};
-use calcium_rendering_simple2d::raw::{Simple2DRendererRaw};
-use calcium_rendering_simple2d::{Simple2DRenderTarget};
+use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, Projection, RenderData, RenderSet};
+use calcium_rendering_2d::{Renderer2DTarget};
 use calcium_rendering_context::{Runtime, Context};
 use calcium_rendering::raw::{RendererRaw};
 
@@ -109,7 +108,7 @@ impl Runtime for StaticRuntime {
         let (mut renderer, mut window) =
             context.renderer(Some(self.log.clone()), &window_settings)?;
         let mut simple2d_renderer = context.simple2d_renderer(&mut renderer)?;
-        let mut simple2d_render_target = Simple2DRenderTarget::new(
+        let mut simple2d_render_target = Renderer2DTarget::new(
             true, &renderer, &simple2d_renderer
         );
 

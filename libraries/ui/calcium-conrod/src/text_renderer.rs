@@ -9,7 +9,7 @@ use conrod::text::{GlyphCache};
 use conrod::text::font::{Id as FontId};
 
 use calcium_rendering::{Renderer, Texture, Error};
-use calcium_rendering_simple2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, SampleMode};
+use calcium_rendering_2d::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, SampleMode};
 
 use util;
 

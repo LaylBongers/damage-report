@@ -5,9 +5,9 @@ dependencies = [
  "calcium-flowy 0.1.0",
  "calcium-game 0.1.0",
  "calcium-rendering 0.1.0",
- "calcium-rendering-simple2d 0.1.0",
+ "calcium-rendering-2d 0.1.0",
  "calcium-rendering-static 0.1.0",
- "calcium-rendering-world3d 0.1.0",
+ "calcium-rendering-3d 0.1.0",
  "carpenter-model 0.1.0",
  "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "collision 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -91,7 +91,7 @@ name = "calcium-flowy"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
- "calcium-rendering-simple2d 0.1.0",
+ "calcium-rendering-2d 0.1.0",
  "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "flowy 0.1.0",
  "image 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -126,7 +126,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "calcium-rendering-simple2d"
+name = "calcium-rendering-2d"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
@@ -135,22 +135,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "calcium-rendering-simple2d-gfx"
+name = "calcium-rendering-2d-gfx"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-gfx 0.1.0",
- "calcium-rendering-simple2d 0.1.0",
+ "calcium-rendering-2d 0.1.0",
  "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
-name = "calcium-rendering-simple2d-vulkano"
+name = "calcium-rendering-2d-vulkano"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
- "calcium-rendering-simple2d 0.1.0",
+ "calcium-rendering-2d 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
  "calcium-rendering-vulkano-shaders 0.1.0",
  "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -164,12 +164,12 @@ version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-gfx 0.1.0",
- "calcium-rendering-simple2d 0.1.0",
- "calcium-rendering-simple2d-gfx 0.1.0",
- "calcium-rendering-simple2d-vulkano 0.1.0",
+ "calcium-rendering-2d 0.1.0",
+ "calcium-rendering-2d-gfx 0.1.0",
+ "calcium-rendering-2d-vulkano 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
- "calcium-rendering-world3d 0.1.0",
- "calcium-rendering-world3d-vulkano 0.1.0",
+ "calcium-rendering-3d 0.1.0",
+ "calcium-rendering-3d-vulkano 0.1.0",
  "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx 0.16.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_device_gl 0.14.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -202,7 +202,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "calcium-rendering-world3d"
+name = "calcium-rendering-3d"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
@@ -212,13 +212,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "calcium-rendering-world3d-vulkano"
+name = "calcium-rendering-3d-vulkano"
 version = "0.1.0"
 dependencies = [
  "calcium-rendering 0.1.0",
  "calcium-rendering-vulkano 0.1.0",
  "calcium-rendering-vulkano-shaders 0.1.0",
- "calcium-rendering-world3d 0.1.0",
+ "calcium-rendering-3d 0.1.0",
  "cgmath 0.15.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "collision 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "slog 2.0.12 (registry+https://github.com/rust-lang/crates.io-index)",

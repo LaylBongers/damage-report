@@ -7,7 +7,7 @@ use conrod::widget::primitive::shape::triangles::{Triangle, ColoredPoint};
 use conrod::color::{Rgba};
 
 use calcium_rendering::{WindowRenderer, Renderer, Error};
-use calcium_rendering_simple2d::{RenderBatch, DrawRectangle, Rectangle, DrawVertex};
+use calcium_rendering_2d::{RenderBatch, DrawRectangle, Rectangle, DrawVertex};
 
 use text_renderer::{TextRenderer};
 use util;

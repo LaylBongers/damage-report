@@ -1,7 +1,7 @@
-#[cfg(feature = "world3d")]
+#[cfg(feature = "3d")]
 mod world3d {
     use calcium_rendering::{Renderer, Viewport};
-    use calcium_rendering_world3d::{World3DRenderer, Vertex, MeshRaw, RenderWorld, Camera, World3DRenderTargetRaw, World3DRenderTarget};
+    use calcium_rendering_3d::{World3DRenderer, Vertex, MeshRaw, RenderWorld, Camera, World3DRenderTargetRaw, World3DRenderTarget};
 
     pub struct UnsupportedWorld3DRenderer;
 
@@ -45,5 +45,5 @@ mod world3d {
     }
 }
 
-#[cfg(feature = "world3d")]
+#[cfg(feature = "3d")]
 pub use self::world3d::*;

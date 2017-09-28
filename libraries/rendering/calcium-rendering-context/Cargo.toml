@@ -7,9 +7,9 @@ license = "MIT/Apache-2.0"
 
 [features]
 # This is supposed to have nothing, do not publish this crate if it has anything
-default = ["simple2d"]
-world3d = ["calcium-rendering-world3d", "calcium-rendering-world3d-vulkano"]
-simple2d = ["calcium-rendering-simple2d", "calcium-rendering-simple2d-gfx", "calcium-rendering-simple2d-vulkano"]
+default = []
+3d = ["calcium-rendering-3d", "calcium-rendering-3d-vulkano"]
+2d = ["calcium-rendering-2d", "calcium-rendering-2d-gfx", "calcium-rendering-2d-vulkano"]
 
 [dependencies]
 cgmath = "0.15"
@@ -28,10 +28,10 @@ calcium-rendering-gfx = {path = "../calcium-rendering-gfx"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}
 
 # Enabled with the world3d feature
-calcium-rendering-world3d = {path = "../calcium-rendering-world3d", optional = true}
-calcium-rendering-world3d-vulkano = {path = "../calcium-rendering-world3d-vulkano", optional = true}
+calcium-rendering-3d = {path = "../calcium-rendering-3d", optional = true}
+calcium-rendering-3d-vulkano = {path = "../calcium-rendering-3d-vulkano", optional = true}
 
 # Enabled with the simple2d feature
-calcium-rendering-simple2d = {path = "../calcium-rendering-simple2d", optional = true}
-calcium-rendering-simple2d-gfx = {path = "../calcium-rendering-simple2d-gfx", optional = true}
-calcium-rendering-simple2d-vulkano = {path = "../calcium-rendering-simple2d-vulkano", optional = true}
+calcium-rendering-2d = {path = "../calcium-rendering-2d", optional = true}
+calcium-rendering-2d-gfx = {path = "../calcium-rendering-2d-gfx", optional = true}
+calcium-rendering-2d-vulkano = {path = "../calcium-rendering-2d-vulkano", optional = true}
