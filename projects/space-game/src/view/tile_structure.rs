@@ -1,6 +1,6 @@
 use std::sync::{Arc};
 
-use cgmath::{Vector2, Vector4, Point2};
+use cgmath::{Vector2, Vector4, Point2, EuclideanSpace};
 
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
@@ -57,12 +57,17 @@ impl<R: RendererRaw> TileStructureView<R> {
         // Render the tiles
         for y in 0..structure.size().y {
             for x in 0..structure.size().x {
-                let offset = Vector2::new(x, y).cast();
+                let tile_position = Point2::new(x, y).cast();
 
+                if !structure.tile_at(tile_position).unwrap().has_floor() {
+                    continue
+                }
+
+                let tile_offset = tile_position.to_vec().cast();
                 tiles_batch.push_rectangle(DrawRectangle {
                     destination: Rectangle::new(
-                        Point2::new(0.0, 0.0) + offset,
-                        Point2::new(1.0, 1.0) + offset,
+                        Point2::new(0.0, 0.0) + tile_offset,
+                        Point2::new(1.0, 1.0) + tile_offset,
                     ),
                     texture_source: Some(Rectangle::new(
                         Point2::new(

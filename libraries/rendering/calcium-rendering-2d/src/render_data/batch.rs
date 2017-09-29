@@ -34,8 +34,6 @@ impl<R: RendererRaw> RenderBatch<R> {
 
     /// Adds vertices for a rectangle to this render batch.
     pub fn push_rectangle(&mut self, rect: DrawRectangle) {
-        // TODO: make use of uv_mode
-
         let destination_start_end = rect.destination.min_max().cast();
         let destination_end_start = rect.destination.max_min().cast();
         let uvs = rect.texture_source.unwrap_or(
@@ -44,24 +42,22 @@ impl<R: RendererRaw> RenderBatch<R> {
         let uvs_min_max = uvs.min_max();
         let uvs_max_min = uvs.max_min();
 
-        self.vertices.extend_from_slice(&DrawVertex::new_triangle(
-            [rect.destination.min.cast(), destination_start_end, destination_end_start],
-            if self.uv_mode == UvMode::YDown {
-                [uvs.min, uvs_min_max, uvs_max_min]
-            } else {
-                [uvs_min_max, uvs.min, uvs.max]
-            },
-            rect.color,
-        ));
-        self.vertices.extend_from_slice(&DrawVertex::new_triangle(
-            [rect.destination.max.cast(), destination_end_start, destination_start_end],
-            if self.uv_mode == UvMode::YDown {
-                [uvs.max, uvs_max_min, uvs_min_max]
-            } else {
-                [uvs_max_min, uvs.max, uvs.min]
-            },
-            rect.color,
-        ));
+        let (tri1_uvs, tri2_uvs) = if self.uv_mode == UvMode::YDown {(
+            [uvs.min, uvs_min_max, uvs_max_min],
+            [uvs.max, uvs_max_min, uvs_min_max],
+        )} else {(
+            [uvs_min_max, uvs.min, uvs.max],
+            [uvs_max_min, uvs.max, uvs.min],
+        )};
+
+        // Add the two triangles for this quad
+        self.vertices.push(DrawVertex::new(rect.destination.min.cast(), tri1_uvs[0], rect.color));
+        self.vertices.push(DrawVertex::new(destination_start_end, tri1_uvs[1], rect.color));
+        self.vertices.push(DrawVertex::new(destination_end_start, tri1_uvs[2], rect.color));
+
+        self.vertices.push(DrawVertex::new(rect.destination.max.cast(), tri2_uvs[0], rect.color));
+        self.vertices.push(DrawVertex::new(destination_end_start, tri2_uvs[1], rect.color));
+        self.vertices.push(DrawVertex::new(destination_start_end, tri2_uvs[2], rect.color));
     }
 }
 
@@ -121,17 +117,6 @@ impl DrawVertex {
             uv: uv,
             color: color,
         }
-    }
-
-    /// Creates a triangle of new vertices, with one flat color.
-    pub fn new_triangle(
-        positions: [Point2<f32>; 3], uvs: [Point2<f32>; 3], color: Vector4<f32>
-    ) -> [Self; 3] {
-        [
-            DrawVertex::new(positions[0], uvs[0], color),
-            DrawVertex::new(positions[1], uvs[1], color),
-            DrawVertex::new(positions[2], uvs[2], color),
-        ]
     }
 }
 
