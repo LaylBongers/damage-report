@@ -8,7 +8,7 @@ use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Error};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
+use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, UvMode};
 
 use flowy::{Ui, ElementId, ElementCursorState, Element};
 
@@ -118,8 +118,8 @@ fn render_element_box<R: RendererRaw>(element: &Element, batcher: &mut Batcher<R
         // Draw the rectangle
         batcher.current_batch.push_rectangle(DrawRectangle {
             destination: element.positioning().container.clone(),
+            texture_source: None,
             color: Vector4::new(color.red, color.green, color.blue, color.alpha),
-            .. DrawRectangle::default()
         });
     }
 }
@@ -144,7 +144,7 @@ fn render_element_text<R: RendererRaw>(
 
         // Finish off this batch and start on a color batch again
         // TODO: Instead make the batcher know when it should finish off a batch
-        batcher.next_batch(RenderBatch::new(ShaderMode::Color));
+        batcher.next_batch(RenderBatch::new(ShaderMode::Color, UvMode::YDown));
     }
 
     Ok(())
@@ -189,7 +189,7 @@ fn generate_text_batch<R: RendererRaw>(
 ) -> Result<RenderBatch<R>, Error> {
     // If the text size is too small, we can't render anything
     if element.style().text_size <= 0.5 {
-        return Ok(RenderBatch::new(ShaderMode::Color))
+        return Ok(RenderBatch::new(ShaderMode::Color, UvMode::YDown))
     }
 
     // Translate the cached glyphs back into regular glyphs
@@ -235,7 +235,7 @@ fn generate_text_batch<R: RendererRaw>(
     }
 
     // Set the texture in the render batch
-    let mut batch = RenderBatch::new(ShaderMode::Mask(glyph_texture.clone()));
+    let mut batch = RenderBatch::new(ShaderMode::Mask(glyph_texture.clone()), UvMode::YDown);
 
     // Actually render the text
     let c = element.style().text_color;
@@ -268,7 +268,7 @@ struct Batcher<'a, R: RendererRaw> {
 impl<'a, R: RendererRaw> Batcher<'a, R> {
     fn new(batches: &'a mut Vec<RenderBatch<R>>) -> Self {
         Batcher {
-            current_batch: RenderBatch::new(ShaderMode::Color),
+            current_batch: RenderBatch::new(ShaderMode::Color, UvMode::YDown),
             batches,
         }
     }

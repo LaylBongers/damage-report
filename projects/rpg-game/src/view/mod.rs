@@ -4,8 +4,8 @@ use std::path::{PathBuf};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering::{Renderer, Error};
-use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle};
-use cgmath::{Vector2, Point2};
+use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, UvMode};
+use cgmath::{Vector2, Vector4, Point2};
 use tiled::{Map as TMap};
 
 use model::{Map};
@@ -62,7 +62,9 @@ impl<R: RendererRaw> MapRenderer<R> {
     pub fn render(
         &self, map: &Map, batches: &mut Vec<RenderBatch<R>>, camera_size: Vector2<f32>
     ) {
-        let mut batch = RenderBatch::new(ShaderMode::Texture(self.tileset_texture.clone()));
+        let mut batch = RenderBatch::new(
+            ShaderMode::Texture(self.tileset_texture.clone()), UvMode::YDown
+        );
 
         let last_pos = Vector2::new(
             (camera_size.x / 32.0).ceil(),
@@ -102,7 +104,7 @@ impl<R: RendererRaw> MapRenderer<R> {
                                 (source_position.y + 1.0) * self.tileset_uv_per_tile.y,
                             ),
                         )),
-                        .. DrawRectangle::default()
+                        color: Vector4::new(1.0, 1.0, 1.0, 1.0),
                     });
                 }
             }

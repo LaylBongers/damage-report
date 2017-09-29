@@ -5,7 +5,7 @@ use cgmath::{Point2, EuclideanSpace};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering::{Renderer, Error};
-use calcium_rendering_2d::render_data::{RenderData, RenderBatch, ShaderMode, DrawRectangle, Rectangle, RenderSet, Projection};
+use calcium_rendering_2d::render_data::{RenderData, RenderBatch, ShaderMode, DrawRectangle, Rectangle, RenderSet, Projection, UvMode};
 
 pub struct BackgroundView<R: RendererRaw> {
     texture: Arc<Texture<R>>,
@@ -25,7 +25,7 @@ impl<R: RendererRaw> BackgroundView<R> {
 
     pub fn render(&self, render_data: &mut RenderData<R>, renderer: &mut Renderer<R>) {
         let mut background_batch = RenderBatch::new(
-            ShaderMode::Texture(self.texture.clone())
+            ShaderMode::Texture(self.texture.clone()), UvMode::YDown
         );
 
         let source_size = self.texture.size().cast();

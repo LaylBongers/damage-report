@@ -10,15 +10,20 @@ use calcium_rendering::texture::{Texture};
 pub struct RenderBatch<R: RendererRaw> {
     /// The shader mode in which a render batch will be drawn.
     pub mode: ShaderMode<R>,
+
+    /// Used to determine what UV coordinates for a full texture are.
+    pub uv_mode: UvMode,
+
     /// The vertices that will be drawn.
     pub vertices: Vec<DrawVertex>,
 }
 
 impl<R: RendererRaw> RenderBatch<R> {
-    pub fn new(mode: ShaderMode<R>) -> Self {
+    pub fn new(mode: ShaderMode<R>, uv_mode: UvMode) -> Self {
         RenderBatch {
             mode,
-            .. RenderBatch::default()
+            uv_mode,
+            vertices: Vec::new(),
         }
     }
 
@@ -29,33 +34,34 @@ impl<R: RendererRaw> RenderBatch<R> {
 
     /// Adds vertices for a rectangle to this render batch.
     pub fn push_rectangle(&mut self, rect: DrawRectangle) {
+        // TODO: make use of uv_mode
+
         let destination_start_end = rect.destination.min_max().cast();
         let destination_end_start = rect.destination.max_min().cast();
         let uvs = rect.texture_source.unwrap_or(
             Rectangle::new(Point2::new(0.0, 0.0), Point2::new(1.0, 1.0))
         );
-        let uvs_start_end = uvs.min_max();
-        let uvs_end_start = uvs.max_min();
+        let uvs_min_max = uvs.min_max();
+        let uvs_max_min = uvs.max_min();
 
         self.vertices.extend_from_slice(&DrawVertex::new_triangle(
             [rect.destination.min.cast(), destination_start_end, destination_end_start],
-            [uvs.min, uvs_start_end, uvs_end_start],
+            if self.uv_mode == UvMode::YDown {
+                [uvs.min, uvs_min_max, uvs_max_min]
+            } else {
+                [uvs_min_max, uvs.min, uvs.max]
+            },
             rect.color,
         ));
         self.vertices.extend_from_slice(&DrawVertex::new_triangle(
             [rect.destination.max.cast(), destination_end_start, destination_start_end],
-            [uvs.max, uvs_end_start, uvs_start_end],
+            if self.uv_mode == UvMode::YDown {
+                [uvs.max, uvs_max_min, uvs_min_max]
+            } else {
+                [uvs_max_min, uvs.max, uvs.min]
+            },
             rect.color,
         ));
-    }
-}
-
-impl<R: RendererRaw> Default for RenderBatch<R> {
-    fn default() -> Self {
-        RenderBatch {
-            mode: ShaderMode::Color,
-            vertices: Vec::new(),
-        }
     }
 }
 
@@ -63,9 +69,16 @@ impl<R: RendererRaw> Clone for RenderBatch<R> {
     fn clone(&self) -> Self {
         RenderBatch {
             mode: self.mode.clone(),
+            uv_mode: self.uv_mode,
             vertices: self.vertices.clone(),
         }
     }
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum UvMode {
+    YUp,
+    YDown,
 }
 
 /// Defines how the renderer should draw vertices.
@@ -138,15 +151,6 @@ impl DrawRectangle {
     pub fn full_texture(destination: Rectangle<f32>) -> Self {
         DrawRectangle {
             destination,
-            .. DrawRectangle::default()
-        }
-    }
-}
-
-impl Default for DrawRectangle {
-    fn default() -> Self {
-        DrawRectangle {
-            destination: Rectangle::new(Point2::new(0.0, 0.0), Point2::new(0.0, 0.0)),
             texture_source: None,
             color: Vector4::new(1.0, 1.0, 1.0, 1.0),
         }

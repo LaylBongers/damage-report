@@ -5,7 +5,7 @@ use cgmath::{Vector2, Vector4, Point2};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering::{Renderer, Error};
-use calcium_rendering_2d::render_data::{RenderData, RenderBatch, ShaderMode, DrawRectangle, Rectangle, RenderSet, Projection, Camera};
+use calcium_rendering_2d::render_data::{RenderData, RenderBatch, ShaderMode, DrawRectangle, Rectangle, RenderSet, Projection, Camera, UvMode};
 
 use model::{TileStructure};
 
@@ -30,7 +30,7 @@ impl<R: RendererRaw> TileStructureView<R> {
         structure: &TileStructure, render_data: &mut RenderData<R>, renderer: &mut Renderer<R>
     ) {
         let mut tiles_batch = RenderBatch::new(
-            ShaderMode::Texture(self.texture.clone())
+            ShaderMode::Texture(self.texture.clone()), UvMode::YUp
         );
 
         for y in 0..structure.size().y {
