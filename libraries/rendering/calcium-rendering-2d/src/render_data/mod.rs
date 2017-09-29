@@ -3,7 +3,7 @@ mod data;
 mod projection;
 
 pub use self::data::{RenderData, RenderSet};
-pub use self::batch::{RenderBatch, DrawRectangle, ShaderMode, DrawVertex, UvMode};
+pub use self::batch::{RenderBatch, ShaderMode, DrawVertex, UvMode};
 pub use self::projection::{Projection, Camera};
 
 // Re-export screenmath types for convenience

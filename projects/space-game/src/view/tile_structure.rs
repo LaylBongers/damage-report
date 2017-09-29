@@ -5,7 +5,7 @@ use cgmath::{Vector2, Vector4, Point2, EuclideanSpace};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering::{Renderer, Error};
-use calcium_rendering_2d::render_data::{RenderData, RenderBatch, ShaderMode, DrawRectangle, Rectangle, RenderSet, Projection, Camera, UvMode};
+use calcium_rendering_2d::render_data::{RenderData, RenderBatch, ShaderMode, Rectangle, RenderSet, Projection, Camera, UvMode};
 
 use model::{TileStructure};
 
@@ -64,23 +64,23 @@ impl<R: RendererRaw> TileStructureView<R> {
                 }
 
                 let tile_offset = tile_position.to_vec().cast();
-                tiles_batch.push_rectangle(DrawRectangle {
-                    destination: Rectangle::new(
+                tiles_batch.push_rectangle(
+                    Rectangle::new(
                         Point2::new(0.0, 0.0) + tile_offset,
                         Point2::new(1.0, 1.0) + tile_offset,
                     ),
-                    texture_source: Some(Rectangle::new(
+                    Rectangle::new(
                         Point2::new(
                             source_position.x * self.tileset_uv_per_tile.x,
-                            source_position.y * self.tileset_uv_per_tile.y,
+                            (source_position.y + 1.0) * self.tileset_uv_per_tile.y,
                         ),
                         Point2::new(
                             (source_position.x + 1.0) * self.tileset_uv_per_tile.x,
-                            (source_position.y + 1.0) * self.tileset_uv_per_tile.y,
+                            source_position.y * self.tileset_uv_per_tile.y,
                         ),
-                    )),
-                    color: Vector4::new(1.0, 1.0, 1.0, 1.0),
-                });
+                    ),
+                    Vector4::new(1.0, 1.0, 1.0, 1.0),
+                );
             }
         }
 

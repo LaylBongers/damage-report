@@ -17,7 +17,7 @@ use tiled;
 use calcium_game::{LoopTimer};
 use calcium_rendering::{Error};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, Projection, RenderData, RenderSet, UvMode};
+use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, Rectangle, Projection, RenderData, RenderSet, UvMode};
 use calcium_rendering_2d::{Renderer2DTarget};
 use calcium_rendering_context::{Runtime, Context};
 use calcium_rendering::raw::{RendererRaw};
@@ -63,19 +63,19 @@ impl <R: RendererRaw> FriendlyUnit<R> {
         let mut normaltexture = RenderBatch::new(
             ShaderMode::Texture(self.tex.clone()), UvMode::YDown
         );
-        normaltexture.push_rectangle(DrawRectangle::full_texture(
+        normaltexture.push_rectangle_full_texture(
             // position is centered in the texture
             Rectangle::new(self.position + -self.size/2.0, self.position + self.size/2.0)
-        ));
+        );
         batches.push(normaltexture);
 
         if self.selected {
             let mut selectiontexture = RenderBatch::new(
                 ShaderMode::Texture(self.selecttex.clone()), UvMode::YDown
             );
-            selectiontexture.push_rectangle(DrawRectangle::full_texture(
+            selectiontexture.push_rectangle_full_texture(
                 Rectangle::new(self.position + -self.size, self.position + self.size)
-            ));
+            );
             batches.push(selectiontexture);
         }
     }

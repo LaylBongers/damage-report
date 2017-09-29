@@ -8,7 +8,7 @@ use image::{GrayImage, GenericImage, ImageBuffer, Luma};
 use calcium_rendering::{Renderer, Error};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
-use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, UvMode};
+use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, Rectangle, UvMode};
 
 use flowy::{Ui, ElementId, ElementCursorState, Element};
 
@@ -116,11 +116,11 @@ fn render_element_box<R: RendererRaw>(element: &Element, batcher: &mut Batcher<R
     // Draw a rect for the background if we've got a color
     if let Some(ref color) = color {
         // Draw the rectangle
-        batcher.current_batch.push_rectangle(DrawRectangle {
-            destination: element.positioning().container.clone(),
-            texture_source: None,
-            color: Vector4::new(color.red, color.green, color.blue, color.alpha),
-        });
+        batcher.current_batch.push_rectangle(
+            element.positioning().container.clone(),
+            Rectangle::new(Point2::new(0.0, 0.0), Point2::new(1.0, 1.0)),
+            Vector4::new(color.red, color.green, color.blue, color.alpha),
+        );
     }
 }
 
@@ -243,17 +243,17 @@ fn generate_text_batch<R: RendererRaw>(
     for glyph in glyphs.iter() {
         if let Ok(Some((uv_rect, screen_rect))) = glyph_cache.rect_for(0, glyph) {
             // Push this glyph into this draw batch
-            batch.push_rectangle(DrawRectangle {
-                destination: Rectangle {
+            batch.push_rectangle(
+                Rectangle {
                     min: Point2::new(screen_rect.min.x as f32, screen_rect.min.y as f32),
                     max: Point2::new(screen_rect.max.x as f32, screen_rect.max.y as f32),
                 },
-                texture_source: Some(Rectangle {
+                Rectangle {
                     min: Point2::new(uv_rect.min.x, uv_rect.min.y),
                     max: Point2::new(uv_rect.max.x, uv_rect.max.y),
-                }),
-                color: text_color,
-            });
+                },
+                text_color,
+            );
         }
     }
 

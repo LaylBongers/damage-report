@@ -33,31 +33,47 @@ impl<R: RendererRaw> RenderBatch<R> {
     }
 
     /// Adds vertices for a rectangle to this render batch.
-    pub fn push_rectangle(&mut self, rect: DrawRectangle) {
-        let destination_start_end = rect.destination.min_max().cast();
-        let destination_end_start = rect.destination.max_min().cast();
-        let uvs = rect.texture_source.unwrap_or(
-            Rectangle::new(Point2::new(0.0, 0.0), Point2::new(1.0, 1.0))
-        );
+    pub fn push_rectangle(
+        &mut self,
+        destination: Rectangle<f32>, texture_source: Rectangle<f32>, color: Vector4<f32>,
+    ) {
+        let destination_start_end = destination.min_max().cast();
+        let destination_end_start = destination.max_min().cast();
+
+        let uvs = texture_source;
         let uvs_min_max = uvs.min_max();
         let uvs_max_min = uvs.max_min();
-
-        let (tri1_uvs, tri2_uvs) = if self.uv_mode == UvMode::YDown {(
+        let (tri1_uvs, tri2_uvs) = (
             [uvs.min, uvs_min_max, uvs_max_min],
             [uvs.max, uvs_max_min, uvs_min_max],
-        )} else {(
-            [uvs_min_max, uvs.min, uvs.max],
-            [uvs_max_min, uvs.max, uvs.min],
-        )};
+        );
 
         // Add the two triangles for this quad
-        self.vertices.push(DrawVertex::new(rect.destination.min.cast(), tri1_uvs[0], rect.color));
-        self.vertices.push(DrawVertex::new(destination_start_end, tri1_uvs[1], rect.color));
-        self.vertices.push(DrawVertex::new(destination_end_start, tri1_uvs[2], rect.color));
+        self.vertices.push(DrawVertex::new(destination.min.cast(), tri1_uvs[0], color));
+        self.vertices.push(DrawVertex::new(destination_start_end, tri1_uvs[1], color));
+        self.vertices.push(DrawVertex::new(destination_end_start, tri1_uvs[2], color));
 
-        self.vertices.push(DrawVertex::new(rect.destination.max.cast(), tri2_uvs[0], rect.color));
-        self.vertices.push(DrawVertex::new(destination_end_start, tri2_uvs[1], rect.color));
-        self.vertices.push(DrawVertex::new(destination_start_end, tri2_uvs[2], rect.color));
+        self.vertices.push(DrawVertex::new(destination.max.cast(), tri2_uvs[0], color));
+        self.vertices.push(DrawVertex::new(destination_end_start, tri2_uvs[1], color));
+        self.vertices.push(DrawVertex::new(destination_start_end, tri2_uvs[2], color));
+    }
+
+    /// Adds vertices for a rectangle to this render batch, assuming the entire texture should be
+    /// drawn.
+    pub fn push_rectangle_full_texture(
+        &mut self,
+        destination: Rectangle<f32>
+    ) {
+        let texture_source = if self.uv_mode == UvMode::YDown {
+            Rectangle::new(Point2::new(0.0, 0.0), Point2::new(1.0, 1.0))
+        } else {
+            Rectangle::new(Point2::new(1.0, 1.0), Point2::new(0.0, 0.0))
+        };
+        self.push_rectangle(
+            destination,
+            texture_source,
+            Vector4::new(1.0, 1.0, 1.0, 1.0),
+        );
     }
 }
 
@@ -116,28 +132,6 @@ impl DrawVertex {
             position: position,
             uv: uv,
             color: color,
-        }
-    }
-}
-
-/// A rectangle that can be drawn on screen.
-#[derive(Debug)]
-pub struct DrawRectangle {
-    /// Where on screen this rectangle will be drawn.
-    pub destination: Rectangle<f32>,
-    /// Where in a texture this rectangle should sample from.
-    pub texture_source: Option<Rectangle<f32>>,
-    /// What solid color this rectangle will be drawn with.
-    pub color: Vector4<f32>,
-}
-
-impl DrawRectangle {
-    /// Creates a new rectangle that will draw the entire texture.
-    pub fn full_texture(destination: Rectangle<f32>) -> Self {
-        DrawRectangle {
-            destination,
-            texture_source: None,
-            color: Vector4::new(1.0, 1.0, 1.0, 1.0),
         }
     }
 }

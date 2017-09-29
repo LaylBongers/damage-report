@@ -4,7 +4,7 @@ use std::path::{PathBuf};
 use calcium_rendering::raw::{RendererRaw};
 use calcium_rendering::texture::{Texture};
 use calcium_rendering::{Renderer, Error};
-use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, DrawRectangle, Rectangle, UvMode};
+use calcium_rendering_2d::render_data::{RenderBatch, ShaderMode, Rectangle, UvMode};
 use cgmath::{Vector2, Vector4, Point2};
 use tiled::{Map as TMap};
 
@@ -89,12 +89,12 @@ impl<R: RendererRaw> MapRenderer<R> {
                     ).cast();
 
                     // Add the tile to be rendered
-                    batch.push_rectangle(DrawRectangle {
-                        destination: Rectangle::new(
+                    batch.push_rectangle(
+                        Rectangle::new(
                             position * 32.0,
                             (position + Vector2::new(1.0, 1.0)) * 32.0
                         ),
-                        texture_source: Some(Rectangle::new(
+                        Rectangle::new(
                             Point2::new(
                                 source_position.x * self.tileset_uv_per_tile.x,
                                 source_position.y * self.tileset_uv_per_tile.y,
@@ -103,9 +103,9 @@ impl<R: RendererRaw> MapRenderer<R> {
                                 (source_position.x + 1.0) * self.tileset_uv_per_tile.x,
                                 (source_position.y + 1.0) * self.tileset_uv_per_tile.y,
                             ),
-                        )),
-                        color: Vector4::new(1.0, 1.0, 1.0, 1.0),
-                    });
+                        ),
+                        Vector4::new(1.0, 1.0, 1.0, 1.0),
+                    );
                 }
             }
         }
