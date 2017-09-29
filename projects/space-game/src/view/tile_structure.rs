@@ -64,7 +64,8 @@ impl<R: RendererRaw> TileStructureView<R> {
                 }
 
                 let tile_offset = tile_position.to_vec().cast();
-                let sigma = 0.001; // I'm not sure why this needs to be subtracted from the V only
+                // I'm not sure why this needs to be subtracted from the V only
+                let half_pixel = 1.0 / (8.0*32.0) / 2.0;
                 tiles_batch.push_rectangle(
                     Rectangle::new(
                         Point2::new(0.0, 0.0) + tile_offset,
@@ -73,11 +74,11 @@ impl<R: RendererRaw> TileStructureView<R> {
                     Rectangle::new(
                         Point2::new(
                             source_position.x * self.tileset_uv_per_tile.x,
-                            (source_position.y + 1.0) * self.tileset_uv_per_tile.y - sigma,
+                            (source_position.y + 1.0) * self.tileset_uv_per_tile.y - half_pixel,
                         ),
                         Point2::new(
                             (source_position.x + 1.0) * self.tileset_uv_per_tile.x,
-                            source_position.y * self.tileset_uv_per_tile.y - sigma,
+                            source_position.y * self.tileset_uv_per_tile.y - half_pixel,
                         ),
                     ),
                     Vector4::new(1.0, 1.0, 1.0, 1.0),
@@ -86,7 +87,7 @@ impl<R: RendererRaw> TileStructureView<R> {
         }
 
         // Submit the rendering set
-        let camera = Camera::new(32.0, Point2::new(0.0, 0.0));
+        let camera = Camera::new(64.0, Point2::new(50.0, 50.0));
         let background_set = RenderSet::new(Projection::Camera(camera), vec!(tiles_batch));
         render_data.render_sets.push(background_set);
     }
