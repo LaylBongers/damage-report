@@ -10,10 +10,11 @@ calcium-rendering-2d = {path = "../../libraries/rendering/calcium-rendering-2d"}
 calcium-rendering-context = {path = "../../libraries/rendering/calcium-rendering-context", features = ["2d"]}
 cgmath = "0.15"
 pistoncore-input = "0.19"
-pistoncore-window = "0.28"
+pistoncore-window = "0.29"
 slog = "2"
 slog-async = "2"
 slog-term = "2"
+rand = "0.3.16"
 
 # If you want optimizations in dev while keeping debug symbols, use these
 [profile.dev]

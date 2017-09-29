@@ -87,7 +87,7 @@ impl VulkanoRenderer2DRaw {
             simple2d_vs::ty::MatrixData {
                 total: total_matrix_raw,
             }
-        ));
+        ).unwrap());
 
         // Go over all batches
         for batch in &set.batches {

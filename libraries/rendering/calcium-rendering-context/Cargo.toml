@@ -7,7 +7,7 @@ license = "MIT/Apache-2.0"
 
 [features]
 # This is supposed to have nothing, do not publish this crate if it has anything
-default = []
+default = ["2d"]
 3d = ["calcium-rendering-3d", "calcium-rendering-3d-vulkano"]
 2d = ["calcium-rendering-2d", "calcium-rendering-2d-gfx", "calcium-rendering-2d-vulkano"]
 
@@ -16,13 +16,13 @@ cgmath = "0.15"
 slog = "2"
 slog-stdlog = "3"
 pistoncore-input = "0.19"
-pistoncore-window = "0.28"
-pistoncore-winit_window = "0.4"
-pistoncore-glutin_window = "0.39"
+pistoncore-window = "0.29"
+pistoncore-winit_window = "0.5"
+pistoncore-glutin_window = "0.40"
 gfx = "0.16"
 gfx_window_glutin = "0.17"
 gfx_device_gl = "0.14"
-vulkano = "0.6"
+vulkano = "0.7"
 calcium-rendering = {path = "../calcium-rendering"}
 calcium-rendering-gfx = {path = "../calcium-rendering-gfx"}
 calcium-rendering-vulkano = {path = "../calcium-rendering-vulkano"}

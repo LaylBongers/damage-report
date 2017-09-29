@@ -1,6 +1,7 @@
 use slog::{Logger};
 use window::{WindowSettings, Window};
 use input::{Input, Button, ButtonArgs, ButtonState, Key};
+use cgmath::{Vector2};
 
 use calcium_rendering::{Error};
 use calcium_rendering_2d::render_data::{RenderData};
@@ -8,7 +9,8 @@ use calcium_rendering_2d::{Renderer2DTarget};
 use calcium_rendering_context::{Context, Runtime};
 use calcium_game::{LoopTimer};
 
-use view::{BackgroundView};
+use model::{TileStructure};
+use view::{BackgroundView, TileStructureView};
 
 pub struct StaticRuntime {
     pub log: Logger,
@@ -27,16 +29,21 @@ impl Runtime for StaticRuntime {
             true, &renderer, &simple2d_renderer
         );
 
+        // Set up models
+        let mut tile_structure = TileStructure::empty(Vector2::new(100, 100));
+        tile_structure.randomize_floors();
+
         // Set up views
         let background_view = BackgroundView::new(&mut renderer)?;
+        let tile_structure_view = TileStructureView::new(&mut renderer)?;
 
-        let mut right_pressed = false;
+        let mut _right_pressed = false;
 
         // Run the actual game loop
         let mut timer = LoopTimer::start();
-        info!(self.log, "Finished loading, starting main loop");
+        info!(self.log, "Starting main game loop");
         while !window.should_close() {
-            let delta = timer.tick();
+            let _delta = timer.tick();
 
             // Handle input
             while let Some(event) = window.poll_event() {
@@ -48,7 +55,7 @@ impl Runtime for StaticRuntime {
                         let press = state == ButtonState::Press;
                         match button {
                             Button::Keyboard(Key::D) =>
-                                right_pressed = press,
+                                _right_pressed = press,
                             _ => {},
                         }
                     },
@@ -60,6 +67,7 @@ impl Runtime for StaticRuntime {
             let mut render_data = RenderData::new();
 
             background_view.render(&mut render_data, &mut renderer);
+            tile_structure_view.render(&mut render_data, &mut renderer);
 
             // Finally do the 2D rendering itself
             let mut frame = renderer.start_frame();

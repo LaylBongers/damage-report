@@ -24,7 +24,6 @@ impl<R: RendererRaw> BackgroundView<R> {
     }
 
     pub fn render(&self, render_data: &mut RenderData<R>, renderer: &mut Renderer<R>) {
-        // Draw the background
         let mut background_batch = RenderBatch::new(
             ShaderMode::Texture(self.texture.clone())
         );
