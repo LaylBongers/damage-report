@@ -17,6 +17,10 @@ impl TileStructure {
         }
     }
 
+    pub fn size(&self) -> Vector2<u32> {
+        self.size
+    }
+
     pub fn randomize_floors(&mut self) {
         let mut rng = ::rand::StdRng::new().unwrap();
         for tile in &mut self.tiles {

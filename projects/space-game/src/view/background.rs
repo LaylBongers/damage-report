@@ -41,7 +41,7 @@ impl<R: RendererRaw> BackgroundView<R> {
             rect_size = rect_size * (target_size.y / source_size.y);
         }
 
-        background_batch.push_rectangle(DrawRectangle::new(Rectangle::new(
+        background_batch.push_rectangle(DrawRectangle::full_texture(Rectangle::new(
             Point2::from_vec(half_target_size - rect_size * 0.5),
             Point2::from_vec(half_target_size + rect_size * 0.5),
         )));

@@ -135,7 +135,7 @@ pub struct DrawRectangle {
 
 impl DrawRectangle {
     /// Creates a new rectangle that will draw the entire texture.
-    pub fn new(destination: Rectangle<f32>) -> Self {
+    pub fn full_texture(destination: Rectangle<f32>) -> Self {
         DrawRectangle {
             destination,
             .. DrawRectangle::default()

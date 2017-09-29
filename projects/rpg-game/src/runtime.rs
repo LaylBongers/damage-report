@@ -63,7 +63,7 @@ impl <R: RendererRaw> FriendlyUnit<R> {
         let mut normaltexture = RenderBatch::new(
             ShaderMode::Texture(self.tex.clone())
         );
-        normaltexture.push_rectangle(DrawRectangle::new(
+        normaltexture.push_rectangle(DrawRectangle::full_texture(
             // position is centered in the texture
             Rectangle::new(self.position + -self.size/2.0, self.position + self.size/2.0)
         ));
@@ -73,7 +73,7 @@ impl <R: RendererRaw> FriendlyUnit<R> {
             let mut selectiontexture = RenderBatch::new(
                 ShaderMode::Texture(self.selecttex.clone())
             );
-            selectiontexture.push_rectangle(DrawRectangle::new(
+            selectiontexture.push_rectangle(DrawRectangle::full_texture(
                 Rectangle::new(self.position + -self.size, self.position + self.size)
             ));
             batches.push(selectiontexture);
