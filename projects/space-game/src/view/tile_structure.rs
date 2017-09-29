@@ -19,7 +19,7 @@ impl<R: RendererRaw> TileStructureView<R> {
     pub fn new(renderer: &mut Renderer<R>) -> Result<Self, Error> {
         let texture = Texture::new()
             .from_file("./assets/tiles.png")
-            .with_linear_sampling()
+            .with_nearest_sampling()
             .build(renderer)?;
 
         let texture_size = texture.size();
@@ -64,6 +64,7 @@ impl<R: RendererRaw> TileStructureView<R> {
                 }
 
                 let tile_offset = tile_position.to_vec().cast();
+                let sigma = 0.001; // I'm not sure why this needs to be subtracted from the V only
                 tiles_batch.push_rectangle(
                     Rectangle::new(
                         Point2::new(0.0, 0.0) + tile_offset,
@@ -72,11 +73,11 @@ impl<R: RendererRaw> TileStructureView<R> {
                     Rectangle::new(
                         Point2::new(
                             source_position.x * self.tileset_uv_per_tile.x,
-                            (source_position.y + 1.0) * self.tileset_uv_per_tile.y,
+                            (source_position.y + 1.0) * self.tileset_uv_per_tile.y - sigma,
                         ),
                         Point2::new(
                             (source_position.x + 1.0) * self.tileset_uv_per_tile.x,
-                            source_position.y * self.tileset_uv_per_tile.y,
+                            source_position.y * self.tileset_uv_per_tile.y - sigma,
                         ),
                     ),
                     Vector4::new(1.0, 1.0, 1.0, 1.0),
