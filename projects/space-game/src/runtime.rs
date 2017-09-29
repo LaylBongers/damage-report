@@ -67,7 +67,7 @@ impl Runtime for StaticRuntime {
             let mut render_data = RenderData::new();
 
             background_view.render(&mut render_data, &mut renderer);
-            tile_structure_view.render(&tile_structure, &mut render_data, &mut renderer);
+            tile_structure_view.render(&tile_structure, &mut render_data);
 
             // Finally do the 2D rendering itself
             let mut frame = renderer.start_frame();

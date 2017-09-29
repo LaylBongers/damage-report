@@ -11,6 +11,8 @@ use model::{TileStructure};
 
 pub struct TileStructureView<R: RendererRaw> {
     texture: Arc<Texture<R>>,
+    tileset_tiles_amount: Vector2<u32>,
+    tileset_uv_per_tile: Vector2<f32>,
 }
 
 impl<R: RendererRaw> TileStructureView<R> {
@@ -20,29 +22,58 @@ impl<R: RendererRaw> TileStructureView<R> {
             .with_linear_sampling()
             .build(renderer)?;
 
+        let texture_size = texture.size();
+        let tile_size = 32;
+        let tileset_tiles_amount = Vector2::new(
+            texture_size.x as u32 / tile_size,
+            texture_size.y as u32 / tile_size,
+        );
+        let tileset_uv_per_tile = Vector2::new(
+            1.0 / tileset_tiles_amount.x as f32,
+            1.0 / tileset_tiles_amount.y as f32
+        );
+
         Ok(TileStructureView {
             texture,
+            tileset_tiles_amount,
+            tileset_uv_per_tile,
         })
     }
 
     pub fn render(
         &self,
-        structure: &TileStructure, render_data: &mut RenderData<R>, renderer: &mut Renderer<R>
+        structure: &TileStructure, render_data: &mut RenderData<R>
     ) {
         let mut tiles_batch = RenderBatch::new(
             ShaderMode::Texture(self.texture.clone()), UvMode::YUp
         );
 
+        let tile = 0;
+        let source_position: Point2<f32> = Point2::new(
+            tile % self.tileset_tiles_amount.x,
+            tile / self.tileset_tiles_amount.x,
+        ).cast();
+
+        // Render the tiles
         for y in 0..structure.size().y {
             for x in 0..structure.size().x {
                 let offset = Vector2::new(x, y).cast();
 
                 tiles_batch.push_rectangle(DrawRectangle {
                     destination: Rectangle::new(
-                            Point2::new(0.0, 0.0) + offset,
-                            Point2::new(1.0, 1.0) + offset,
+                        Point2::new(0.0, 0.0) + offset,
+                        Point2::new(1.0, 1.0) + offset,
+                    ),
+                    texture_source: Some(Rectangle::new(
+                        Point2::new(
+                            source_position.x * self.tileset_uv_per_tile.x,
+                            source_position.y * self.tileset_uv_per_tile.y,
                         ),
-                    texture_source: None,
+                        Point2::new(
+                            (source_position.x + 1.0) * self.tileset_uv_per_tile.x,
+                            (source_position.y + 1.0) * self.tileset_uv_per_tile.y,
+                        ),
+                    )),
                     color: Vector4::new(1.0, 1.0, 1.0, 1.0),
                 });
             }
