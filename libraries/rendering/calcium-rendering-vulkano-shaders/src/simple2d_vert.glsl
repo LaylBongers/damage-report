@@ -17,7 +17,7 @@ out gl_PerVertex {
 };
 
 void main() {
-    f_color = v_color;
     f_uv = v_uv;
+    f_color = v_color;
     gl_Position = u_matrix_data.total * vec4(v_position, 0.0, 1.0);
 }

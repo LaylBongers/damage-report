@@ -125,8 +125,6 @@ impl VulkanoRenderer2DRaw {
         ).unwrap();
 
         // Get the mode ID this batch has and a texture to render
-        // TODO: Figure out a way to avoid having to have a dummy texture
-        // TODO: Make use of the sample mode
         let (mode_id, image, sampler) = match &batch.mode {
             &ShaderMode::Color =>
                 (0, self.dummy_texture.raw().image(),
@@ -159,7 +157,7 @@ impl VulkanoRenderer2DRaw {
                     depth_range: 0.0 .. 1.0,
                     dimensions: [
                         size.x as f32,
-                        size.y as f32
+                        size.y as f32,
                     ],
                 })),
                 .. DynamicState::none()

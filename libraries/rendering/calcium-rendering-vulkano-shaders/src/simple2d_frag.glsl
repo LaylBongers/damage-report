@@ -19,8 +19,8 @@ void main() {
     if (u_mode.mode == MODE_COLOR) {
         o_color = f_color;
     } else if (u_mode.mode == MODE_TEXTURE) {
-        o_color = texture(u_texture, f_uv).rgba;
+        o_color = texture(u_texture, f_uv).rgba * f_color;
     } else if (u_mode.mode == MODE_MASK) {
-        o_color = vec4(f_color.rgb, texture(u_texture, f_uv).r);
+        o_color = vec4(f_color.rgb, texture(u_texture, f_uv).r) * f_color;
     }
 }
